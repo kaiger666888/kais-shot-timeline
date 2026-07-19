@@ -1,81 +1,79 @@
 #!/usr/bin/env python3
-"""
-PySceneDetect V2: 双检测器组合 + 后处理
-- 主检测: AdaptiveDetector(4.0, min_scene_len=30) → 粗切
-- 长镜头(>8s)内部: ContentDetector(22) 二次扫描 → 防漏切
-- 后处理: 合并 <1.2s 碎片到相邻镜头 → 消除误切
-- 帧级精度
-"""
+"""PySceneDetect V2：双检测器组合 + 后处理（参数化版本）。
 
-import os, sys, json, base64, subprocess, tempfile, time, glob
+  - 主检测: AdaptiveDetector(4.0, min_scene_len=30) → 粗切
+  - 长镜头(>8s)内部: ContentDetector(22) 二次扫描 → 防漏切
+  - 后处理: 合并 <1.2s 碎片到相邻镜头 → 消除误切
+  - 帧级精度
+
+用法：
+  python detectors/psd_shot_preview_v2.py --video input.mp4
+                                          [--output shots.html]
+                                          [--json shots.json]
+                                          [--adaptive-threshold 4.0]
+                                          [--min-scene-len 30]
+                                          [--content-threshold 22]
+                                          [--long-shot-thresh 8.0]
+                                          [--merge-frag 1.2]
+"""
+import argparse
+import base64
+import json
+import os
+import subprocess
+import tempfile
+import time
+from pathlib import Path
+
 from scenedetect import detect, ContentDetector, AdaptiveDetector
-from scenedetect.frame_timecode import FrameTimecode
-
-VIDEO_DIR = "/home/kai/Downloads/bilibili_xiaojianghu"
-TMP_DIR = "/tmp/xiaojianghu_psd"
-OUTPUT_DIR = "/home/kai/range_server"
-
-EPISODES = {
-    "ep01": "虫虫武侠小故事《小江湖》第01话：爸爸去哪儿？（ 画面只是工具，情绪才是目的。.mp4",
-}
 
 
-def get_fps(h264_path):
-    """Get video FPS."""
-    result = subprocess.run(
+def get_fps(video_path: str) -> float:
+    r = subprocess.run(
         ["ffprobe", "-v", "quiet", "-select_streams", "v:0",
-         "-show_entries", "stream=r_frame_rate", "-of", "csv=p=0", h264_path],
-        capture_output=True, text=True
-    )
-    fps_str = result.stdout.strip()
+         "-show_entries", "stream=r_frame_rate", "-of", "csv=p=0", video_path],
+        capture_output=True, text=True)
+    fps_str = r.stdout.strip()
     if "/" in fps_str:
         num, den = fps_str.split("/")
         return float(num) / float(den)
-    return float(fps_str)
+    return float(fps_str) if fps_str else 30.0
 
 
-def detect_shots_v2(h264_path):
-    """Two-stage detection: coarse + fine-grained on long shots."""
-    fps = get_fps(h264_path)
-    
-    # Stage 1: Coarse detection with AdaptiveDetector
-    print(f"  Stage 1: AdaptiveDetector(4.0, min30)...")
-    coarse = detect(h264_path, AdaptiveDetector(
-        adaptive_threshold=4.0,
-        min_scene_len=30,
-    ))
+def detect_shots_v2(video_path: str, adaptive_threshold: float = 4.0,
+                    min_scene_len: int = 30, content_threshold: float = 22.0,
+                    long_shot_thresh: float = 8.0,
+                    merge_frag: float = 1.2) -> list:
+    fps = get_fps(video_path)
+
+    print(f"  Stage 1: AdaptiveDetector({adaptive_threshold}, min{min_scene_len})...")
+    coarse = detect(video_path, AdaptiveDetector(
+        adaptive_threshold=adaptive_threshold, min_scene_len=min_scene_len))
     print(f"    {len(coarse)} coarse scenes")
-    
-    # Stage 2: For long scenes (>8s), do fine-grained ContentDetector scan
-    print(f"  Stage 2: Fine-grained scan on long scenes (>8s)...")
+
+    print(f"  Stage 2: Fine-grained ContentDetector({content_threshold}) "
+          f"on long scenes (>{long_shot_thresh}s)...")
     refined = []
     long_count = 0
     for start, end in coarse:
         dur = end.get_seconds() - start.get_seconds()
-        if dur > 8.0:
-            # Re-scan this segment with ContentDetector
-            # Use lower threshold to catch subtle cuts
-            sub_scenes = detect(
-                h264_path,
-                ContentDetector(threshold=22, min_scene_len=15),
+        if dur > long_shot_thresh:
+            sub = detect(
+                video_path,
+                ContentDetector(threshold=content_threshold, min_scene_len=15),
                 start_time=start.get_seconds(),
-                end_time=end.get_seconds(),
-            )
-            if len(sub_scenes) > 1:
+                end_time=end.get_seconds())
+            if len(sub) > 1:
                 long_count += 1
-                refined.extend(sub_scenes)
-                # print(f"    Long scene {start.get_seconds():.1f}-{end.get_seconds():.1f}s ({dur:.1f}s) → {len(sub_scenes)} sub-scenes")
+                refined.extend(sub)
             else:
                 refined.append((start, end))
         else:
             refined.append((start, end))
     print(f"    Refined {long_count} long scenes")
-    
-    # Sort by start time (in case order changed)
     refined.sort(key=lambda x: x[0].get_seconds())
-    
-    # Stage 3: Post-processing — merge short fragments
-    print(f"  Stage 3: Merging fragments <1.2s...")
+
+    print(f"  Stage 3: Merging fragments <{merge_frag}s...")
     merged = list(refined)
     changed = True
     while changed:
@@ -83,139 +81,116 @@ def detect_shots_v2(h264_path):
         for i in range(len(merged)):
             start, end = merged[i]
             dur = end.get_seconds() - start.get_seconds()
-            if dur < 1.2 and len(merged) > 1:
-                # Merge with the shorter neighbor
+            if dur < merge_frag and len(merged) > 1:
                 if i == 0:
-                    # Merge with next
-                    merged[i+1] = (start, merged[i+1][1])
+                    merged[i + 1] = (start, merged[i + 1][1])
                     del merged[i]
                 elif i == len(merged) - 1:
-                    # Merge with previous
-                    merged[i-1] = (merged[i-1][0], end)
+                    merged[i - 1] = (merged[i - 1][0], end)
                     del merged[i]
                 else:
-                    # Merge with shorter neighbor
-                    prev_dur = merged[i-1][1].get_seconds() - merged[i-1][0].get_seconds()
-                    next_dur = merged[i+1][1].get_seconds() - merged[i+1][0].get_seconds()
+                    prev_dur = merged[i - 1][1].get_seconds() - merged[i - 1][0].get_seconds()
+                    next_dur = merged[i + 1][1].get_seconds() - merged[i + 1][0].get_seconds()
                     if prev_dur <= next_dur:
-                        merged[i-1] = (merged[i-1][0], end)
+                        merged[i - 1] = (merged[i - 1][0], end)
                         del merged[i]
                     else:
-                        merged[i+1] = (start, merged[i+1][1])
+                        merged[i + 1] = (start, merged[i + 1][1])
                         del merged[i]
                 changed = True
                 break
-    
-    # Build shot list
+
     shots = []
     for i, (start, end) in enumerate(merged):
-        dur = end.get_seconds() - start.get_seconds()
+        s, e = start.get_seconds(), end.get_seconds()
         shots.append({
             "id": i + 1,
-            "start_sec": round(start.get_seconds(), 3),
-            "end_sec": round(end.get_seconds(), 3),
-            "duration": round(dur, 3),
+            "start_sec": round(s, 3),
+            "end_sec": round(e, 3),
+            "duration": round(e - s, 3),
         })
-    
-    # Stats
-    short = sum(1 for s in shots if s["duration"] < 1.2)
-    long_shots = sum(1 for s in shots if s["duration"] > 8)
+    short = sum(1 for s in shots if s["duration"] < merge_frag)
+    long_shots = sum(1 for s in shots if s["duration"] > long_shot_thresh)
     avg = sum(s["duration"] for s in shots) / len(shots) if shots else 0
-    print(f"  Final: {len(shots)} shots, <1.2s={short}, >8s={long_shots}, avg={avg:.1f}s")
-    
+    print(f"  Final: {len(shots)} shots, "
+          f"<{merge_frag}s={short}, >{long_shot_thresh}s={long_shots}, "
+          f"avg={avg:.1f}s")
     return shots
 
 
-def extract_frame(video_path, timestamp, quality=2):
-    """Extract a single frame at given timestamp using ffmpeg, return base64."""
+def extract_frame(video_path: str, timestamp: float, quality: int = 2) -> str:
     with tempfile.NamedTemporaryFile(suffix=".jpg", delete=False) as f:
         tmp_path = f.name
-    
-    cmd = [
-        "ffmpeg", "-y", "-ss", str(timestamp),
-        "-i", video_path,
-        "-frames:v", "1",
-        "-q:v", str(quality),
-        "-vf", "scale=480:-1",
-        tmp_path,
-        "-loglevel", "error",
-    ]
-    subprocess.run(cmd, capture_output=True, timeout=10)
-    
+    subprocess.run(
+        ["ffmpeg", "-y", "-ss", str(timestamp), "-i", video_path,
+         "-frames:v", "1", "-q:v", str(quality), "-vf", "scale=480:-1",
+         tmp_path, "-loglevel", "error"],
+        capture_output=True, timeout=10)
     if os.path.exists(tmp_path) and os.path.getsize(tmp_path) > 100:
         with open(tmp_path, "rb") as f:
             b64 = base64.b64encode(f.read()).decode()
         os.unlink(tmp_path)
         return f"data:image/jpeg;base64,{b64}"
-    else:
-        if os.path.exists(tmp_path):
-            os.unlink(tmp_path)
-        return ""
+    if os.path.exists(tmp_path):
+        os.unlink(tmp_path)
+    return ""
 
 
-def extract_all_frames(video_path, shots):
-    """Extract first and last frame for each shot."""
+def extract_all_frames(video_path: str, shots: list):
     print(f"  Extracting frames for {len(shots)} shots...")
     for i, shot in enumerate(shots):
         shot["first_frame"] = extract_frame(video_path, shot["start_sec"])
         last_ts = max(shot["end_sec"] - 0.05, shot["start_sec"])
         shot["last_frame"] = extract_frame(video_path, last_ts)
         if (i + 1) % 20 == 0:
-            print(f"    {i+1}/{len(shots)} frames extracted")
-    print(f"  All frames extracted.")
+            print(f"    {i+1}/{len(shots)}")
+    print("  All frames extracted.")
 
 
-def generate_html(ep_name, shots, video_filename, video_path):
-    """Generate self-contained HTML preview."""
-    
-    # Copy/symlink video to output dir
-    dest_video = os.path.join(OUTPUT_DIR, video_filename)
-    if not os.path.exists(dest_video):
-        try:
-            os.symlink(video_path, dest_video)
-        except FileExistsError:
-            pass
-    
+def generate_html(ep_name: str, shots: list, video_filename: str) -> str:
     total_duration = shots[-1]["end_sec"] if shots else 0
-    shot_data_js = json.dumps([{k: v for k, v in s.items() if k not in ('first_frame', 'last_frame')} for s in shots])
-    
-    cards_html = ""
-    for shot in shots:
+    shot_data_js = json.dumps([
+        {k: v for k, v in s.items()
+         if k not in ("first_frame", "last_frame")} for s in shots])
+
+    cards = ""
+    for s in shots:
         cls = "shot-card"
-        if shot["duration"] < 1.5:
+        if s["duration"] < 1.5:
             cls += " short"
-        elif shot["duration"] > 8:
+        elif s["duration"] > 8:
             cls += " long"
-        cards_html += f"""    <div class="{cls}" id="shot-{shot['id']}" 
-         onclick="playShot({shot['id']}, {shot['start_sec']}, {shot['end_sec'] - 0.05})">
+        cards += f"""    <div class="{cls}" id="shot-{s['id']}" onclick="playShot({s['id']}, {s['start_sec']}, {s['end_sec'] - 0.05})">
         <div class="shot-header">
-            <span class="shot-num">#{shot['id']}</span>
-            <span class="shot-dur">{shot['duration']:.1f}s</span>
+            <span class="shot-num">#{s['id']}</span>
+            <span class="shot-dur">{s['duration']:.1f}s</span>
         </div>
         <div class="frames">
             <div class="frame">
-                <img src="{shot['first_frame']}" alt="首帧" loading="lazy">
-                <span class="frame-label">{shot['start_sec']:.1f}s</span>
+                <img src="{s['first_frame']}" alt="首帧" loading="lazy">
+                <span class="frame-label">{s['start_sec']:.1f}s</span>
             </div>
             <div class="frame">
-                <img src="{shot['last_frame']}" alt="尾帧" loading="lazy">
-                <span class="frame-label">{shot['end_sec']:.1f}s</span>
+                <img src="{s['last_frame']}" alt="尾帧" loading="lazy">
+                <span class="frame-label">{s['end_sec']:.1f}s</span>
             </div>
         </div>
         <div class="shot-times">
-            <span>{shot['start_sec']:.1f}s</span>
+            <span>{s['start_sec']:.1f}s</span>
             <span>→</span>
-            <span>{shot['end_sec']:.1f}s</span>
+            <span>{s['end_sec']:.1f}s</span>
         </div>
     </div>
 """
-    
+
+    n_short = sum(1 for s in shots if s['duration'] < 1.5)
+    n_long = sum(1 for s in shots if s['duration'] > 8)
     html = f"""<!DOCTYPE html>
 <html lang="zh-CN">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>分镜预览 V2 - 小江湖 {ep_name}</title>
+<title>分镜预览 V2 - {ep_name}</title>
 <style>
 * {{ margin: 0; padding: 0; box-sizing: border-box; }}
 html {{ scroll-behavior: smooth; scroll-padding-top: 380px; }}
@@ -238,12 +213,10 @@ body {{ background: #0d1117; color: #c9d1d9; font-family: -apple-system, 'PingFa
 video {{ width: 100%; max-height: 60vh; border-radius: 8px; object-fit: contain; }}
 .current-shot-info {{ text-align: center; padding: 2px; color: #58a6ff; font-size: 13px; }}
 
-/* Player size toggle */
 .player-size-btns {{ display: flex; gap: 6px; justify-content: center; margin-top: 4px; }}
 .player-size-btns button {{ background: #21262d; color: #8b949e; border: 1px solid #30363d; padding: 2px 10px; border-radius: 4px; cursor: pointer; font-size: 11px; }}
 .player-size-btns button.active {{ background: #1f6feb; border-color: #1f6feb; color: white; }}
 
-/* Only shots area scrolls — header+player are sticky on top */
 .shots-grid {{
     display: grid;
     grid-template-columns: repeat(4, 1fr);
@@ -286,9 +259,9 @@ video {{ width: 100%; max-height: 60vh; border-radius: 8px; object-fit: contain;
 
 <div class="header">
   <div class="header-top">
-      <h1>🎬 小江湖 {ep_name}</h1>
+      <h1>🎬 {ep_name}</h1>
       <span class="badge">双检测器+后处理</span>
-      <div class="stats">{len(shots)} 镜 · {total_duration:.1f}s · 短={sum(1 for s in shots if s['duration'] < 1.5)} · 长={sum(1 for s in shots if s['duration'] > 8)}</div>
+      <div class="stats">{len(shots)} 镜 · {total_duration:.1f}s · 短={n_short} · 长={n_long}</div>
       <div class="toolbar">
           <label>每行</label>
           <button class="cols-btn" onclick="setCols(1)">1</button>
@@ -317,7 +290,7 @@ video {{ width: 100%; max-height: 60vh; border-radius: 8px; object-fit: contain;
 </div>
 
 <div class="shots-grid cols-4" id="shotsGrid">
-{cards_html}</div>
+{cards}</div>
 
 <div class="nav">
     <button onclick="prevShot()">⬅ 上一镜</button>
@@ -347,7 +320,6 @@ function setPlayerSize(size) {{
     localStorage.setItem('playerSize', size);
 }}
 
-// Restore player size
 const savedSize = localStorage.getItem('playerSize');
 if (savedSize) {{
     document.getElementById('player').style.maxHeight = savedSize;
@@ -357,7 +329,6 @@ if (savedSize) {{
     }});
 }}
 
-// Restore preference
 const savedCols = localStorage.getItem('shotGridCols');
 if (savedCols) {{
     grid.className = 'shots-grid cols-' + savedCols;
@@ -380,7 +351,6 @@ function playShot(id, start, stopAtTime) {{
         shotInfo.textContent = `镜头 #${{id}} · ${{s.start_sec.toFixed(1)}}s → ${{s.end_sec.toFixed(1)}}s · ${{s.duration.toFixed(1)}}s`;
     }}
     if (card) {{
-        // Header (title+player) is sticky — scroll card just below it
         const headerEl = document.querySelector('.header');
         const offset = headerEl ? headerEl.offsetHeight + 8 : 0;
         const rect = card.getBoundingClientRect();
@@ -430,62 +400,63 @@ document.addEventListener('keydown', (e) => {{
 </script>
 </body>
 </html>"""
-    
     return html
 
 
-def process_episode(ep_name, video_filename):
-    """Full pipeline."""
-    video_path = os.path.join(VIDEO_DIR, video_filename)
-    
-    # For ep03, use glob
-    if not os.path.exists(video_path):
-        matches = glob.glob(os.path.join(VIDEO_DIR, f"*{ep_name[-2:]}话*"))
-        if matches:
-            video_path = matches[0]
-    
-    h264_path = os.path.join(TMP_DIR, f"{ep_name}_h264.mp4")
-    
-    print(f"\n{'='*60}")
-    print(f"Processing {ep_name}: {os.path.basename(video_path)}")
-    print(f"{'='*60}")
-    
-    # Detect
-    shots = detect_shots_v2(h264_path)
-    
-    # Save JSON
-    json_path = os.path.join(OUTPUT_DIR, f"xiaojianghu_{ep_name}_shots_v2.json")
+def main():
+    ap = argparse.ArgumentParser(
+        description="PySceneDetect V2：双检测器 + 后处理 + HTML 预览")
+    ap.add_argument("--video", required=True, help="输入视频路径")
+    ap.add_argument("--adaptive-threshold", type=float, default=4.0,
+                    help="AdaptiveDetector 阈值（默认 4.0）")
+    ap.add_argument("--min-scene-len", type=int, default=30,
+                    help="AdaptiveDetector 最小场景帧数（默认 30）")
+    ap.add_argument("--content-threshold", type=float, default=22.0,
+                    help="长镜头二次扫描 ContentDetector 阈值（默认 22）")
+    ap.add_argument("--long-shot-thresh", type=float, default=8.0,
+                    help="长镜头阈值（默认 8s，超过此长度触发二次扫描）")
+    ap.add_argument("--merge-frag", type=float, default=1.2,
+                    help="碎片合并阈值（默认 1.2s）")
+    ap.add_argument("--ep-name", default=None,
+                    help="剧集名（默认 <video-basename>）")
+    ap.add_argument("--json", default=None,
+                    help="输出分镜 JSON 路径（默认 <video-basename>_shots_v2.json）")
+    ap.add_argument("--output", default=None,
+                    help="输出 HTML 路径（默认 <video-basename>_shots_v2.html）")
+    ap.add_argument("--video-src", default=None,
+                    help="HTML 内嵌 <video> 引用源（默认 --video 的 basename）")
+    args = ap.parse_args()
+
+    ep_name = args.ep_name or Path(args.video).stem
+    json_path = args.json or os.path.join(
+        os.path.dirname(args.video) or ".",
+        f"{Path(args.video).stem}_shots_v2.json")
+    html_path = args.output or os.path.join(
+        os.path.dirname(args.video) or ".",
+        f"{Path(args.video).stem}_shots_v2.html")
+    video_src = args.video_src or os.path.basename(args.video)
+
+    print(f"Processing {args.video}")
+    shots = detect_shots_v2(
+        args.video, adaptive_threshold=args.adaptive_threshold,
+        min_scene_len=args.min_scene_len,
+        content_threshold=args.content_threshold,
+        long_shot_thresh=args.long_shot_thresh,
+        merge_frag=args.merge_frag)
+
     with open(json_path, "w") as f:
-        json.dump([{k: v for k, v in s.items() if k not in ('first_frame', 'last_frame')} for s in shots], f, indent=2)
-    
-    # Extract frames
-    extract_all_frames(video_path, shots)
-    
-    # Generate HTML
-    html_filename = f"xiaojianghu_{ep_name}_shots_v2.html"
-    video_dest_name = f"xiaojianghu_{ep_name}.mp4"
-    html = generate_html(ep_name, shots, video_dest_name, video_path)
-    
-    html_path = os.path.join(OUTPUT_DIR, html_filename)
+        json.dump([{k: v for k, v in s.items()
+                    if k not in ("first_frame", "last_frame")} for s in shots],
+                  f, indent=2)
+    print(f"  JSON saved: {json_path}")
+
+    extract_all_frames(args.video, shots)
+    html = generate_html(ep_name, shots, video_src)
     with open(html_path, "w") as f:
         f.write(html)
     size_mb = os.path.getsize(html_path) / 1024 / 1024
     print(f"  HTML: {html_path} ({size_mb:.1f} MB)")
-    
-    return shots
 
 
 if __name__ == "__main__":
-    os.makedirs(TMP_DIR, exist_ok=True)
-    os.makedirs(OUTPUT_DIR, exist_ok=True)
-    
-    all_results = {}
-    for ep_name, fname in EPISODES.items():
-        shots = process_episode(ep_name, fname)
-        all_results[ep_name] = len(shots)
-    
-    print(f"\n{'='*60}")
-    print("SUMMARY (V2: dual-detector + post-merge)")
-    print(f"{'='*60}")
-    for ep, count in all_results.items():
-        print(f"  {ep}: {count} shots")
+    main()

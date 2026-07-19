@@ -1,129 +1,101 @@
 #!/usr/bin/env python3
+"""PySceneDetect 基础分镜检测 + HTML 预览生成器（V1，参数化版本）。
+
+  - AdaptiveDetector（滑窗自适应阈值，适合动画）
+  - 帧级精度
+  - 首尾帧用 ffmpeg 从原视频精确抽取（base64 内嵌）
+  - HTML playShot 点击播放对应分镜
+
+用法：
+  python detectors/psd_shot_preview_v1.py --video input.mp4
+                                         [--output shots.html]
+                                         [--json shots.json]
+                                         [--threshold 3.0]
+                                         [--min-scene-len 15]
+                                         [--video-src video.mp4]
+                                         [--ep-name ep01]
 """
-PySceneDetect 分镜检测 + HTML 预览生成器
-- 用 AdaptiveDetector（滑窗自适应阈值，适合动画）
-- 帧级精度，直接输出每个 shot 的起止时间
-- 首尾帧用 ffmpeg 从原视频精确抽取
-- HTML 内嵌 base64 图片 + playShot 点击播放
-"""
+import argparse
+import base64
+import json
+import os
+import subprocess
+import tempfile
+import time
+from pathlib import Path
 
-import os, sys, json, base64, subprocess, tempfile, time
-from scenedetect import detect, ContentDetector, AdaptiveDetector
-
-VIDEO_DIR = "/home/kai/Downloads/bilibili_xiaojianghu"
-TMP_DIR = "/tmp/xiaojianghu_psd"
-OUTPUT_DIR = "/home/kai/range_server"
-
-EPISODES = {
-    "ep01": "虫虫武侠小故事《小江湖》第01话：爸爸去哪儿？（ 画面只是工具，情绪才是目的。.mp4",
-    "ep02": "虫虫武侠小故事《小江湖》第02话：刀和小番茄（ 有苦有甜，才是人生.mp4",
-    "ep03": "《小江湖》第03话：白头发的少女（画面只是工具，情绪是目的.mp4",
-}
+from scenedetect import detect, AdaptiveDetector
 
 
-def detect_shots(h264_path, video_path):
-    """Run PySceneDetect with AdaptiveDetector, return list of shots."""
-    print(f"  Detecting scenes with AdaptiveDetector...")
+def get_video_duration(video_path: str) -> float:
+    r = subprocess.run(
+        ["ffprobe", "-v", "quiet", "-select_streams", "v:0",
+         "-show_entries", "stream=duration", "-of", "csv=p=0", video_path],
+        capture_output=True, text=True)
+    try:
+        return float(r.stdout.strip())
+    except (ValueError, AttributeError):
+        return 300.0
+
+
+def detect_shots(video_path: str, threshold: float = 3.0,
+                 min_scene_len: int = 15) -> list:
+    print(f"  Detecting scenes with AdaptiveDetector(threshold={threshold}, "
+          f"min_scene_len={min_scene_len})...")
     t0 = time.time()
-    
-    # AdaptiveDetector: sliding window + adaptive threshold
-    # threshold=3.0 (default), min_scene_len=15 frames
-    scenes = detect(
-        h264_path,
-        AdaptiveDetector(
-            adaptive_threshold=3.0,
-            min_scene_len=15,  # 0.5s at 30fps
-        ),
-    )
-    
-    elapsed = time.time() - t0
-    print(f"  Found {len(scenes)} scenes in {elapsed:.1f}s")
-    
-    # Build shot list with frame-accurate times
+    scenes = detect(video_path, AdaptiveDetector(
+        adaptive_threshold=threshold, min_scene_len=min_scene_len))
+    print(f"  Found {len(scenes)} scenes in {time.time() - t0:.1f}s")
     shots = []
     for i, (start, end) in enumerate(scenes):
-        start_sec = start.get_seconds()
-        end_sec = end.get_seconds()
-        duration = end_sec - start_sec
+        s, e = start.get_seconds(), end.get_seconds()
         shots.append({
             "id": i + 1,
-            "start_sec": round(start_sec, 3),
-            "end_sec": round(end_sec, 3),
-            "duration": round(duration, 3),
+            "start_sec": round(s, 3),
+            "end_sec": round(e, 3),
+            "duration": round(e - s, 3),
         })
-    
     return shots
 
 
-def extract_frame(video_path, timestamp, quality=2):
-    """Extract a single frame at given timestamp using ffmpeg, return base64."""
+def extract_frame(video_path: str, timestamp: float, quality: int = 2) -> str:
+    """抽单帧 → base64 data URI。"""
     with tempfile.NamedTemporaryFile(suffix=".jpg", delete=False) as f:
         tmp_path = f.name
-    
-    cmd = [
-        "ffmpeg", "-y", "-ss", str(timestamp),
-        "-i", video_path,
-        "-frames:v", "1",
-        "-q:v", str(quality),
-        "-vf", "scale=480:-1",  # 480px wide thumbnail
-        tmp_path,
-        "-loglevel", "error",
-    ]
-    subprocess.run(cmd, capture_output=True, timeout=10)
-    
+    subprocess.run(
+        ["ffmpeg", "-y", "-ss", str(timestamp), "-i", video_path,
+         "-frames:v", "1", "-q:v", str(quality), "-vf", "scale=480:-1",
+         tmp_path, "-loglevel", "error"],
+        capture_output=True, timeout=10)
     if os.path.exists(tmp_path) and os.path.getsize(tmp_path) > 100:
         with open(tmp_path, "rb") as f:
             b64 = base64.b64encode(f.read()).decode()
         os.unlink(tmp_path)
         return f"data:image/jpeg;base64,{b64}"
-    else:
-        if os.path.exists(tmp_path):
-            os.unlink(tmp_path)
-        return ""
+    if os.path.exists(tmp_path):
+        os.unlink(tmp_path)
+    return ""
 
 
-def extract_all_frames(video_path, shots):
-    """Extract first and last frame for each shot."""
+def extract_all_frames(video_path: str, shots: list):
     print(f"  Extracting frames for {len(shots)} shots...")
     for i, shot in enumerate(shots):
-        # First frame: at start_sec
         shot["first_frame"] = extract_frame(video_path, shot["start_sec"])
-        # Last frame: at end_sec - 0.05 (slightly before the cut)
         last_ts = max(shot["end_sec"] - 0.05, shot["start_sec"])
         shot["last_frame"] = extract_frame(video_path, last_ts)
         if (i + 1) % 20 == 0:
-            print(f"    {i+1}/{len(shots)} frames extracted")
-    print(f"  All frames extracted.")
+            print(f"    {i+1}/{len(shots)}")
+    print("  All frames extracted.")
 
 
-def generate_html(ep_name, shots, video_filename, video_path):
-    """Generate self-contained HTML preview."""
-    
-    # Get video duration for the video element
-    result = subprocess.run(
-        ["ffprobe", "-v", "quiet", "-select_streams", "v:0",
-         "-show_entries", "stream=duration", "-of", "csv=p=0", video_path],
-        capture_output=True, text=True
-    )
-    video_duration = float(result.stdout.strip()) if result.stdout.strip() else 300
-    
-    # Copy video to range_server dir if not already there
-    dest_video = os.path.join(OUTPUT_DIR, video_filename)
-    if not os.path.exists(dest_video):
-        # Create symlink to avoid copying large files
-        try:
-            os.symlink(video_path, dest_video)
-        except FileExistsError:
-            pass
-    
+def generate_html(ep_name: str, shots: list, video_filename: str) -> str:
     total_duration = shots[-1]["end_sec"] if shots else 0
-    
     html = f"""<!DOCTYPE html>
 <html lang="zh-CN">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>分镜预览 - 小江湖 {ep_name}</title>
+<title>分镜预览 - {ep_name}</title>
 <style>
 * {{ margin: 0; padding: 0; box-sizing: border-box; }}
 body {{ background: #0d1117; color: #c9d1d9; font-family: -apple-system, 'PingFang SC', 'Microsoft YaHei', sans-serif; }}
@@ -153,7 +125,7 @@ video {{ width: 100%; border-radius: 8px; }}
 <body>
 
 <div class="header">
-    <h1>🎬 小江湖 {ep_name} — 分镜预览 (PySceneDetect)</h1>
+    <h1>🎬 {ep_name} — 分镜预览 (PySceneDetect)</h1>
     <div class="stats">{len(shots)} 镜 · 总时长 {total_duration:.1f}s</div>
 </div>
 
@@ -168,10 +140,9 @@ video {{ width: 100%; border-radius: 8px; }}
 
 <div class="shots-grid">
 """
-    
     for shot in shots:
-        html += f"""    <div class="shot-card" id="shot-{shot['id']}" 
-         onclick="playShot({shot['id']}, {shot['start_sec']}, {shot['end_sec'] - 0.05})">
+        html += f"""    <div class="shot-card" id="shot-{shot['id']}"
+     onclick="playShot({shot['id']}, {shot['start_sec']}, {shot['end_sec'] - 0.05})">
         <span class="shot-num">#{shot['id']}</span>
         <span class="shot-dur">{shot['duration']:.1f}s</span>
         <div class="frames">
@@ -191,7 +162,8 @@ video {{ width: 100%; border-radius: 8px; }}
         </div>
     </div>
 """
-    
+    meta_only = [{k: v for k, v in s.items()
+                  if k not in ("first_frame", "last_frame")} for s in shots]
     html += f"""</div>
 
 <div class="nav">
@@ -203,29 +175,22 @@ video {{ width: 100%; border-radius: 8px; }}
 <script>
 const video = document.getElementById('player');
 const shotInfo = document.getElementById('shotInfo');
-const shots = {json.dumps([{k: v for k, v in s.items() if k not in ('first_frame', 'last_frame')} for s in shots])};
+const shots = {json.dumps(meta_only)};
 let currentShot = null;
 let stopAt = null;
 
 function playShot(id, start, stopAtTime) {{
-    // Clear previous highlight
     document.querySelectorAll('.shot-card').forEach(c => c.classList.remove('playing'));
-    
     const card = document.getElementById('shot-' + id);
     if (card) card.classList.add('playing');
-    
     currentShot = id;
     stopAt = stopAtTime;
-    
     video.currentTime = start;
     video.play().catch(() => {{}});
-    
     const s = shots.find(s => s.id === id);
     if (s) {{
         shotInfo.textContent = `镜头 #${{id}} · ${{s.start_sec.toFixed(1)}}s → ${{s.end_sec.toFixed(1)}}s · ${{s.duration.toFixed(1)}}s`;
     }}
-    
-    // Scroll card into view
     if (card) card.scrollIntoView({{ behavior: 'smooth', block: 'nearest' }});
 }}
 
@@ -261,7 +226,6 @@ function togglePlay() {{
     if (video.paused) video.play(); else video.pause();
 }}
 
-// Keyboard shortcuts
 document.addEventListener('keydown', (e) => {{
     if (e.key === 'ArrowRight') nextShot();
     else if (e.key === 'ArrowLeft') prevShot();
@@ -270,76 +234,54 @@ document.addEventListener('keydown', (e) => {{
 </script>
 </body>
 </html>"""
-    
     return html
 
 
-def process_episode(ep_name, video_filename):
-    """Full pipeline: transcode → detect → extract frames → generate HTML."""
-    video_path = os.path.join(VIDEO_DIR, video_filename)
-    h264_path = os.path.join(TMP_DIR, f"{ep_name}_h264.mp4")
-    
-    # For ep03, use glob to find the file
-    if not os.path.exists(video_path):
-        import glob
-        matches = glob.glob(os.path.join(VIDEO_DIR, f"*{ep_name[-2:]}话*"))
-        if matches:
-            video_path = matches[0]
-    
-    print(f"\n{'='*60}")
-    print(f"Processing {ep_name}: {os.path.basename(video_path)}")
-    print(f"{'='*60}")
-    
-    # Step 1: Transcode if needed
-    if not os.path.exists(h264_path) or os.path.getsize(h264_path) < 1000000:
-        print("  Transcoding AV1→H264...")
-        t0 = time.time()
-        subprocess.run([
-            "ffmpeg", "-y", "-i", video_path,
-            "-c:v", "libx264", "-preset", "fast", "-crf", "20", "-an",
-            h264_path
-        ], capture_output=True, timeout=300)
-        print(f"  Transcoded in {time.time()-t0:.0f}s")
-    else:
-        print(f"  H264 already exists, skipping transcode")
-    
-    # Step 2: Detect scenes
-    shots = detect_shots(h264_path, video_path)
-    
-    # Save shot data as JSON
-    json_path = os.path.join(OUTPUT_DIR, f"xiaojianghu_{ep_name}_shots.json")
+def main():
+    ap = argparse.ArgumentParser(
+        description="PySceneDetect V1：基础分镜检测 + HTML 预览")
+    ap.add_argument("--video", required=True, help="输入视频路径")
+    ap.add_argument("--threshold", type=float, default=3.0,
+                    help="AdaptiveDetector 阈值（默认 3.0）")
+    ap.add_argument("--min-scene-len", type=int, default=15,
+                    help="最小场景帧数（默认 15）")
+    ap.add_argument("--ep-name", default=None,
+                    help="剧集名（默认 <video-basename>）")
+    ap.add_argument("--json", default=None,
+                    help="输出分镜 JSON 路径（默认 <video-basename>_shots.json）")
+    ap.add_argument("--output", default=None,
+                    help="输出 HTML 路径（默认 <video-basename>_shots.html）")
+    ap.add_argument("--video-src", default=None,
+                    help="HTML 内嵌 <video> 引用源（默认 --video 的 basename）")
+    args = ap.parse_args()
+
+    ep_name = args.ep_name or Path(args.video).stem
+    json_path = args.json or os.path.join(
+        os.path.dirname(args.video) or ".",
+        f"{Path(args.video).stem}_shots.json")
+    html_path = args.output or os.path.join(
+        os.path.dirname(args.video) or ".",
+        f"{Path(args.video).stem}_shots.html")
+    video_src = args.video_src or os.path.basename(args.video)
+
+    print(f"Processing {args.video}")
+    shots = detect_shots(args.video, threshold=args.threshold,
+                         min_scene_len=args.min_scene_len)
+
     with open(json_path, "w") as f:
-        json.dump([{k: v for k, v in s.items() if k not in ('first_frame', 'last_frame')} for s in shots], f, indent=2)
-    print(f"  Shot data saved: {json_path}")
-    
-    # Step 3: Extract frames (from original AV1 video for best quality)
-    extract_all_frames(video_path, shots)
-    
-    # Step 4: Generate HTML
-    html_filename = f"xiaojianghu_{ep_name}_shots.html"
-    video_dest_name = f"xiaojianghu_{ep_name}.mp4"
-    html = generate_html(ep_name, shots, video_dest_name, video_path)
-    
-    html_path = os.path.join(OUTPUT_DIR, html_filename)
+        json.dump([{k: v for k, v in s.items()
+                    if k not in ("first_frame", "last_frame")} for s in shots],
+                  f, indent=2)
+    print(f"  JSON saved: {json_path}")
+
+    extract_all_frames(args.video, shots)
+
+    html = generate_html(ep_name, shots, video_src)
     with open(html_path, "w") as f:
         f.write(html)
     size_mb = os.path.getsize(html_path) / 1024 / 1024
-    print(f"  HTML generated: {html_path} ({size_mb:.1f} MB)")
-    
-    return shots
+    print(f"  HTML: {html_path} ({size_mb:.1f} MB)")
 
 
 if __name__ == "__main__":
-    os.makedirs(TMP_DIR, exist_ok=True)
-    os.makedirs(OUTPUT_DIR, exist_ok=True)
-    
-    all_results = {}
-    for ep_name, fname in EPISODES.items():
-        shots = process_episode(ep_name, fname)
-        all_results[ep_name] = len(shots)
-    
-    print(f"\n{'='*60}")
-    print("SUMMARY")
-    print(f"{'='*60}")
-    for ep, count in all_results.items():
-        print(f"  {ep}: {count} scenes")
+    main()
