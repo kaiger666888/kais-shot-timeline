@@ -1,0 +1,7 @@
+output/
+*.mp4
+*.wav
+*.html
+__pycache__/
+*.pyc
+.DS_Store
