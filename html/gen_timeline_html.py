@@ -98,15 +98,18 @@ def build_js_stems(stems_dir, duration, bucket_ms=350):
 
 def build_html(shots_js, stems_js, duration, video_src, title,
                stem_basename, n_dialogue=None, n_bgm=None, n_sfx=None,
-               n_shots=None):
+               n_shots=None, transcript_segments=None):
     """生成完整 HTML。
 
     stem_basename: stem 文件名前缀，例如 'ep01'。HTML 内 <audio> 会引用
                    {stem_basename}_vocals.wav / {stem_basename}_drums.wav /
                    {stem_basename}_other.wav。
+    transcript_segments: 可选 [{start,end,text}, ...]，用于播放器下的实时字幕条，
+                         按 audio/video 的 currentTime 精确匹配。
     """
     shots_json = json.dumps(shots_js, ensure_ascii=False)
     stems_json = json.dumps(stems_js)
+    transcript_json = json.dumps(transcript_segments or [], ensure_ascii=False)
     n_shots_val = n_shots if n_shots is not None else len(shots_js)
 
     # 类型统计行（仅在数据存在时显示对应 span）
@@ -140,6 +143,16 @@ video {{ width:100%; max-height:35vh; border-radius:8px; object-fit:contain; }}
 .player-size-btns button {{ background:#21262d; color:#8b949e; border:1px solid #30363d;
     padding:2px 10px; border-radius:4px; cursor:pointer; font-size:11px; }}
 .player-size-btns button.active {{ background:#1f6feb; border-color:#1f6feb; color:white; }}
+
+/* ===== Live caption (follows actual playback time) ===== */
+.live-caption {{ min-height:22px; padding:6px 14px; margin:6px auto 0; max-width:90%;
+    font-size:14px; line-height:1.35; color:#d29922; background:rgba(46,38,10,0.45);
+    border-left:3px solid #d29922; border-radius:4px; text-align:center;
+    transition:opacity 0.15s; font-weight:500; }}
+.live-caption.empty {{ opacity:0.25; color:#6e7681; font-style:italic;
+    background:rgba(110,118,129,0.08); border-left-color:#6e7681; }}
+.live-caption .seg-time {{ display:block; font-size:10px; color:#8b949e;
+    font-family:monospace; margin-top:2px; font-weight:400; }}
 
 /* ===== Below: two-panel layout (body flex, no JS height calc) ===== */
 .app {{ display:flex; gap:0; flex:1; min-height:0; }}
@@ -207,6 +220,7 @@ video {{ width:100%; max-height:35vh; border-radius:8px; object-fit:contain; }}
     <video id="player" controls preload="metadata">
       <source src="{video_src}" type="video/mp4">
     </video>
+    <div id="liveCaption" class="live-caption empty">（待播放）</div>
     <div class="player-size-btns">
       <button onclick="setPlayerSize('25vh')">小</button>
       <button onclick="setPlayerSize('35vh')" class="active">中</button>
@@ -233,6 +247,7 @@ video {{ width:100%; max-height:35vh; border-radius:8px; object-fit:contain; }}
 <script>
 const SHOTS = {shots_json};
 const STEMS = {stems_json};
+const TRANSCRIPT_SEGMENTS = {transcript_json};
 const DURATION = {duration};
 const STEM_BASENAME = {json.dumps(stem_basename)};
 const N_PTS = STEMS.vocals.length;
@@ -291,8 +306,34 @@ const playhead = document.getElementById('playhead');
 const timelineInner = document.getElementById('timelineInner');
 const rightPanel = document.getElementById('rightPanel');
 const leftPanel = document.getElementById('leftPanel');
+const liveCaption = document.getElementById('liveCaption');
 let currentShot = null;
 let syncMode = true;
+
+// === 实时字幕：按当前播放时刻精确匹配 transcript segment ===
+function updateCaption(t) {{
+    if (!TRANSCRIPT_SEGMENTS.length) return;
+    // 二分找第一个 end > t 的段；它若 start <= t 即命中
+    let lo = 0, hi = TRANSCRIPT_SEGMENTS.length - 1, hit = -1;
+    while (lo <= hi) {{
+        const mid = (lo + hi) >> 1;
+        if (TRANSCRIPT_SEGMENTS[mid].end > t) {{ hit = mid; hi = mid - 1; }}
+        else lo = mid + 1;
+    }}
+    const seg = (hit >= 0 && TRANSCRIPT_SEGMENTS[hit].start <= t) ? TRANSCRIPT_SEGMENTS[hit] : null;
+    if (seg) {{
+        if (liveCaption.dataset.segStart !== String(seg.start)) {{
+            liveCaption.classList.remove('empty');
+            liveCaption.dataset.segStart = seg.start;
+            liveCaption.innerHTML = seg.text
+                + `<span class="seg-time">${{seg.start.toFixed(1)}} → ${{seg.end.toFixed(1)}}s</span>`;
+        }}
+    }} else {{
+        liveCaption.classList.add('empty');
+        liveCaption.dataset.segStart = '';
+        liveCaption.textContent = '（静音 / 间奏）';
+    }}
+}}
 
 function adjustAppHeight() {{
     const header = document.querySelector('.header');
@@ -507,6 +548,8 @@ function stopStem() {{
         a.pause();
         a.ontimeupdate = null;
     }});
+    // Stem 停止时，把同步静音播放的视频也一并暂停
+    if (!video.paused) video.pause();
     activeStemKey = null;
 }}
 
@@ -522,8 +565,10 @@ function stopAll() {{
 function playStem(key, t) {{
     t = Math.max(0, Math.min(t, DURATION - 0.1));
     const v = document.getElementById('player');
-    if (v && !v.paused) v.pause();
-    v.currentTime = t;
+    // 视频静音 + 同步播放：只有目标 stem 出声，画面跟着 stem 推进
+    v.muted = true;
+    try {{ v.currentTime = t; }} catch (e) {{}}
+    v.play().catch(() => {{}});
 
     if (stemStopTimer) {{
         clearTimeout(stemStopTimer);
@@ -560,6 +605,7 @@ function playStem(key, t) {{
         if (playbackMode !== 'stem' || activeStemKey !== key) return;
         const ct = audio.currentTime;
         playhead.style.top = getTimeY(ct) + 'px';
+        updateCaption(ct);
         const found = SHOTS.find(s => ct >= s.start && ct < s.end);
         if (found && found.id !== currentShot) selectShot(found.id);
     }};
@@ -619,6 +665,8 @@ function playAt(t, shotId) {{
     stopStem();
     clearTrackHighlight();
     playbackMode = 'video';
+    // 切回视频模式：解除静音，恢复视频自带音频
+    video.muted = false;
     let sid = shotId;
     if (!sid) {{
         const found = SHOTS.find(s => t >= s.start && t < s.end);
@@ -827,6 +875,7 @@ video.addEventListener('timeupdate', () => {{
         stopAtTime = null;
     }}
     playhead.style.top = getTimeY(t) + 'px';
+    updateCaption(t);
     scrollTimelineTo(t);
     const found = SHOTS.find(s => t >= s.start && t < s.end);
     if (found && found.id !== currentShot) {{
@@ -1020,6 +1069,7 @@ def main():
         n_bgm=type_dist.get("bgm"),
         n_sfx=type_dist.get("sfx"),
         n_shots=len(shots),
+        transcript_segments=transcript_segments,
     )
     with open(args.output, "w") as f:
         f.write(html)
