@@ -217,7 +217,7 @@ video {{ width:100%; max-height:35vh; border-radius:8px; object-fit:contain; }}
     </div>
   </div>
   <div class="player-section">
-    <video id="player" controls preload="metadata">
+    <video id="player" controls preload="auto">
       <source src="{video_src}" type="video/mp4">
     </video>
     <div id="liveCaption" class="live-caption empty">（待播放）</div>
@@ -565,10 +565,6 @@ function stopAll() {{
 function playStem(key, t) {{
     t = Math.max(0, Math.min(t, DURATION - 0.1));
     const v = document.getElementById('player');
-    // 视频静音 + 同步播放：只有目标 stem 出声，画面跟着 stem 推进
-    v.muted = true;
-    try {{ v.currentTime = t; }} catch (e) {{}}
-    v.play().catch(() => {{}});
 
     if (stemStopTimer) {{
         clearTimeout(stemStopTimer);
@@ -580,6 +576,12 @@ function playStem(key, t) {{
 
     playbackMode = 'stem';
     activeStemKey = key;
+
+    // 视频静音 + 同步播放：只有目标 stem 出声，画面跟着 stem 推进。
+    // 不做 drift 修正 — 修正会在视频偶发卡顿时变成 seek 循环（"反复跳"）。
+    v.muted = true;
+    try {{ v.currentTime = t; }} catch (e) {{}}
+    v.play().catch(() => {{}});
 
     const audio = stemAudioElements[key];
     if (!audio) return;
@@ -619,6 +621,7 @@ function playStem(key, t) {{
     }};
 
     playhead.style.top = getTimeY(t) + 'px';
+    updateCaption(t);
     scrollTimelineTo(t);
     const found = SHOTS.find(s => t >= s.start && t < s.end);
     if (found) selectShot(found.id);
