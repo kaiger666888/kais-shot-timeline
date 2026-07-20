@@ -154,10 +154,22 @@ def _resolve_canonical_video(asset_dir: Path) -> str:
     背景：Phase 2 决定 video.mp4 是 symlink，target = --video abs path（原始
     含 audio 流的视频，非 -an 转 h264.mp4）。PHASE4_RE_EXPORT=1 重导时需要
     把原始路径传给 export_asset.py。
+
+    WR-04 修复：os.readlink 返回 symlink 字面 target —— 若 target 是相对路径
+    （如 ``../../originals/ep01.mp4``，常见于 asset 目录与源 cache 同级布局），
+    原实现直接 return 该相对串，后续 export_asset.py 会按 Python 进程 CWD
+    （通常是 kais-shot-timeline/）解析，而非按 asset_dir —— 要么 "input video
+    not found"，要么误中 CWD-relative 同名文件。改成始终返回绝对路径：相对
+    target 相对 asset_dir 解析，绝对 target 也走一遍 realpath 规整掉 ``..``。
     """
     video_link = asset_dir / "video.mp4"
     if video_link.is_symlink():
-        return os.readlink(video_link)
+        target = os.readlink(video_link)
+        if not os.path.isabs(target):
+            target = str((asset_dir / target).resolve())
+        else:
+            target = os.path.realpath(target)
+        return target
     return str(video_link)
 
 
