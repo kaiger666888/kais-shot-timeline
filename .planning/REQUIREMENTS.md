@@ -22,9 +22,9 @@
 
 ### CANVAS — 画布消费端（@kais/infinite-canvas，跨仓库 kais-aigc-platform）
 
-- [ ] **CANVAS-01**: 画布现有 `import-from-dir` 路径能消费 ShotTimelineAsset，在画布上表示为一个 collection（结构化父节点）
-- [ ] **CANVAS-02**: 用结构化父节点（沿用 `zone`/`phase` 模式，持有子节点 ID）聚合现有 `storyboard`/`audio`/`video` 子节点
-- [ ] **CANVAS-03**: 复用画布现有 5 个渲染器，不引入 custom renderer / 不 bump contract（receiver schema 已透传 structuralTypes）
+- [x] **CANVAS-01**: 画布现有 `import-from-dir` 路径能消费 ShotTimelineAsset，在画布上表示为一个 collection（结构化父节点）
+- [x] **CANVAS-02**: 用结构化父节点（沿用 `zone`/`phase` 模式，持有子节点 ID）聚合现有 `storyboard`/`audio`/`video` 子节点
+- [x] **CANVAS-03**: 复用画布现有 5 个渲染器，不引入 custom renderer / 不 bump contract（receiver schema 已透传 structuralTypes）
 
 ### VERIFY — 跨仓库契约一致性
 
@@ -67,9 +67,9 @@ Deferred to future milestone（建立在 v1.0 契约之上）：
 | EXPORT-01 | Phase 2 | Complete |
 | EXPORT-02 | Phase 2 | Complete |
 | EXPORT-03 | Phase 2 | Complete |
-| CANVAS-01 | Phase 3 | Pending |
-| CANVAS-02 | Phase 3 | Pending |
-| CANVAS-03 | Phase 3 | Pending |
+| CANVAS-01 | Phase 3 | Complete |
+| CANVAS-02 | Phase 3 | Complete |
+| CANVAS-03 | Phase 3 | Complete |
 | VERIFY-01 | Phase 4 | Pending |
 | VERIFY-02 | Phase 4 | Pending |
 

@@ -15,7 +15,7 @@ Decimal phases appear between their surrounding integers in numeric order.
 
 - [x] **Phase 1: ShotTimelineAsset Specification** - Define the repo-agnostic contract (schema + version + media refs + manifest) both repos implement against — COMPLETE 2026-07-20
 - [x] **Phase 2: shot-timeline Exporter (Producer)** - Implement the producer: pipeline output → ShotTimelineAsset artifact, versioned + self-describing, Range-served (completed 2026-07-20)
-- [ ] **Phase 3: Canvas Consumer** - Implement canvas ingestion via structural parent node reusing existing 5 renderers (no contract bump)
+- [x] **Phase 3: Canvas Consumer** - Implement canvas ingestion via structural parent node reusing existing 5 renderers (no contract bump) (completed 2026-07-20)
 - [ ] **Phase 4: Cross-Repo Contract Verification** - End-to-end smoke + regression protection against schema/media-reference drift
 
 ## Phase Details
@@ -87,7 +87,7 @@ Plans:
 Plans:
 **Wave 1**
 
-- [ ] 03-01-PLAN.md — Add ShotTimelineAsset branch to import-from-dir.ts (RawArtifact.canvasType + buildPhaseTree L804 override + extractShotTimelineArtifacts + sequence edges + scanAndBuildTree merge) + downsampled golden fixture + verify-canvas-shot-timeline.ts (asserts A–F + additive-only guards)
+- [x] 03-01-PLAN.md — Add ShotTimelineAsset branch to import-from-dir.ts (RawArtifact.canvasType + buildPhaseTree L804 override + extractShotTimelineArtifacts + sequence edges + scanAndBuildTree merge) + downsampled golden fixture + verify-canvas-shot-timeline.ts (asserts A–F + additive-only guards)
 
 **UI hint**: yes
 
@@ -114,7 +114,7 @@ Phases execute in numeric order: 1 → 2 → 3 → 4
 |-------|----------------|--------|-----------|
 | 1. ShotTimelineAsset Specification | 2/2 | Complete | 2026-07-20 |
 | 2. shot-timeline Exporter (Producer) | 2/2 | Complete    | 2026-07-20 |
-| 3. Canvas Consumer | 0/TBD | Not started | - |
+| 3. Canvas Consumer | 1/1 | Complete   | 2026-07-20 |
 | 4. Cross-Repo Contract Verification | 0/TBD | Not started | - |
 
 ---
