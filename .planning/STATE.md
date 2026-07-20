@@ -3,15 +3,15 @@ gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: ShotTimelineAsset Contract
 status: executing
-stopped_at: Roadmap created (4 phases derived from 12 v1 requirements, 100% coverage, no orphans)
-last_updated: "2026-07-20T08:54:20.869Z"
-last_activity: 2026-07-20 -- Phase 01 execution started
+stopped_at: "Plan 01-01 complete: 6 schemas + minimal fixture + validate.py (smoke 5/5 valid)"
+last_updated: "2026-07-20T09:42:00.000Z"
+last_activity: 2026-07-20 -- Plan 01-01 complete (Phase 1 plan 1 of 2)
 progress:
   total_phases: 4
   completed_phases: 0
   total_plans: 2
-  completed_plans: 0
-  percent: 0
+  completed_plans: 1
+  percent: 50
 ---
 
 # Project State
@@ -26,25 +26,25 @@ See: .planning/PROJECT.md (updated 2026-07-20)
 ## Current Position
 
 Phase: 01 (ShotTimelineAsset Specification) — EXECUTING
-Plan: 1 of 2
-Status: Executing Phase 01
-Last activity: 2026-07-20 -- Phase 01 execution started
+Plan: 2 of 2 (01-01 complete; ready for 01-02)
+Status: Plan 01-01 complete — 6 schemas + minimal fixture + validate.py committed
+Last activity: 2026-07-20 -- Plan 01-01 complete (smoke 5/5 valid against real producer output)
 
-Progress: [░░░░░░░░░░] 0%
+Progress: [█████░░░░░] 50%
 
 ## Performance Metrics
 
 **Velocity:**
 
-- Total plans completed: 0
-- Average duration: —
-- Total execution time: —
+- Total plans completed: 1
+- Average duration: ~25min
+- Total execution time: ~25min
 
 **By Phase:**
 
 | Phase | Plans | Total | Avg/Plan |
 |-------|-------|-------|----------|
-| - | - | - | - |
+| 01 | 1/2 | ~25min | ~25min |
 
 *Updated after each plan completion*
 
@@ -58,6 +58,10 @@ Recent decisions affecting current work:
 - v1.0 bootstrap: shot-timeline is the authoritative spec owner / external producer (loose coupling)
 - v1.0 bootstrap: canvas uses structural parent node (zone/phase pattern) — reuses 5 renderers, no contract bump
 - v1.0 bootstrap: canvas work happens on branch `feat/canvas-asset-collection` in `kais-aigc-platform`
+- Plan 01-01: schema_version pattern `^(0|[1-9]\d*)(\.(0|[1-9]\d*))?$` (semver-lite; "1" / "1.1" accepted, "v1" / "1.1.1" rejected)
+- Plan 01-01: asset schema additionalProperties:false (strict) — graceful-degrade is runtime consumer behavior, not schema-loosening
+- Plan 01-01: media.stems rejects bass.wav (canonical = vocals/drums/other only — consumer frontend renders 3 stems)
+- Plan 01-01: producer's 5 data JSON shapes already conform to strict schemas (smoke 5/5 valid) — Phase 2 only needs to add asset.json + canonical media rename
 
 ### Pending Todos
 
@@ -80,5 +84,5 @@ Items acknowledged and carried forward from milestone bootstrap:
 ## Session Continuity
 
 Last session: 2026-07-20
-Stopped at: Roadmap created (4 phases derived from 12 v1 requirements, 100% coverage, no orphans)
-Resume file: None
+Stopped at: "Plan 01-01 complete: 6 schemas + minimal fixture + validate.py (smoke 5/5 valid)"
+Resume file: None (next: Plan 01-02 — prose SPEC.md + human review checkpoint)

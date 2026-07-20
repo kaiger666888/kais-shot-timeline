@@ -9,10 +9,10 @@
 
 ### SPEC — ShotTimelineAsset 规范
 
-- [ ] **SPEC-01**: 定义 5-JSON canonical 形状的字段 schema —— `shots`（边界/时长）、`audio_analysis`（Demucs + 每镜能量/谱/dominant_type）、`transcript`（Whisper segments）、`frames`（首尾帧）、`prompts`（结构化 prompt）
-- [ ] **SPEC-02**: 定义资产版本号字段（schema versioning），使导出端与消费端可独立演进、做兼容性判断
-- [ ] **SPEC-03**: 定义媒体引用约定 —— video mp4 + 3 个 stem wav 的路径/命名规则，以及 Range-aware HTTP 服务要求（206 Partial Content，供消费端 seek 播放）
-- [ ] **SPEC-04**: 资产自描述（manifest 描述内容清单、来源视频、生成参数/工具版本），消费端无需外部文档即可理解
+- [x] **SPEC-01**: 定义 5-JSON canonical 形状的字段 schema —— `shots`（边界/时长）、`audio_analysis`（Demucs + 每镜能量/谱/dominant_type）、`transcript`（Whisper segments）、`frames`（首尾帧）、`prompts`（结构化 prompt） — DONE Plan 01-01 (6 schemas under spec/schemas/)
+- [x] **SPEC-02**: 定义资产版本号字段（schema versioning），使导出端与消费端可独立演进、做兼容性判断 — DONE Plan 01-01 (asset.schema.json schema_version + graceful-degrade rule)
+- [x] **SPEC-03**: 定义媒体引用约定 —— video mp4 + 3 个 stem wav 的路径/命名规则，以及 Range-aware HTTP 服务要求（206 Partial Content，供消费端 seek 播放） — DONE Plan 01-01 (canonical patterns; Range 206 ref in spec/README.md → scripts/serve.py)
+- [x] **SPEC-04**: 资产自描述（manifest 描述内容清单、来源视频、生成参数/工具版本），消费端无需外部文档即可理解 — DONE Plan 01-01 (asset.schema.json: source/generator/data/media inventory)
 
 ### EXPORT — shot-timeline 导出端（生产者，本仓库）
 
@@ -60,10 +60,10 @@ Deferred to future milestone（建立在 v1.0 契约之上）：
 
 | Requirement | Phase | Status |
 |-------------|-------|--------|
-| SPEC-01 | Phase 1 | Pending |
-| SPEC-02 | Phase 1 | Pending |
-| SPEC-03 | Phase 1 | Pending |
-| SPEC-04 | Phase 1 | Pending |
+| SPEC-01 | Phase 1 | Complete (Plan 01-01) |
+| SPEC-02 | Phase 1 | Complete (Plan 01-01) |
+| SPEC-03 | Phase 1 | Complete (Plan 01-01) |
+| SPEC-04 | Phase 1 | Complete (Plan 01-01) |
 | EXPORT-01 | Phase 2 | Pending |
 | EXPORT-02 | Phase 2 | Pending |
 | EXPORT-03 | Phase 2 | Pending |

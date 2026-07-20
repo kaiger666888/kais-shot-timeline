@@ -39,7 +39,7 @@ Decimal phases appear between their surrounding integers in numeric order.
 Plans:
 **Wave 1**
 
-- [ ] 01-01-PLAN.md — Write 6 JSON Schema (draft 2020-12) contract files + minimal fixture + jsonschema validation runner
+- [x] 01-01-PLAN.md — Write 6 JSON Schema (draft 2020-12) contract files + minimal fixture + jsonschema validation runner — DONE 2026-07-20 (smoke 5/5 valid against real producer output)
 
 **Wave 2** *(blocked on Wave 1 completion)*
 
@@ -97,7 +97,7 @@ Phases execute in numeric order: 1 → 2 → 3 → 4
 
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
-| 1. ShotTimelineAsset Specification | 0/2 | Not started | - |
+| 1. ShotTimelineAsset Specification | 1/2 | Executing | - |
 | 2. shot-timeline Exporter (Producer) | 0/TBD | Not started | - |
 | 3. Canvas Consumer | 0/TBD | Not started | - |
 | 4. Cross-Repo Contract Verification | 0/TBD | Not started | - |
