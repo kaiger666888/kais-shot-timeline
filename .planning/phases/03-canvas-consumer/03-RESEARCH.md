@@ -714,27 +714,33 @@ assert(!/\.optional\(\)/.test(schemaDiff.replace(/\/\/.*$/gm, "")),
 
 **Overall confidence:** HIGH —— 大部分关键 claims 已 `[VERIFIED]` 或 `[CITED]`;只有 A5(fixture size 策略)有中等 risk。
 
-## Open Questions
+## Open Questions (RESOLVED)
+
+> All 4 questions resolved during planning — the plan implements recommendations 1–3 verbatim; recommendation 4 (sidecar attachment) is deferred with justification (see plan 03-01 Task 2 `<done>` D3 note). Resolution markers added post plan-checker (doc-format fix, no content change).
 
 1. **Pattern 2 方案 A vs B —— planner 取舍**
    - What we know: 两种都能 work;方案 A 改 1 行 buildPhaseTree,方案 B 加 ~80 行并行 builder
    - What's unclear: 用户对「修改既有 production hot path」的容忍度
    - Recommendation: **方案 A** —— buildPhaseTree 改动是 additive opt-in(既有 13 phase 不设 canvasType → 零行为变化),且复用最大化。Planner 可在 plan 中明确「方案 A,失败回退方案 B」。
+   - RESOLVED: Plan 03-01 选方案 A(RawArtifact.canvasType 可选字段 + buildPhaseTree L804 `(art.canvasType ?? def.canvasType)` 单行覆盖)。
 
 2. **phase prefix 选 p11 vs p12 vs p13**
    - What we know: 三者都是 phaseGroup="post";canvasType 都是 "video"(zone 用 canvasType 不重要,structural pass-through)
    - What's unclear: 哪个 lane label 语义最贴近「逆向解构的成片」
    - Recommendation: **p13(delivery)** —— master video 是已交付的 artifact;lane label 「P13 · 交付」语义最贴。低风险可逆。
+   - RESOLVED: Plan 03-01 选 p13。
 
 3. **fixture 媒体 downsample 策略**
    - What we know: ep01 全量 648MB(stems 208MB + video 46MB + frames.json 7MB + 其它);进 git 不现实
    - What's unclear: 用户接受何种替代 —— (a)ffmpeg 生成 1s silent stub;(b)只复制数据 JSON + 文件名占位 stub;(c)git LFS 引入
    - Recommendation: **(a) ffmpeg 生成 1s silent stub** —— 保留 fsToOssUrl/ffprobe 可测性,fixture < 10MB。Planner 在 Wave 0 加 stub 生成步骤。或更激进:**fixture 完全不带媒体**,在 helper 内 monkey-patch fsToOssUrl 用于 verify。
+   - RESOLVED: Plan 03-01 Task 1 用 ffmpeg 生成 1s silent stub + 复制真实数据 JSON。
 
 4. **transcript/prompts 作为 sidecar description 的具体 attach 形态**
    - What we know: CONTEXT 说「不单独建 script/asset 节点」;附挂在哪个节点的 data 上未定
    - What's unclear: 挂在 zone.data.description?还是每个 storyboard 的 prompt 来自 prompts.json[shot_id-1]?还是单独 transcript.json 全文挂 video 节点?
    - Recommendation: storyboard 节点附 prompts.json 对应 shot 的 `prompt_text`(提升单镜信息密度);video 节点附 transcript.json 全文(对白与 master 视频关联);zone 节点附 asset.generator.tool/version 来源信息。Planner 细化。
+   - RESOLVED (deferred): 本 phase 显式延后次要 sidecar 附挂(CANVAS-01/02/03 SC 不要求);prompts/transcript 仍保留在 fixture asset.json data 引用里。见 plan 03-01 Task 2 `<done>` D3 deferral note。
 
 ## Sources
 
