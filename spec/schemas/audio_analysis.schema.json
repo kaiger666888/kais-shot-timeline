@@ -1,0 +1,109 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://kais.shot-timeline/spec/schemas/audio_analysis.schema.json",
+  "draft": "2020-12",
+  "title": "Audio analysis (per-shot Demucs stem profile)",
+  "description": "Per-shot audio profile from Demucs htdemucs 4-stem separation: RMS energies, energy ratios, spectral centroids, and a classified dominant_type per shot. Producer: audio/separate_stems.py:analyze_shots.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["episode", "duration", "stems", "shots", "type_distribution"],
+  "properties": {
+    "episode": {
+      "type": "string",
+      "description": "Logical episode/source tag emitted by the producer (currently always the literal \"shots\")."
+    },
+    "duration": {
+      "type": "number",
+      "minimum": 0,
+      "description": "Total source duration in seconds covered by the analysis."
+    },
+    "stems": {
+      "type": "array",
+      "description": "Fixed 4-stem list emitted by Demucs htdemucs. Order is producer-determined; all four must be present exactly once.",
+      "items": {
+        "enum": ["vocals", "drums", "bass", "other"]
+      },
+      "minItems": 4,
+      "maxItems": 4,
+      "uniqueItems": true
+    },
+    "shots": {
+      "type": "array",
+      "description": "Per-shot analysis entries. Must align 1:1 with shots.json by shot_id.",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "shot_id",
+          "start_sec",
+          "end_sec",
+          "duration",
+          "energies",
+          "ratios",
+          "spectral_centroid",
+          "dominant_type"
+        ],
+        "properties": {
+          "shot_id": {
+            "type": "integer",
+            "minimum": 1,
+            "description": "Matches the id field in shots.json."
+          },
+          "start_sec": {
+            "type": "number",
+            "minimum": 0
+          },
+          "end_sec": {
+            "type": "number",
+            "minimum": 0
+          },
+          "duration": {
+            "type": "number",
+            "exclusiveMinimum": 0
+          },
+          "energies": {
+            "$ref": "#/$defs/stem_float_map",
+            "description": "Per-stem RMS energy (linear amplitude squared, [0, 1]ish)."
+          },
+          "ratios": {
+            "$ref": "#/$defs/stem_float_map",
+            "description": "Per-stem share of total energy (sums to ~1.0)."
+          },
+          "spectral_centroid": {
+            "$ref": "#/$defs/stem_float_map",
+            "description": "Per-stem spectral centroid in Hz (brightness)."
+          },
+          "dominant_type": {
+            "enum": ["dialogue", "bgm", "mixed", "sfx"],
+            "description": "Classifier label from audio/separate_stems.py:classify_shot (energies + spectral_centroid heuristic)."
+          }
+        }
+      }
+    },
+    "type_distribution": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["dialogue", "bgm", "mixed", "sfx"],
+      "description": "Histogram of dominant_type counts across the shots array.",
+      "properties": {
+        "dialogue": { "type": "integer", "minimum": 0 },
+        "bgm": { "type": "integer", "minimum": 0 },
+        "mixed": { "type": "integer", "minimum": 0 },
+        "sfx": { "type": "integer", "minimum": 0 }
+      }
+    }
+  },
+  "$defs": {
+    "stem_float_map": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["vocals", "drums", "bass", "other"],
+      "properties": {
+        "vocals": { "type": "number", "minimum": 0 },
+        "drums": { "type": "number", "minimum": 0 },
+        "bass": { "type": "number", "minimum": 0 },
+        "other": { "type": "number", "minimum": 0 }
+      }
+    }
+  }
+}

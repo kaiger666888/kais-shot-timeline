@@ -1,0 +1,35 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://kais.shot-timeline/spec/schemas/shots.schema.json",
+  "draft": "2020-12",
+  "title": "Shots (canonical shot segmentation)",
+  "description": "Canonical shot boundary list — the authoritative segmentation shared by every downstream stage. Top-level JSON array, contiguous from t=0 to source duration with no gaps. Producer: detectors/detect_v3b.py:main (writes shots.json); Consumers: audio/separate_stems.py:analyze_shots, html/gen_timeline_html.py:build_shots_js.",
+  "type": "array",
+  "items": {
+    "type": "object",
+    "additionalProperties": false,
+    "required": ["id", "start_sec", "end_sec", "duration"],
+    "properties": {
+      "id": {
+        "type": "integer",
+        "minimum": 1,
+        "description": "1-based shot index, monotonically increasing across the array."
+      },
+      "start_sec": {
+        "type": "number",
+        "minimum": 0,
+        "description": "Shot start time in seconds (inclusive). First shot starts at 0.0."
+      },
+      "end_sec": {
+        "type": "number",
+        "minimum": 0,
+        "description": "Shot end time in seconds (exclusive). Must equal the next shot's start_sec."
+      },
+      "duration": {
+        "type": "number",
+        "exclusiveMinimum": 0,
+        "description": "Shot duration in seconds. Must equal end_sec - start_sec and be > 0."
+      }
+    }
+  }
+}

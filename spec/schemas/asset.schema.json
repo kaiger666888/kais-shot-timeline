@@ -1,0 +1,128 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://kais.shot-timeline/spec/schemas/asset.schema.json",
+  "draft": "2020-12",
+  "title": "ShotTimelineAsset manifest (asset.json)",
+  "description": "Self-describing manifest for a ShotTimelineAsset — a portable, multi-track shot decomposition produced by kais-shot-timeline and consumed by downstream canvases (e.g. @kais/infinite-canvas). The manifest carries the schema_version, source provenance, generator identity, the inventory of 5 canonical data JSON files, and the inventory of canonical media files (video + 3 stems). Producer (Phase 2): exporter writing asset.json into the asset directory. Consumer: any reader that wants to understand the asset without external docs.",
+  "$comment": "Graceful-degrade rule (SPEC-02 / CONTEXT D-02): The schema is intentionally strict (additionalProperties: false on every object). Strictness at validation time is what forces explicit version bumps. The CONSUMER, however, must be lenient at RUNTIME: on an unknown or newer schema_version, ignore unknown fields, render the known parts, and emit a warning — do NOT reject or crash. New field = minor version bump (old consumers degrade gracefully). Breaking change (rename, semantic shift, removal) = major bump, and MUST be documented in the prose SPEC migration section. Semver-lite: major[.minor], e.g. \"1\" or \"1.1\" — NOT full semver (no patch component, no pre-release tags).",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schema_version", "asset_type", "source", "generator", "data", "media"],
+  "properties": {
+    "schema_version": {
+      "type": "string",
+      "pattern": "^(0|[1-9]\\d*)(\\.(0|[1-9]\\d*))?$",
+      "description": "Asset contract version, semver-lite (major[.minor]). Examples: \"1\", \"1.1\", \"2.0\". Non-examples: \"v1\", \"1.1.1\", \"\". Consumer MUST graceful-degrade on unknown/newer versions: ignore unknown fields, render known parts, emit a warning — do NOT reject. New field = minor bump; breaking change (rename/semantic shift/removal) = major bump (document migration in SPEC.md)."
+    },
+    "asset_type": {
+      "const": "shottimeline",
+      "description": "Asset kind discriminator. Always the literal \"shottimeline\" for this contract — lets a future reader distinguish this asset kind from others sharing a directory."
+    },
+    "source": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["video_filename", "duration_sec"],
+      "description": "Provenance of the original source video.",
+      "properties": {
+        "video_filename": {
+          "type": "string",
+          "description": "Original source video filename (basename, e.g. \"《小江湖》第03话：….mp4\")."
+        },
+        "duration_sec": {
+          "type": "number",
+          "minimum": 0,
+          "description": "Source video duration in seconds (from ffprobe)."
+        }
+      }
+    },
+    "generator": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["tool", "version", "generated_at"],
+      "description": "Identity of the tool that produced this asset.",
+      "properties": {
+        "tool": {
+          "type": "string",
+          "description": "Tool name (e.g. \"kais-shot-timeline\")."
+        },
+        "version": {
+          "type": "string",
+          "description": "Tool version (any string — semver, git SHA, build id)."
+        },
+        "generated_at": {
+          "type": "string",
+          "description": "ISO-8601 datetime (UTC recommended, e.g. \"2026-07-20T00:00:00Z\")."
+        }
+      }
+    },
+    "data": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["shots", "audio_analysis", "transcript", "frames", "prompts"],
+      "description": "Inventory of the 5 canonical data JSON files. Each value is a path relative to the asset root.",
+      "properties": {
+        "shots": {
+          "type": "string",
+          "pattern": "^(?!.*\\.\\.)[^:*?\"<>|]+\\.json$",
+          "description": "Relative path to shots.json (no parent traversal, no drive letters, must end in .json)."
+        },
+        "audio_analysis": {
+          "type": "string",
+          "pattern": "^(?!.*\\.\\.)[^:*?\"<>|]+\\.json$",
+          "description": "Relative path to audio_analysis.json."
+        },
+        "transcript": {
+          "type": "string",
+          "pattern": "^(?!.*\\.\\.)[^:*?\"<>|]+\\.json$",
+          "description": "Relative path to transcript.json."
+        },
+        "frames": {
+          "type": "string",
+          "pattern": "^(?!.*\\.\\.)[^:*?\"<>|]+\\.json$",
+          "description": "Relative path to frames.json."
+        },
+        "prompts": {
+          "type": "string",
+          "pattern": "^(?!.*\\.\\.)[^:*?\"<>|]+\\.json$",
+          "description": "Relative path to prompts.json."
+        }
+      }
+    },
+    "media": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["video", "stems"],
+      "description": "Inventory of canonical media files. Paths are relative to the asset root and MUST follow the canonical naming (CONTEXT D-03): video.mp4 at root or one directory deep; stems under stems/{vocals,drums,other}.wav. The producer's pre-canonical layout (stems/htdemucs/<stem>/{vocals,drums,bass,other}.wav) is NOT accepted here — the Phase 2 exporter renames to canonical before writing asset.json. bass.wav is intentionally excluded (consumer frontend only uses 3 stems).",
+      "properties": {
+        "video": {
+          "type": "string",
+          "pattern": "^(?!.*\\.\\.)([^/]+/)*video\\.mp4$",
+          "description": "Relative path to the canonical video file. Must end in video.mp4 (optionally under one or more directory segments). Rejects ../video.mp4, /abs/video.mp4, video.avi."
+        },
+        "stems": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["vocals", "drums", "other"],
+          "description": "Canonical 3-stem WAV inventory (bass is excluded — consumer only renders vocals/drums/other).",
+          "properties": {
+            "vocals": {
+              "type": "string",
+              "pattern": "^(?!.*\\.\\.)([^/]+/)*stems/(vocals)\\.wav$",
+              "description": "Relative path to vocals WAV. Canonical: stems/vocals.wav."
+            },
+            "drums": {
+              "type": "string",
+              "pattern": "^(?!.*\\.\\.)([^/]+/)*stems/(drums)\\.wav$",
+              "description": "Relative path to drums WAV. Canonical: stems/drums.wav."
+            },
+            "other": {
+              "type": "string",
+              "pattern": "^(?!.*\\.\\.)([^/]+/)*stems/(other)\\.wav$",
+              "description": "Relative path to other WAV. Canonical: stems/other.wav."
+            }
+          }
+        }
+      }
+    }
+  }
+}
