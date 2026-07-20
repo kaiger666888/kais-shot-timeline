@@ -231,6 +231,13 @@ def main():
     r = subprocess.run(
         ["ffprobe", "-v", "quiet", "-show_entries", "stream=codec_type",
          "-of", "csv=p=0", video], capture_output=True, text=True)
+    # 02-REVIEW WR-04：先看 returncode —— ffprobe 失败（corrupt video、权限、PATH
+    # 问题）时 stdout 为空，不查 returncode 会错误触发"no audio stream"，把用户
+    # 带偏到 transcode -an 调试路径。真实原因是 ffprobe 没跑起来。
+    if r.returncode != 0:
+        sys.exit(
+            f"ffprobe failed (rc={r.returncode}): {video}\n"
+            f"  stderr: {r.stderr.strip() or '(empty)'}")
     if "audio" not in r.stdout:
         sys.exit(
             f"video has no audio stream: {video}\n"
