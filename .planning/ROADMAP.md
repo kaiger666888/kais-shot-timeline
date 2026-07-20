@@ -30,7 +30,11 @@ Decimal phases appear between their surrounding integers in numeric order.
   2. The spec defines a schema version field and the rule consumers follow when they encounter an unknown/newer version (graceful degrade vs. reject)
   3. The spec defines how media files (video mp4 + 3 stem wavs) are path/naming-conventioned and the Range-aware HTTP 206 serving requirement consumers depend on for seek playback
   4. The spec defines a self-describing manifest (content inventory, source video, generator tool/version) so a consumer can understand an asset without external documentation
-**Plans**: TBD
+**Plans**: 2 plans
+
+Plans:
+- [ ] 01-01-PLAN.md — Write 6 JSON Schema (draft 2020-12) contract files + minimal fixture + jsonschema validation runner
+- [ ] 01-02-PLAN.md — Write the authoritative human-readable spec/SPEC.md + human review checkpoint
 
 ### Phase 2: shot-timeline Exporter (Producer)
 **Goal**: Running the shot-timeline pipeline emits a self-describing ShotTimelineAsset artifact that conforms to the Phase 1 spec and is servable to a downstream consumer.
@@ -75,7 +79,7 @@ Phases execute in numeric order: 1 → 2 → 3 → 4
 
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
-| 1. ShotTimelineAsset Specification | 0/TBD | Not started | - |
+| 1. ShotTimelineAsset Specification | 0/2 | Not started | - |
 | 2. shot-timeline Exporter (Producer) | 0/TBD | Not started | - |
 | 3. Canvas Consumer | 0/TBD | Not started | - |
 | 4. Cross-Repo Contract Verification | 0/TBD | Not started | - |
