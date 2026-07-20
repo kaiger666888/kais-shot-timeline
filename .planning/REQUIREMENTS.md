@@ -28,7 +28,7 @@
 
 ### VERIFY — 跨仓库契约一致性
 
-- [ ] **VERIFY-01**: 导出端产物能被消费端成功 import，并正确渲染出分镜/stem/字幕/prompt 集合
+- [x] **VERIFY-01**: 导出端产物能被消费端成功 import，并正确渲染出分镜/stem/字幕/prompt 集合
 - [x] **VERIFY-02**: 契约一致性验证 —— 字段 schema 与媒体引用在导出端 ↔ 消费端两端对齐，有回归保护
 
 ## v2 Requirements
@@ -70,7 +70,7 @@ Deferred to future milestone（建立在 v1.0 契约之上）：
 | CANVAS-01 | Phase 3 | Complete |
 | CANVAS-02 | Phase 3 | Complete |
 | CANVAS-03 | Phase 3 | Complete |
-| VERIFY-01 | Phase 4 | Pending |
+| VERIFY-01 | Phase 4 | Complete |
 | VERIFY-02 | Phase 4 | Complete |
 
 **Coverage:**

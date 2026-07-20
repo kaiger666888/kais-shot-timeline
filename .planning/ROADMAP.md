@@ -16,7 +16,7 @@ Decimal phases appear between their surrounding integers in numeric order.
 - [x] **Phase 1: ShotTimelineAsset Specification** - Define the repo-agnostic contract (schema + version + media refs + manifest) both repos implement against — COMPLETE 2026-07-20
 - [x] **Phase 2: shot-timeline Exporter (Producer)** - Implement the producer: pipeline output → ShotTimelineAsset artifact, versioned + self-describing, Range-served (completed 2026-07-20)
 - [x] **Phase 3: Canvas Consumer** - Implement canvas ingestion via structural parent node reusing existing 5 renderers (no contract bump) (completed 2026-07-20)
-- [ ] **Phase 4: Cross-Repo Contract Verification** - End-to-end smoke + regression protection against schema/media-reference drift
+- [x] **Phase 4: Cross-Repo Contract Verification** - End-to-end smoke + regression protection against schema/media-reference drift (completed 2026-07-20)
 
 ## Phase Details
 
@@ -112,7 +112,7 @@ Plans:
 
 **Wave 2** *(blocked on Wave 1 completion — same-file extension; e2e needs the harness skeleton from 04-01)*
 
-- [ ] 04-02-PLAN.md — Add e2e mode to verify_contract.py (backend lifecycle via subprocess.Popen + /health poll + POST /api/canvas/v2/import-from-dir with real ep01 + SQL read-back of o_agentWorkData canvasGraph snapshot + structural asserts + try/finally teardown incl. worktree database.d.ts reconcile) + write 04-VERIFICATION.md capstone (WR-01/04 acceptance + SC-1 prompt-children scope reduction cross-ref Phase 3 deferred-items) — covers VERIFY-01 (end-to-end observable)
+- [x] 04-02-PLAN.md — Add e2e mode to verify_contract.py (backend lifecycle via subprocess.Popen + /health poll + POST /api/canvas/v2/import-from-dir with real ep01 + SQL read-back of o_agentWorkData canvasGraph snapshot + structural asserts + try/finally teardown incl. worktree database.d.ts reconcile) + write 04-VERIFICATION.md capstone (WR-01/04 acceptance + SC-1 prompt-children scope reduction cross-ref Phase 3 deferred-items) — covers VERIFY-01 (end-to-end observable)
 
 ## Progress
 
@@ -124,7 +124,7 @@ Phases execute in numeric order: 1 → 2 → 3 → 4
 | 1. ShotTimelineAsset Specification | 2/2 | Complete | 2026-07-20 |
 | 2. shot-timeline Exporter (Producer) | 2/2 | Complete    | 2026-07-20 |
 | 3. Canvas Consumer | 1/1 | Complete    | 2026-07-20 |
-| 4. Cross-Repo Contract Verification | 1/2 | In Progress|  |
+| 4. Cross-Repo Contract Verification | 2/2 | Complete   | 2026-07-20 |
 
 ---
 

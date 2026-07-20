@@ -2,16 +2,16 @@
 gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: ShotTimelineAsset Contract
-status: executing
+status: verifying
 stopped_at: "Phase 01 complete — both plans done (01-01 schemas + 01-02 SPEC.md); ready for Phase 2 planning"
-last_updated: "2026-07-20T19:37:20.054Z"
+last_updated: "2026-07-20T19:47:18.173Z"
 last_activity: 2026-07-20
 progress:
   total_phases: 4
-  completed_phases: 3
+  completed_phases: 4
   total_plans: 7
-  completed_plans: 6
-  percent: 75
+  completed_plans: 7
+  percent: 100
 ---
 
 # Project State
@@ -27,10 +27,10 @@ See: .planning/PROJECT.md (updated 2026-07-20)
 
 Phase: 4 (Cross-Repo Contract Verification) — EXECUTING
 Plan: 2 of 2
-Status: Ready to execute
+Status: Phase complete — ready for verification
 Last activity: 2026-07-20
 
-Progress: [█████████░] 86%
+Progress: [██████████] 100%
 
 ## Performance Metrics
 
@@ -52,6 +52,7 @@ Progress: [█████████░] 86%
 | Phase 02 P02 | 15min | 2 tasks | 3 files |
 | Phase 3 P1 | 45min | 3 tasks | 13 files |
 | Phase 04 P01 | 12min | 2 tasks | 1 files |
+| Phase 04 P02 | 7min | 2 tasks | 2 files |
 
 ## Accumulated Context
 
@@ -86,6 +87,10 @@ Recent decisions affecting current work:
 - [Phase ?]: test
 - [Phase ?]: Plan 04-01: verify_contract.py canonical harness — 3 modes (producer/consumer/e2e placeholder) + self-test; inline jsonschema on 6 schemas (asset shape NOT subprocessed to spec/validate.py since SMOKE_SHAPES excludes it)
 - [Phase ?]: Plan 04-01: self-test semantics — PASS=harness detects drift (exit 0); FAIL=harness broken (exit 1). Aligned with RESEARCH §Regression Invariants (meta-test of fail-loud property)
+- [Phase ?]: Plan 04-02: e2e backend teardown requires start_new_session=True + os.killpg (Rule 1 fix) — npx tsx forks child node process; SIGTERM-only on npx parent leaves orphan backend
+- [Phase ?]: Plan 04-02: e2e SQL 直查 o_agentWorkData JSON blob (Pitfall 1) — /api/canvas/v2/load-v2 reads relational canvas_nodes which import-from-dir doesn't write
+- [Phase ?]: Plan 04-02: SC-1 prompt-children scope reduction formally recorded — Phase 3 D3 deferred prompts/transcript to sidecar data refs; observable collection = storyboard/audio/video (not a gap)
+- [Phase ?]: Plan 04-02: WR-01/04 formally accepted (not fixing in v1.0) — primary appendAndSync path unaffected; save-v2 latent bugs belong to consumer-repo backlog
 
 ### Pending Todos
 
@@ -107,6 +112,6 @@ Items acknowledged and carried forward from milestone bootstrap:
 
 ## Session Continuity
 
-Last session: 2026-07-20T19:37:03.075Z
+Last session: 2026-07-20T19:47:03.564Z
 Stopped at: "Phase 01 complete — both plans done (01-01 schemas + 01-02 SPEC.md); ready for Phase 2 planning"
 Resume file: None
