@@ -38,6 +38,7 @@ opt-in 环境变量：
     1 = 任一 mode fail（schema-invalid / subprocess rc≠0 / guard 拒绝）
 """
 import argparse
+import http.client
 import json
 import os
 import shutil
@@ -86,24 +87,38 @@ def find_free_port() -> int:
 
 
 # === e2e helpers (Plan 04-02) ===========================================
-def _poll_health(port: int, timeout: float = 45.0) -> bool:
+def _poll_health(
+    port: int, proc: subprocess.Popen, timeout: float = 45.0
+) -> tuple:
     """轮询 http://127.0.0.1:{port}/health 直到 200 或超时。
 
     模板源：scripts/check_range.py:39-48 wait_ready 的 HTTP 版；04-RESEARCH.md
     §Pattern 2。timeout 默认 45s（consumer Express + better-sqlite3 boot 比
     scripts/serve.py 慢，src/app.ts:269 在 server.listen 前 await bootReady）。
+
+    WR-01：每轮先看 proc.poll() —— backend 启动期崩溃（TS 编译错 / 缺
+    better-sqlite3 / 端口占用）不再空耗 45s，立刻 fail-fast 返回带 exit code
+    的可读原因。返回 tuple[bool, str] 让 caller 直接 embed reason。
+    WR-02：异常覆盖从 urllib.error.URLError 扩到 (URLError, OSError,
+    http.client.HTTPException) —— 半启动 Express 可能发畸形 HTTP 头触发
+    HTTPException / ConnectionResetError（非 URLError 子类），不再逃出循环
+    把 e2e 整体崩成 traceback。
     """
     url = f"http://127.0.0.1:{port}/health"
     deadline = time.time() + timeout
     while time.time() < deadline:
+        # WR-01：backend 进程已死就别再轮询 45s
+        rc = proc.poll()
+        if rc is not None:
+            return (False, f"backend died before /health (exit code={rc})")
         try:
             with urllib.request.urlopen(url, timeout=2) as r:
                 if r.status == 200:
-                    return True
-        except urllib.error.URLError:
+                    return (True, "ready")
+        except (urllib.error.URLError, OSError, http.client.HTTPException):
             pass
         time.sleep(0.5)
-    return False
+    return (False, f"backend /health 未在 {timeout:g}s 内 ready（port {port}）")
 
 
 def _read_persisted_snapshot(db_path: str, project_id: int, episodes_id: int):
@@ -492,8 +507,9 @@ def run_e2e_check(args) -> tuple:
         # 把 SIGKILL escalation 整段跳过。
         pgid = proc.pid
         # a. poll /health
-        if not _poll_health(port, timeout=45.0):
-            return (False, f"backend /health 未在 45s 内 ready（port {port}）")
+        ok, reason = _poll_health(port, proc, timeout=45.0)
+        if not ok:
+            return (False, reason)
         print(f"[e2e] backend ready on port {port}")
 
         # b. POST /api/canvas/v2/import-from-dir
