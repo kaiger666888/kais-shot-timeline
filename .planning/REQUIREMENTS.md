@@ -60,24 +60,24 @@ Deferred to future milestone（建立在 v1.0 契约之上）：
 
 | Requirement | Phase | Status |
 |-------------|-------|--------|
-| SPEC-01 | TBD | Pending |
-| SPEC-02 | TBD | Pending |
-| SPEC-03 | TBD | Pending |
-| SPEC-04 | TBD | Pending |
-| EXPORT-01 | TBD | Pending |
-| EXPORT-02 | TBD | Pending |
-| EXPORT-03 | TBD | Pending |
-| CANVAS-01 | TBD | Pending |
-| CANVAS-02 | TBD | Pending |
-| CANVAS-03 | TBD | Pending |
-| VERIFY-01 | TBD | Pending |
-| VERIFY-02 | TBD | Pending |
+| SPEC-01 | Phase 1 | Pending |
+| SPEC-02 | Phase 1 | Pending |
+| SPEC-03 | Phase 1 | Pending |
+| SPEC-04 | Phase 1 | Pending |
+| EXPORT-01 | Phase 2 | Pending |
+| EXPORT-02 | Phase 2 | Pending |
+| EXPORT-03 | Phase 2 | Pending |
+| CANVAS-01 | Phase 3 | Pending |
+| CANVAS-02 | Phase 3 | Pending |
+| CANVAS-03 | Phase 3 | Pending |
+| VERIFY-01 | Phase 4 | Pending |
+| VERIFY-02 | Phase 4 | Pending |
 
 **Coverage:**
 - v1 requirements: 12 total
-- Mapped to phases: 0（待 roadmap）
-- Unmapped: 12 ⚠️（roadmap 创建后清零）
+- Mapped to phases: 12 (Phase 1: 4, Phase 2: 3, Phase 3: 3, Phase 4: 2)
+- Unmapped: 0
 
 ---
 *Requirements defined: 2026-07-20*
-*Last updated: 2026-07-20 after initial definition for v1.0 ShotTimelineAsset Contract*
+*Last updated: 2026-07-20 — traceability backfilled after ROADMAP.md creation*
