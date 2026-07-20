@@ -2,16 +2,16 @@
 gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: ShotTimelineAsset Contract
-status: phase_complete
-stopped_at: "Phase 01 complete — both plans done (01-01 schemas + 01-02 SPEC.md); ready for Phase 2 planning"
-last_updated: "2026-07-20T11:00:00.000Z"
+status: ready_to_plan
+stopped_at: Phase 01 complete (2/2) — ready to discuss Phase 2
+last_updated: 2026-07-20T10:03:45.043Z
 last_activity: 2026-07-20 -- Plan 01-02 complete (SPEC.md human-verify checkpoint APPROVED on first review)
 progress:
   total_phases: 4
   completed_phases: 1
   total_plans: 2
   completed_plans: 2
-  percent: 50
+  percent: 25
 ---
 
 # Project State
@@ -21,14 +21,14 @@ progress:
 See: .planning/PROJECT.md (updated 2026-07-20)
 
 **Core value:** 把成片解构成可移植的分镜资产集合（分镜 + stems + 转录 + prompts），作为下游 `@kais/infinite-canvas` 可直接消费的一等 collection 形态。
-**Current focus:** Phase 01 — ShotTimelineAsset Specification (COMPLETE); next: Phase 2 planning
+**Current focus:** Phase 2 — shot timeline exporter (producer)
 
 ## Current Position
 
-Phase: 01 (ShotTimelineAsset Specification) — COMPLETE
-Plan: 2 of 2 (01-01 + 01-02 both complete)
-Status: Phase 01 fully delivered — 6 schemas + minimal fixture + validator (01-01) + authoritative human-readable SPEC.md prose contract (01-02, human-verify APPROVED on first review)
-Last activity: 2026-07-20 -- Plan 01-02 closed out (455-line SPEC.md committed c6f603d; Task 2 checkpoint approved; SUMMARY created)
+Phase: 2
+Plan: Not started
+Status: Ready to plan
+Last activity: 2026-07-20
 
 Progress: [█████░░░░░] 50% (phase 1 of 4 complete; both Phase-1 plans done)
 
@@ -36,7 +36,7 @@ Progress: [█████░░░░░] 50% (phase 1 of 4 complete; both Phas
 
 **Velocity:**
 
-- Total plans completed: 2
+- Total plans completed: 4
 - Average duration: ~20min
 - Total execution time: ~40min
 
@@ -44,7 +44,7 @@ Progress: [█████░░░░░] 50% (phase 1 of 4 complete; both Phas
 
 | Phase | Plans | Total | Avg/Plan |
 |-------|-------|-------|----------|
-| 01 | 2/2 | ~40min | ~20min |
+| 01 | 2 | - | - |
 
 *Updated after each plan completion*
 
