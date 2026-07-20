@@ -103,7 +103,16 @@ Plans:
   1. A ShotTimelineAsset produced by `kais-shot-timeline` imports successfully into the canvas and renders the expected collection of storyboard / stem-audio / video / prompt children — observable end-to-end
   2. A regression test exists that fails when the field schema or media-reference convention drifts between the producer and consumer (catches silent breakage on either side)
 
-**Plans**: TBD
+**Plans**: 2 plans
+
+Plans:
+**Wave 1**
+
+- [ ] 04-01-PLAN.md — Build scripts/verify_contract.py harness skeleton with producer mode (inline jsonschema 6-schema validate, NOT spec/validate.py since SMOKE_SHAPES excludes asset) + consumer mode (shell-out to Phase 3 verify-canvas-shot-timeline.ts) + PHASE4_SELF_TEST=1 self-test (corrupt-asset injection) — covers VERIFY-02 (regression against producer/consumer drift)
+
+**Wave 2** *(blocked on Wave 1 completion — same-file extension; e2e needs the harness skeleton from 04-01)*
+
+- [ ] 04-02-PLAN.md — Add e2e mode to verify_contract.py (backend lifecycle via subprocess.Popen + /health poll + POST /api/canvas/v2/import-from-dir with real ep01 + SQL read-back of o_agentWorkData canvasGraph snapshot + structural asserts + try/finally teardown incl. worktree database.d.ts reconcile) + write 04-VERIFICATION.md capstone (WR-01/04 acceptance + SC-1 prompt-children scope reduction cross-ref Phase 3 deferred-items) — covers VERIFY-01 (end-to-end observable)
 
 ## Progress
 
@@ -115,7 +124,7 @@ Phases execute in numeric order: 1 → 2 → 3 → 4
 | 1. ShotTimelineAsset Specification | 2/2 | Complete | 2026-07-20 |
 | 2. shot-timeline Exporter (Producer) | 2/2 | Complete    | 2026-07-20 |
 | 3. Canvas Consumer | 1/1 | Complete    | 2026-07-20 |
-| 4. Cross-Repo Contract Verification | 0/TBD | Not started | - |
+| 4. Cross-Repo Contract Verification | 0/2 | Not started | - |
 
 ---
 
