@@ -77,23 +77,32 @@ class RangeRequestHandler(http.server.SimpleHTTPRequestHandler):
                          self.date_time_string(os.fstat(f.fileno()).st_mtime))
         self.end_headers()
 
-        if start > 0:
-            f.seek(start)
-        remaining = end - start + 1
-        chunk_size = 64 * 1024
-
+        # _Partial 把 f / remaining / chunk_size 全部存为实例属性，并提供 close()。
+        # 原因：SimpleHTTPRequestHandler.do_GET 在 finally 块里调 f.close()（/usr/lib/python3.12/http/server.py:681），
+        # 此处 f 是 send_head 的返回值。206 路径返回 _Partial 实例 —— 若它没有 close() 方法，
+        # f.close() 会 raise AttributeError，导致底层 file object 永不关闭，每次 Range 请求泄漏一个 FD。
         class _Partial:
+            def __init__(self, f, start, end, chunk_size=64 * 1024):
+                self._f = f
+                self._remaining = end - start + 1
+                self._chunk_size = chunk_size
+                if start > 0:
+                    f.seek(start)
+
             def read(self, _n=None):
-                nonlocal remaining
-                if remaining <= 0:
+                if self._remaining <= 0:
                     return b""
-                n = min(chunk_size, remaining)
-                data = f.read(n)
-                remaining -= len(data)
+                n = min(self._chunk_size, self._remaining)
+                data = self._f.read(n)
+                self._remaining -= len(data)
                 return data
 
-        # 返回一个能 read 的对象，SimpleHTTPRequestHandler 用 wfile.copyfile
-        return _Partial() if partial else f
+            def close(self):
+                # 让 do_GET 的 finally f.close() 不再 AttributeError，正确释放底层 FD。
+                self._f.close()
+
+        # 返回一个能 read 且能 close 的对象，SimpleHTTPRequestHandler 用 wfile.copyfile + finally f.close()
+        return _Partial(f, start, end) if partial else f
 
 
 class ThreadingHTTPServer(socketserver.ThreadingMixIn, http.server.HTTPServer):
