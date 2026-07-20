@@ -114,7 +114,7 @@ Phases execute in numeric order: 1 → 2 → 3 → 4
 |-------|----------------|--------|-----------|
 | 1. ShotTimelineAsset Specification | 2/2 | Complete | 2026-07-20 |
 | 2. shot-timeline Exporter (Producer) | 2/2 | Complete    | 2026-07-20 |
-| 3. Canvas Consumer | 1/1 | Complete   | 2026-07-20 |
+| 3. Canvas Consumer | 1/1 | Complete    | 2026-07-20 |
 | 4. Cross-Repo Contract Verification | 0/TBD | Not started | - |
 
 ---
