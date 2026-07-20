@@ -43,7 +43,7 @@ Plans:
 
 **Wave 2** *(blocked on Wave 1 completion)*
 
-- [ ] 01-02-PLAN.md — Write the authoritative human-readable spec/SPEC.md + human review checkpoint
+- [~] 01-02-PLAN.md — Write the authoritative human-readable spec/SPEC.md + human review checkpoint — Task 1 DONE 2026-07-20 (SPEC.md 455 lines, c6f603d); Task 2 human-verify checkpoint PENDING
 
 ### Phase 2: shot-timeline Exporter (Producer)
 

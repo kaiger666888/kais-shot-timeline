@@ -3,9 +3,9 @@ gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: ShotTimelineAsset Contract
 status: executing
-stopped_at: "Plan 01-01 complete: 6 schemas + minimal fixture + validate.py (smoke 5/5 valid)"
-last_updated: "2026-07-20T09:42:00.000Z"
-last_activity: 2026-07-20 -- Plan 01-01 complete (Phase 1 plan 1 of 2)
+stopped_at: "Plan 01-02 Task 1 complete (spec/SPEC.md committed c6f603d) — awaiting Task 2 human-verify checkpoint"
+last_updated: "2026-07-20T10:15:00.000Z"
+last_activity: 2026-07-20 -- Plan 01-02 Task 1 complete (SPEC.md written, awaiting human review)
 progress:
   total_phases: 4
   completed_phases: 0
@@ -26,9 +26,9 @@ See: .planning/PROJECT.md (updated 2026-07-20)
 ## Current Position
 
 Phase: 01 (ShotTimelineAsset Specification) — EXECUTING
-Plan: 2 of 2 (01-01 complete; ready for 01-02)
-Status: Plan 01-01 complete — 6 schemas + minimal fixture + validate.py committed
-Last activity: 2026-07-20 -- Plan 01-01 complete (smoke 5/5 valid against real producer output)
+Plan: 2 of 2 (01-01 complete; 01-02 Task 1 complete, Task 2 human-verify checkpoint pending)
+Status: Plan 01-02 Task 1 complete — spec/SPEC.md committed (c6f603d); awaiting human review of the prose contract
+Last activity: 2026-07-20 -- Plan 01-02 Task 1 complete (455-line SPEC.md written; covers all 4 phase success criteria)
 
 Progress: [█████░░░░░] 50%
 
@@ -62,6 +62,7 @@ Recent decisions affecting current work:
 - Plan 01-01: asset schema additionalProperties:false (strict) — graceful-degrade is runtime consumer behavior, not schema-loosening
 - Plan 01-01: media.stems rejects bass.wav (canonical = vocals/drums/other only — consumer frontend renders 3 stems)
 - Plan 01-01: producer's 5 data JSON shapes already conform to strict schemas (smoke 5/5 valid) — Phase 2 only needs to add asset.json + canonical media rename
+- Plan 01-02 Task 1: SPEC.md is 455 lines, bilingual style matching repo convention; quotes graceful-degrade rule verbatim from asset.schema.json#schema_version.description; covers all 4 phase success criteria + all 6 schema filename references
 
 ### Pending Todos
 
@@ -84,5 +85,5 @@ Items acknowledged and carried forward from milestone bootstrap:
 ## Session Continuity
 
 Last session: 2026-07-20
-Stopped at: "Plan 01-01 complete: 6 schemas + minimal fixture + validate.py (smoke 5/5 valid)"
-Resume file: None (next: Plan 01-02 — prose SPEC.md + human review checkpoint)
+Stopped at: "Plan 01-02 Task 1 complete (spec/SPEC.md committed c6f603d) — awaiting Task 2 human-verify checkpoint"
+Resume file: None (next: human reviews spec/SPEC.md against the 6 schemas + 4 phase success criteria, types "approved" or lists specific issues)
