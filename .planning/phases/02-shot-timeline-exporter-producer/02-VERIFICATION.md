@@ -1,0 +1,109 @@
+---
+phase: 02-shot-timeline-exporter-producer
+verified: 2026-07-20T22:58:00Z
+status: passed
+score: 3/3 must-haves verified
+overrides_applied: 0
+---
+
+# Phase 2: shot-timeline Exporter (Producer) — Verification Report
+
+**Phase Goal:** Running the shot-timeline pipeline emits a self-describing
+ShotTimelineAsset artifact that conforms to the Phase 1 spec and is servable
+to a downstream consumer.
+**Verified:** 2026-07-20T22:58:00Z
+**Status:** passed
+**Re-verification:** No — initial verification
+
+## Goal Achievement
+
+### Observable Truths (ROADMAP success criteria)
+
+| #   | Truth (SC)                                                                                                                                                                                                                                                                                                                                                                                                                     | Status     | Evidence                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                          |
+| --- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ | ---------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| 1   | After `run_pipeline.py` finishes, a ShotTimelineAsset artifact (manifest + 5 JSON set + media references) exists under `output/<video-stem>/` that conforms to the Phase 1 spec                                                                                                                                                                                                                                                | ✓ VERIFIED | Ran `python3 run_pipeline.py --video <ep01-abs-path> --skip-detect --skip-separate --skip-transcribe` against ep01 (stable work dir). `step_export` ran, exited 0, wrote `output/<ep01>/asset.json` (725 bytes). `Draft202012Validator(spec/schemas/asset.schema.json).iter_errors(asset)` = 0 errors. All 5 data JSONs present (shots/audio_analysis/transcript/frames/prompts). Canonical `video.mp4` symlink → original video at `/data/home/kai/下载/bilibili_xiaojianghu/<ep01>.mp4`; ffprobe confirms target has `audio` stream (NOT the `-an` h264.mp4). Canonical `stems/{vocals,drums,other}.wav` symlinks resolve to real files; `bass.wav` NOT in canonical set.                                          |
+| 2   | The exported asset carries a version number and self-describing manifest, and the export layer adds this WITHOUT modifying the existing detection/transcription/separation algorithms (additive only)                                                                                                                                                                                                                          | ✓ VERIFIED | Fresh `asset.json` carries: `schema_version="1"`, `asset_type="shottimeline"`, `source.{video_filename, duration_sec}`, `generator.{tool="kais-shot-timeline", version=<git short SHA>, generated_at=<UTC ISO-8601>}`, `data` (5 JSON refs), `media.{video, stems.{vocals,drums,other}}`. Additive-only invariant: `git diff f32d537 -- detectors/ audio/ html/gen_timeline_html.py` is **EMPTY** (0 lines changed). Phase 2 modified only `scripts/export_asset.py` (NEW), `run_pipeline.py` (step_export + --skip-export + --force asset.json), `scripts/serve.py` (_Partial.close FD-leak fix), `scripts/check_range.py` (NEW).                                                            |
+| 3   | The exported asset's media files (video + 3 stem wavs) are consumable via HTTP Range requests through `scripts/serve.py` — a consumer can seek without re-downloading the whole file (206 Partial Content responses observed)                                                                                                                                                                                                    | ✓ VERIFIED | `python3 scripts/check_range.py "output/<ep01>"` exits 0, stdout: `[check-range] OK: 206 + Content-Range=bytes 0-1023/48783460 + Accept-Ranges=bytes + 1024-byte body`. All 4 invariants hold. Default scan (no arg) also exits 0 (auto-picks sorted-first dir with video.mp4). Non-existent dir exits 1 with actionable message. FD-leak fix verified independently: 50 consecutive `curl -H 'Range: bytes=0-1023'` requests against serve.py, FD drift=0, zero `AttributeError` in stderr. `_Partial.close()` method exists (line 100) and calls `self._f.close()` (line 102); `nonlocal remaining` closure eliminated. |
+
+**Score:** 3/3 truths verified
+
+### Required Artifacts
+
+| Artifact                  | Expected                                                                    | Status     | Details                                                                                                                                                                                                                                                                                                                                                |
+| ------------------------- | --------------------------------------------------------------------------- | ---------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `scripts/export_asset.py` | Manifest writer + canonical symlinks + inline jsonschema self-validation    | ✓ VERIFIED | 321 lines (> 150 min). `Draft202012Validator` imported inline (line 113). `os.symlink` usage (line 103). Canonical literals `"video.mp4"` (4x), `"stems/vocals.wav"`, `"stems/drums.wav"`, `"stems/other.wav"` all present; `"stems/bass.wav"` absent. Zero `subprocess` calls to `spec/validate.py` (3 textual refs are docstrings explaining why not). |
+| `run_pipeline.py`         | step_export (step 6) + `--skip-export` flag + `--force` clears `asset.json` | ✓ VERIFIED | `def step_export(` defined (line 202). `--skip-export` present (3 hits). `asset_json` mentioned 13x. `args.skip_export` wired in main (line 357). `asset.json` in `--force` wipe tuple (line 325-326). All `[N/5]` stage-prefixes replaced with `[N/6]` (0 left, 17 hits). `--help` lists `--skip-export`.                                              |
+| `scripts/serve.py`        | `_Partial` class with `close()` method (FD-leak fix)                        | ✓ VERIFIED | `def close(` defined (line 100). `self._f.close()` called (line 102). `def __init__(self, f, start, end` signature (line 85). `nonlocal remaining` closure eliminated (0 hits). 50-request FD drift=0, no AttributeError. 416/NOT_FOUND/200 branches untouched (only `_Partial` class + return statement + 3 setup lines moved into `__init__`).        |
+| `scripts/check_range.py`  | Range-206 self-check (urllib + subprocess + try/finally teardown)           | ✓ VERIFIED | 157 lines (> 80 min). `urllib.request` used (4x). `Range.*bytes=0-1023` header present. Boots `scripts/serve.py` via `subprocess.Popen` (7 textual refs). `proc.terminate` in finally block. No curl dependency. Default scan, explicit path, and non-existent-dir paths all behave per spec.                                                            |
+
+### Key Link Verification
+
+| From                          | To                                            | Via                                                                        | Status   | Details                                                                                                                                          |
+| ----------------------------- | --------------------------------------------- | -------------------------------------------------------------------------- | -------- | ------------------------------------------------------------------------------------------------------------------------------------------------ |
+| `run_pipeline.py:step_export` | `scripts/export_asset.py`                     | `subprocess.run([sys.executable, HERE/"scripts"/"export_asset.py", ...])` | ✓ WIRED  | `cmd` built at line 251-255, invoked via `run_step(cmd, "[6/6] ShotTimelineAsset export")` (line 258). Verified by live pipeline run.               |
+| `scripts/export_asset.py`     | `spec/schemas/asset.schema.json`              | inline `Draft202012Validator(schema).iter_errors(asset_dict)`              | ✓ WIRED  | `validate_asset_json()` helper (lines 106-126) reads schema from `REPO / "spec" / "schemas" / "asset.schema.json"`. Validated fresh asset = 0 errors. |
+| `scripts/export_asset.py`     | `output/<video-stem>/video.mp4`               | `os.symlink(original_video_abs_path, link_path)`                           | ✓ WIRED  | `ensure_symlink(work_dir/video.mp4, video)` (line 262). Verified symlink resolves to real file with audio stream.                                  |
+| `scripts/check_range.py`      | `scripts/serve.py`                            | `subprocess.Popen([sys.executable, REPO/"scripts"/"serve.py", root, port])` | ✓ WIRED  | `check()` helper Popen at line 68-72, try/finally terminate at lines 104-118. Verified by `check_range.py` exit 0 against ep01.                     |
+| `scripts/check_range.py`      | `output/<video-stem>/video.mp4`               | `urllib.request.Request(url, headers={"Range": "bytes=0-1023"})`           | ✓ WIRED  | Line 80. Verified by `[check-range] OK: 206 + Content-Range=bytes 0-1023/48783460` output.                                                          |
+| `scripts/serve.py:_Partial.close` | underlying file object                     | `self._f.close()`                                                          | ✓ WIRED  | Line 102. `self._f = f` stored at `__init__` (line 86). Verified by FD-drift=0 over 50 requests.                                                     |
+
+### Data-Flow Trace (Level 4)
+
+| Artifact                | Data Variable                                       | Source                                                                                              | Produces Real Data | Status     |
+| ----------------------- | --------------------------------------------------- | --------------------------------------------------------------------------------------------------- | ------------------ | ---------- |
+| `asset.json`            | `source.duration_sec`                               | `transcript.json["duration"]` with ffprobe fallback                                                 | Yes (308.352)      | ✓ FLOWING  |
+| `asset.json`            | `source.video_filename`                             | `os.path.basename(video_path)` from `--video` arg                                                   | Yes                | ✓ FLOWING  |
+| `asset.json`            | `generator.version`                                 | `git rev-parse --short HEAD` (fallback "dev")                                                       | Yes (e3f0b90 → 63965d7 after re-gen) | ✓ FLOWING  |
+| `asset.json`            | `data.*`, `media.*`                                 | Literals hardcoded in `build_asset_dict`                                                            | Yes                | ✓ FLOWING  |
+| HTTP 206 response body  | `f.read(n)` chunks from `_Partial`                  | underlying `open(path, "rb")` file object                                                           | Yes (1024 bytes verified) | ✓ FLOWING  |
+
+### Behavioral Spot-Checks
+
+| Behavior                                                                                  | Command                                                                                                                              | Result                                                                                       | Status  |
+| ----------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------ | -------------------------------------------------------------------------------------------- | ------- |
+| Pipeline produces fresh schema-valid asset.json                                          | `python3 run_pipeline.py --video <ep01> --skip-detect --skip-separate --skip-transcribe` (after rm-ing asset.json + .video-stamp)   | exit 0; asset.json regenerated (725 bytes); schema validation 0 errors                       | ✓ PASS  |
+| `--skip-export` skips step 6 without touching asset.json mtime                            | `python3 run_pipeline.py --video <ep01> --skip-detect --skip-separate --skip-transcribe --skip-export`                              | log contains `[6/6] --skip-export: skipping asset export`; mtime unchanged                   | ✓ PASS  |
+| `scripts/export_asset.py` fails loud on missing data JSON                                 | `python3 scripts/export_asset.py --work-dir <empty mktemp> --video /dev/null --stems-source-dir <empty> --output <empty>/asset.json` | stderr contains `不存在`; exit non-zero                                                       | ✓ PASS  |
+| `scripts/check_range.py` Range-206 self-check on ep01                                     | `python3 scripts/check_range.py output/<ep01>`                                                                                       | exit 0; `[check-range] OK: 206 + Content-Range=bytes 0-1023/48783460 + Accept-Ranges=bytes` | ✓ PASS  |
+| `scripts/check_range.py` default scan (auto-pick)                                         | `python3 scripts/check_range.py`                                                                                                     | exit 0; auto-picked sorted-first dir; same 4-invariant OK message                            | ✓ PASS  |
+| `scripts/check_range.py` non-existent dir                                                 | `python3 scripts/check_range.py /tmp/nonexistent_dir_xyz`                                                                            | exit 1; `[check-range] no video.mp4 in /tmp/nonexistent_dir_xyz — nothing to probe`          | ✓ PASS  |
+| FD-leak fix: 50 consecutive Range requests                                                | 50× `curl -H 'Range: bytes=0-1023' http://127.0.0.1:8767/video.mp4` (with FD count)                                                  | FD drift=0; zero AttributeError in stderr                                                    | ✓ PASS  |
+| Additive-only: detectors/audio/html untouched vs main                                     | `git diff f32d537 -- detectors/ audio/ html/gen_timeline_html.py`                                                                    | 0 lines changed                                                                              | ✓ PASS  |
+| Phase 1 invariant: spec/validate.py still works                                           | `python3 spec/validate.py`                                                                                                           | minimal 6/6 valid (strict-smoke failures on ep03 transcript/frames are pre-existing data-dir caveats — see Known Data-Dir Caveat) | ✓ PASS  |
+
+### Probe Execution
+
+| Probe                     | Command                                                        | Result                                                                                                                                                                                          | Status |
+| ------------------------- | -------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------ |
+| `scripts/check_range.py`  | `bash scripts/check_range.py` (via `python3 scripts/check_range.py`) | exit 0; `[check-range] OK: 206 + Content-Range=bytes 0-1023/48783460 + Accept-Ranges=bytes + 1024-byte body`<br>(probes scripts/serve.py Range-206 contract end-to-end via urllib + subprocess) | PASS   |
+
+### Requirements Coverage
+
+| Requirement | Source Plan | Description                                                                                                            | Status     | Evidence                                                                                                                                                                                                                                                                                                                                 |
+| ----------- | ----------- | ---------------------------------------------------------------------------------------------------------------------- | ---------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| EXPORT-01   | 02-01       | Implement shot-timeline exporter: package `output/<stem>/` into spec-conforming ShotTimelineAsset                      | ✓ SATISFIED | `scripts/export_asset.py` exists (321 lines), writes asset.json + 4 canonical symlinks + inline schema self-validation. End-to-end pipeline run on ep01 produces schema-valid manifest. Canonical video.mp4 symlink resolves to original video with audio stream. bass.wav excluded per schema. |
+| EXPORT-02   | 02-01       | Versioned + self-describing manifest; additive-only (no algorithm changes)                                             | ✓ SATISFIED | asset.json carries `schema_version="1"`, `generator.{tool, version, generated_at}`, full `source/data/media` inventory. `git diff f32d537 -- detectors/ audio/ html/gen_timeline_html.py` is empty — additive-only invariant holds.                                                                               |
+| EXPORT-03   | 02-02       | Range-aware server for media files, consumable by client seek                                                          | ✓ SATISFIED | `scripts/serve.py` _Partial FD-leak fixed (50-request FD drift=0). `scripts/check_range.py` exits 0, asserting 206 + Content-Range + Accept-Ranges + 1024-byte body invariants. Default scan + explicit-path + error-path all behave per spec.                                                                  |
+
+No orphaned requirements (REQUIREMENTS.md maps exactly EXPORT-01/02/03 to Phase 2; all 3 covered by plans 02-01 and 02-02).
+
+### Anti-Patterns Found
+
+| File                       | Line | Pattern | Severity | Impact |
+| -------------------------- | ---- | ------- | -------- | ------ |
+| (none — all 4 Phase 2 files clean) | —    | —       | —        | —      |
+
+Zero `TBD`/`FIXME`/`XXX`/`TODO`/`HACK`/`PLACEHOLDER`/`not implemented`/`placeholder`/`coming soon` markers in `scripts/export_asset.py`, `scripts/check_range.py`, `scripts/serve.py`, or `run_pipeline.py`.
+
+### Human Verification Required
+
+None. All 3 ROADMAP success criteria verified via runnable checks (pipeline run + schema validation + Range-206 self-check + FD-drift measurement + git-diff additive-only invariant). No visual / real-time / external-service checks needed for this phase — the consumer side (canvas rendering) is Phase 3, explicitly out of scope.
+
+### Gaps Summary
+
+No gaps. All three success criteria pass with concrete executable evidence. The `.video-stamp` sidecar (next to asset.json) is the WR-07 cache-key fix mentioned in guidance — gitignored under `output/`, not governed by schema, not a failure. The ep03 strict-smoke failures (missing transcript.json/frames.json from an interrupted background cache-restore regen) are a known data-dir caveat documented in `deferred-items.md`, not a Phase 2 code defect — Phase 2's exporter correctly refuses to write a manifest when any of the 5 data JSONs is missing (WR-02 guard).
+
+---
+
+_Verified: 2026-07-20T22:58:00Z_
+_Verifier: Claude (gsd-verifier)_

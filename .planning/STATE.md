@@ -2,9 +2,9 @@
 gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: ShotTimelineAsset Contract
-status: verifying
-stopped_at: "Phase 01 complete — both plans done (01-01 schemas + 01-02 SPEC.md); ready for Phase 2 planning"
-last_updated: "2026-07-20T14:11:56.357Z"
+status: ready_to_plan
+stopped_at: Phase 2 complete (2/2) — ready to discuss Phase 3
+last_updated: 2026-07-20T15:00:11.554Z
 last_activity: 2026-07-20
 progress:
   total_phases: 4
@@ -21,13 +21,13 @@ progress:
 See: .planning/PROJECT.md (updated 2026-07-20)
 
 **Core value:** 把成片解构成可移植的分镜资产集合（分镜 + stems + 转录 + prompts），作为下游 `@kais/infinite-canvas` 可直接消费的一等 collection 形态。
-**Current focus:** Phase 2 — shot-timeline Exporter (Producer)
+**Current focus:** Phase 3 — canvas consumer
 
 ## Current Position
 
-Phase: 2 (shot-timeline Exporter (Producer)) — EXECUTING
-Plan: 2 of 2
-Status: Phase complete — ready for verification
+Phase: 3
+Plan: Not started
+Status: Ready to plan
 Last activity: 2026-07-20
 
 Progress: [██████████] 100%
@@ -36,7 +36,7 @@ Progress: [██████████] 100%
 
 **Velocity:**
 
-- Total plans completed: 4
+- Total plans completed: 6
 - Average duration: ~20min
 - Total execution time: ~40min
 
@@ -45,6 +45,7 @@ Progress: [██████████] 100%
 | Phase | Plans | Total | Avg/Plan |
 |-------|-------|-------|----------|
 | 01 | 2 | - | - |
+| 2 | 2 | - | - |
 
 *Updated after each plan completion*
 | Phase 02 P02 | 15min | 2 tasks | 3 files |
