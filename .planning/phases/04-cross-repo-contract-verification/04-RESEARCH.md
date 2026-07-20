@@ -953,32 +953,39 @@ proc = subprocess.Popen(..., stdout=subprocess.DEVNULL, stderr=subprocess.DEVNUL
 
 **Overall confidence:** HIGH —— 大部分关键 claims 已 `[VERIFIED]` 或基于 CONTEXT 明确 discretion。A4 (NODE_ENV choice) 与 A10 (prompts scope) 有中等 risk,planner 须在 PLAN 显式处置。
 
-## Open Questions
+## Open Questions (RESOLVED)
+
+> All 5 questions resolved during planning — plans implement every recommendation verbatim. Resolution markers added post plan-checker (doc-format fix, no content change).
 
 1. **e2e backend 启动模式:dev tsx vs production build?**
    - What we know: `NODE_ENV=dev` 触发 `initKnexType` regen database.d.ts (Pitfall 2/5);`NODE_ENV=production` 走 `data/serve/app.js` 但需要 `npm run build:server` (esbuild bundle ~10s)
    - What's unclear: 用户对 worktree dirty state 的容忍度
    - Recommendation: **dev tsx + teardown 时 `git checkout -- src/types/database.d.ts` 兜底** —— 避免 build step,与 Phase 3 verify 模式一致 (它也用 `npx tsx`)。planner 在 Wave 0 加 reconcile step。
+   - RESOLVED: Plan 04-02 Task 1 用 NODE_ENV=dev + teardown `git checkout -- src/types/database.d.ts`。
 
 2. **Producer mode 是否要 re-export 覆盖既有 asset.json?**
    - What we know: `scripts/export_asset.py` 已 inline 自校验,write 成功即 schema-valid;harness 再独立校验是双重保险
    - What's unclear: 既有 ep01 asset.json 是 Phase 2 测试时产生的 (固定),是否要 Phase 4 re-export 抓"今天 producer 还能产出 valid asset"
    - Recommendation: **默认不 re-export (用既有 asset.json) + 提供 `PHASE4_RE_EXPORT=1` opt-in** —— 避免每次跑 harness 都改 output/(可能影响其他工具),但允许 manual 完整回归。CONTEXT discretion 倾向此 (「避免 GPU/Whisper 重跑」)。
+   - RESOLVED: Plan 04-01 Task 1 默认用既有 asset.json,`PHASE4_RE_EXPORT=1` opt-in 触发 re-export。
 
 3. **SC-1 "prompt children" 措辞 vs Phase 3 实际 scope?**
    - What we know: SC-1 写 "分镜/stem/字幕/prompt 集合";Phase 3 CONTEXT discretion 把 transcript/prompts 显式 defer 为 sidecar data refs (不单独建节点);e2e observable 节点集合是 storyboard/audio/video
    - What's unclear: SC-1 是否要求 prompt 节点存在?还是 prompt data 附挂在某节点 data 上即可?
    - Recommendation: **VERIFICATION 报告显式记录此 scope 缩减** —— Phase 3 已决定 (CONTEXT discretion locked),Phase 4 不重判;在 VERIFICATION §SC-1 写 "prompts/transcript 作为 sidecar data refs 保留在 asset.json#data 里,collection 节点集合不含独立 prompt 节点 (Phase 3 CONTEXT discretion)",并 cross-reference Phase 3 SUMMARY 的 D3 deferral note。
+   - RESOLVED: Plan 04-02 Task 2 在 04-VERIFICATION.md 显式记录 SC-1 scope reduction + cross-ref Phase 3 D3。
 
 4. **Self-test mode (`PHASE4_SELF_TEST=1`) 是否纳入 v1.0?**
    - What we know: deliberate-drift 仿真 (corrupt asset → expect fail) 是回归保护的黄金标准 (证明 harness fail-loud)
    - What's unclear: 用户是否接受额外 ~50-80 行代码做 self-test
    - Recommendation: **纳入** —— 成本低 (复用 producer mode 的 jsonschema,只需写 temp invalid asset + assert raises);价值高 (回归保护「证明」)。planner 取舍。
+   - RESOLVED: Plan 04-01 Task 2 实现 self-test mode (corrupt schema_version='v1' → assert fail-loud)。
 
 5. **e2e cleanup:删 test rows 还是保留?**
    - What we know: 多次 e2e 跑会在 `o_agentWorkData` 累积 rows (每次新 pid/eid);sqlite gitignored,本地无害
    - What's unclear: 是否有性能或清晰度问题 (loadGraph scan 全表?)
    - Recommendation: **teardown 时 DELETE 自己的 test rows (pid+eid WHERE clause)**,不删 Phase 3 leftover (9001/9001 是 Phase 3 测试产物,保留作 cross-reference 证据)。
+   - RESOLVED: Plan 04-02 Task 1 teardown 用 parameterized DELETE 删自己的 test rows,保留 9001/9001。
 
 ## Sources
 
