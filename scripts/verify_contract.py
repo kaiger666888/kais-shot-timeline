@@ -473,6 +473,11 @@ def run_e2e_check(args) -> tuple:
         stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL,
         start_new_session=True,
     )
+    # CR-02：start_new_session=True 保证子进程成为新 session/group leader，
+    # 所以 pgid == proc.pid 整个 group 生命周期不变。在 Popen 后立即缓存，
+    # 避免事后 os.getpgid(reaped_pid) 与 reaping 竞争抛 ProcessLookupError
+    # 把 SIGKILL escalation 整段跳过。
+    pgid = proc.pid
 
     # timestamp-based pid/eid —— 避免碰撞 Phase 3 leftover 9001/9001
     pid = int(time.time())
@@ -574,24 +579,32 @@ def run_e2e_check(args) -> tuple:
         # teardown a：3-layer proc-group cleanup
         # 模板源 scripts/check_range.py L104-118 + 升级到 process-group kill
         # （npx tsx 会 fork 子 node 进程；SIGTERM 只打 npx 留 orphan —— Rule 1 fix）
+        # CR-02 修复两点：
+        #   (a) pgid 已在 Popen 后缓存（start_new_session=True 时 pgid==proc.pid
+        #       全程不变），消除 getpgid(reaped_pid) TOCTOU；
+        #   (b) SIGKILL 改为外层 finally 无条件执行 —— 不再只在 TimeoutExpired
+        #       分支里 escalation。修补 npx 父进程先死、子 node 没收到 SIGTERM
+        #       （装了不 exit 的 handler / 信号延迟转发）的孤儿窗口。
         import signal as _signal
         try:
-            pgid = os.getpgid(proc.pid)
             os.killpg(pgid, _signal.SIGTERM)
         except (ProcessLookupError, PermissionError):
             pass
+        # bounded SIGTERM wait —— 父进程通常几秒内退；不依赖此超时触发 escalation
         try:
             proc.wait(timeout=10)
         except subprocess.TimeoutExpired:
-            try:
-                pgid = os.getpgid(proc.pid)
-                os.killpg(pgid, _signal.SIGKILL)
-            except (ProcessLookupError, PermissionError):
-                pass
-            try:
-                proc.wait(timeout=2)
-            except subprocess.TimeoutExpired:
-                pass
+            pass
+        # 无条件 SIGKILL 整个 group —— 兜底所有 SIGTERM 没收齐的情形
+        # （父先死 / 子装 handler 不 exit / 信号延迟转发）
+        try:
+            os.killpg(pgid, _signal.SIGKILL)
+        except (ProcessLookupError, PermissionError):
+            pass
+        try:
+            proc.wait(timeout=2)
+        except subprocess.TimeoutExpired:
+            pass
 
         # teardown b：worktree reconcile（Pitfall 2/5 —— database.d.ts dev regen 噪音）
         # best-effort，失败不阻塞 —— 是 auto-regen 副产品，生产路径不依赖
