@@ -193,8 +193,16 @@ def main():
                     help="若 output 已存在则先删除再写（canonical symlinks 由 ensure_symlink 幂等处理）")
     args = ap.parse_args()
 
+    # 路径绝对化：symlink target 必须是 abs path，否则会相对「symlink 所在目录」
+    # 解析（不是 cwd）—— 相对 target 会让 stems/vocals.wav 解析到
+    # stems/./output/.../vocals.wav 这种不存在的路径。video 同理（RESEARCH Pitfall 1）。
+    work_dir = os.path.abspath(args.work_dir)
+    video = os.path.abspath(args.video)
+    stems_source_dir = os.path.abspath(args.stems_source_dir)
+    output = os.path.abspath(args.output)
+
     # (a) prompts.json 存在性 guard —— asset.schema.json 的 data.prompts required
-    prompts_path = os.path.join(args.work_dir, "prompts.json")
+    prompts_path = os.path.join(work_dir, "prompts.json")
     if not os.path.exists(prompts_path):
         sys.exit(
             f"prompts.json 不存在: {prompts_path}\n"
@@ -202,8 +210,7 @@ def main():
             f"  prompts.json 当前由独立步骤产出（未接入 run_pipeline）；"
             f"请先就位再运行导出。")
 
-    # (b) video 存在性 + 绝对路径化
-    video = os.path.abspath(args.video)
+    # (b) video 存在性
     if not os.path.exists(video):
         sys.exit(f"input video not found: {video}")
 
@@ -218,33 +225,34 @@ def main():
             f"  (h264.mp4 transcode was -an stripped — exporter needs original)")
 
     # (d) stems/ 子目录
-    os.makedirs(os.path.join(args.work_dir, "stems"), exist_ok=True)
+    os.makedirs(os.path.join(work_dir, "stems"), exist_ok=True)
 
     # (e) 4 个 canonical symlinks
     #   video.mp4 → 原始视频 abs path（NOT work_dir 内的 <original-name>.mp4，
     #   后者链到 -an 去 audio 的 h264.mp4 —— 会让消费者听不到声音）
-    ensure_symlink(os.path.join(args.work_dir, "video.mp4"), video)
+    #   target 必须是 abs path —— 相对 target 会按「symlink 所在目录」解析（非 cwd）。
+    ensure_symlink(os.path.join(work_dir, "video.mp4"), video)
     ensure_symlink(
-        os.path.join(args.work_dir, "stems", "vocals.wav"),
-        os.path.join(args.stems_source_dir, "vocals.wav"))
+        os.path.join(work_dir, "stems", "vocals.wav"),
+        os.path.join(stems_source_dir, "vocals.wav"))
     ensure_symlink(
-        os.path.join(args.work_dir, "stems", "drums.wav"),
-        os.path.join(args.stems_source_dir, "drums.wav"))
+        os.path.join(work_dir, "stems", "drums.wav"),
+        os.path.join(stems_source_dir, "drums.wav"))
     ensure_symlink(
-        os.path.join(args.work_dir, "stems", "other.wav"),
-        os.path.join(args.stems_source_dir, "other.wav"))
+        os.path.join(work_dir, "stems", "other.wav"),
+        os.path.join(stems_source_dir, "other.wav"))
     # 不创建 stems/bass.wav —— schema 拒绝 + 前端只渲染 3 stems。
     # htdemucs 原始 bass.wav 在 stems-source-dir 中保持不动（additive-only）。
 
     # (f) --force 清空已存在的 output
-    if args.force and os.path.exists(args.output):
-        os.unlink(args.output)
+    if args.force and os.path.exists(output):
+        os.unlink(output)
 
     # (g) 构建 manifest dict
-    asset = build_asset_dict(args.work_dir, video)
+    asset = build_asset_dict(work_dir, video)
 
     # (h) 写入（ensure_ascii=False 强制 —— Chinese video_filename）
-    with open(args.output, "w", encoding="utf-8") as f:
+    with open(output, "w", encoding="utf-8") as f:
         json.dump(asset, f, indent=2, ensure_ascii=False)
 
     # (i) inline schema 自校验（invalid 时 helper 内 sys.exit 非 0）
@@ -252,12 +260,12 @@ def main():
 
     # (j) Post-write assert：4 个 canonical paths 都 resolve 到真实文件
     for rel in ("video.mp4", "stems/vocals.wav", "stems/drums.wav", "stems/other.wav"):
-        p = os.path.join(args.work_dir, rel)
+        p = os.path.join(work_dir, rel)
         if not os.path.exists(p):
             sys.exit(f"canonical path missing after export: {rel} (expected at {p})")
 
     # (k) Final-status print（CLAUDE.md bracketed-tag 惯例）
-    print(f"[export-asset] wrote asset.json → {args.output}")
+    print(f"[export-asset] wrote asset.json → {output}")
     print(f"[export-asset] canonical symlinks: video.mp4, stems/{{vocals,drums,other}}.wav")
 
 

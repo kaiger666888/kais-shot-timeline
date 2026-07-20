@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""端到端 pipeline：视频 → 分镜检测 + 音轨分离 + 转录 + 时间轴 HTML。
+"""端到端 pipeline：视频 → 分镜检测 + 音轨分离 + 转录 + 时间轴 HTML + ShotTimelineAsset 导出。
 
 步骤（每步可单独跳过，中间结果缓存在 output/<video-name>/ 下）：
 
@@ -8,11 +8,12 @@
   3. Demucs 音轨分离 + 分镜音频能量分析（audio/separate_stems.py）
   4. Whisper 转录（audio/transcribe.py）
   5. 生成时间轴双面板 HTML（html/gen_timeline_html.py）
+  6. ShotTimelineAsset 导出（scripts/export_asset.py —— asset.json + canonical symlinks）
 
 用法：
   python run_pipeline.py --video input.mp4
                          [--output-dir ./output]
-                         [--skip-detect] [--skip-separate] [--skip-transcribe]
+                         [--skip-detect] [--skip-separate] [--skip-transcribe] [--skip-export]
                          [--whisper-model large-v3] [--whisper-language zh]
                          [--demucs-model htdemucs]
                          [--device cuda]
@@ -23,9 +24,13 @@
     ├── h264.mp4               （若转码过）
     ├── shots.json             （V3b 检测结果）
     ├── frames.json            （首尾帧 base64 缓存）
-    ├── stems/htdemucs/<stem>/ （Demucs 分轨）
+    ├── stems/htdemucs/<stem>/ （Demucs 分轨，4 stems 含 bass）
+    ├── stems/{vocals,drums,other}.wav （canonical symlinks, bass 显式剔除）
     ├── audio_analysis.json    （per-shot stem 能量分析）
     ├── transcript.json        （Whisper 转录）
+    ├── prompts.json           （外部步骤产出 —— 导出步骤要求存在）
+    ├── video.mp4              （canonical symlink → 原始视频含 audio 流）
+    ├── asset.json             （ShotTimelineAsset manifest, schema_version="1"）
     └── timeline.html          （最终 HTML）
 """
 import argparse
@@ -60,13 +65,13 @@ def ensure_h264(video_path: str, work_dir: str) -> str:
     """若视频是 AV1，转码到 H264（PySceneDetect 在 AV1 上不稳定）。"""
     codec = probe_codec(video_path)
     if codec != "av1":
-        print(f"[1/5] codec={codec}, no transcode needed")
+        print(f"[1/6] codec={codec}, no transcode needed")
         return video_path
     out = os.path.join(work_dir, "h264.mp4")
     if os.path.exists(out) and os.path.getsize(out) > 1_000_000:
-        print(f"[1/5] cached H264: {out}")
+        print(f"[1/6] cached H264: {out}")
         return out
-    print(f"[1/5] transcoding AV1 → H264: {video_path} → {out}")
+    print(f"[1/6] transcoding AV1 → H264: {video_path} → {out}")
     subprocess.run(
         ["ffmpeg", "-y", "-i", video_path,
          "-c:v", "libx264", "-preset", "fast", "-crf", "20", "-an", out],
@@ -84,17 +89,17 @@ def run_step(cmd: list, label: str):
 def step_detect(video: str, work_dir: str, frames_dir: str,
                 shots_json: str, skip: bool, sample_fps: float) -> str:
     if skip:
-        print("[2/5] --skip-detect: skipping scene detection")
+        print("[2/6] --skip-detect: skipping scene detection")
         return shots_json if os.path.exists(shots_json) else None
     if os.path.exists(shots_json):
-        print(f"[2/5] cached shots: {shots_json}")
+        print(f"[2/6] cached shots: {shots_json}")
         return shots_json
     run_step(
         [sys.executable, str(HERE / "detectors" / "detect_v3b.py"),
          "--video", video, "--frames-dir", frames_dir,
          "--sample-fps", str(sample_fps),
          "--output", shots_json],
-        "[2/5] V3b scene detection")
+        "[2/6] V3b scene detection")
     return shots_json
 
 
@@ -102,10 +107,10 @@ def step_separate(video: str, stems_root: str, shots_json: str,
                   audio_json: str, skip: bool, demucs_model: str,
                   device: str) -> str:
     if skip:
-        print("[3/5] --skip-separate: skipping Demucs + audio analysis")
+        print("[3/6] --skip-separate: skipping Demucs + audio analysis")
         return audio_json if os.path.exists(audio_json) else None
     if os.path.exists(audio_json):
-        print(f"[3/5] cached audio analysis: {audio_json}")
+        print(f"[3/6] cached audio analysis: {audio_json}")
         return audio_json
     cmd = [sys.executable, str(HERE / "audio" / "separate_stems.py"),
            "--input", video, "--shots", shots_json,
@@ -113,7 +118,7 @@ def step_separate(video: str, stems_root: str, shots_json: str,
            "--model", demucs_model]
     if device:
         cmd += ["--device", device]
-    run_step(cmd, "[3/5] Demucs stem separation + per-shot analysis")
+    run_step(cmd, "[3/6] Demucs stem separation + per-shot analysis")
     return audio_json
 
 
@@ -121,10 +126,10 @@ def step_transcribe(video: str, transcript: str, skip: bool,
                     model: str, language: str, device: str,
                     backend: str) -> str:
     if skip:
-        print("[4/5] --skip-transcribe: skipping Whisper")
+        print("[4/6] --skip-transcribe: skipping Whisper")
         return transcript if os.path.exists(transcript) else None
     if os.path.exists(transcript):
-        print(f"[4/5] cached transcript: {transcript}")
+        print(f"[4/6] cached transcript: {transcript}")
         return transcript
     cmd = [sys.executable, str(HERE / "audio" / "transcribe.py"),
            "--input", video, "--output", transcript,
@@ -132,7 +137,7 @@ def step_transcribe(video: str, transcript: str, skip: bool,
            "--backend", backend]
     if device:
         cmd += ["--device", device]
-    run_step(cmd, "[4/5] Whisper transcription")
+    run_step(cmd, "[4/6] Whisper transcription")
     return transcript
 
 
@@ -144,7 +149,7 @@ def step_timeline(video: str, work_dir: str, shots_json: str,
             os.path.getmtime(shots_json),
             os.path.getmtime(audio_json) if audio_json else 0,
             os.path.getmtime(transcript) if transcript else 0):
-        print(f"[5/5] cached timeline: {out_html}")
+        print(f"[5/6] cached timeline: {out_html}")
         return out_html
     cmd = [sys.executable, str(HERE / "html" / "gen_timeline_html.py"),
            "--shots", shots_json, "--output", out_html]
@@ -162,8 +167,45 @@ def step_timeline(video: str, work_dir: str, shots_json: str,
         cmd += ["--video-src", video_src]
     if stem_basename:
         cmd += ["--stem-basename", stem_basename]
-    run_step(cmd, "[5/5] timeline HTML generation")
+    run_step(cmd, "[5/6] timeline HTML generation")
     return out_html
+
+
+def step_export(work_dir: str, video: str, stems_source_dir: str,
+                asset_json: str, skip: bool, force: bool) -> str:
+    """导出 ShotTimelineAsset（asset.json + canonical symlinks）。
+
+    子进程调 scripts/export_asset.py；失败（export_asset.py sys.exit 非 0）
+    时 subprocess.run(check=True) raises CalledProcessError，run_pipeline 崩
+    （fails loud，项目惯例）。
+    """
+    if skip:
+        print("[6/6] --skip-export: skipping asset export")
+        return asset_json if os.path.exists(asset_json) else None
+    # mtime cache: mirror step_timeline；inputs = 5 数据 JSON + 原始 video
+    inputs = [
+        os.path.join(work_dir, "shots.json"),
+        os.path.join(work_dir, "audio_analysis.json"),
+        os.path.join(work_dir, "transcript.json"),
+        os.path.join(work_dir, "frames.json"),
+        os.path.join(work_dir, "prompts.json"),
+        video,
+    ]
+    inputs_exist = [p for p in inputs if os.path.exists(p)]
+    if (not force and os.path.exists(asset_json)
+            and inputs_exist
+            and os.path.getmtime(asset_json) > max(os.path.getmtime(p) for p in inputs_exist)):
+        print(f"[6/6] cached asset: {asset_json}")
+        return asset_json
+    cmd = [sys.executable, str(HERE / "scripts" / "export_asset.py"),
+           "--work-dir", work_dir,
+           "--video", video,
+           "--stems-source-dir", stems_source_dir,
+           "--output", asset_json]
+    if force:
+        cmd += ["--force"]
+    run_step(cmd, "[6/6] ShotTimelineAsset export")
+    return asset_json
 
 
 def main():
@@ -178,6 +220,8 @@ def main():
                     help="跳过 Demucs 分轨 + 音频分析")
     ap.add_argument("--skip-transcribe", action="store_true",
                     help="跳过 Whisper 转录")
+    ap.add_argument("--skip-export", action="store_true",
+                    help="跳过 ShotTimelineAsset 导出（asset.json + canonical symlinks）")
     ap.add_argument("--sample-fps", type=float, default=5.0,
                     help="V3b Pass2 HistCorr 抽帧频率（默认 5）")
     ap.add_argument("--demucs-model", default="htdemucs",
@@ -212,11 +256,12 @@ def main():
     audio_json = os.path.join(work_dir, "audio_analysis.json")
     transcript = os.path.join(work_dir, "transcript.json")
     out_html = os.path.join(work_dir, "timeline.html")
+    asset_json = os.path.join(work_dir, "asset.json")
 
     os.makedirs(work_dir, exist_ok=True)
 
     if args.force:
-        for p in (shots_json, frames_json, audio_json, transcript, out_html):
+        for p in (shots_json, frames_json, audio_json, transcript, out_html, asset_json):
             if os.path.exists(p):
                 os.unlink(p)
         print(f"[force] cleared cache under {work_dir}")
@@ -245,8 +290,14 @@ def main():
     html = step_timeline(video, work_dir, shots, audio, tr, frames_json,
                          stems_dir, out_html, video_src, stem_basename)
 
+    # 6. ShotTimelineAsset 导出（asset.json + canonical symlinks）
+    stems_source_dir = stems_dir  # stems/htdemucs/<stem>/
+    step_export(work_dir, video, stems_source_dir, asset_json,
+                args.skip_export, args.force)
+
     print(f"\n[done] timeline: {html}")
     print(f"       work dir: {work_dir}")
+    print(f"       asset: {asset_json}")
     if not os.path.isabs(video_src) and not os.path.exists(
             os.path.join(work_dir, video_src)):
         print(f"       hint: HTML references '{video_src}' — copy/symlink "
