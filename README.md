@@ -14,6 +14,7 @@
    - 分镜卡片网格（V1/V2/V3 风格）
    - 音频分析卡片网格（4-stem 能量条 + 对白文本）
    - 时间轴双面板（左：分镜首尾帧 + 对白；右：竖向音轨波形，点击即播对应 stem）
+5. **分镜 prompt 反推** — 由首尾帧反推视频生成 prompt（主体/动作/镜头/场景/光影/风格 结构化 + 连贯 prompt 文本），产出 prompts.json + 卡片审阅 HTML（一键复制）
 
 ## 目录结构
 
@@ -33,7 +34,12 @@ kais-shot-timeline/
 ├── html/                       # HTML 生成
 │   ├── gen_shots_preview.py    # 分镜卡片网格 HTML
 │   ├── gen_audio_html.py       # 音频分析卡片 HTML（4-stem 能量条）
-│   └── gen_timeline_html.py    # 时间轴双面板 HTML（含 stem 播放）
+│   ├── gen_timeline_html.py    # 时间轴双面板 HTML（含 stem 播放）
+│   └── gen_prompts_html.py     # 分镜 prompt 审阅 HTML（一键复制）
+│
+├── prompts/                    # 分镜 prompt 反推
+│   ├── extract_frames.py       # frames.json → 每镜首尾帧 jpg
+│   └── merge_prompts.py        # prompt_parts/*.json → prompts.json（补时间元数据）
 │
 ├── examples/                   # 示例数据
 │   ├── ep01_shots.json
@@ -52,9 +58,9 @@ python run_pipeline.py --video input.mp4
 python run_pipeline.py --video input.mp4 \
     --skip-detect --skip-separate --skip-transcribe
 
-# 指定 GPU / 模型
+# 指定 GPU / 模型（默认 cuda:1 = RTX 3090）
 python run_pipeline.py --video input.mp4 \
-    --device cuda:0 \
+    --device cuda:1 \
     --demucs-model htdemucs \
     --whisper-model large-v3 --whisper-language zh
 ```
@@ -116,6 +122,33 @@ python html/gen_audio_html.py \
 python html/gen_shots_preview.py \
     --video input.mp4 --shots shots.json \
     --output shots.html
+```
+
+### 分镜 prompt 反推
+
+反推由 AI agent 看图完成（不依赖外部 VLM API），脚本负责素材准备与产物合并：
+
+```bash
+# 1. 解出每镜首尾帧 jpg（供 agent 看图）
+python prompts/extract_frames.py \
+    --frames output/<stem>/frames.json \
+    --output-dir output/<stem>/shot_frames/
+
+# 2. AI agent 分批读 shot_frames/，按统一 schema 写 output/<stem>/prompt_parts/part_*.json
+#    （字段：subject/action/camera/scene/lighting/style/prompt_text）
+
+# 3. 合并分片 + 补时间元数据
+python prompts/merge_prompts.py \
+    --parts-dir output/<stem>/prompt_parts/ \
+    --shots output/<stem>/shots.json \
+    --output output/<stem>/prompts.json
+
+# 4. 生成审阅 HTML（首尾帧 + 台词 + 结构化字段 + prompt 一键复制）
+python html/gen_prompts_html.py \
+    --prompts output/<stem>/prompts.json \
+    --frames output/<stem>/frames.json \
+    --transcript output/<stem>/transcript.json \
+    --output output/<stem>/prompts.html
 ```
 
 ## 时间轴 HTML 特性

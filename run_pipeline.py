@@ -188,8 +188,9 @@ def main():
                     help="Whisper 语言代码（默认 zh）")
     ap.add_argument("--whisper-backend", default="auto",
                     choices=["auto", "faster-whisper", "openai-whisper"])
-    ap.add_argument("--device", default=None,
-                    help="cuda / cuda:0 / cpu（Demucs + Whisper）")
+    ap.add_argument("--device", default="cuda:1",
+                    help="cuda / cuda:0 / cuda:1 / cpu（默认 cuda:1 = RTX 3090；"
+                         "Demucs + Whisper 共用）")
     ap.add_argument("--video-src", default=None,
                     help="HTML 内嵌 <video> 引用源（默认 --video 的 basename）")
     ap.add_argument("--stem-basename", default=None,

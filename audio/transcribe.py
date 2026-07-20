@@ -20,12 +20,15 @@
 }
 
 每个 segment 也会按分镜归属后处理（可选，由 pipeline 拼接时使用）。
+每个 segment 也会按分镜归属后处理（可选，由 pipeline 拼接时使用）。
 """
 import argparse
 import json
 import os
 import subprocess
 import sys
+
+import torch
 import tempfile
 from pathlib import Path
 
@@ -88,38 +91,132 @@ def transcribe_faster_whisper(wav: str, model: str, language: str,
     }
 
 
+def _other_gpu(device: str) -> str | None:
+    """返回另一张卡的 device id（仅当当前是 cuda:N）。"""
+    import re
+    m = re.fullmatch(r"cuda:(\d+)", device)
+    if not m:
+        return None
+    import torch
+    n = torch.cuda.device_count()
+    cur = int(m.group(1))
+    for i in range(n):
+        if i == cur:
+            continue
+        free, _total = torch.cuda.mem_get_info(i)
+        if free > 2 * 1024**3:  # 至少 2GB 空闲才考虑
+            return f"cuda:{i}"
+    return None
+
+
 def transcribe_openai_whisper(wav: str, model: str, language: str,
                               device: str = "cuda"):
-    """使用 openai-whisper 官方实现。"""
+    """使用 openai-whisper 官方实现。
+
+    OOM 回退链:cuda:N → 另一张卡 → cpu
+    """
     import whisper
-    print(f"[openai-whisper] model={model} device={device}")
-    m = whisper.load_model(model, device=device)
-    result = m.transcribe(wav, language=language, verbose=False)
-    seg_list = [{"start": round(s["start"], 2), "end": round(s["end"], 2),
-                 "text": s["text"].strip()} for s in result["segments"]]
-    return {
-        "backend": "openai-whisper",
-        "model": model,
-        "language": language,
-        "segments": seg_list,
-        "text": result.get("text", "").strip(),
-    }
+    chain = [device]
+    if device.startswith("cuda"):
+        other = _other_gpu(device)
+        if other and other != device:
+            chain.append(other)
+        chain.append("cpu")
+    last_err = None
+    for dev in chain:
+        print(f"[openai-whisper] model={model} trying device={dev}")
+        try:
+            m = whisper.load_model(model, device=dev)
+            result = m.transcribe(wav, language=language, verbose=False)
+            seg_list = [{"start": round(s["start"], 2), "end": round(s["end"], 2),
+                         "text": s["text"].strip()} for s in result["segments"]]
+            return {
+                "backend": "openai-whisper",
+                "model": model,
+                "language": language,
+                "segments": seg_list,
+                "text": result.get("text", "").strip(),
+            }
+        except torch.cuda.OutOfMemoryError as e:
+            last_err = e
+            print(f"[openai-whisper] OOM on {dev}, trying next fallback...")
+            import gc
+            gc.collect()
+            try:
+                torch.cuda.empty_cache()
+            except Exception:
+                pass
+            continue
+        except RuntimeError as e:
+            if "out of memory" in str(e).lower():
+                last_err = e
+                print(f"[openai-whisper] OOM on {dev}, trying next fallback...")
+                import gc
+                gc.collect()
+                try:
+                    torch.cuda.empty_cache()
+                except Exception:
+                    pass
+                continue
+            raise
+    if last_err:
+        raise last_err
 
 
 def transcribe(wav: str, model: str, language: str, device: str,
                backend: str = "auto"):
-    """按 backend 选择实现；auto 时先 faster-whisper 再 openai-whisper。"""
+    """按 backend 选择实现；auto 时先 faster-whisper 再 openai-whisper。
+
+    OOM 回退链（仅 faster-whisper）：
+        cuda:N (float16) → 另一张空闲 cuda (float16) → cuda (int8) → cpu (int8)
+    """
     if backend in ("auto", "faster-whisper"):
-        try:
-            return transcribe_faster_whisper(wav, model, language, device=device)
-        except ImportError:
-            if backend == "faster-whisper":
-                raise
-            print("[whisper] faster-whisper not available, falling back to openai-whisper")
-        except Exception as e:
-            if backend == "faster-whisper":
-                raise
-            print(f"[whisper] faster-whisper failed ({e}), trying openai-whisper")
+        # 回退链构建
+        chain = [device]
+        if device.startswith("cuda"):
+            other = _other_gpu(device)
+            if other and other != device:
+                chain.append(other)
+            chain.append(device)   # 同卡换 int8
+            chain.append("cpu")
+        seen = set()
+        last_err = None
+        for dev in chain:
+            key = (dev, "int8" if (dev == device and chain.index(dev) > 0) or dev == "cpu" else "float16")
+            if key in seen:
+                continue
+            seen.add(key)
+            try:
+                compute = key[1]
+                print(f"[whisper] trying faster-whisper on {dev} ({compute})")
+                return transcribe_faster_whisper(wav, model, language,
+                                                 device=dev, compute_type=compute)
+            except ImportError:
+                if backend == "faster-whisper":
+                    raise
+                print("[whisper] faster-whisper not available, falling back to openai-whisper")
+                last_err = ImportError()
+                break
+            except Exception as e:
+                # 区分 OOM vs 其他错误
+                is_oom = "OutOfMemoryError" in type(e).__name__ or "out of memory" in str(e).lower()
+                if is_oom:
+                    last_err = e
+                    print(f"[whisper] OOM on {dev} ({key[1]}), trying next fallback...")
+                    import gc
+                    gc.collect()
+                    try:
+                        torch.cuda.empty_cache()
+                    except Exception:
+                        pass
+                    continue
+                # 非OOM错误(如模型下载失败):auto模式回退到openai-whisper
+                last_err = e
+                if backend == "faster-whisper":
+                    raise
+                print(f"[whisper] faster-whisper failed ({e}), trying openai-whisper")
+                break
+        # 非OOM错误或所有OOM回退都失败 → 回退到 openai-whisper
     return transcribe_openai_whisper(wav, model, language, device=device)
 
 
