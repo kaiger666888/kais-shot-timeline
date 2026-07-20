@@ -82,7 +82,13 @@ Plans:
   2. The collection is represented as a **structural parent node** following the existing `zone`/`phase` pattern (holds child node IDs), aggregating `storyboard` / `audio` / `video` child nodes derived from the asset
   3. All child nodes render via the canvas's **existing 5 renderers** — no custom renderer is introduced, no receiver-schema contract bump occurs (`structuralTypes` passthrough suffices)
 
-**Plans**: TBD
+**Plans**: 1 plan
+
+Plans:
+**Wave 1**
+
+- [ ] 03-01-PLAN.md — Add ShotTimelineAsset branch to import-from-dir.ts (RawArtifact.canvasType + buildPhaseTree L804 override + extractShotTimelineArtifacts + sequence edges + scanAndBuildTree merge) + downsampled golden fixture + verify-canvas-shot-timeline.ts (asserts A–F + additive-only guards)
+
 **UI hint**: yes
 
 ### Phase 4: Cross-Repo Contract Verification
