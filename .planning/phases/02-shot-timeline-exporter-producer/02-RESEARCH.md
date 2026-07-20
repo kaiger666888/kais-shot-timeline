@@ -740,22 +740,27 @@ if __name__ == "__main__":
 | A4 | Step prefix `[N/6]` is preferred over introducing a `TOTAL_STEPS` constant | Pitfall 3 | Minor stylistic choice; literal find/replace vs constant. **Risk: TRIVIAL**. `[ASSUMED]` |
 | A5 | `video.mp4` symlink pointing to an absolute path OUTSIDE the asset root (e.g., `/data/home/kai/下载/bilibili_xiaojianghu/…mp4`) is acceptable for v1.0 | Pitfall 1 | Asset dir is non-portable (moving it breaks the symlink). CONTEXT.md deferred zip/portability to v2. **Risk: MEDIUM** — if user expects to `cp -r output/<asset>/ /elsewhere/` and have it work, it won't. Mitigation: print a warning when the symlink target is outside the asset root. `[ASSUMED]` |
 
-## Open Questions
+## Open Questions (RESOLVED)
+
+> All 3 questions resolved during planning — plans implement the recommendations verbatim. Resolution markers added post plan-checker (doc-format fix, no content change).
 
 1. **Should the exporter fail or warn when `transcript.source != basename(video)`?**
    - What we know: Both are usually identical (transcribe.py writes `source` from the same basename). Cross-check verified identical for episode 03.
    - What's unclear: If they diverge (e.g., user renamed the video after transcribe), should export fail or warn?
    - Recommendation: **Warn + use `basename(video)`** (the authoritative `--video` arg). Don't fail — the schema accepts any string; provenance divergence isn't a schema violation.
+   - RESOLVED: Plan 02-01 implements warn-don't-fail with `basename(video)` as authoritative.
 
 2. **Should `step_export` run if `prompts.json` is missing, skipping only the export (not failing the pipeline)?**
    - What we know: CONTEXT says exporter "fails loud". But pipeline-level, should `step_export` failure cascade to non-zero exit of `run_pipeline.py`?
    - What's unclear: Is "exporter fails loud" an exporter-internal behavior (sys.exit inside export_asset.py) or a pipeline-level behavior (step_export propagates CalledProcessError → main exits non-zero)?
    - Recommendation: **Exporter sys.exits with non-zero → subprocess.run(check=True) raises CalledProcessError → run_pipeline.py crashes with traceback.** Matches existing `subprocess.run([...], check=True)` pattern. This is "fails loud" by the project's existing convention.
+   - RESOLVED: Plan 02-01 relies on `subprocess.run(..., check=True)` → `CalledProcessError` cascade (matches recommendation).
 
 3. **Should the Range-206 self-check script be auto-invoked at the end of `step_export`, or be a separate manual step?**
    - What we know: CONTEXT discretion ("落地形式 plan 阶段定"). SC-3 needs "206 Partial Content responses observed" — automated check provides evidence.
    - What's unclear: Should running `run_pipeline.py` always run the Range check (adds ~1s + spawns a server), or should the check be opt-in via a separate CLI?
    - Recommendation: **Standalone script, NOT auto-run by step_export.** Reasons: (a) the check requires `serve.py` to bind a port (concurrency risk in parallel pipelines); (b) step_export is a producer concern, Range serving is a server concern — coupling them muddies the architecture; (c) the check is a verification step, belongs with `/gsd:verify-work` or Phase 4 regression harness, not every pipeline run. The phase plan should include a task to run check_range.py manually as part of acceptance.
+   - RESOLVED: Plan 02-02 keeps `check_range.py` standalone (not wired to step_export); manual run in acceptance.
 
 ## Environment Availability
 

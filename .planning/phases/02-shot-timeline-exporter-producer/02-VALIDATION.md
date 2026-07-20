@@ -1,8 +1,8 @@
 ---
 phase: 2
 slug: shot-timeline-exporter-producer
-status: draft
-nyquist_compliant: false
+status: planned
+nyquist_compliant: true
 wave_0_complete: false
 created: 2026-07-20
 ---
@@ -75,11 +75,11 @@ created: 2026-07-20
 
 ## Validation Sign-Off
 
-- [ ] All tasks have `<automated>` verify or Wave 0 dependencies
-- [ ] Sampling continuity: no 3 consecutive tasks without automated verify
-- [ ] Wave 0 covers all MISSING references
-- [ ] No watch-mode flags
-- [ ] Feedback latency < 3s
-- [ ] `nyquist_compliant: true` set in frontmatter
+- [x] All tasks have `<automated>` verify or Wave 0 dependencies
+- [x] Sampling continuity: no 3 consecutive tasks without automated verify
+- [x] Wave 0 covers all MISSING references (Wave 0 tasks ARE the plan tasks — self-bootstrapping, no external test framework)
+- [x] No watch-mode flags
+- [x] Feedback latency < 3s
+- [x] `nyquist_compliant: true` set in frontmatter
 
-**Approval:** pending
+**Approval:** approved 2026-07-20 (post plan-checker; Dimension 8 substantive checks 8a–8d all PASS; `wave_0_complete` flips to true after Plan 02-01 lands)
