@@ -2,10 +2,10 @@
 gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: ShotTimelineAsset Contract
-status: milestone_complete
-stopped_at: Milestone complete (Phase 4 was final phase)
-last_updated: 2026-07-20T20:10:17.543Z
-last_activity: 2026-07-20
+status: Awaiting next milestone
+stopped_at: "Phase 01 complete — both plans done (01-01 schemas + 01-02 SPEC.md); ready for Phase 2 planning"
+last_updated: "2026-07-20T20:15:02.971Z"
+last_activity: 2026-07-20 — Milestone v1.0 completed and archived
 progress:
   total_phases: 4
   completed_phases: 4
@@ -25,12 +25,10 @@ See: .planning/PROJECT.md (updated 2026-07-20)
 
 ## Current Position
 
-Phase: 4
-Plan: Not started
-Status: Milestone complete
-Last activity: 2026-07-20
-
-Progress: [██████████] 100%
+Phase: Milestone v1.0 complete
+Plan: —
+Status: Awaiting next milestone
+Last activity: 2026-07-20 — Milestone v1.0 completed and archived
 
 ## Performance Metrics
 
@@ -116,3 +114,7 @@ Items acknowledged and carried forward from milestone bootstrap:
 Last session: 2026-07-20T19:47:03.564Z
 Stopped at: "Phase 01 complete — both plans done (01-01 schemas + 01-02 SPEC.md); ready for Phase 2 planning"
 Resume file: None
+
+## Operator Next Steps
+
+- Start the next milestone with /gsd-new-milestone
