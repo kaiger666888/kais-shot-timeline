@@ -33,12 +33,15 @@
 - ✓ ShotTimelineAsset 规范（6 个 JSON Schema draft 2020-12 + 版本号 graceful-degrade 规则 + 媒体引用约定 + 自描述 manifest + validate.py）— Validated in Phase 1: ShotTimelineAsset Specification
 - ✓ shot-timeline 导出 ShotTimelineAsset 产物（export_asset.py 写 asset.json + canonical symlinks；run_pipeline.py step_export 第 6 步 always-on；serve.py FD-leak 修复 + check_range.py Range-206 自检；additive-only）— Validated in Phase 2: shot-timeline Exporter (Producer)
 - ✓ 画布侧（@kais/infinite-canvas）消费 ShotTimelineAsset，表示为 collection（import-from-dir.ts 新增 ShotTimelineAsset 分支：asset.json 识别 → extractShotTimelineArtifacts → 复用 buildPhaseTree；1 zone 父节点 + storyboard/audio/video 子节点 + sequence edges；合成字段满足 per-type Zod，不改 renderer / 不 bump contract；跨仓库 kais-aigc-platform feat/canvas-asset-collection）— Validated in Phase 3: Canvas Consumer
+- ✓ 跨仓库契约一致性验证（scripts/verify_contract.py 三模式 harness：producer inline schema 校验 + consumer shells Phase 3 verify + e2e 真 producer→backend→SQL read-back 断言 1 zone+93 storyboard+3 audio+video+92 sequence edges；self-test 证 fail-loud；WR-01/04 正式接受）— Validated in Phase 4: Cross-Repo Contract Verification
 
 ### Active
 
 <!-- 当前 milestone 范围。v1.0 ShotTimelineAsset Contract。 -->
 
-- [ ] 跨仓库契约一致性验证（导出端 ↔ 消费端）
+*All v1.0 requirements validated — milestone complete. See lifecycle (audit → complete → cleanup).*
+
+
 
 ### Out of Scope
 
@@ -93,4 +96,4 @@ This document evolves at phase transitions and milestone boundaries.
 4. Update Context with current state
 
 ---
-*Last updated: 2026-07-21 after Phase 3 complete (Canvas Consumer verified — import-from-dir ingests ShotTimelineAsset → collection, additive-only, 5 renderers reused; cross-repo kais-aigc-platform)*
+*Last updated: 2026-07-21 after Phase 4 complete — v1.0 ShotTimelineAsset Contract milestone COMPLETE (all 4 phases verified: spec / exporter / consumer / cross-repo verification)*
