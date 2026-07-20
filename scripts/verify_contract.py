@@ -172,15 +172,33 @@ def validate_six_shapes(asset_dir: Path, manifest: dict) -> list:
     模板源：spec/validate.py L52-94（_format_errors + sorted iter_errors 模式）。
     每个 shape 失败时只记第一条错误（actionable + 不刷屏）；self-test / 深度
     debug 走 validate_asset_json 拿完整列表。
+
+    CR-01 修复：manifest 缺 data 字段或 data.<shape> 非字符串时不能抛
+    KeyError/TypeError —— 那会把 harness 自身崩溃成 traceback，掩盖本该
+    干净报告的 "asset: 'data' is a required" schema 错误。改用 .get() 链 +
+    类型守护，让 asset-shape iter 负责报 missing-required，data 侧只记录
+    「键存在但类型错」这一类 schema 抓不到的漂移。
     """
     failures = []
+    # CR-01：data 缺失/类型错时退化成空 dict；asset-shape iter 会报
+    # "data is a required property"，无需在 data 循环里再炸 KeyError。
+    data_field = manifest.get("data") if isinstance(manifest, dict) else None
+    if not isinstance(data_field, dict):
+        data_field = {}
     for shape in SIX_SHAPES:
         schema_path = SCHEMAS_DIR / f"{shape}.schema.json"
         schema = json.loads(schema_path.read_text(encoding="utf-8"))
         if shape == "asset":
             instance = manifest
         else:
-            rel = manifest["data"][shape]
+            rel = data_field.get(shape)
+            if not isinstance(rel, str):
+                # data.<shape> 缺失：由 asset-shape iter 报 "data is required"，
+                # 不重复记录；只有「键存在但值非字符串」（schema 抓不到）才 flag
+                if shape not in data_field:
+                    continue
+                failures.append(f"{shape}: data.{shape} is not a string: {rel!r}")
+                continue
             instance_path = asset_dir / rel
             try:
                 instance = json.loads(instance_path.read_text(encoding="utf-8"))
