@@ -263,6 +263,18 @@ def main():
     # (g) 构建 manifest dict
     asset = build_asset_dict(work_dir, video)
 
+    # (g0) duration_sec > 0 hard check —— asset.schema.json 仅约束 minimum:0，
+    # schema 校验放过 0；但下游消费者拿到 duration_sec=0 会渲染失败。
+    # 02-REVIEW WR-03：transcript.duration 缺失 + ffprobe 失败时 _probe_duration
+    # 静默返回 0.0（低阶 helper 沿用项目惯例），exporter 必须把它当硬错误。
+    if not asset["source"]["duration_sec"]:
+        sys.exit(
+            f"无法确定视频时长：duration_sec=0\n"
+            f"  video={video}\n"
+            f"  transcript.json 无 duration 字段，且 ffprobe 兜底失败（rc≠0 或 stdout 解析失败）。\n"
+            f"  duration_sec 是 asset.schema.json 的 required 字段，不可为 0 —— "
+            f"请检查 ffprobe 是否在 PATH、video 是否可读。")
+
     # (g') Pre-write assert：4 个 canonical paths 都 resolve 到真实文件
     # 必须在 write 之前 —— 否则 dangling-symlink 的 manifest 已经落盘，下游看到
     # schema-valid 但指向不存在媒体的文档（02-REVIEW WR-01）。
