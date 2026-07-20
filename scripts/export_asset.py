@@ -201,14 +201,26 @@ def main():
     stems_source_dir = os.path.abspath(args.stems_source_dir)
     output = os.path.abspath(args.output)
 
-    # (a) prompts.json 存在性 guard —— asset.schema.json 的 data.prompts required
-    prompts_path = os.path.join(work_dir, "prompts.json")
-    if not os.path.exists(prompts_path):
-        sys.exit(
-            f"prompts.json 不存在: {prompts_path}\n"
-            f"  asset.schema.json 的 data.prompts 是 required 字段 —— 不可省略。\n"
-            f"  prompts.json 当前由独立步骤产出（未接入 run_pipeline）；"
-            f"请先就位再运行导出。")
+    # (a) 5 个数据 JSON 存在性 guard —— asset.schema.json 的 data.* 全部 required
+    # （schema 第 61 行：required: shots/audio_analysis/transcript/frames/prompts）。
+    # 任何缺失都 fail loud —— 不静默写入引用不存在文件的 manifest（02-REVIEW WR-02：
+    # 原实现只 guard 了 prompts.json，其余 4 个缺失会让 schema 通过但下游崩）。
+    # prompts.json 由独立步骤产出（未接入 run_pipeline），其余 4 个由 step_* 产出。
+    required_data = ("shots.json", "audio_analysis.json", "transcript.json",
+                     "frames.json", "prompts.json")
+    for name in required_data:
+        p = os.path.join(work_dir, name)
+        if not os.path.exists(p):
+            field = name.removesuffix(".json")
+            if name == "prompts.json":
+                hint = ("  prompts.json 当前由独立步骤产出（未接入 run_pipeline）；"
+                        "请先就位再运行导出。\n")
+            else:
+                hint = ("  若是用 --skip-* 跳过了对应步骤，请先就位再运行导出。\n")
+            sys.exit(
+                f"{name} 不存在: {p}\n"
+                f"  asset.schema.json 的 data.{field} 是 required 字段 —— 不可省略。\n"
+                + hint)
 
     # (b) video 存在性
     if not os.path.exists(video):
