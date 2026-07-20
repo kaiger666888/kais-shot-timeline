@@ -1,0 +1,265 @@
+#!/usr/bin/env python3
+"""ShotTimelineAsset 导出器：把 output/<video-stem>/ 打包成自描述的 asset.json。
+
+目的：在 pipeline 末端把现有 5 个数据 JSON（shots / audio_analysis / transcript /
+frames / prompts）+ 原始视频 + 3 个 canonical stems（vocals / drums / other）
+打包成符合 spec/schemas/asset.schema.json 的 ShotTimelineAsset manifest，并
+建立 canonical 媒体 symlink，让下游消费者（@kais/infinite-canvas）能以统一的
+相对路径（`video.mp4`、`stems/{vocals,drums,other}.wav`）找到所有资产。
+
+行为：
+  * 读取 transcript.json 中的 `source` / `duration` 字段，回退到 ffprobe 兜底。
+  * 写入 asset.json（schema_version="1"，asset_type="shottimeline"，generator
+    含 tool / version(git SHA) / generated_at(ISO-8601 UTC)）。
+  * 建立 4 个 canonical symlinks：
+      - video.mp4             → 原始视频的绝对路径（含 audio 流，非 h264.mp4）
+      - stems/vocals.wav      → stems/htdemucs/<video-stem>/vocals.wav
+      - stems/drums.wav       → stems/htdemucs/<video-stem>/drums.wav
+      - stems/other.wav       → stems/htdemucs/<video-stem>/other.wav
+    bass.wav 显式剔除（schema 拒绝 + 前端只渲染 3 stems）。
+  * 写完后立即用 inline Draft202012Validator(asset.schema.json) 自校验，
+    不 subprocess 到 spec/validate.py（其 SMOKE_SHAPES 排除 asset）。
+  * prompts.json 缺失时 sys.exit 非 0 + 中文 actionable 错误（schema required）。
+  * 幂等：已存在的 symlink 若 target 一致则跳过；非 symlink 真实文件拒绝覆盖。
+
+用法：
+  python3 scripts/export_asset.py \
+      --work-dir output/<video-stem>/ \
+      --video /abs/path/to/original.mp4 \
+      --stems-source-dir output/<video-stem>/stems/htdemucs/<video-stem>/ \
+      --output output/<video-stem>/asset.json \
+      [--force]
+"""
+import argparse
+import json
+import os
+import subprocess
+import sys
+from datetime import datetime, timezone
+from pathlib import Path
+
+
+# scripts/export_asset.py → repo root（定位 spec/schemas/asset.schema.json）
+REPO = Path(__file__).parent.parent.resolve()
+
+
+def _probe_duration(path: str) -> float:
+    """ffprobe 读取视频时长（秒）；失败回退 0.0。
+
+    与 run_pipeline.py:probe_duration 行为一致（不跨 stage import，自带副本）。
+    """
+    r = subprocess.run(
+        ["ffprobe", "-v", "quiet", "-show_entries", "format=duration",
+         "-of", "csv=p=0", path], capture_output=True, text=True)
+    try:
+        return float(r.stdout.strip())
+    except (ValueError, AttributeError):
+        return 0.0
+
+
+def _git_sha() -> str:
+    """取仓库短 git SHA 作为 generator.version；失败回退 "dev"。"""
+    try:
+        r = subprocess.run(
+            ["git", "-C", str(REPO), "rev-parse", "--short", "HEAD"],
+            capture_output=True, text=True, timeout=2)
+        return r.stdout.strip() or "dev"
+    except (subprocess.SubprocessError, OSError):
+        return "dev"
+
+
+def ensure_symlink(link_path: str, target: str) -> None:
+    """幂等创建 symlink link_path → target。
+
+    分支：
+      * 若 link_path 已是 symlink：
+          - readlink 与 target 一致 → skip（避免无谓的 unlink+recreate）
+          - 不一致 → unlink + 重建
+      * 若 link_path 存在但非 symlink（真实文件/目录）→ raise FileExistsError
+        （拒绝静默覆盖真实文件）
+      * 否则 → os.symlink(target, link_path)
+    """
+    if os.path.islink(link_path):
+        try:
+            current = os.readlink(link_path)
+        except OSError:
+            current = None
+        if current == target:
+            return  # idempotent skip
+        os.unlink(link_path)
+    elif os.path.exists(link_path):
+        raise FileExistsError(
+            f"refusing to overwrite non-symlink: {link_path} "
+            f"(expected symlink → {target})")
+    os.symlink(target, link_path)
+
+
+def validate_asset_json(asset_dict: dict) -> None:
+    """inline Draft202012Validator 自校验 asset_dict。
+
+    绝不 subprocess 到 spec/validate.py —— 其 SMOKE_SHAPES 显式排除 asset
+    （spec/validate.py:49），subprocess 会让无效 manifest 悄悄通过。
+    """
+    # lazy import：沿用 CLAUDE.md 的 optional-dep lazy-import 惯例
+    from jsonschema import Draft202012Validator
+
+    schema_path = REPO / "spec" / "schemas" / "asset.schema.json"
+    with open(schema_path, encoding="utf-8") as f:
+        schema = json.load(f)
+    validator = Draft202012Validator(schema)
+    errors = sorted(validator.iter_errors(asset_dict),
+                    key=lambda e: list(e.absolute_path))
+    if errors:
+        lines = [f"  at {'/'.join(map(str, e.absolute_path)) or '<root>'}: {e.message}"
+                 for e in errors]
+        sys.exit(
+            f"asset.json failed schema validation ({len(errors)} error(s)):\n"
+            + "\n".join(lines))
+
+
+def build_asset_dict(work_dir: str, video_path: str) -> dict:
+    """从现有 pipeline 产物组装 asset.json dict。
+
+    字段 sourcing（全部对照 output/《小江湖》第03话…/ 实际产物验证过）：
+      * schema_version: 字面量 "1"（spec/fixtures/minimal/asset.json 一致）
+      * asset_type: const "shottimeline"
+      * source.video_filename: basename(video_path)；与 transcript.source 交叉
+        校验（不一致仅 warn，不 fail）
+      * source.duration_sec: transcript.duration 优先；缺失回退 _probe_duration
+      * generator.tool: 字面量 "kais-shot-timeline"
+      * generator.version: _git_sha() 短 SHA（失败 "dev"）
+      * generator.generated_at: UTC ISO-8601（带 Z 后缀）
+      * data.*: 5 个数据 JSON 的字面量相对路径
+      * media.video: 字面量 "video.mp4"
+      * media.stems.*: 字面量 "stems/<name>.wav"（bass 不在内）
+    """
+    with open(os.path.join(work_dir, "transcript.json"), encoding="utf-8") as f:
+        transcript = json.load(f)
+
+    video_filename = os.path.basename(video_path)
+    # 完整性交叉校验：transcript.source 与 video basename 应一致。
+    # 不一致仅 warn（不 fail）—— 让用户看到但不阻塞导出。
+    if transcript.get("source") and transcript["source"] != video_filename:
+        print(f"[warn] transcript.source={transcript['source']!r} != "
+              f"video basename={video_filename!r}")
+
+    duration = transcript.get("duration")
+    if not duration:
+        duration = _probe_duration(video_path)
+
+    return {
+        "schema_version": "1",
+        "asset_type": "shottimeline",
+        "source": {
+            "video_filename": video_filename,
+            "duration_sec": duration,
+        },
+        "generator": {
+            "tool": "kais-shot-timeline",
+            "version": _git_sha(),
+            "generated_at": datetime.now(timezone.utc).strftime(
+                "%Y-%m-%dT%H:%M:%SZ"),
+        },
+        "data": {
+            "shots": "shots.json",
+            "audio_analysis": "audio_analysis.json",
+            "transcript": "transcript.json",
+            "frames": "frames.json",
+            "prompts": "prompts.json",
+        },
+        "media": {
+            "video": "video.mp4",
+            "stems": {
+                "vocals": "stems/vocals.wav",
+                "drums": "stems/drums.wav",
+                "other": "stems/other.wav",
+            },
+        },
+    }
+
+
+def main():
+    ap = argparse.ArgumentParser(
+        description="ShotTimelineAsset 导出器（manifest 写入 + canonical symlinks + inline jsonschema 自校验）")
+    ap.add_argument("--work-dir", required=True,
+                    help="资产根目录（output/<video-stem>/，含 5 个数据 JSON）")
+    ap.add_argument("--video", required=True,
+                    help="原始视频绝对路径（含 audio 流；非 h264.mp4）")
+    ap.add_argument("--stems-source-dir", required=True,
+                    help="Demucs 输出 stems 目录（stems/htdemucs/<video-stem>/）")
+    ap.add_argument("--output", required=True,
+                    help="asset.json 写入路径（通常 <work-dir>/asset.json）")
+    ap.add_argument("--force", action="store_true",
+                    help="若 output 已存在则先删除再写（canonical symlinks 由 ensure_symlink 幂等处理）")
+    args = ap.parse_args()
+
+    # (a) prompts.json 存在性 guard —— asset.schema.json 的 data.prompts required
+    prompts_path = os.path.join(args.work_dir, "prompts.json")
+    if not os.path.exists(prompts_path):
+        sys.exit(
+            f"prompts.json 不存在: {prompts_path}\n"
+            f"  asset.schema.json 的 data.prompts 是 required 字段 —— 不可省略。\n"
+            f"  prompts.json 当前由独立步骤产出（未接入 run_pipeline）；"
+            f"请先就位再运行导出。")
+
+    # (b) video 存在性 + 绝对路径化
+    video = os.path.abspath(args.video)
+    if not os.path.exists(video):
+        sys.exit(f"input video not found: {video}")
+
+    # (c) 验证 video 含 audio 流（02-RESEARCH Pitfall 1 关键修复）
+    # h264.mp4 是 -an 去 audio 的转码中间产物 —— video.mp4 symlink 决不能指它。
+    r = subprocess.run(
+        ["ffprobe", "-v", "quiet", "-show_entries", "stream=codec_type",
+         "-of", "csv=p=0", video], capture_output=True, text=True)
+    if "audio" not in r.stdout:
+        sys.exit(
+            f"video has no audio stream: {video}\n"
+            f"  (h264.mp4 transcode was -an stripped — exporter needs original)")
+
+    # (d) stems/ 子目录
+    os.makedirs(os.path.join(args.work_dir, "stems"), exist_ok=True)
+
+    # (e) 4 个 canonical symlinks
+    #   video.mp4 → 原始视频 abs path（NOT work_dir 内的 <original-name>.mp4，
+    #   后者链到 -an 去 audio 的 h264.mp4 —— 会让消费者听不到声音）
+    ensure_symlink(os.path.join(args.work_dir, "video.mp4"), video)
+    ensure_symlink(
+        os.path.join(args.work_dir, "stems", "vocals.wav"),
+        os.path.join(args.stems_source_dir, "vocals.wav"))
+    ensure_symlink(
+        os.path.join(args.work_dir, "stems", "drums.wav"),
+        os.path.join(args.stems_source_dir, "drums.wav"))
+    ensure_symlink(
+        os.path.join(args.work_dir, "stems", "other.wav"),
+        os.path.join(args.stems_source_dir, "other.wav"))
+    # 不创建 stems/bass.wav —— schema 拒绝 + 前端只渲染 3 stems。
+    # htdemucs 原始 bass.wav 在 stems-source-dir 中保持不动（additive-only）。
+
+    # (f) --force 清空已存在的 output
+    if args.force and os.path.exists(args.output):
+        os.unlink(args.output)
+
+    # (g) 构建 manifest dict
+    asset = build_asset_dict(args.work_dir, video)
+
+    # (h) 写入（ensure_ascii=False 强制 —— Chinese video_filename）
+    with open(args.output, "w", encoding="utf-8") as f:
+        json.dump(asset, f, indent=2, ensure_ascii=False)
+
+    # (i) inline schema 自校验（invalid 时 helper 内 sys.exit 非 0）
+    validate_asset_json(asset)
+
+    # (j) Post-write assert：4 个 canonical paths 都 resolve 到真实文件
+    for rel in ("video.mp4", "stems/vocals.wav", "stems/drums.wav", "stems/other.wav"):
+        p = os.path.join(args.work_dir, rel)
+        if not os.path.exists(p):
+            sys.exit(f"canonical path missing after export: {rel} (expected at {p})")
+
+    # (k) Final-status print（CLAUDE.md bracketed-tag 惯例）
+    print(f"[export-asset] wrote asset.json → {args.output}")
+    print(f"[export-asset] canonical symlinks: video.mp4, stems/{{vocals,drums,other}}.wav")
+
+
+if __name__ == "__main__":
+    main()
