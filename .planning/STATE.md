@@ -2,15 +2,15 @@
 gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: ShotTimelineAsset Contract
-status: executing
-stopped_at: "Plan 01-02 Task 1 complete (spec/SPEC.md committed c6f603d) — awaiting Task 2 human-verify checkpoint"
-last_updated: "2026-07-20T10:15:00.000Z"
-last_activity: 2026-07-20 -- Plan 01-02 Task 1 complete (SPEC.md written, awaiting human review)
+status: phase_complete
+stopped_at: "Phase 01 complete — both plans done (01-01 schemas + 01-02 SPEC.md); ready for Phase 2 planning"
+last_updated: "2026-07-20T11:00:00.000Z"
+last_activity: 2026-07-20 -- Plan 01-02 complete (SPEC.md human-verify checkpoint APPROVED on first review)
 progress:
   total_phases: 4
-  completed_phases: 0
+  completed_phases: 1
   total_plans: 2
-  completed_plans: 1
+  completed_plans: 2
   percent: 50
 ---
 
@@ -21,30 +21,30 @@ progress:
 See: .planning/PROJECT.md (updated 2026-07-20)
 
 **Core value:** 把成片解构成可移植的分镜资产集合（分镜 + stems + 转录 + prompts），作为下游 `@kais/infinite-canvas` 可直接消费的一等 collection 形态。
-**Current focus:** Phase 01 — ShotTimelineAsset Specification
+**Current focus:** Phase 01 — ShotTimelineAsset Specification (COMPLETE); next: Phase 2 planning
 
 ## Current Position
 
-Phase: 01 (ShotTimelineAsset Specification) — EXECUTING
-Plan: 2 of 2 (01-01 complete; 01-02 Task 1 complete, Task 2 human-verify checkpoint pending)
-Status: Plan 01-02 Task 1 complete — spec/SPEC.md committed (c6f603d); awaiting human review of the prose contract
-Last activity: 2026-07-20 -- Plan 01-02 Task 1 complete (455-line SPEC.md written; covers all 4 phase success criteria)
+Phase: 01 (ShotTimelineAsset Specification) — COMPLETE
+Plan: 2 of 2 (01-01 + 01-02 both complete)
+Status: Phase 01 fully delivered — 6 schemas + minimal fixture + validator (01-01) + authoritative human-readable SPEC.md prose contract (01-02, human-verify APPROVED on first review)
+Last activity: 2026-07-20 -- Plan 01-02 closed out (455-line SPEC.md committed c6f603d; Task 2 checkpoint approved; SUMMARY created)
 
-Progress: [█████░░░░░] 50%
+Progress: [█████░░░░░] 50% (phase 1 of 4 complete; both Phase-1 plans done)
 
 ## Performance Metrics
 
 **Velocity:**
 
-- Total plans completed: 1
-- Average duration: ~25min
-- Total execution time: ~25min
+- Total plans completed: 2
+- Average duration: ~20min
+- Total execution time: ~40min
 
 **By Phase:**
 
 | Phase | Plans | Total | Avg/Plan |
 |-------|-------|-------|----------|
-| 01 | 1/2 | ~25min | ~25min |
+| 01 | 2/2 | ~40min | ~20min |
 
 *Updated after each plan completion*
 
@@ -63,6 +63,9 @@ Recent decisions affecting current work:
 - Plan 01-01: media.stems rejects bass.wav (canonical = vocals/drums/other only — consumer frontend renders 3 stems)
 - Plan 01-01: producer's 5 data JSON shapes already conform to strict schemas (smoke 5/5 valid) — Phase 2 only needs to add asset.json + canonical media rename
 - Plan 01-02 Task 1: SPEC.md is 455 lines, bilingual style matching repo convention; quotes graceful-degrade rule verbatim from asset.schema.json#schema_version.description; covers all 4 phase success criteria + all 6 schema filename references
+- Plan 01-02 Task 2: Human-verify checkpoint APPROVED on first review — SPEC.md confirmed implementable without tribal knowledge; SPEC↔schema drift check passed character-for-character on the graceful-degrade rule quote
+- Plan 01-02: Two-tier authority formalized — schemas are machine-checkable truth, SPEC.md is human-readable overview; on conflict, schema wins; verbatim quoting is the structural mitigation against SPEC↔schema drift (T-01-05)
+- Phase 01 closed: all 4 SPEC-* requirements satisfied; Phase 2 (EXPORT) unblocked — only asset.json manifest + canonical media rename needed (5 data shapes already smoke-valid)
 
 ### Pending Todos
 
@@ -85,5 +88,5 @@ Items acknowledged and carried forward from milestone bootstrap:
 ## Session Continuity
 
 Last session: 2026-07-20
-Stopped at: "Plan 01-02 Task 1 complete (spec/SPEC.md committed c6f603d) — awaiting Task 2 human-verify checkpoint"
-Resume file: None (next: human reviews spec/SPEC.md against the 6 schemas + 4 phase success criteria, types "approved" or lists specific issues)
+Stopped at: "Phase 01 complete — both plans done (01-01 schemas + 01-02 SPEC.md); ready for Phase 2 planning"
+Resume file: None (next: plan Phase 2 — EXPORT producer exporter; only asset.json manifest + canonical media rename needed, 5 data shapes already conform)

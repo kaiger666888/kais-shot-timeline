@@ -13,7 +13,7 @@ This milestone delivers a repo-agnostic **ShotTimelineAsset** format contract: t
 
 Decimal phases appear between their surrounding integers in numeric order.
 
-- [ ] **Phase 1: ShotTimelineAsset Specification** - Define the repo-agnostic contract (schema + version + media refs + manifest) both repos implement against
+- [x] **Phase 1: ShotTimelineAsset Specification** - Define the repo-agnostic contract (schema + version + media refs + manifest) both repos implement against — COMPLETE 2026-07-20
 - [ ] **Phase 2: shot-timeline Exporter (Producer)** - Implement the producer: pipeline output → ShotTimelineAsset artifact, versioned + self-describing, Range-served
 - [ ] **Phase 3: Canvas Consumer** - Implement canvas ingestion via structural parent node reusing existing 5 renderers (no contract bump)
 - [ ] **Phase 4: Cross-Repo Contract Verification** - End-to-end smoke + regression protection against schema/media-reference drift
@@ -43,7 +43,7 @@ Plans:
 
 **Wave 2** *(blocked on Wave 1 completion)*
 
-- [~] 01-02-PLAN.md — Write the authoritative human-readable spec/SPEC.md + human review checkpoint — Task 1 DONE 2026-07-20 (SPEC.md 455 lines, c6f603d); Task 2 human-verify checkpoint PENDING
+- [x] 01-02-PLAN.md — Write the authoritative human-readable spec/SPEC.md + human review checkpoint — DONE 2026-07-20 (SPEC.md 455 lines, c6f603d; Task 2 human-verify checkpoint APPROVED on first review)
 
 ### Phase 2: shot-timeline Exporter (Producer)
 
@@ -97,7 +97,7 @@ Phases execute in numeric order: 1 → 2 → 3 → 4
 
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
-| 1. ShotTimelineAsset Specification | 1/2 | Executing | - |
+| 1. ShotTimelineAsset Specification | 2/2 | Complete | 2026-07-20 |
 | 2. shot-timeline Exporter (Producer) | 0/TBD | Not started | - |
 | 3. Canvas Consumer | 0/TBD | Not started | - |
 | 4. Cross-Repo Contract Verification | 0/TBD | Not started | - |
