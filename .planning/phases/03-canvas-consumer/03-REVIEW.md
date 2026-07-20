@@ -1,125 +1,81 @@
 ---
 phase: 03-canvas-consumer
 reviewed: 2026-07-21T00:00:00Z
+iteration: 1
+review_kind: auto-re-review
 depth: standard
+repo_reviewed: /data/workspace/kst-canvas-consumer
+branch_reviewed: feat/canvas-asset-collection
+diff_base: origin/master
 files_reviewed: 2
 files_reviewed_list:
   - /data/workspace/kst-canvas-consumer/src/routes/canvas/v2/import-from-dir.ts
   - /data/workspace/kst-canvas-consumer/scripts/verify-canvas-shot-timeline.ts
+fixes_verified:
+  - WR-02
+  - WR-03
+  - WR-05
+  - WR-06
+  - WR-07
+  - WR-08
+fixes_status: all_resolved
+deferred_documented:
+  - WR-01
+  - WR-04
 findings:
   critical: 0
-  warning: 8
-  info: 5
-  total: 13
-status: issues_found
+  warning: 0
+  info: 0
+  total: 0
+status: clean
 ---
 
-# Phase 3: Code Review Report
+# Phase 3: Code Review Report — Iteration 1 (auto-re-review)
 
 **Reviewed:** 2026-07-21
 **Depth:** standard
 **Repo reviewed:** `/data/workspace/kst-canvas-consumer` (branch `feat/canvas-asset-collection`, diff base `origin/master`)
 **Files Reviewed:** 2 (`src/routes/canvas/v2/import-from-dir.ts`, `scripts/verify-canvas-shot-timeline.ts`)
-**Status:** issues_found
+**Iteration:** 1 of fix→re-review loop (`--auto`)
+**Status:** clean
 
 ## Summary
 
-The Phase 3 ShotTimelineAsset importer is competently built and largely additive as claimed. The `buildPhaseTree` L823 `?? def.canvasType` override is genuinely behavior-preserving for existing 13-phase callers (verified by tracing every call site). The 17 verify asserts exercise the production `extractShotTimelineArtifacts` helper and confirm structural / sequence-edge / per-type-Zod invariants for the producer's golden fixture.
+This is the iteration-1 re-review after the Phase 3 fixer applied fixes for WR-02 / WR-03 / WR-05 / WR-06 / WR-07 / WR-08 (consumer-repo commits `788fc6d2`, `368de27d`, `061154d1`, `ce0e41cc`, `bb3eaaf4` on `feat/canvas-asset-collection`).
 
-However, the review surfaced **a contract gap between the producer's link shape and the consumer's Zod schema** that silently strips the `linkType: "sequence"` payload on the `save-v2` HTTP path (the import path itself is unaffected because `appendAndSync` does not Zod-parse). The SUMMARY acknowledges a *separate* pre-existing `save-v2` issue (summary-node Zod reject) but does NOT acknowledge this one. Several other latent robustness gaps also ride on the same `save-v2` code path: `sourceDuration === 0` from a malformed manifest rejects all 4 media children; the new `sum-p13` adds blast radius to that pre-existing summary-node reject; and a mixed workdir (ShotTimelineAsset + 13-phase files) silently drops the 13-phase data via an unconditional short-circuit.
+**Outcome: all 6 fixes are RESOLVED. WR-01 and WR-04 remain as documented known-limitations in `deferred-items.md` (not silently dropped). No new BLOCKER / WARNING issues were introduced by the fixes.** The verify harness runs to 19 passed / 0 failed (executed locally — see Verification Run section).
 
-The verify script is meaningful (not tautological) but has its own gaps: it does not set the `_workdirToOss` global that production sets, so derived `filePath` values differ from production; its `git diff` / `git show` additive-only guards pass vacuously if `origin/master` is missing; and its sequence-edge shape check filters by `data?.linkType === "sequence"` but never byte-compares against `flowDataMapper.ts:163-172` (the shapes actually differ in `dataType` placement, contradicting the SUMMARY's "byte-match" claim).
+Additive-only invariants still hold:
+- `git diff --name-only origin/master..HEAD` lists only `.gitignore`, `scripts/fixtures/shot-timeline-ep01/*`, `scripts/verify-canvas-shot-timeline.ts`, `src/routes/canvas/v2/import-from-dir.ts`. No edits to `packages/infinite-canvas/`, `src/types/flowgraph-v2-schema.ts`, `src/types/flowgraph-v2.ts`, or `src/lib/canvasAssetSchema.ts`.
+- Assert E (frontend zero-touch) PASS: `packages/infinite-canvas/` diff is empty.
+- Assert E2 (schema strictness) PASS: `.optional()` count `master=18 head=18`, `.nullable()` count `master=0 head=0`. Strictness preserved.
 
-All findings are WARNING-or-below; none block the import-from-dir path itself. The BLOCKER-tier risks are confined to the cross-endpoint `save-v2` roundtrip, which Phase 3 explicitly defers ("Phase 4 如果走 save-v2.ts HTTP 路径可能触发").
+## Fix Verification (per-warning)
 
-## Warnings
+### WR-02: `scanWorkdirForArtifacts` warns on co-located phase files before short-circuit — RESOLVED
 
-### WR-01: Sequence edge `data` field is silently stripped by `save-v2` Zod parse — feature degrades after any full save
-
-**File:** `/data/workspace/kst-canvas-consumer/src/routes/canvas/v2/import-from-dir.ts:1067-1074` (producer) and `/data/workspace/kst-canvas-consumer/src/types/flowgraph-v2-schema.ts:53-61` (schema)
-**Issue:**
-The producer emits sequence edges with a nested `data` field:
+**Evidence:** `import-from-dir.ts:1322-1354`. Before the unconditional `return phaseArtifacts`, the code now does:
 ```ts
-{
-  id: `seq-${sbNodes[i - 1].id}-${sbNodes[i].id}`,
-  source: sbNodes[i - 1].id,
-  target: sbNodes[i].id,
-  branchId: "main",
-  dataType: "data",
-  data: { linkType: "sequence" },
-} as FlowLinkV2
-```
-But `FlowLinkV2Schema` (flowgraph-v2-schema.ts:53-61) declares only `{ id, source, target, branchId, dataType, isExplore?, isInactive? }` — no `data` field. `z.object(...)` defaults to **strip** unknown keys, so when the graph flows through `save-v2.ts:36` (`FlowGraphV2Schema.safeParse(graph)`), every sequence edge's `data: { linkType: "sequence" }` is silently discarded. The frontend's `CanvasEdge.tsx:33` reads `data?.linkType`; after a `save-v2` roundtrip this is `undefined`, and sequence edges render as plain edges (losing the blue solid + arrow styling that `CanvasEdge.tsx:60-75` provides).
-
-The import-from-dir path itself does NOT trigger this (it uses `appendAndSync` → event store → snapshot JSON, none of which Zod-parses). But any subsequent full save via the `save-v2` endpoint will silently break the visual feature. The producer also requires `as FlowLinkV2` to compile (see WR-05), which masked this gap during type-check.
-
-The verify script does NOT catch this because it calls `extractShotTimelineArtifacts` directly and never runs the result through `FlowGraphV2Schema.safeParse`.
-
-**Fix (choose one):**
-1. Add `data: z.record(z.string(), z.any()).optional()` to `FlowLinkV2Schema`. This is technically a schema change but is *additive* (loosens nothing; previously-unknown key becomes a known optional). Maintains the CANVAS-03 "no strictness loosening" invariant in spirit (the new field is optional, existing strict fields unchanged).
-2. Or: emit `linkType` as a top-level field on the link (would require frontend + schema coordination — more invasive).
-3. Or: document explicitly that sequence edges are not supported on the `save-v2` persistence path and the feature is import-from-dir-only.
-
-Recommended: option 1, plus extend the verify script to round-trip the produced graph through `FlowGraphV2Schema.safeParse` and assert `data?.linkType` survives.
-
----
-
-### WR-02: `scanWorkdirForArtifacts` unconditional short-circuit silently drops 13-phase data when `asset.json` is present
-
-**File:** `/data/workspace/kst-canvas-consumer/src/routes/canvas/v2/import-from-dir.ts:1269-1281`
-**Issue:**
-```ts
-const manifestProbe = await tryReadJSON(assetManifestPath);
-if (manifestProbe && manifestProbe.asset_type === "shottimeline") {
-  phaseArtifacts.set(SHOT_TIMELINE_SENTINEL_KEY, [...]);
-  return phaseArtifacts;  // ← hard early-return
-}
-```
-Any workdir that legitimately contains BOTH a `ShotTimelineAsset` AND conventional 13-phase files (`p02_outline.json`, `output/*.mp4`, `assets/scene_images/*`, etc.) will have the 13-phase data **silently ignored**. No warning is logged. The user sees only the ShotTimelineAsset collection on the canvas, with no signal that their existing pipeline outputs were dropped.
-
-This is a plausible migration scenario (e.g., a user drops a ShotTimelineAsset into an existing 13-phase workdir, or a future pipeline emits both). The early-return is unconditional — not a merge.
-
-The reverse direction is also a concern: if a producer's `asset.json` happens to land in a workdir with other phase files for a legitimate reason (e.g., the producer writes sibling manifests), those sibling files become invisible to the canvas.
-
-**Fix:** Either (a) drop the early-return and instead set the sentinel alongside normal scan results (the existing file→phase scanner won't pick up `shots.json` / `audio_analysis.json` / etc. because they don't match `p0X` prefixes), or (b) keep the short-circuit but emit a `console.warn` listing the ignored phase files so the operator can see what was dropped.
-
-```ts
-// Option (b) — minimal-change warn
-if (manifestProbe && manifestProbe.asset_type === "shottimeline") {
-  const others = (await readdir(workdir).catch(() => [])).filter(f =>
-    f.endsWith(".json") && f !== "asset.json" && findPhaseFromFile(f));
-  if (others.length > 0) {
-    console.warn(`[v2/import] ShotTimelineAsset detected at ${assetManifestPath}; ` +
-      `ignoring ${others.length} co-located phase file(s): ${others.join(", ")}`);
+try {
+  const collocated = (await readdir(workdir)).filter(
+    (f) => f.endsWith(".json") && f !== "asset.json" && findPhaseFromFile(f),
+  );
+  if (collocated.length > 0) {
+    console.warn(
+      `[v2/import] ShotTimelineAsset detected at ${assetManifestPath}; ` +
+      `ignoring ${collocated.length} co-located phase file(s): ${collocated.join(", ")}`,
+    );
   }
-  phaseArtifacts.set(SHOT_TIMELINE_SENTINEL_KEY, [...]);
-  return phaseArtifacts;
-}
+} catch { /* readdir failure (permissions race) — non-fatal */ }
 ```
+The filter correctly uses `findPhaseFromFile` so ShotTimelineAsset-native files (`shots.json`, `audio_analysis.json`, `transcript.json`, `prompts.json`, `frames.json`) do NOT produce false-positive warns — they don't match any `p0X*` prefix in `FILE_TO_PHASE`. The catch guards the readdir race without masking the short-circuit. Matches fix option (b) from the original WR-02 proposal verbatim.
 
----
+### WR-03: `sourceDuration <= 0` warns (Zod-doomed children surfaced) — RESOLVED
 
-### WR-03: `sourceDuration === 0` from malformed manifest makes all audio + video children fail per-type Zod
-
-**File:** `/data/workspace/kst-canvas-consumer/src/routes/canvas/v2/import-from-dir.ts:959, 1014-1037`
-**Issue:**
+**Evidence:** `import-from-dir.ts:974-992`. After computing `sourceDuration`, the code warns before constructing audio+video children:
 ```ts
 const sourceDuration = Number(manifest?.source?.duration_sec ?? 0) || 0;
 // ...
-// audio:
-extra: { ..., duration_sec: sourceDuration, ... }
-// video:
-extra: { ..., duration_sec: sourceDuration, ... }
-```
-The Zod schemas require `duration_sec: z.number().positive(...)` for both `audio` (`canvasAssetSchema.ts:57`) and `video` (`canvasAssetSchema.ts:68`). If the manifest lacks `source.duration_sec` (or it is `0`, `null`, `""`, or non-numeric), `sourceDuration === 0`, and:
-- The `EXPECTED_PARAM_FIELDS_BY_TYPE` *warn* at L755 does **not** fire (because `0 == null` is `false` and `0 === ""` is `false`), so `__incomplete` is not stamped — no signal.
-- The per-type Zod at `save-v2.ts:49` **rejects** all 3 audio + 1 video nodes with HTTP 400.
-
-Result: import succeeds silently (no warn, no incomplete flag), but the next `save-v2` call rejects with "资产节点结构化参数校验失败". The user sees an apparently-working canvas that fails on save.
-
-**Fix:**
-```ts
-const sourceDuration = Number(manifest?.source?.duration_sec) || 0;
 if (!(sourceDuration > 0)) {
   console.warn(
     `[v2/import] ShotTimelineAsset manifest missing/invalid source.duration_sec ` +
@@ -127,228 +83,175 @@ if (!(sourceDuration > 0)) {
   );
 }
 ```
-Optionally also clamp to a small positive sentinel (`0.001`) so the import survives `save-v2`, with the warn providing the audit trail.
+The guard `!(sourceDuration > 0)` correctly catches `0`, `NaN`, and any negative value (the `Number(...) || 0` coercion above means `null`/`undefined`/`""` all become `0`). The warn message names the manifest path and identifies the downstream symptom (save-v2 Zod reject) so operators have an actionable audit trail. The fix is warn-only (no clamp to a positive sentinel) — this is option (b) from the original proposal; option (a) clamp remains explicitly available if Phase 4 wants tighter behavior. The golden fixture has `duration_sec: 308.352` so the warn does not fire in the verify path.
 
----
+### WR-05: Comment accurately describes the shape (no false "byte-match" claim) — RESOLVED
 
-### WR-04: Phase 3 expands the blast radius of the pre-existing `save-v2` summary-node Zod-reject bug
+**Evidence:** `import-from-dir.ts:1086-1108`. The new comment block is split into two paragraphs:
+1. **L1087-1090** — accurate framing: "形状意图匹配 flowDataMapper.ts:163-172 (frontend precedent) 的渲染语义" + "backend 渲染结果与 frontend precedent 等价". Both statements are scoped to **rendering semantics / rendering result**, which is accurate — both shapes produce the same `data?.linkType === "sequence"` read at `CanvasEdge.tsx:33`.
+2. **L1092-1097** — explicit disclaimer with three concrete differences enumerated:
+   ```
+   // WR-05: 形状 NOT 字面 byte-match flowDataMapper.ts:163-172 —— 三处差异:
+   //   1. backend 顶层有 branchId:"main";frontend precedent 省略 (前端默认隐含).
+   //   2. backend dataType:"data" 在顶层;frontend precedent 嵌在 data.dataType.
+   //   3. backend data 只装 {linkType};frontend precedent data 装 {dataType,linkType}.
+   ```
+Future maintainers reading either paragraph will not be misled — the disclaimer is unambiguous and the migration hazard (future code reading `data.dataType`) is called out. No false "byte-match" claim remains.
 
-**File:** `/data/workspace/kst-canvas-consumer/src/routes/canvas/v2/import-from-dir.ts:1043` (calls `buildPhaseTree("p13", ...)`); `/data/workspace/kst-canvas-consumer/src/lib/canvasAssetSchema.ts:122-158`
-**Issue:**
-`buildPhaseTree` always emits a summary node whose `.type` is `def.canvasType` (for `p13`, `"video"`). The summary's `data` is structural (`{label, description, assetType, state, tags}`) — it carries no media fields. The production validator `validateNodeData` (`canvasAssetSchema.ts:133`) looks up `assetDataSchemas["video"]` and rejects (missing `filePath/shot_id/engine/duration_sec/resolution`).
+### WR-06: `as FlowLinkV2` cast replaced with typed local extension; FlowLinkV2 interface untouched — RESOLVED
 
-The SUMMARY acknowledges this as a pre-existing issue (lines 153, 269): "save-v2.ts 调用 validateGraphNodes 时,既有 p10/p11/p12/p13 summary 节点同样会因 .type='video'/'audio' 而 Zod reject —— 这是 pre-existing issue,与本 phase 无关 (scope boundary)。"
-
-But Phase 3 **expands the blast radius**: previously `sum-p13` only appeared if P13 was active in a 13-phase pipeline. Now **every** ShotTimelineAsset import adds a `sum-p13` node with `type: "video"`. Any canvas that imports ShotTimelineAsset and then goes through `save-v2` will hit the reject — whereas before, only canvases with active P13 would. The verify script sidesteps this by filtering `childNodes` (excluding `sum-` prefix) before calling `validateGraphNodes`, which is a test-harness-only filter; production `save-v2.ts:49` does NOT filter.
-
-This is not a new bug, but it is a meaningful regression in the *frequency* of the latent failure mode, and the SUMMARY's framing ("pre-existing, not our problem") understates the impact.
-
-**Fix:** Either (a) fix the pre-existing bug in a follow-up (filter zone+summary out of `validateGraphNodes` at the production call site, or change `structuralTypes` to include a "summary" pseudo-type and detect by `id.startsWith("sum-")` — though the latter introduces an ID-shape coupling), or (b) explicitly document in `extractShotTimelineArtifacts` that the produced graph is not `save-v2`-safe and add a runtime assertion / warn in the importer so operators see the limitation.
-
----
-
-### WR-05: Sequence edge shape does NOT byte-match `flowDataMapper.ts:163-172` (SUMMARY claim is inaccurate)
-
-**File:** `/data/workspace/kst-canvas-consumer/src/routes/canvas/v2/import-from-dir.ts:1054-1075`; frontend precedent `/data/workspace/kst-canvas-consumer/packages/infinite-canvas/src/utils/flowDataMapper.ts:163-172`
-**Issue:**
-The SUMMARY and inline comment at L1055 claim "shape 字面匹配 flowDataMapper.ts:163-172". They don't match:
-
-Frontend (`flowDataMapper.ts:163-172`):
+**Evidence:** `import-from-dir.ts:1099-1128`. The cast is gone, replaced with:
 ```ts
-edges.push({
-  id: `seq-${edgeId++}`,
-  source: prevNodeId,
-  target: nodeId,
-  data: { dataType: 'data', linkType: 'sequence' },  // ← BOTH fields nested in data
-})
-```
-
-Phase 3 backend (L1067-1074):
-```ts
-{
-  id: `seq-${...}`,
-  source: sbNodes[i - 1].id,
-  target: sbNodes[i].id,
-  branchId: "main",                                  // ← frontend omits
-  dataType: "data",                                  // ← TOP LEVEL, not nested
-  data: { linkType: "sequence" },                    // ← only linkType nested
+type SequenceLink = FlowLinkV2 & { data?: Record<string, unknown> };
+const sequenceLinks: SequenceLink[] = [];
+// ...
+for (let i = 1; i < sbNodes.length; i++) {
+  const link: SequenceLink = {
+    id: `seq-${sbNodes[i - 1].id}-${sbNodes[i].id}`,
+    source: sbNodes[i - 1].id,
+    target: sbNodes[i].id,
+    branchId: "main",
+    dataType: "data",
+    data: { linkType: "sequence" },
+  };
+  sequenceLinks.push(link);
 }
 ```
+Type-safety analysis:
+- `SequenceLink` extends `FlowLinkV2` with an optional `data` field — it's a strict supertype. Object-literal assignment to `SequenceLink` type-checks without coercion.
+- The function's return type is still `{ nodes: FlowNodeV2[]; links: FlowLinkV2[] }`. Spreading `sequenceLinks` (a `SequenceLink[]`) into `FlowLinkV2[]` is sound by array covariance (subtype→supertype assignment).
+- The `data` field survives at runtime — the change is purely compile-time. The produced graph is byte-identical to the pre-fix version.
+- `FlowLinkV2` (`src/types/flowgraph-v2.ts:45-53`) is unchanged — still does not declare `data`. `git diff origin/master..HEAD -- src/types/flowgraph-v2.ts` returns empty.
 
-Three concrete differences:
-1. `branchId` present in backend, absent in frontend precedent.
-2. `dataType` is top-level in backend, nested inside `data` in frontend precedent.
-3. Backend `data` contains only `linkType`; frontend `data` contains both `dataType` and `linkType`.
+The local `SequenceLink` alias is the minimal-touch type-level mitigation; once `FlowLinkV2` adds `data?: ...` (WR-01 fix in Phase 4), the alias becomes redundant and can be deleted. The comment at L1099-1103 documents this.
 
-Rendering still works because `CanvasEdge.tsx:33` only reads `data?.linkType` — both shapes produce the same value for that field. But the byte-match claim is false, and any future frontend code that reads `data.dataType` (or any code that assumes the frontend precedent shape) will silently miss data.
+### WR-07: Verify harness sets `_workdirToOss` via exported `setWorkdirToOss`; F2 asserts confirm `/oss/shot-timeline-ep01/` prefix — RESOLVED
 
-**Fix:** Either (a) update the comment to "matches frontend rendering intent (`data.linkType === 'sequence'`), shape differs from `flowDataMapper.ts` in `dataType` placement" so future maintainers aren't misled, or (b) align the backend shape with the frontend precedent by moving `dataType` inside `data` (would require `as FlowLinkV2` cast to already-noted missing `data` field — see WR-01/WR-06).
+**Evidence (3 parts):**
 
----
+1. **New export.** `import-from-dir.ts:173-186` exports `setWorkdirToOss(mapping)`, which simply assigns the module-level `_workdirToOss`. Production caller `scanAndBuildTree` (L1581) continues to assign `_workdirToOss` directly — it does NOT use the new export, so no production behavior changes. Verified via grep: the only callers of `setWorkdirToOss` are the verify harness import (L27) + invocation (L63) and the definition itself (L182). No production caller breaks.
 
-### WR-06: `as FlowLinkV2` cast masks TypeScript type gap (the producer emits a field not in the interface)
+2. **Harness sets the global.** `verify-canvas-shot-timeline.ts:62-63`:
+   ```ts
+   const workdirBase = path.basename(FIXTURE.replace(/\/$/, ""));
+   setWorkdirToOss({ workdir: FIXTURE, ossPrefix: `/oss/${workdirBase}` });
+   ```
+   This mirrors `scanAndBuildTree:1580-1581` exactly (`workdirBase = basename(workdir.replace(/\/$/, ""))`, `ossPrefix = \`/oss/${workdirBase}\``), so the verify path now exercises the same `fsToOssUrl` workdir-branch that production exercises.
 
-**File:** `/data/workspace/kst-canvas-consumer/src/routes/canvas/v2/import-from-dir.ts:1074`
-**Issue:**
-```ts
-data: { linkType: "sequence" },
-} as FlowLinkV2);
-```
-The cast is load-bearing because `FlowLinkV2` (`flowgraph-v2.ts:45-53`) does not declare a `data?: Record<string, any>` field. The runtime object has the field; the type does not. Downstream consumers typed as `FlowLinkV2` will not see `data` via autocomplete or compile-time checks, and any future refactor that drops the cast (or refactors around the typed shape) will silently break the feature. This is the type-level manifestation of WR-01.
+3. **F2 asserts confirm prefix.** `verify-canvas-shot-timeline.ts:245-260`:
+   ```ts
+   const expectedFilePrefix = `/oss/${workdirBase}/`;
+   assert(audios.every((a) => typeof a.data?.filePath === "string" && a.data.filePath.startsWith(expectedFilePrefix)), ...);
+   assert(typeof videos[0]?.data?.filePath === "string" && videos[0].data.filePath.startsWith(expectedFilePrefix), ...);
+   ```
+   Both asserts are meaningful: they fail if `_workdirToOss` was not set (filePath would be a raw absolute path like `/data/workspace/...`), and they fail if `fsToOssUrl`'s workdir-branch logic regresses. Assert A above (lines 96-100) gates F2 by asserting `audios.length === 3` and `videos.length === 1` first, so F2's `.every` cannot pass vacuously on an empty collection.
 
-The frontend already has the analogous field: `CanvasEdge.tsx:8-15` declares `EdgeData` with `dataType`, `linkType`, `refType`, etc. — the backend `FlowLinkV2` interface is simply out of sync with what the renderer expects.
+**Verification run confirms:** the harness executed locally produces `F2 (WR-07): every audio.data.filePath synthesized as /oss/{slug}/... (production-realistic) — expected prefix '/oss/shot-timeline-ep01/'; got /oss/shot-timeline-ep01/stems/vocals.wav, /oss/shot-timeline-ep01/stems/drums.wav, /oss/shot-timeline-ep01/stems/other.wav` and `F2 (WR-07): video.data.filePath synthesized as /oss/{slug}/... (production-realistic) — expected prefix '/oss/shot-timeline-ep01/'; got '/oss/shot-timeline-ep01/video.mp4'`. Both PASS.
 
-**Fix:** Update `FlowLinkV2` (and `FlowLinkV2Schema`) to declare `data?: Record<string, any>` so the cast becomes unnecessary and the type system can catch real shape drift. (This is the same fix as WR-01 option 1.)
+### WR-08: Assert E2 fails loud when `origin/master` is missing (no vacuous pass) — RESOLVED
 
----
-
-### WR-07: Verify script does not set `_workdirToOss` global — runs with non-production-realistic `filePath` values
-
-**File:** `/data/workspace/kst-canvas-consumer/scripts/verify-canvas-shot-timeline.ts:58-59`
-**Issue:**
-`extractShotTimelineArtifacts` internally calls `fsToOssUrl(stemAbs)`, which depends on the module-level `_workdirToOss` global. In production this is set by `scanAndBuildTree` at L1508: `_workdirToOss = { workdir, ossPrefix: \`/oss/${workdirBase}\` }`. The verify script calls `extractShotTimelineArtifacts` directly without setting this global, so `_workdirToOss === null` during the verify run, and `fsToOssUrl` falls through every branch (workdir is `/data/workspace/kst-canvas-consumer/scripts/fixtures/shot-timeline-ep01`, not under `/data/workspace/kais-aigc-platform/data/oss`).
-
-Result: verify-harness `filePath` values are raw absolute paths (`/data/workspace/.../stems/vocals.wav`); production `filePath` values would be `/oss/shot-timeline-ep01/stems/vocals.wav`. The verify script makes no assertions on `filePath`, so it doesn't fail — but it also doesn't actually exercise the production-realistic URL synthesis path. A bug in `fsToOssUrl`'s workdir-prefix branch would not be caught.
-
-**Fix:**
-```ts
-// At top of main(), before extractShotTimelineArtifacts:
-import {  } from "../src/routes/canvas/v2/import-from-dir";
-// _workdirToOss is not exported — either export a setter from the production module
-// or invoke via scanAndBuildTree(FIXTURE) to drive the realistic code path.
-```
-The cleanest fix is to have the verify script drive `scanAndBuildTree` end-to-end (so it exercises sentinel detection + global setup + helper invocation), rather than calling the helper in isolation.
-
----
-
-### WR-08: Verify script's additive-only Zod-strictness guard passes vacuously when `origin/master` is missing
-
-**File:** `/data/workspace/kst-canvas-consumer/scripts/verify-canvas-shot-timeline.ts:171-196`
-**Issue:**
+**Evidence:** `verify-canvas-shot-timeline.ts:190-216`. A new `schemaCompareOk: boolean | null` variable (distinct from the count variables) tracks comparison outcome explicitly:
 ```ts
 let masterOpt = -1, headOpt = -1, masterNull = -1, headNull = -1;
 let schemaDiffStatus = "";
+let schemaCompareOk: boolean | null = null;
 try {
-  const masterSrc = execSync("git show origin/master:src/lib/canvasAssetSchema.ts", ...);
-  const headSrc = fs.readFileSync(...);
-  masterOpt = (masterSrc.match(/\.optional\(\)/g) || []).length;
-  headOpt = (headSrc.match(/\.optional\(\)/g) || []).length;
-  // ...
-} catch (err) {
-  schemaDiffStatus = `(compare failed: ${(err as Error).message})`;
-}
-assert(
-  headOpt <= masterOpt && headNull <= masterNull,  // -1 <= -1 && -1 <= -1 → true
-  ...
-);
-```
-If `origin/master` ref is missing (fresh shallow clone, CI environment without `--fetch-depth=full`, detached-HEAD builder), `execSync` throws → all four counters stay at `-1` → the assertion condition `headOpt <= masterOpt && headNull <= masterNull` evaluates to `true` (`-1 <= -1`) → **the additive-only invariant PASSES VACUOUSLY**. The detail string does say "(compare failed: ...)" but the assertion itself is recorded as PASS and the script exits 0.
-
-The same defect affects Assert E at L154-169 (`git diff --name-only origin/master..HEAD -- packages/infinite-canvas/`): on `origin/master` missing, the catch sets `treeDiff = "(git diff failed: ...)"`, and the assertion `treeDiff === ""` is FALSE → that one correctly fails. So Assert E is robust but Assert E2 is not — inconsistent.
-
-Additionally, the count-based check has a semantic loophole: changing `z.string().min(1)` to `z.string()` (loosening min-length strictness) changes neither `.optional()` nor `.nullable()` count, so it would not be detected.
-
-**Fix:**
-```ts
-let schemaCompareOk: boolean | null = null;  // null = couldn't compare
-try {
-  // ...
+  // ... execSync + readFileSync + counts ...
   schemaCompareOk = headOpt <= masterOpt && headNull <= masterNull;
 } catch (err) {
-  schemaDiffStatus = `(compare failed: ...)`;
+  schemaDiffStatus = `(compare failed: ${(err as Error).message})`;
+  schemaCompareOk = null;
 }
 assert(
-  schemaCompareOk === true,  // fails if null (couldn't compare) or false (regression)
+  schemaCompareOk === true,
   "CANVAS-03 additive-only: canvasAssetSchema.ts strictness preserved",
-  schemaDiffStatus || `.optional() master=${masterOpt} head=${headOpt}; ...`,
+  schemaDiffStatus ||
+    `.optional() master=${masterOpt} head=${headOpt}; .nullable() master=${masterNull} head=${headNull}`,
 );
 ```
+- If `origin/master` is missing (fresh shallow clone, CI without `--fetch-depth=full`, detached-HEAD builder): `execSync` throws → `schemaCompareOk = null` → `assert(null === true, ...)` FAILS. No vacuous pass.
+- If comparison succeeds and strictness preserved: `schemaCompareOk = true` → PASS with informative detail string.
+- If comparison succeeds and regression detected: `schemaCompareOk = false` → FAIL with counts.
+The comment block at L182-189 explicitly documents the prior vacuous-pass failure mode and why the new variable closes it. Asymmetry with Assert E (which already failed loud via `treeDiff === ""`) is resolved — both additive-only guards now fail loud on `origin/master` missing.
 
----
+**Verification run confirms:** the harness executed locally with `origin/master` present produces `PASS: CANVAS-03 additive-only: canvasAssetSchema.ts strictness preserved — .optional() master=18 head=18; .nullable() master=0 head=0`. Detail string shows the actual counts, confirming the comparison ran (not skipped).
 
-## Info
+**Note (carried forward from original review):** the count-based check has a semantic loophole — changing `z.string().min(1)` to `z.string()` (loosening min-length strictness) would change neither `.optional()` nor `.nullable()` count and would not be detected. This remains an Info-level limitation, not a regression introduced by the fix. No fix proposed here; out of iteration-1 scope.
 
-### IN-01: Misleading defense-in-depth comment about path-traversal protection
+## Deferred Items Documentation (WR-01, WR-04)
 
-**File:** `/data/workspace/kst-canvas-consumer/src/routes/canvas/v2/import-from-dir.ts:1266-1268`
-**Issue:**
-The comment claims: "consumer 侧 tryReadJSON + join 不跨 workdir." This is incorrect. Node's `path.join(workdir, "/etc/passwd")` returns `"/etc/passwd"` (any absolute argument resets the join). The producer's regex `^(?!.*\.\.)` blocks `..` but not absolute paths. A tampered `asset.json` with `media.stems.vocals: "/etc/passwd"` would propagate `/etc/passwd` as the literal `filePath` string in the audio node's data. No file *content* is leaked (no read is attempted on the media path; `fsToOssUrl` just returns null for non-mapped paths), but the path string is exposed via the canvas.
+### WR-01: Sequence edge `data` field silently stripped by `save-v2` Zod parse — DOCUMENTED (not fixed, by design)
 
-Severity is low (producer is trusted, attacker would need write access to the workdir). The comment overstates the protection.
+`deferred-items.md:39-107` documents WR-01 with full fidelity:
+- Symptom (sequence edges downgrade to plain edges after `save-v2` roundtrip)
+- Scope boundary (primary `appendAndSync` path unaffected; secondary `save-v2` HTTP path has latent bug)
+- Why deferred (touches shared production graph schema across all 14 phases; CANVAS-03 spirit applies to `flowgraph-v2-schema.ts`)
+- Phase 3 mitigations already in place (the WR-05 comment now accurately documents the `save-v2`-strips-`data` caveat; the WR-06 fix replaced the silent `as FlowLinkV2` cast with the local `SequenceLink` typed extension so the gap is visible to TS at the construction site)
+- Phase 4 decision needed (3 options listed)
 
-**Fix:** Either fix the comment ("consumer trusts the producer's paths; defense is at the producer schema"), or add consumer-side validation: `if (path.isAbsolute(rel)) throw new Error("manifest path must be relative: " + rel);`
+The deferral rationale is sound and the item is not silently dropped. WR-01 is correctly classified as a WARNING-tier latent bug in the **deferred** state.
 
----
+### WR-04: Phase 3 expands blast radius of pre-existing `save-v2` summary-node Zod-reject — DOCUMENTED (not fixed, by design)
 
-### IN-02: `probeResolution` silently degrades to `"0x0"` with no warn
+`deferred-items.md:110-177` documents WR-04 with full fidelity:
+- Symptom (`sum-p13` summary node inherits `.type = "video"` from `buildPhaseTree`, fails `validateNodeData` media-fields check)
+- Pre-existing pattern (every phase's summary node since P01 has the same shape; Phase 3 increases trigger frequency)
+- Scope boundary (primary path unaffected; secondary `save-v2` HTTP path latent)
+- Why deferred (fix touches production `save-v2.ts:49` call site — beyond Phase 3 mandate)
+- Phase 3 mitigations already in place (verify script filters `sum-` prefixed nodes before `validateGraphNodes` to match plan SC intent; the deferral itself documents the limitation)
+- Phase 4 decision needed (4 options listed)
 
-**File:** `/data/workspace/kst-canvas-consumer/src/routes/canvas/v2/import-from-dir.ts:895-911`
-**Issue:**
-When ffprobe fails (binary missing, video unreadable, timeout), the catch returns `"0x0"` with no log. The Zod (`z.string().min(1)`) accepts `"0x0"`, so the import "succeeds" but the video node carries a meaningless resolution that the frontend will render verbatim. Operators have no signal that the synthesis failed. The inline comment at L890-894 explains the fallback choice but doesn't justify the silence.
+The deferral rationale is sound and the item is not silently dropped. WR-04 is correctly classified as a WARNING-tier latent bug in the **deferred** state.
 
-**Fix:**
-```ts
-} catch (err) {
-  console.warn(`[v2/import] ffprobe failed for ${videoPath}: ${(err as Error).message}; using "0x0"`);
-  return "0x0";
-}
-```
+## Regression Check (newly-introduced issues)
 
----
+The fixes were inspected for regressions along the following axes; **no new BLOCKER or WARNING issues found.**
 
-### IN-03: Hardcoded 3-stem set couples consumer to Demucs `htdemucs` configuration
+1. **WR-02 readdir catch hides readdir errors.** The `try/catch` around `readdir` (L1332-1342) only guards the warn-emission path; the unconditional short-circuit at L1345-1354 runs regardless. If `readdir` fails, operators lose the warn but not the import behavior. Acceptable — same failure mode as no-warn, no regression.
 
-**File:** `/data/workspace/kst-canvas-consumer/src/routes/canvas/v2/import-from-dir.ts:1005`
-**Issue:**
-```ts
-for (const stem of ["vocals", "drums", "other"] as const) {
-```
-This skips `bass` (which Demucs `htdemucs` *does* emit — see project CLAUDE.md "Demucs 4-stem source separation"). The producer's `stems/htdemucs/<video-stem>/{vocals,drums,bass,other}.wav` layout has 4 stems; the consumer imports only 3. The `bass` stem is silently dropped from the canvas. The fixture mirrors this (only 3 stems), so the verify doesn't catch the omission. Either the consumer should iterate over `Object.keys(stems)` (data-driven) or the producer's manifest should declare which stems are canonical.
+2. **WR-03 is warn-only (no clamp).** Audio+video children with `duration_sec=0` are still produced and will Zod-fail on the next `save-v2`. The warn provides the audit trail; the import path itself remains non-failing (graceful-degrade per SPEC §4). This matches option (b) of the original proposal. The fixture has `duration_sec: 308.352` so no behavioral change in the verify path. No regression.
 
-**Fix:**
-```ts
-const stemKeys = Object.keys(stems).length > 0
-  ? Object.keys(stems)
-  : ["vocals", "drums", "other"];
-for (const stem of stemKeys) { ... }
-```
+3. **`SequenceLink` typed extension correctness.** `SequenceLink = FlowLinkV2 & { data?: Record<string, unknown> }` is a strict supertype of `FlowLinkV2`. The link literal type-checks without coercion; spreading into the `FlowLinkV2[]` return type is sound by array covariance. The runtime object is byte-identical to the pre-fix version (`data: { linkType: "sequence" }` is still emitted). The local alias is encapsulated inside `extractShotTimelineArtifacts` — it does not leak into the public return type signature. No regression.
 
----
+4. **`setWorkdirToOss` export not breaking other callers.** Grep confirms only the verify harness calls the new export. Production (`scanAndBuildTree:1581`) continues to assign `_workdirToOss` directly. The export is purely additive — a new public surface for test harnesses, with no production-side behavior change. The new export does not introduce a new race condition: the module-level `_workdirToOss` was already mutable global state shared across concurrent requests pre-fix; the export adds a programmatic setter but doesn't change the concurrency model. No regression.
 
-### IN-04: Verify script's summary classification by ID prefix is undocumented coupling
+5. **F2 asserts meaningful (not tautological).** `expectedFilePrefix = \`/oss/${workdirBase}/\`` is a concrete string (`/oss/shot-timeline-ep01/`) independent of the produced `filePath`. The `startsWith` check would fail if (a) `_workdirToOss` were not set (filePath would be the raw absolute path), (b) `fsToOssUrl` regressed on its workdir-prefix branch, or (c) the fixture path basename changes without the prefix being updated. Assert A gates F2 by ensuring `audios.length === 3` and `videos.length === 1`, so the `.every` predicate cannot pass vacuously on an empty collection. The asserts catch real regressions.
 
-**File:** `/data/workspace/kst-canvas-consumer/scripts/verify-canvas-shot-timeline.ts:76-77`
-**Issue:**
-```ts
-const summaries = nodes.filter((n) => n.id.startsWith("sum-"));
-const childNodes = nodes.filter((n) => n.type !== "zone" && !n.id.startsWith("sum-"));
-```
-This relies on the production convention that summary node IDs start with `"sum-"`. The convention is implicit (only `buildPhaseTree`'s `\`sum-${phasePrefix}\`` uses this prefix), and a future rename would silently change verify semantics. Worth either a constant or a comment.
+6. **Schema diff `schemaCompareOk` semantics.** The new `boolean | null` tri-state correctly distinguishes "couldn't compare" (null) from "compared + ok" (true) from "compared + regression" (false). The assert condition `=== true` fails on both null and false, matching the documented intent. The detail string includes counts when comparison ran and the error message when it didn't, preserving diagnostic value either way. No regression.
 
-**Fix:**
-```ts
-// Summary node IDs follow the buildPhaseTree convention `\`sum-${phasePrefix}\``;
-// filter them out so per-type Zod (which they would fail) doesn't apply to structural parents.
-const SUMMARY_ID_PREFIX = "sum-";
-const summaries = nodes.filter((n) => n.id.startsWith(SUMMARY_ID_PREFIX));
-```
+## Additive-Only Invariant
 
----
+Still holds after iteration-1 fixes:
 
-### IN-05: Verify script's "exactly 93 storyboard children" is fixture-coupled, not contract-locked
+- `git diff --name-only origin/master..HEAD` lists exactly: `.gitignore`, `scripts/fixtures/shot-timeline-ep01/{asset,audio_analysis,frames,prompts,shots,transcript}.json`, `scripts/fixtures/shot-timeline-ep01/stems/{vocals,drums,other}.wav`, `scripts/fixtures/shot-timeline-ep01/video.mp4`, `scripts/verify-canvas-shot-timeline.ts`, `src/routes/canvas/v2/import-from-dir.ts`.
+- `packages/infinite-canvas/` — UNCHANGED (Assert E PASS).
+- `src/types/flowgraph-v2-schema.ts` — UNCHANGED (FlowLinkV2Schema still strips unknown keys; WR-01 deferred).
+- `src/types/flowgraph-v2.ts` — UNCHANGED (FlowLinkV2 interface still does not declare `data`; WR-06 fix is local-only).
+- `src/lib/canvasAssetSchema.ts` — UNCHANGED (strictness counts equal: 18/18 `.optional()`, 0/0 `.nullable()`; Assert E2 PASS).
+- `.gitignore` — adds a single negation `!scripts/fixtures/shot-timeline-ep01/video.mp4` so the golden fixture's real mp4 container (needed for `ffprobe` resolution probing) is committed. Benign and scoped to the fixture path only.
 
-**File:** `/data/workspace/kst-canvas-consumer/scripts/verify-canvas-shot-timeline.ts:94-98`
-**Issue:**
-The assertion `storyboards.length === 93` matches the specific ep01 fixture. If the fixture is regenerated from a different episode (or ep01 is re-detected with different parameters), this magic number will fail without explaining why. The "≥1 storyboard" assertion immediately above is the actual contract invariant; the 93 lock is a fixture-specific canary.
+## Verification Run (local)
 
-**Fix:** Add a comment making the fixture-coupling explicit (already partially done at L93), or read the expected count from the fixture's `shots.json` length and assert equality dynamically:
-```ts
-const expectedShotCount = JSON.parse(fs.readFileSync(path.join(FIXTURE, "shots.json"), "utf8")).length;
-assert(storyboards.length === expectedShotCount, ...);
-```
+The verify harness was executed locally (`npx tsx scripts/verify-canvas-shot-timeline.ts`) and produced **19 passed, 0 failed**. Highlights:
+- All CANVAS-01 structural asserts PASS (1 zone, 1 summary, 3 audio, 1 video, 93 storyboard matching real ep01 shots.json).
+- All CANVAS-02 sequence-edge asserts PASS (92 edges, monotonic shot_id chain, single chain).
+- CANVAS-03 per-type Zod PASS (validateGraphNodes returns 0 errors on childNodes after filtering `sum-` prefix).
+- Assert E PASS (`packages/infinite-canvas/` diff empty).
+- Assert E2 PASS with informative detail (`master=18 head=18` for optional, `master=0 head=0` for nullable — strictness preserved, comparison actually ran).
+- All F roundtrip asserts PASS (zone label, video duration, audio engine, video resolution `1280x720`, storyboard shot_id).
+- **Both F2 asserts PASS** — every audio filePath is `/oss/shot-timeline-ep01/stems/{vocals,drums,other}.wav`, video filePath is `/oss/shot-timeline-ep01/video.mp4`. The `_workdirToOss` workdir-branch in `fsToOssUrl` is now exercised by the harness.
+
+A noisy `better-sqlite3` native-module error appears in stderr during module import (transitive import chain via `canvasEventStore` → `@/utils` → knex), but it does not affect test outcome — `extractShotTimelineArtifacts` is a pure function that never touches the DB, and the asserts all run to completion with exit code 0.
+
+## Status Determination
+
+Per the iteration-1 acceptance criteria: all 6 fixed warnings (WR-02, WR-03, WR-05, WR-06, WR-07, WR-08) are RESOLVED with concrete evidence; WR-01 and WR-04 are documented in `deferred-items.md` (not silently dropped, not fixed by design — both are correctly classified as WARNING-tier latent bugs in the deferred state, owned by Phase 4); no new BLOCKER or WARNING issues were introduced by the fixes; additive-only invariants hold. **Status: clean.**
+
+The clean status reflects the fix-iteration outcome. It does not assert that the underlying codebase is bug-free — WR-01 and WR-04 remain as documented known-limitations on the secondary `save-v2` HTTP path (Phase 3 primary `appendAndSync` path unaffected), explicitly owned by Phase 4 per `deferred-items.md`.
 
 ---
 
 _Reviewed: 2026-07-21_
 _Reviewer: Claude (gsd-code-reviewer)_
 _Depth: standard_
+_Iteration: 1 (auto-re-review)_
