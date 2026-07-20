@@ -663,27 +663,34 @@ def run_e2e_check(args) -> tuple:
 
         # teardown c：DELETE 自己的 test rows（保留 Phase 3 leftover 9001/9001）
         # T-04-04-T2 mitigation: parameterized SQL，绝不字符串拼接
+        # WR-08：原实现把两条 DELETE 放同一隐式事务，第二条失败时 conn.close()
+        # 在 finally 里 rollback，连第一条（o_agentWorkData）也回滚 —— 残留
+        # 阻塞下次同 pid/eid 重跑（Phase 3 漂移 schema 没建 kv_canvasEvent 时
+        # 正好踩此）。改成每条 DELETE 独立 try/except + 各自 commit —— 第一条
+        # 成功就持久化，第二条失败只 WARN 自己那一张表。
         try:
             conn = sqlite3.connect(db_path)
             try:
                 cur = conn.cursor()
-                cur.execute(
+                for sql in (
                     "DELETE FROM o_agentWorkData "
                     "WHERE projectId = ? AND episodesId = ?",
-                    (str(pid), str(eid)),
-                )
-                cur.execute(
                     "DELETE FROM kv_canvasEvent "
                     "WHERE projectId = ? AND episodesId = ?",
-                    (str(pid), str(eid)),
-                )
-                conn.commit()
+                ):
+                    try:
+                        cur.execute(sql, (str(pid), str(eid)))
+                        conn.commit()
+                    except sqlite3.Error as e:
+                        sys.stderr.write(
+                            f"[e2e] WARNING: cleanup step failed ({sql[:40]}…): {e}\n"
+                        )
             finally:
                 conn.close()
         except sqlite3.Error as e:
-            # cleanup 失败不阻塞 —— 但要在 stderr 提示（手动清理）
+            # 连接/打开失败 —— 整体 best-effort，不阻塞退出
             sys.stderr.write(
-                f"[e2e] WARNING: test row cleanup failed: {e} "
+                f"[e2e] WARNING: test row cleanup failed to open DB: {e} "
                 f"(pid={pid} eid={eid} 残留 in {db_path})\n"
             )
 
