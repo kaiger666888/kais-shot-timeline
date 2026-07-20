@@ -30,12 +30,12 @@
 - ✓ 分镜卡片网格 / 音频分析卡片网格 / prompt 审阅 HTML（一键复制）— pre-GSD 基线
 - ✓ 分镜 prompt 反推（首尾帧 → 结构化 prompt + 连贯 prompt 文本 → prompts.json）— pre-GSD 基线
 - ✓ Range-aware HTTP server（scripts/serve.py，206 Partial Content）用于 stem/视频 seek 播放 — pre-GSD 基线
+- ✓ ShotTimelineAsset 规范（6 个 JSON Schema draft 2020-12 + 版本号 graceful-degrade 规则 + 媒体引用约定 + 自描述 manifest + validate.py）— Validated in Phase 1: ShotTimelineAsset Specification
 
 ### Active
 
 <!-- 当前 milestone 范围。v1.0 ShotTimelineAsset Contract。 -->
 
-- [ ] 定义 ShotTimelineAsset 规范（schema + 版本 + 媒体引用约定）
 - [ ] shot-timeline 导出 ShotTimelineAsset 产物
 - [ ] 画布侧（@kais/infinite-canvas）消费 ShotTimelineAsset，表示为 collection
 - [ ] 跨仓库契约一致性验证（导出端 ↔ 消费端）
@@ -93,4 +93,4 @@ This document evolves at phase transitions and milestone boundaries.
 4. Update Context with current state
 
 ---
-*Last updated: 2026-07-20 after milestone v1.0 bootstrap*
+*Last updated: 2026-07-20 after Phase 1 complete (ShotTimelineAsset Specification verified)*
