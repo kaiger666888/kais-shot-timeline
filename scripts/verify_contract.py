@@ -464,27 +464,33 @@ def run_e2e_check(args) -> tuple:
     env = os.environ.copy()
     env["PORT"] = str(port)
     env["NODE_ENV"] = "dev"  # dev tsx 直跑 src/app.ts；production 需 esbuild bundle
-    # Pitfall 7：DEVNULL 避免 pipe-buffer deadlock（backend 启动期大量 console.log）
-    # start_new_session=True 让 npx + 子 node 进程成 process group（PGID=proc.pid），
-    # teardown 用 os.killpg 一次清整个组（否则 SIGTERM 只打 npx，子 node 变 orphan）
-    proc = subprocess.Popen(
-        ["npx", "tsx", "src/app.ts"],
-        cwd=consumer, env=env,
-        stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL,
-        start_new_session=True,
-    )
-    # CR-02：start_new_session=True 保证子进程成为新 session/group leader，
-    # 所以 pgid == proc.pid 整个 group 生命周期不变。在 Popen 后立即缓存，
-    # 避免事后 os.getpgid(reaped_pid) 与 reaping 竞争抛 ProcessLookupError
-    # 把 SIGKILL escalation 整段跳过。
-    pgid = proc.pid
 
     # timestamp-based pid/eid —— 避免碰撞 Phase 3 leftover 9001/9001
+    # WR-03：挪到 Popen 之前 —— 这些值与 proc 无关，先算好消除 Popen↔try
+    # 之间的 orphan 窗口（任何 Popen 之后、try 之前的异常原本会让 backend
+    # 进程无 teardown 泄漏）。
     pid = int(time.time())
     eid = pid + 1
     db_path = os.path.join(consumer, "data", "db2.sqlite")
 
+    # WR-03：proc/pgid 先置 None，让 finally 能识别「Popen 没成功」分支。
+    proc = None
+    pgid = None
     try:
+        # Pitfall 7：DEVNULL 避免 pipe-buffer deadlock（backend 启动期大量 console.log）
+        # start_new_session=True 让 npx + 子 node 进程成 process group（PGID=proc.pid），
+        # teardown 用 os.killpg 一次清整个组（否则 SIGTERM 只打 npx，子 node 变 orphan）
+        proc = subprocess.Popen(
+            ["npx", "tsx", "src/app.ts"],
+            cwd=consumer, env=env,
+            stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL,
+            start_new_session=True,
+        )
+        # CR-02：start_new_session=True 保证子进程成为新 session/group leader，
+        # 所以 pgid == proc.pid 整个 group 生命周期不变。在 Popen 后立即缓存，
+        # 避免事后 os.getpgid(reaped_pid) 与 reaping 竞争抛 ProcessLookupError
+        # 把 SIGKILL escalation 整段跳过。
+        pgid = proc.pid
         # a. poll /health
         if not _poll_health(port, timeout=45.0):
             return (False, f"backend /health 未在 45s 内 ready（port {port}）")
@@ -585,26 +591,29 @@ def run_e2e_check(args) -> tuple:
         #   (b) SIGKILL 改为外层 finally 无条件执行 —— 不再只在 TimeoutExpired
         #       分支里 escalation。修补 npx 父进程先死、子 node 没收到 SIGTERM
         #       （装了不 exit 的 handler / 信号延迟转发）的孤儿窗口。
+        # WR-03：pgid is None 说明 Popen 没成功（或前置异常），跳过 proc 清理；
+        # teardown b/c 不依赖 proc，仍可执行。
         import signal as _signal
-        try:
-            os.killpg(pgid, _signal.SIGTERM)
-        except (ProcessLookupError, PermissionError):
-            pass
-        # bounded SIGTERM wait —— 父进程通常几秒内退；不依赖此超时触发 escalation
-        try:
-            proc.wait(timeout=10)
-        except subprocess.TimeoutExpired:
-            pass
-        # 无条件 SIGKILL 整个 group —— 兜底所有 SIGTERM 没收齐的情形
-        # （父先死 / 子装 handler 不 exit / 信号延迟转发）
-        try:
-            os.killpg(pgid, _signal.SIGKILL)
-        except (ProcessLookupError, PermissionError):
-            pass
-        try:
-            proc.wait(timeout=2)
-        except subprocess.TimeoutExpired:
-            pass
+        if pgid is not None:
+            try:
+                os.killpg(pgid, _signal.SIGTERM)
+            except (ProcessLookupError, PermissionError):
+                pass
+            # bounded SIGTERM wait —— 父进程通常几秒内退；不依赖此超时触发 escalation
+            try:
+                proc.wait(timeout=10)
+            except subprocess.TimeoutExpired:
+                pass
+            # 无条件 SIGKILL 整个 group —— 兜底所有 SIGTERM 没收齐的情形
+            # （父先死 / 子装 handler 不 exit / 信号延迟转发）
+            try:
+                os.killpg(pgid, _signal.SIGKILL)
+            except (ProcessLookupError, PermissionError):
+                pass
+            try:
+                proc.wait(timeout=2)
+            except subprocess.TimeoutExpired:
+                pass
 
         # teardown b：worktree reconcile（Pitfall 2/5 —— database.d.ts dev regen 噪音）
         # best-effort，失败不阻塞 —— 是 auto-regen 副产品，生产路径不依赖
