@@ -31,12 +31,12 @@
 - ✓ 分镜 prompt 反推（首尾帧 → 结构化 prompt + 连贯 prompt 文本 → prompts.json）— pre-GSD 基线
 - ✓ Range-aware HTTP server（scripts/serve.py，206 Partial Content）用于 stem/视频 seek 播放 — pre-GSD 基线
 - ✓ ShotTimelineAsset 规范（6 个 JSON Schema draft 2020-12 + 版本号 graceful-degrade 规则 + 媒体引用约定 + 自描述 manifest + validate.py）— Validated in Phase 1: ShotTimelineAsset Specification
+- ✓ shot-timeline 导出 ShotTimelineAsset 产物（export_asset.py 写 asset.json + canonical symlinks；run_pipeline.py step_export 第 6 步 always-on；serve.py FD-leak 修复 + check_range.py Range-206 自检；additive-only）— Validated in Phase 2: shot-timeline Exporter (Producer)
 
 ### Active
 
 <!-- 当前 milestone 范围。v1.0 ShotTimelineAsset Contract。 -->
 
-- [ ] shot-timeline 导出 ShotTimelineAsset 产物
 - [ ] 画布侧（@kais/infinite-canvas）消费 ShotTimelineAsset，表示为 collection
 - [ ] 跨仓库契约一致性验证（导出端 ↔ 消费端）
 
@@ -70,7 +70,7 @@
 | Decision | Rationale | Outcome |
 |----------|-----------|---------|
 | v1.0 交付 = 格式契约（非原生组件移植、非 iframe 嵌入） | 格式是骨架，原生渲染/嵌入都建立在它之上；v1.0 先落契约 + 画布最小消费 | — Pending |
-| shot-timeline 作为「外部生产者」（非画布编排 skill） | 与「shot-timeline 独立 GSD 工程」决策一致；两仓库松耦合、独立演进 | — Pending |
+| shot-timeline 作为「外部生产者」（非画布编排 skill） | 与「shot-timeline 独立 GSD 工程」决策一致；两仓库松耦合、独立演进 | ✓ Validated Phase 2（export_asset.py + step_export 落地导出层，additive-only） |
 | 画布用结构化父节点表示 collection（非新 node type / custom renderer） | receiver schema 已透传 structural types，复用现有 5 渲染器，零 contract bump | — Pending |
 | GSD 工程建在 shot-timeline（非 aigc-platform） | 格式权威定义方 = 生产者；aigc-platform 已有独立 GSD（v2.0） | — Pending |
 | 在 `feat/canvas-asset-collection` 分支开发（非 main / 非 worktree） | main 保留可交付、隔离多 phase 工作；worktree 无法跨仓库组合且拆分 .planning/ 状态 | — Pending |
@@ -93,4 +93,4 @@ This document evolves at phase transitions and milestone boundaries.
 4. Update Context with current state
 
 ---
-*Last updated: 2026-07-20 after Phase 1 complete (ShotTimelineAsset Specification verified)*
+*Last updated: 2026-07-20 after Phase 2 complete (shot-timeline Exporter verified — producer layer ships ShotTimelineAsset artifacts, additive-only, Range-servable)*
