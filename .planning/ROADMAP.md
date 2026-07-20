@@ -7,6 +7,7 @@ This milestone delivers a repo-agnostic **ShotTimelineAsset** format contract: t
 ## Phases
 
 **Phase Numbering:**
+
 - Integer phases (1, 2, 3, 4): Planned milestone work
 - Decimal phases (2.1, 2.2): Urgent insertions (marked with INSERTED)
 
@@ -20,56 +21,73 @@ Decimal phases appear between their surrounding integers in numeric order.
 ## Phase Details
 
 ### Phase 1: ShotTimelineAsset Specification
+
 **Goal**: A repo-agnostic ShotTimelineAsset contract document exists that both producer and consumer can implement against without tribal knowledge.
 **Mode**: mvp
 **Depends on**: Nothing (first phase)
 **Repo**: `kais-shot-timeline` (authoritative spec owner)
 **Requirements**: SPEC-01, SPEC-02, SPEC-03, SPEC-04
 **Success Criteria** (what must be TRUE):
+
   1. The spec defines the 5 canonical JSON shapes (`shots` / `audio_analysis` / `transcript` / `frames` / `prompts`) with field-level types, so a reader can recognize any conforming asset
   2. The spec defines a schema version field and the rule consumers follow when they encounter an unknown/newer version (graceful degrade vs. reject)
   3. The spec defines how media files (video mp4 + 3 stem wavs) are path/naming-conventioned and the Range-aware HTTP 206 serving requirement consumers depend on for seek playback
   4. The spec defines a self-describing manifest (content inventory, source video, generator tool/version) so a consumer can understand an asset without external documentation
+
 **Plans**: 2 plans
 
 Plans:
+**Wave 1**
+
 - [ ] 01-01-PLAN.md — Write 6 JSON Schema (draft 2020-12) contract files + minimal fixture + jsonschema validation runner
+
+**Wave 2** *(blocked on Wave 1 completion)*
+
 - [ ] 01-02-PLAN.md — Write the authoritative human-readable spec/SPEC.md + human review checkpoint
 
 ### Phase 2: shot-timeline Exporter (Producer)
+
 **Goal**: Running the shot-timeline pipeline emits a self-describing ShotTimelineAsset artifact that conforms to the Phase 1 spec and is servable to a downstream consumer.
 **Mode**: mvp
 **Depends on**: Phase 1
 **Repo**: `kais-shot-timeline` (this repo)
 **Requirements**: EXPORT-01, EXPORT-02, EXPORT-03
 **Success Criteria** (what must be TRUE):
+
   1. After `run_pipeline.py` finishes, a ShotTimelineAsset artifact (manifest + 5 JSON set + media references) exists under `output/<video-stem>/` that conforms to the Phase 1 spec
   2. The exported asset carries a version number and self-describing manifest, and the export layer adds this **without modifying** the existing detection/transcription/separation algorithms (additive only)
   3. The exported asset's media files (video + 3 stem wavs) are consumable via HTTP Range requests through `scripts/serve.py` — a consumer can seek without re-downloading the whole file (206 Partial Content responses observed)
+
 **Plans**: TBD
 
 ### Phase 3: Canvas Consumer
+
 **Goal**: The canvas's existing `import-from-dir` path ingests a ShotTimelineAsset directory and renders it as a first-class collection on the canvas, using only existing renderers.
 **Mode**: mvp
 **Depends on**: Phase 1 (spec), Phase 2 (a real exported asset to test against)
 **Repo**: `kais-aigc-platform` branch `feat/canvas-asset-collection` (package `@kais/infinite-canvas`)
 **Requirements**: CANVAS-01, CANVAS-02, CANVAS-03
 **Success Criteria** (what must be TRUE):
+
   1. Dropping a ShotTimelineAsset directory into the canvas's `import-from-dir` path produces a single collection entity on the canvas (not loose nodes)
   2. The collection is represented as a **structural parent node** following the existing `zone`/`phase` pattern (holds child node IDs), aggregating `storyboard` / `audio` / `video` child nodes derived from the asset
   3. All child nodes render via the canvas's **existing 5 renderers** — no custom renderer is introduced, no receiver-schema contract bump occurs (`structuralTypes` passthrough suffices)
+
 **Plans**: TBD
 **UI hint**: yes
 
 ### Phase 4: Cross-Repo Contract Verification
+
 **Goal**: A real ShotTimelineAsset flows end-to-end from producer to consumer, and a regression harness exists to keep the contract aligned as both repos evolve independently.
 **Mode**: mvp
 **Depends on**: Phase 2 (exporter), Phase 3 (consumer)
 **Repo**: Spans both (`kais-shot-timeline` producer fixture + `kais-aigc-platform` consumer test)
 **Requirements**: VERIFY-01, VERIFY-02
 **Success Criteria** (what must be TRUE):
+
   1. A ShotTimelineAsset produced by `kais-shot-timeline` imports successfully into the canvas and renders the expected collection of storyboard / stem-audio / video / prompt children — observable end-to-end
   2. A regression test exists that fails when the field schema or media-reference convention drifts between the producer and consumer (catches silent breakage on either side)
+
 **Plans**: TBD
 
 ## Progress
