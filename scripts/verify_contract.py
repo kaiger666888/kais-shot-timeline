@@ -267,6 +267,78 @@ def run_consumer_check(args) -> tuple:
     return (True, "Phase 3 17 asserts all green (importer accepts golden asset)")
 
 
+# === self-test (PHASE4_SELF_TEST=1) ====================================
+def run_self_test(args) -> tuple:
+    """注入故意漂移（schema_version='v1'），证明 harness fail-loud。
+
+    流程：
+      1. 创建 /tmp/phase4-selftest-<rand>/ temp dir
+      2. 复制真实 ep01 asset.json + 5 referenced data files 到 temp dir
+         （shutil.copy2 保留 mtime；不改动真实 output/）
+      3. 加载 asset.json copy → 把 schema_version 从 '1' 改为 'v1'
+         （违反 asset.schema.json L13 pattern `^(0|[1-9]\\d*)(\\.(0|[1-9]\\d*))?$`）
+      4. atomic write back（tmp + os.replace，per scripts/export_asset.py L308-313）
+      5. validate_asset_json(temp_path) —— 期望返 ≥1 error
+      6. ≥1 error → (True, "PASS: corrupt asset correctly rejected ...")
+         空 errors → (False, "FAIL: harness 接受了损坏 asset —— 无法检测 producer drift")
+
+    语义：self-test PASS = harness 工作正常（能检测 drift）→ 整体 exit 0；
+          self-test FAIL = harness 损坏（无法检测 drift）→ 整体 exit 1。
+    这与 RESEARCH §Validation Architecture "corrupt asset → exit 1" 一致 ——
+    「exit 1」指底层 producer mode 遇到坏 asset 应 exit 1，self-test 是
+    meta-test 验证这个属性成立。
+    """
+    src_dir = Path(args.e2e_asset_dir)
+    src_asset = src_dir / "asset.json"
+    if not src_asset.is_file():
+        return (
+            False,
+            f"self-test 需要 ep01 asset.json 作为漂移注入源，但缺失: {src_asset}",
+        )
+
+    # 1. temp dir（mkdtemp 前缀方便 find /tmp -name 'phase4-selftest-*' 调试）
+    temp_dir = Path(tempfile.mkdtemp(prefix="phase4-selftest-"))
+    try:
+        # 2. 复制 asset.json + 5 referenced data files
+        temp_asset = temp_dir / "asset.json"
+        shutil.copy2(src_asset, temp_asset)
+        manifest_copy = json.loads(temp_asset.read_text(encoding="utf-8"))
+        for shape, rel in manifest_copy.get("data", {}).items():
+            src_data = src_dir / rel
+            if src_data.is_file():
+                shutil.copy2(src_data, temp_dir / rel)
+
+        # 3. 注入 drift：schema_version "1" → "v1"（违反 pattern 字段）
+        manifest_copy["schema_version"] = "v1"
+
+        # 4. atomic write back（per scripts/export_asset.py L308-313）
+        tmp_write = str(temp_asset) + ".tmp"
+        with open(tmp_write, "w", encoding="utf-8") as f:
+            json.dump(manifest_copy, f, indent=2, ensure_ascii=False)
+        os.replace(tmp_write, temp_asset)
+
+        # 5. 跑 producer 侧 inline validator（asset shape only）
+        errors = validate_asset_json(temp_asset)
+
+        # 6. 断言
+        if len(errors) >= 1:
+            first = errors[0]
+            loc = "/".join(map(str, first.absolute_path)) or "<root>"
+            return (
+                True,
+                f"corrupt asset (schema_version='v1') correctly rejected with "
+                f"{len(errors)} error(s); first at /{loc}: {first.message}",
+            )
+        return (
+            False,
+            "harness 接受了 schema_version='v1' —— 无法检测 producer drift "
+            "（这是严重 regression；asset.schema.json 的 pattern 校验失效）",
+        )
+    finally:
+        # T-04-03-T1：temp dir 不留残留（try/finally + ignore_errors 兜底）
+        shutil.rmtree(temp_dir, ignore_errors=True)
+
+
 # === CLI ================================================================
 def main():
     """CLI 入口。"""
@@ -295,6 +367,16 @@ def main():
     args = ap.parse_args()
 
     results = []  # list of (mode_name, ok, detail)
+
+    # self-test (opt-in via PHASE4_SELF_TEST=1; only meaningful for producer/all)
+    # 必须先于 producer mode 跑 —— 若 harness 本身损坏（fail-loud 失效），
+    # producer mode 的「PASS」结果不可信，self-test FAIL 应让整体 exit 1。
+    if os.environ.get("PHASE4_SELF_TEST") == "1" and args.mode in ("producer", "all"):
+        print("[verify-contract] self-test mode starting (PHASE4_SELF_TEST=1)")
+        ok, detail = run_self_test(args)
+        tag = "[self-test] PASS" if ok else "[self-test] FAIL"
+        print(f"{tag}: {detail}")
+        results.append(("self-test", ok, detail))
 
     # producer mode
     if args.mode in ("producer", "all"):
