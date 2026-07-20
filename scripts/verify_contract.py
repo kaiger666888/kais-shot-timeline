@@ -392,27 +392,225 @@ def run_self_test(args) -> tuple:
 
 # === e2e mode (Plan 04-02) ==============================================
 def run_e2e_check(args) -> tuple:
-    """[TDD RED] e2e mode 骨架占位 —— Plan 04-02 Task 1 GREEN 替换为真实实现。
+    """e2e mode：起 backend → POST import-from-dir → SQL read-back → 结构断言。
 
-    流程（GREEN 蓝图）：
-      1. guard consumer worktree + asset_dir
-      2. find_free_port + Popen npx tsx src/app.ts (NODE_ENV=dev)
-      3. try:
+    流程（Plan 04-02 <action>）：
+      1. guard：consumer worktree 存在 + 是 git worktree（T-04-07-T2）
+      2. guard：asset_dir 含 asset.json
+      3. find_free_port() + Popen npx tsx src/app.ts（NODE_ENV=dev）
+         stdout=DEVNULL（Pitfall 7：避免 pipe-buffer deadlock）
+      4. timestamp-based pid/eid（int(time.time()), +1）—— 避免碰撞 Phase 3 9001/9001
+      5. try:
            a. _poll_health(45s)
-           b. POST /api/canvas/v2/import-from-dir (timestamp pid/eid)
-           c. _read_persisted_snapshot SQL 直查
-           d. 结构断言：1 zone + N storyboard + 3 audio + ≥1 video + (N-1) seq edges
-         finally:
-           a. proc.terminate → wait → kill → wait reap（3 层）
-           b. git checkout -- src/types/database.d.ts（dev regen 兜底）
-           c. DELETE FROM o_agentWorkData/kv_canvasEvent WHERE projectId/episodesId=?
-              （保留 Phase 3 leftover 9001/9001）
+           b. POST /api/canvas/v2/import-from-dir body=UTF-8 encoded JSON bytes
+              （Pitfall 6：workdir 路径含 CJK + 全角标点）
+           c. _read_persisted_snapshot SQL 直查 o_agentWorkData
+              （Pitfall 1：绝不用 load-v2 HTTP 读 relational）
+           d. 结构断言：
+              - 1 zone
+              - ≥1 storyboard（ep01 实测 93，不硬编码）
+              - 3 audio (vocals/drums/other)
+              - ≥1 video（实测 1 artifact + 1 sum-p13 = 2）
+              - N-1 sequence edges（WR-01 验证：primary 路径 sequence edges 存活）
+         finally (teardown —— 3 层 + worktree reconcile + cleanup DELETE):
+           a. proc.terminate → wait(10) → kill → wait(2) reap
+              （模板源：scripts/check_range.py L104-118 + 02-REVIEW WR-06）
+           b. git -C $consumer checkout -- src/types/database.d.ts
+              （Pitfall 2/5：dev-mode regen 噪音兜底）
+           c. DELETE FROM o_agentWorkData/kv_canvasEvent WHERE pid/eid=?
+              （保留 Phase 3 leftover 9001/9001；T-04-04-T2 cleanup）
+
+    返回 tuple[bool, str] —— 让 main() 统一格式化 + exit code。
     """
-    return (
-        False,
-        "TDD RED —— run_e2e_check 尚未实现；Plan 04-02 Task 1 GREEN 阶段替换此 stub "
-        "（起 backend → POST import-from-dir → SQL read-back → 结构断言 → try/finally teardown）",
+    consumer = args.consumer_path
+    if not os.path.isdir(consumer) or not (
+        os.path.isdir(os.path.join(consumer, ".git"))
+        or os.path.isfile(os.path.join(consumer, ".git"))
+    ):
+        return (
+            False,
+            f"CANVAS_CONSUMER_PATH 不是 git worktree: {consumer}\n"
+            f"  set CANVAS_CONSUMER_PATH=<worktree> 或 clone kais-aigc-platform\n"
+            f"  + checkout feat/canvas-asset-collection",
+        )
+
+    asset_dir = args.e2e_asset_dir
+    if not os.path.isfile(os.path.join(asset_dir, "asset.json")):
+        return (
+            False,
+            f"e2e 输入 asset.json 缺失: {asset_dir}\n"
+            f"  set PHASE4_E2E_ASSET_DIR=<real producer asset dir>",
+        )
+
+    port = find_free_port()
+    env = os.environ.copy()
+    env["PORT"] = str(port)
+    env["NODE_ENV"] = "dev"  # dev tsx 直跑 src/app.ts；production 需 esbuild bundle
+    # Pitfall 7：DEVNULL 避免 pipe-buffer deadlock（backend 启动期大量 console.log）
+    # start_new_session=True 让 npx + 子 node 进程成 process group（PGID=proc.pid），
+    # teardown 用 os.killpg 一次清整个组（否则 SIGTERM 只打 npx，子 node 变 orphan）
+    proc = subprocess.Popen(
+        ["npx", "tsx", "src/app.ts"],
+        cwd=consumer, env=env,
+        stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL,
+        start_new_session=True,
     )
+
+    # timestamp-based pid/eid —— 避免碰撞 Phase 3 leftover 9001/9001
+    pid = int(time.time())
+    eid = pid + 1
+    db_path = os.path.join(consumer, "data", "db2.sqlite")
+
+    try:
+        # a. poll /health
+        if not _poll_health(port, timeout=45.0):
+            return (False, f"backend /health 未在 45s 内 ready（port {port}）")
+        print(f"[e2e] backend ready on port {port}")
+
+        # b. POST /api/canvas/v2/import-from-dir
+        # Pitfall 6：workdir 含 CJK + 全角标点 —— body 用 UTF-8 encoded JSON bytes
+        body = json.dumps({
+            "projectId": pid,
+            "episodesId": eid,
+            "workdir": str(asset_dir),
+            "mode": "replace",
+        }, ensure_ascii=False).encode("utf-8")
+        req = urllib.request.Request(
+            f"http://127.0.0.1:{port}/api/canvas/v2/import-from-dir",
+            data=body,
+            headers={"Content-Type": "application/json"},
+            method="POST",
+        )
+        try:
+            with urllib.request.urlopen(req, timeout=60) as r:
+                resp = json.loads(r.read().decode("utf-8"))
+                if r.status != 200:
+                    return (False, f"import-from-dir HTTP {r.status}: {resp}")
+        except urllib.error.HTTPError as e:
+            err_body = e.read()[:300].decode("utf-8", errors="replace")
+            return (False, f"import-from-dir failed: HTTP {e.code} {err_body}")
+        imported = (resp.get("data") or {}).get("imported", "?")
+        print(f"[e2e] import-from-dir OK: {imported} nodes imported")
+
+        # c. SQL read-back —— 绕开 load-v2 relational mismatch（Pitfall 1）
+        graph = _read_persisted_snapshot(db_path, pid, eid)
+        if graph is None:
+            return (
+                False,
+                f"snapshot 缺失 pid={pid} eid={eid} —— import-from-dir 写入但 "
+                f"o_agentWorkData 查不到（可能 primary 路径异常）",
+            )
+
+        # d. 结构断言
+        nodes = graph.get("nodes", [])
+        links = graph.get("links", [])
+        zones = [n for n in nodes if n.get("type") == "zone"]
+        storyboards = [n for n in nodes if n.get("type") == "storyboard"]
+        audios = [n for n in nodes if n.get("type") == "audio"]
+        videos = [n for n in nodes if n.get("type") == "video"]
+        summaries = [n for n in nodes if str(n.get("id", "")).startswith("sum-")]
+        # WR-01 验证：sequence edges 在 primary appendAndSync 路径完整存活
+        # （save-v2 才会经 FlowLinkV2Schema strip；e2e 不走 save-v2）
+        # Phase 3 producer 字面形状：{dataType:"data", data:{linkType:"sequence"}}
+        # —— 断言优先用 data.linkType 字段（语义权威）
+        seq_edges = [
+            l for l in links
+            if (l.get("data") or {}).get("linkType") == "sequence"
+        ]
+
+        try:
+            assert len(zones) == 1, f"zones: want 1 got {len(zones)}"
+            assert len(storyboards) >= 1, \
+                f"storyboards: want ≥1 got {len(storyboards)}"
+            assert len(audios) == 3, \
+                f"audios: want 3 (vocals/drums/other) got {len(audios)}"
+            assert len(videos) >= 1, \
+                f"videos: want ≥1 artifact got {len(videos)}"
+            assert len(seq_edges) == len(storyboards) - 1, \
+                f"seq_edges: want {len(storyboards)-1} (N-1) got {len(seq_edges)} " \
+                f"—— WR-01 验证（primary 路径 sequence edges 应存活）"
+        except AssertionError as e:
+            return (
+                False,
+                f"snapshot 结构断言失败: {e}\n"
+                f"  实测: {len(nodes)} nodes, {len(links)} links, "
+                f"{len(zones)} zone, {len(storyboards)} storyboard, "
+                f"{len(audios)} audio, {len(videos)} video, "
+                f"{len(summaries)} summary, {len(seq_edges)} seq_edges"
+            )
+
+        print(
+            f"[e2e] snapshot valid: {len(nodes)} nodes, {len(links)} links, "
+            f"{len(zones)} zone, {len(storyboards)} storyboard, "
+            f"{len(audios)} audio, {len(videos)} video, "
+            f"{len(seq_edges)} seq edges "
+            f"(WR-01 data survives primary path)"
+        )
+        return (
+            True,
+            f"snapshot valid: {len(storyboards)} storyboards + "
+            f"{len(seq_edges)} sequence edges survive primary appendAndSync path "
+            f"(WR-01/04 not surfaced)",
+        )
+    finally:
+        # teardown a：3-layer proc-group cleanup
+        # 模板源 scripts/check_range.py L104-118 + 升级到 process-group kill
+        # （npx tsx 会 fork 子 node 进程；SIGTERM 只打 npx 留 orphan —— Rule 1 fix）
+        import signal as _signal
+        try:
+            pgid = os.getpgid(proc.pid)
+            os.killpg(pgid, _signal.SIGTERM)
+        except (ProcessLookupError, PermissionError):
+            pass
+        try:
+            proc.wait(timeout=10)
+        except subprocess.TimeoutExpired:
+            try:
+                pgid = os.getpgid(proc.pid)
+                os.killpg(pgid, _signal.SIGKILL)
+            except (ProcessLookupError, PermissionError):
+                pass
+            try:
+                proc.wait(timeout=2)
+            except subprocess.TimeoutExpired:
+                pass
+
+        # teardown b：worktree reconcile（Pitfall 2/5 —— database.d.ts dev regen 噪音）
+        # best-effort，失败不阻塞 —— 是 auto-regen 副产品，生产路径不依赖
+        try:
+            subprocess.run(
+                ["git", "-C", consumer, "checkout", "--",
+                 "src/types/database.d.ts"],
+                capture_output=True, timeout=10,
+            )
+        except (subprocess.TimeoutExpired, FileNotFoundError):
+            pass
+
+        # teardown c：DELETE 自己的 test rows（保留 Phase 3 leftover 9001/9001）
+        # T-04-04-T2 mitigation: parameterized SQL，绝不字符串拼接
+        try:
+            conn = sqlite3.connect(db_path)
+            try:
+                cur = conn.cursor()
+                cur.execute(
+                    "DELETE FROM o_agentWorkData "
+                    "WHERE projectId = ? AND episodesId = ?",
+                    (str(pid), str(eid)),
+                )
+                cur.execute(
+                    "DELETE FROM kv_canvasEvent "
+                    "WHERE projectId = ? AND episodesId = ?",
+                    (str(pid), str(eid)),
+                )
+                conn.commit()
+            finally:
+                conn.close()
+        except sqlite3.Error as e:
+            # cleanup 失败不阻塞 —— 但要在 stderr 提示（手动清理）
+            sys.stderr.write(
+                f"[e2e] WARNING: test row cleanup failed: {e} "
+                f"(pid={pid} eid={eid} 残留 in {db_path})\n"
+            )
 
 
 # === CLI ================================================================
