@@ -713,6 +713,14 @@ def main():
     )
     args = ap.parse_args()
 
+    # WR-06：--mode=e2e + --e2e-skip 是矛盾组合 —— 用户显式要 e2e 又显式跳过它，
+    # 不该静默 exit 0（会掩盖 CI wrapper 误传两 flag 的配置错）。直接拒掉。
+    if args.mode == "e2e" and args.e2e_skip:
+        sys.exit(
+            "[verify-contract] --mode=e2e 与 --e2e-skip 冲突 —— "
+            "要么去掉 --e2e-skip 让 e2e 跑，要么换 --mode=all 再加 --e2e-skip"
+        )
+
     results = []  # list of (mode_name, ok, detail)
 
     # self-test (opt-in via PHASE4_SELF_TEST=1; only meaningful for producer/all)
