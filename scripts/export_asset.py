@@ -251,18 +251,26 @@ def main():
     # (g) 构建 manifest dict
     asset = build_asset_dict(work_dir, video)
 
-    # (h) 写入（ensure_ascii=False 强制 —— Chinese video_filename）
-    with open(output, "w", encoding="utf-8") as f:
-        json.dump(asset, f, indent=2, ensure_ascii=False)
-
-    # (i) inline schema 自校验（invalid 时 helper 内 sys.exit 非 0）
-    validate_asset_json(asset)
-
-    # (j) Post-write assert：4 个 canonical paths 都 resolve 到真实文件
+    # (g') Pre-write assert：4 个 canonical paths 都 resolve 到真实文件
+    # 必须在 write 之前 —— 否则 dangling-symlink 的 manifest 已经落盘，下游看到
+    # schema-valid 但指向不存在媒体的文档（02-REVIEW WR-01）。
+    # step (e) 已建好 symlink，这里只是兜底断言；schema 校验只看 path 字符串
+    # pattern，验不出 dangling symlink。
     for rel in ("video.mp4", "stems/vocals.wav", "stems/drums.wav", "stems/other.wav"):
         p = os.path.join(work_dir, rel)
         if not os.path.exists(p):
-            sys.exit(f"canonical path missing after export: {rel} (expected at {p})")
+            sys.exit(f"canonical path missing before write: {rel} (expected at {p})")
+
+    # (i') inline schema 自校验（在写入之前 —— invalid 时 helper 内 sys.exit 非 0，
+    # 避免 schema-invalid manifest 落盘被下游读到）
+    validate_asset_json(asset)
+
+    # (h) 原子写入（temp + os.replace）—— 避免 partial-write 状态被下游读到
+    # （02-REVIEW WR-01）。ensure_ascii=False 强制 —— Chinese video_filename。
+    tmp = output + ".tmp"
+    with open(tmp, "w", encoding="utf-8") as f:
+        json.dump(asset, f, indent=2, ensure_ascii=False)
+    os.replace(tmp, output)
 
     # (k) Final-status print（CLAUDE.md bracketed-tag 惯例）
     print(f"[export-asset] wrote asset.json → {output}")
