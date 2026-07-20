@@ -2,16 +2,16 @@
 gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: ShotTimelineAsset Contract
-status: executing
+status: verifying
 stopped_at: "Phase 01 complete — both plans done (01-01 schemas + 01-02 SPEC.md); ready for Phase 2 planning"
-last_updated: "2026-07-20T13:54:26.426Z"
+last_updated: "2026-07-20T14:11:56.357Z"
 last_activity: 2026-07-20
 progress:
   total_phases: 4
-  completed_phases: 1
+  completed_phases: 2
   total_plans: 4
-  completed_plans: 3
-  percent: 25
+  completed_plans: 4
+  percent: 50
 ---
 
 # Project State
@@ -27,10 +27,10 @@ See: .planning/PROJECT.md (updated 2026-07-20)
 
 Phase: 2 (shot-timeline Exporter (Producer)) — EXECUTING
 Plan: 2 of 2
-Status: Ready to execute
+Status: Phase complete — ready for verification
 Last activity: 2026-07-20
 
-Progress: [████████░░] 75%
+Progress: [██████████] 100%
 
 ## Performance Metrics
 
@@ -47,6 +47,7 @@ Progress: [████████░░] 75%
 | 01 | 2 | - | - |
 
 *Updated after each plan completion*
+| Phase 02 P02 | 15min | 2 tasks | 3 files |
 
 ## Accumulated Context
 
@@ -71,6 +72,9 @@ Recent decisions affecting current work:
 - [Phase 02]: Plan 02-01: video.mp4 canonical symlink target = --video abs path (非 work_dir 内 <orig>.mp4; 后者链到 -an 去 audio 的 h264.mp4)
 - [Phase 02]: Plan 02-01: prompts.json 视作 opaque external input (无 in-repo producer); SPEC.md §5 提到的 gen_prompts_html.py 不存在
 - [Phase 02]: Plan 02-01 (Rule 1 deviation): export_asset.py main 顶部统一 abspath 化所有路径 args —— 修复相对 --stems-source-dir 导致 stem symlinks target 按 symlink 所在目录解析失效
+- [Phase 02]: Plan 02-02: scripts/serve.py _Partial 类重构为 __init__(self, f, start, end, chunk_size) + read() + close()；closure var f → self._f；close() 调 self._f.close() —— 修复 206 success path 的 AttributeError 导致的 FD 泄漏
+- [Phase 02]: Plan 02-02: scripts/check_range.py 落地为 standalone verifier (不接 step_export) —— 避免 port 并发 + producer/server concern 分离；find_free_port + try/finally tear-down
+- [Phase 02]: Plan 02-02: 416/NOT_FOUND/200 分支 deliberately untouched (02-RESEARCH Pitfall 2 verified 它们本就正确)
 
 ### Pending Todos
 
@@ -92,6 +96,6 @@ Items acknowledged and carried forward from milestone bootstrap:
 
 ## Session Continuity
 
-Last session: 2026-07-20T13:54:26.418Z
+Last session: 2026-07-20T14:08:23.126Z
 Stopped at: "Phase 01 complete — both plans done (01-01 schemas + 01-02 SPEC.md); ready for Phase 2 planning"
 Resume file: None

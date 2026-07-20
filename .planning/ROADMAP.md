@@ -14,7 +14,7 @@ This milestone delivers a repo-agnostic **ShotTimelineAsset** format contract: t
 Decimal phases appear between their surrounding integers in numeric order.
 
 - [x] **Phase 1: ShotTimelineAsset Specification** - Define the repo-agnostic contract (schema + version + media refs + manifest) both repos implement against — COMPLETE 2026-07-20
-- [ ] **Phase 2: shot-timeline Exporter (Producer)** - Implement the producer: pipeline output → ShotTimelineAsset artifact, versioned + self-describing, Range-served
+- [x] **Phase 2: shot-timeline Exporter (Producer)** - Implement the producer: pipeline output → ShotTimelineAsset artifact, versioned + self-describing, Range-served (completed 2026-07-20)
 - [ ] **Phase 3: Canvas Consumer** - Implement canvas ingestion via structural parent node reusing existing 5 renderers (no contract bump)
 - [ ] **Phase 4: Cross-Repo Contract Verification** - End-to-end smoke + regression protection against schema/media-reference drift
 
@@ -67,7 +67,7 @@ Plans:
 
 **Wave 2** *(blocked on Wave 1 completion — check_range exercises canonical media produced by 02-01)*
 
-- [ ] 02-02-PLAN.md — Fix scripts/serve.py _Partial FD-leak (add close() method) + create scripts/check_range.py (Range-206 self-check)
+- [x] 02-02-PLAN.md — Fix scripts/serve.py _Partial FD-leak (add close() method) + create scripts/check_range.py (Range-206 self-check)
 
 ### Phase 3: Canvas Consumer
 
@@ -107,7 +107,7 @@ Phases execute in numeric order: 1 → 2 → 3 → 4
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
 | 1. ShotTimelineAsset Specification | 2/2 | Complete | 2026-07-20 |
-| 2. shot-timeline Exporter (Producer) | 1/2 | In Progress|  |
+| 2. shot-timeline Exporter (Producer) | 2/2 | Complete   | 2026-07-20 |
 | 3. Canvas Consumer | 0/TBD | Not started | - |
 | 4. Cross-Repo Contract Verification | 0/TBD | Not started | - |
 

@@ -18,7 +18,7 @@
 
 - [x] **EXPORT-01**: 实现 shot-timeline 导出器，把 `run_pipeline.py` 产出的 `output/<stem>/` 打包成符合 SPEC 的 ShotTimelineAsset 产物
 - [x] **EXPORT-02**: 导出产物带版本号、自描述 manifest，且不改变现有检测/转录/分离算法（仅在其输出之上加导出层）
-- [ ] **EXPORT-03**: 导出端通过 Range-aware server（`scripts/serve.py`）对外提供媒体文件，满足消费端 stem/视频 seek 依赖
+- [x] **EXPORT-03**: 导出端通过 Range-aware server（`scripts/serve.py`）对外提供媒体文件，满足消费端 stem/视频 seek 依赖
 
 ### CANVAS — 画布消费端（@kais/infinite-canvas，跨仓库 kais-aigc-platform）
 
@@ -66,7 +66,7 @@ Deferred to future milestone（建立在 v1.0 契约之上）：
 | SPEC-04 | Phase 1 | Complete (Plan 01-01) |
 | EXPORT-01 | Phase 2 | Complete |
 | EXPORT-02 | Phase 2 | Complete |
-| EXPORT-03 | Phase 2 | Pending |
+| EXPORT-03 | Phase 2 | Complete |
 | CANVAS-01 | Phase 3 | Pending |
 | CANVAS-02 | Phase 3 | Pending |
 | CANVAS-03 | Phase 3 | Pending |
