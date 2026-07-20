@@ -63,7 +63,7 @@ Plans:
 Plans:
 **Wave 1**
 
-- [ ] 02-01-PLAN.md — Create scripts/export_asset.py (manifest writer + canonical symlinks + inline jsonschema) + wire step_export into run_pipeline.py (bump [N/5]→[N/6], add --skip-export, --force clears asset.json)
+- [x] 02-01-PLAN.md — Create scripts/export_asset.py (manifest writer + canonical symlinks + inline jsonschema) + wire step_export into run_pipeline.py (bump [N/5]→[N/6], add --skip-export, --force clears asset.json)
 
 **Wave 2** *(blocked on Wave 1 completion — check_range exercises canonical media produced by 02-01)*
 
@@ -107,7 +107,7 @@ Phases execute in numeric order: 1 → 2 → 3 → 4
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
 | 1. ShotTimelineAsset Specification | 2/2 | Complete | 2026-07-20 |
-| 2. shot-timeline Exporter (Producer) | 0/2 | Not started | - |
+| 2. shot-timeline Exporter (Producer) | 1/2 | In Progress|  |
 | 3. Canvas Consumer | 0/TBD | Not started | - |
 | 4. Cross-Repo Contract Verification | 0/TBD | Not started | - |
 

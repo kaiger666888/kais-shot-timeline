@@ -4,13 +4,13 @@ milestone: v1.0
 milestone_name: ShotTimelineAsset Contract
 status: executing
 stopped_at: "Phase 01 complete — both plans done (01-01 schemas + 01-02 SPEC.md); ready for Phase 2 planning"
-last_updated: "2026-07-20T13:28:51.796Z"
-last_activity: 2026-07-20 -- Phase 2 planning complete
+last_updated: "2026-07-20T13:54:26.426Z"
+last_activity: 2026-07-20
 progress:
   total_phases: 4
   completed_phases: 1
   total_plans: 4
-  completed_plans: 2
+  completed_plans: 3
   percent: 25
 ---
 
@@ -21,16 +21,16 @@ progress:
 See: .planning/PROJECT.md (updated 2026-07-20)
 
 **Core value:** 把成片解构成可移植的分镜资产集合（分镜 + stems + 转录 + prompts），作为下游 `@kais/infinite-canvas` 可直接消费的一等 collection 形态。
-**Current focus:** Phase 2 — shot timeline exporter (producer)
+**Current focus:** Phase 2 — shot-timeline Exporter (Producer)
 
 ## Current Position
 
-Phase: 2
-Plan: Not started
+Phase: 2 (shot-timeline Exporter (Producer)) — EXECUTING
+Plan: 2 of 2
 Status: Ready to execute
-Last activity: 2026-07-20 -- Phase 2 planning complete
+Last activity: 2026-07-20
 
-Progress: [█████░░░░░] 50% (phase 1 of 4 complete; both Phase-1 plans done)
+Progress: [████████░░] 75%
 
 ## Performance Metrics
 
@@ -66,6 +66,11 @@ Recent decisions affecting current work:
 - Plan 01-02 Task 2: Human-verify checkpoint APPROVED on first review — SPEC.md confirmed implementable without tribal knowledge; SPEC↔schema drift check passed character-for-character on the graceful-degrade rule quote
 - Plan 01-02: Two-tier authority formalized — schemas are machine-checkable truth, SPEC.md is human-readable overview; on conflict, schema wins; verbatim quoting is the structural mitigation against SPEC↔schema drift (T-01-05)
 - Phase 01 closed: all 4 SPEC-* requirements satisfied; Phase 2 (EXPORT) unblocked — only asset.json manifest + canonical media rename needed (5 data shapes already smoke-valid)
+- [Phase ?]: Plan 02-01: scripts/export_asset.py 产出 ShotTimelineAsset manifest + inline Draft202012Validator 自校验
+- [Phase 02]: Plan 02-01: run_pipeline.py 升级到 6 步 (step_export + --skip-export + --force asset.json + [N/5]→[N/6] 全量替换); fails loud 惯例
+- [Phase 02]: Plan 02-01: video.mp4 canonical symlink target = --video abs path (非 work_dir 内 <orig>.mp4; 后者链到 -an 去 audio 的 h264.mp4)
+- [Phase 02]: Plan 02-01: prompts.json 视作 opaque external input (无 in-repo producer); SPEC.md §5 提到的 gen_prompts_html.py 不存在
+- [Phase 02]: Plan 02-01 (Rule 1 deviation): export_asset.py main 顶部统一 abspath 化所有路径 args —— 修复相对 --stems-source-dir 导致 stem symlinks target 按 symlink 所在目录解析失效
 
 ### Pending Todos
 
@@ -87,6 +92,6 @@ Items acknowledged and carried forward from milestone bootstrap:
 
 ## Session Continuity
 
-Last session: 2026-07-20
+Last session: 2026-07-20T13:54:26.418Z
 Stopped at: "Phase 01 complete — both plans done (01-01 schemas + 01-02 SPEC.md); ready for Phase 2 planning"
-Resume file: None (next: plan Phase 2 — EXPORT producer exporter; only asset.json manifest + canonical media rename needed, 5 data shapes already conform)
+Resume file: None
