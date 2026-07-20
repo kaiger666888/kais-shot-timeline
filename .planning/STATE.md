@@ -4,8 +4,8 @@ milestone: v1.0
 milestone_name: ShotTimelineAsset Contract
 status: executing
 stopped_at: Roadmap created (4 phases derived from 12 v1 requirements, 100% coverage, no orphans)
-last_updated: "2026-07-20T08:53:25.603Z"
-last_activity: 2026-07-20 -- Phase 01 planning complete
+last_updated: "2026-07-20T08:54:20.869Z"
+last_activity: 2026-07-20 -- Phase 01 execution started
 progress:
   total_phases: 4
   completed_phases: 0
@@ -21,14 +21,14 @@ progress:
 See: .planning/PROJECT.md (updated 2026-07-20)
 
 **Core value:** 把成片解构成可移植的分镜资产集合（分镜 + stems + 转录 + prompts），作为下游 `@kais/infinite-canvas` 可直接消费的一等 collection 形态。
-**Current focus:** Phase 1 — ShotTimelineAsset Specification
+**Current focus:** Phase 01 — ShotTimelineAsset Specification
 
 ## Current Position
 
-Phase: 1 of 4 (ShotTimelineAsset Specification)
-Plan: —
-Status: Ready to execute
-Last activity: 2026-07-20 -- Phase 01 planning complete
+Phase: 01 (ShotTimelineAsset Specification) — EXECUTING
+Plan: 1 of 2
+Status: Executing Phase 01
+Last activity: 2026-07-20 -- Phase 01 execution started
 
 Progress: [░░░░░░░░░░] 0%
 
