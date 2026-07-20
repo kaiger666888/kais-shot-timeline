@@ -108,6 +108,14 @@ def check(asset_root: str) -> int:
             proc.wait(timeout=2)
         except subprocess.TimeoutExpired:
             proc.kill()
+            # 02-REVIEW WR-06：kill 后必须 wait 收尸 —— 否则 SIGKILL'd 子进程在 Linux
+            # 上变 zombie，直到父进程退出才被 init 收养。Phase 4 回归 harness 在循环
+            # 里多次调 check()，zombie 会累积。best-effort：仍超时只能放弃（kernel
+            # 在父进程退出时 reap）。
+            try:
+                proc.wait(timeout=2)
+            except subprocess.TimeoutExpired:
+                pass
 
 
 def main():
