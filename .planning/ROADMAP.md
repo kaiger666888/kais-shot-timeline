@@ -108,7 +108,7 @@ Plans:
 Plans:
 **Wave 1**
 
-- [ ] 04-01-PLAN.md — Build scripts/verify_contract.py harness skeleton with producer mode (inline jsonschema 6-schema validate, NOT spec/validate.py since SMOKE_SHAPES excludes asset) + consumer mode (shell-out to Phase 3 verify-canvas-shot-timeline.ts) + PHASE4_SELF_TEST=1 self-test (corrupt-asset injection) — covers VERIFY-02 (regression against producer/consumer drift)
+- [x] 04-01-PLAN.md — Build scripts/verify_contract.py harness skeleton with producer mode (inline jsonschema 6-schema validate, NOT spec/validate.py since SMOKE_SHAPES excludes asset) + consumer mode (shell-out to Phase 3 verify-canvas-shot-timeline.ts) + PHASE4_SELF_TEST=1 self-test (corrupt-asset injection) — covers VERIFY-02 (regression against producer/consumer drift)
 
 **Wave 2** *(blocked on Wave 1 completion — same-file extension; e2e needs the harness skeleton from 04-01)*
 
@@ -124,7 +124,7 @@ Phases execute in numeric order: 1 → 2 → 3 → 4
 | 1. ShotTimelineAsset Specification | 2/2 | Complete | 2026-07-20 |
 | 2. shot-timeline Exporter (Producer) | 2/2 | Complete    | 2026-07-20 |
 | 3. Canvas Consumer | 1/1 | Complete    | 2026-07-20 |
-| 4. Cross-Repo Contract Verification | 0/2 | Not started | - |
+| 4. Cross-Repo Contract Verification | 1/2 | In Progress|  |
 
 ---
 

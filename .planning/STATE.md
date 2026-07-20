@@ -4,14 +4,14 @@ milestone: v1.0
 milestone_name: ShotTimelineAsset Contract
 status: executing
 stopped_at: "Phase 01 complete — both plans done (01-01 schemas + 01-02 SPEC.md); ready for Phase 2 planning"
-last_updated: "2026-07-20T19:31:52.718Z"
-last_activity: 2026-07-20 -- Phase 4 planning complete
+last_updated: "2026-07-20T19:37:20.054Z"
+last_activity: 2026-07-20
 progress:
   total_phases: 4
   completed_phases: 3
   total_plans: 7
-  completed_plans: 5
-  percent: 71
+  completed_plans: 6
+  percent: 75
 ---
 
 # Project State
@@ -21,16 +21,16 @@ progress:
 See: .planning/PROJECT.md (updated 2026-07-20)
 
 **Core value:** 把成片解构成可移植的分镜资产集合（分镜 + stems + 转录 + prompts），作为下游 `@kais/infinite-canvas` 可直接消费的一等 collection 形态。
-**Current focus:** Phase 4 — cross repo contract verification
+**Current focus:** Phase 4 — Cross-Repo Contract Verification
 
 ## Current Position
 
-Phase: 4
-Plan: Not started
+Phase: 4 (Cross-Repo Contract Verification) — EXECUTING
+Plan: 2 of 2
 Status: Ready to execute
-Last activity: 2026-07-20 -- Phase 4 planning complete
+Last activity: 2026-07-20
 
-Progress: [██████████] 100%
+Progress: [█████████░] 86%
 
 ## Performance Metrics
 
@@ -51,6 +51,7 @@ Progress: [██████████] 100%
 *Updated after each plan completion*
 | Phase 02 P02 | 15min | 2 tasks | 3 files |
 | Phase 3 P1 | 45min | 3 tasks | 13 files |
+| Phase 04 P01 | 12min | 2 tasks | 1 files |
 
 ## Accumulated Context
 
@@ -82,6 +83,9 @@ Recent decisions affecting current work:
 - [Phase ?]: Phase 3 Plan 01: phasePrefix=p13 (P13 · 交付) — master video 是已交付 artifact,语义最贴
 - [Phase ?]: Phase 3 Plan 01: summary + zone 不参与 per-type Zod 断言 (.type 反映 phase renderer 但 data 非媒体); plan SC 全部子节点 指 media-bearing children
 - [Phase ?]: Phase 3 Plan 01: 3 Rule 1 auto-fixes (EXPECTED warn effective type, zone label override, verify childNodes filter) — additive,既有 13 phase 零行为变化
+- [Phase ?]: test
+- [Phase ?]: Plan 04-01: verify_contract.py canonical harness — 3 modes (producer/consumer/e2e placeholder) + self-test; inline jsonschema on 6 schemas (asset shape NOT subprocessed to spec/validate.py since SMOKE_SHAPES excludes it)
+- [Phase ?]: Plan 04-01: self-test semantics — PASS=harness detects drift (exit 0); FAIL=harness broken (exit 1). Aligned with RESEARCH §Regression Invariants (meta-test of fail-loud property)
 
 ### Pending Todos
 
@@ -103,6 +107,6 @@ Items acknowledged and carried forward from milestone bootstrap:
 
 ## Session Continuity
 
-Last session: 2026-07-20T16:44:55.583Z
+Last session: 2026-07-20T19:37:03.075Z
 Stopped at: "Phase 01 complete — both plans done (01-01 schemas + 01-02 SPEC.md); ready for Phase 2 planning"
 Resume file: None
