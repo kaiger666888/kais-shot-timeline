@@ -42,9 +42,13 @@ import json
 import os
 import shutil
 import socket
+import sqlite3
 import subprocess
 import sys
 import tempfile
+import time
+import urllib.error
+import urllib.request
 from pathlib import Path
 
 from jsonschema import Draft202012Validator
@@ -79,6 +83,53 @@ def find_free_port() -> int:
     with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
         s.bind(("127.0.0.1", 0))
         return s.getsockname()[1]
+
+
+# === e2e helpers (Plan 04-02) ===========================================
+def _poll_health(port: int, timeout: float = 45.0) -> bool:
+    """轮询 http://127.0.0.1:{port}/health 直到 200 或超时。
+
+    模板源：scripts/check_range.py:39-48 wait_ready 的 HTTP 版；04-RESEARCH.md
+    §Pattern 2。timeout 默认 45s（consumer Express + better-sqlite3 boot 比
+    scripts/serve.py 慢，src/app.ts:269 在 server.listen 前 await bootReady）。
+    """
+    url = f"http://127.0.0.1:{port}/health"
+    deadline = time.time() + timeout
+    while time.time() < deadline:
+        try:
+            with urllib.request.urlopen(url, timeout=2) as r:
+                if r.status == 200:
+                    return True
+        except urllib.error.URLError:
+            pass
+        time.sleep(0.5)
+    return False
+
+
+def _read_persisted_snapshot(db_path: str, project_id: int, episodes_id: int):
+    """直查 consumer worktree data/db2.sqlite 的 o_agentWorkData snapshot。
+
+    Pitfall 1 关键决策（04-RESEARCH.md §Pitfall 1）：绝不用
+    /api/canvas/v2/load-v2 做 read-back —— 它读 relational canvas_nodes 表
+    （import-from-dir 不写），返 null。o_agentWorkData JSON blob snapshot 是
+    唯一非侵入路径。Phase 3 leftover (9001/9001, ~290KB) 验证此路径。
+
+    T-04-01-T2 mitigation: sqlite3 占位符 `?` 参数化，绝不字符串拼接。
+    """
+    conn = sqlite3.connect(db_path)
+    try:
+        cur = conn.cursor()
+        cur.execute(
+            "SELECT data FROM o_agentWorkData "
+            "WHERE projectId = ? AND episodesId = ? AND key = 'canvasGraph'",
+            (str(project_id), str(episodes_id)),
+        )
+        row = cur.fetchone()
+        if not row:
+            return None
+        return json.loads(row[0])
+    finally:
+        conn.close()
 
 
 # === producer-side helpers ==============================================
@@ -339,6 +390,31 @@ def run_self_test(args) -> tuple:
         shutil.rmtree(temp_dir, ignore_errors=True)
 
 
+# === e2e mode (Plan 04-02) ==============================================
+def run_e2e_check(args) -> tuple:
+    """[TDD RED] e2e mode 骨架占位 —— Plan 04-02 Task 1 GREEN 替换为真实实现。
+
+    流程（GREEN 蓝图）：
+      1. guard consumer worktree + asset_dir
+      2. find_free_port + Popen npx tsx src/app.ts (NODE_ENV=dev)
+      3. try:
+           a. _poll_health(45s)
+           b. POST /api/canvas/v2/import-from-dir (timestamp pid/eid)
+           c. _read_persisted_snapshot SQL 直查
+           d. 结构断言：1 zone + N storyboard + 3 audio + ≥1 video + (N-1) seq edges
+         finally:
+           a. proc.terminate → wait → kill → wait reap（3 层）
+           b. git checkout -- src/types/database.d.ts（dev regen 兜底）
+           c. DELETE FROM o_agentWorkData/kv_canvasEvent WHERE projectId/episodesId=?
+              （保留 Phase 3 leftover 9001/9001）
+    """
+    return (
+        False,
+        "TDD RED —— run_e2e_check 尚未实现；Plan 04-02 Task 1 GREEN 阶段替换此 stub "
+        "（起 backend → POST import-from-dir → SQL read-back → 结构断言 → try/finally teardown）",
+    )
+
+
 # === CLI ================================================================
 def main():
     """CLI 入口。"""
@@ -394,19 +470,16 @@ def main():
         print(f"{tag}: {detail}")
         results.append(("consumer", ok, detail))
 
-    # e2e mode —— Plan 04-01 占位（防 --mode=all 默认值挂掉）
+    # e2e mode —— Plan 04-02 接入（替换 04-01 placeholder）
+    # 语义：--mode=e2e 显式 opt-in 时即使无 env var 也跑（用户明确要 e2e）；
+    #       --mode=all 需要 PHASE4_RUN_E2E=1 才包含 e2e（CI-friendly，heavy：起 backend）
     if args.mode in ("e2e", "all") and not args.e2e_skip:
-        if args.mode == "e2e":
-            print("[verify-contract] e2e mode 在 Plan 04-02 实现；当前仅占位")
-            results.append((
-                "e2e", False,
-                "e2e not implemented yet — see Plan 04-02 "
-                "(set --e2e-skip to silence in --mode=all)",
-            ))
+        e2e_enabled = (args.mode == "e2e") or (os.environ.get("PHASE4_RUN_E2E") == "1")
+        if e2e_enabled:
+            print("[verify-contract] mode=e2e starting (heavy: starts backend)")
+            results.append(("e2e", *run_e2e_check(args)))
         else:
-            # --mode=all 时 e2e placeholder 跳过（不 fail）
-            print("[verify-contract] e2e mode 在 Plan 04-02 实现；--mode=all 跳过 "
-                  "(set --e2e-skip to silence)")
+            print("[verify-contract] e2e skipped (set PHASE4_RUN_E2E=1 to enable)")
 
     # 汇总表
     print()
