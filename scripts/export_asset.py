@@ -72,6 +72,11 @@ def ensure_symlink(link_path: str, target: str) -> None:
     """幂等创建 symlink link_path → target。
 
     分支：
+      * target 必须是 regular file —— 拒绝目录/FIFO/device/special file
+        （02-REVIEW WR-05）。否则 symlink-to-dir 会通过 schema pattern 校验 +
+        pre-write os.path.exists assert（True for dir），把指向目录的"看似有效"
+        manifest 落盘，下游打开 .wav 才崩。os.path.isfile 跟随 symlink 后 stat，
+        等价于 "exists 且是 regular file"。
       * 若 link_path 已是 symlink：
           - readlink 与 target 一致 → skip（避免无谓的 unlink+recreate）
           - 不一致 → unlink + 重建
@@ -79,6 +84,10 @@ def ensure_symlink(link_path: str, target: str) -> None:
         （拒绝静默覆盖真实文件）
       * 否则 → os.symlink(target, link_path)
     """
+    # 02-REVIEW WR-05：用 isfile 而非 exists —— 显式排除 dir / FIFO / device / socket。
+    if not os.path.isfile(target):
+        raise FileNotFoundError(
+            f"symlink target is not a regular file: {target}")
     if os.path.islink(link_path):
         try:
             current = os.readlink(link_path)
