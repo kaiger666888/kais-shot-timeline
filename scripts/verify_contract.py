@@ -24,7 +24,8 @@ opt-in 环境变量：
   PHASE4_SELF_TEST=1     self-test：注入 schema_version='v1' 故意漂移，
                           断言 harness fail-loud（Plan 04-01 Task 2 落地）
   PHASE4_RUN_E2E=1       启用 e2e mode（04-02 才会真正起作用）
-  PHASE4_E2E_ASSET_DIR   e2e 输入 asset 目录（默认 ep01）
+  PHASE4_ASSET_DIR       producer/self-test/e2e 共用的 asset 目录（默认 ep01）。
+                          WR-07：旧名 PHASE4_E2E_ASSET_DIR 仍向后兼容。
 
 用法：
     python3 scripts/verify_contract.py --mode=producer
@@ -249,7 +250,8 @@ def run_producer_check(args) -> tuple:
     """producer mode：对真实 ep01 asset 跑 6-schema inline 校验。
 
     流程：
-      1. 定位 asset.json（默认 ep01；可 PHASE4_E2E_ASSET_DIR 覆盖）
+      1. 定位 asset.json（默认 ep01；可 PHASE4_ASSET_DIR 覆盖，旧名
+         PHASE4_E2E_ASSET_DIR 仍向后兼容 —— WR-07）
       2. （opt-in）PHASE4_RE_EXPORT=1 调 scripts/export_asset.py 重导
       3. 加载 manifest
       4. validate_six_shapes 跑 6 个 schema
@@ -257,14 +259,14 @@ def run_producer_check(args) -> tuple:
 
     返回 tuple[bool, str] —— 让 main() 统一格式化输出 + exit code。
     """
-    asset_dir = Path(args.e2e_asset_dir)
+    asset_dir = Path(args.asset_dir)
     asset_path = asset_dir / "asset.json"
     if not asset_path.is_file():
         return (
             False,
             f"ep01 asset.json missing at {asset_dir}\n"
             f"  run `python3 run_pipeline.py --video <path>` + export first, or set\n"
-            f"  PHASE4_E2E_ASSET_DIR=<path-to-asset-dir>",
+            f"  PHASE4_ASSET_DIR=<path-to-asset-dir>",
         )
 
     # (可选) 重导抓 producer 漂移 —— CONTEXT 锁：本仓库 output/ 可覆盖，
@@ -384,7 +386,7 @@ def run_self_test(args) -> tuple:
     「exit 1」指底层 producer mode 遇到坏 asset 应 exit 1，self-test 是
     meta-test 验证这个属性成立。
     """
-    src_dir = Path(args.e2e_asset_dir)
+    src_dir = Path(args.asset_dir)
     src_asset = src_dir / "asset.json"
     if not src_asset.is_file():
         return (
@@ -484,12 +486,12 @@ def run_e2e_check(args) -> tuple:
             f"  + checkout feat/canvas-asset-collection",
         )
 
-    asset_dir = args.e2e_asset_dir
+    asset_dir = args.asset_dir
     if not os.path.isfile(os.path.join(asset_dir, "asset.json")):
         return (
             False,
             f"e2e 输入 asset.json 缺失: {asset_dir}\n"
-            f"  set PHASE4_E2E_ASSET_DIR=<real producer asset dir>",
+            f"  set PHASE4_ASSET_DIR=<real producer asset dir>",
         )
 
     port = find_free_port()
@@ -703,9 +705,14 @@ def main():
         help="consumer worktree 路径（kais-aigc-platform feat/canvas-asset-collection）",
     )
     ap.add_argument(
-        "--e2e-asset-dir",
-        default=os.environ.get("PHASE4_E2E_ASSET_DIR", str(DEFAULT_E01_ASSET_DIR)),
-        help="e2e 用的真实 asset 目录（默认 ep01）",
+        "--asset-dir", "--e2e-asset-dir",
+        dest="asset_dir",
+        default=os.environ.get("PHASE4_ASSET_DIR")
+            or os.environ.get("PHASE4_E2E_ASSET_DIR")
+            or str(DEFAULT_E01_ASSET_DIR),
+        help="asset 目录（producer/self-test/e2e 三种 mode 共用，默认 ep01）。"
+             "WR-07：旧名 --e2e-asset-dir / PHASE4_E2E_ASSET_DIR 仍向后兼容，"
+             "推荐用 --asset-dir / PHASE4_ASSET_DIR。",
     )
     ap.add_argument(
         "--e2e-skip", action="store_true",
