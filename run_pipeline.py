@@ -171,6 +171,34 @@ def step_timeline(video: str, work_dir: str, shots_json: str,
     return out_html
 
 
+def _safe_mtime(path: str) -> float:
+    """单点 stat 读 mtime；缺失返回 +inf 强制 cache miss（02-REVIEW WR-07 TOCTOU）。
+
+    step_export / step_timeline 旧实现是 `os.path.exists(p)` 之后再 `os.path.getmtime(p)`，
+    两步之间存在 TOCTOU 窗口：另一进程删文件会让 getmtime raise FileNotFoundError
+    变 uncaught traceback。统一经此 helper 走 try/except，缺失视为 +inf → cache miss。
+    """
+    try:
+        return os.path.getmtime(path)
+    except OSError:
+        return float("inf")
+
+
+def _video_identity(video_path: str) -> str | None:
+    """视频身份指纹（path + size + mtime_ns）；缺失返回 None（02-REVIEW WR-07）。
+
+    step_export 的 mtime cache 仅看 mtime —— 若用户切到另一个 mtime 更老/相等
+    的 --video（例如 backup 恢复保留原时间戳），cache 会命中并返回引用旧 video
+    filename 的陈旧 manifest。把 path+size+mtime_ns 三件套写入 sidecar，下次
+    cache check 比对，不同 video 强制 miss。
+    """
+    try:
+        st = os.stat(video_path)
+    except OSError:
+        return None
+    return f"{video_path}|{st.st_size}|{st.st_mtime_ns}"
+
+
 def step_export(work_dir: str, video: str, stems_source_dir: str,
                 asset_json: str, skip: bool, force: bool) -> str:
     """导出 ShotTimelineAsset（asset.json + canonical symlinks）。
@@ -178,6 +206,12 @@ def step_export(work_dir: str, video: str, stems_source_dir: str,
     子进程调 scripts/export_asset.py；失败（export_asset.py sys.exit 非 0）
     时 subprocess.run(check=True) raises CalledProcessError，run_pipeline 崩
     （fails loud，项目惯例）。
+
+    Cache 策略（mirror step_timeline + 02-REVIEW WR-07 修补）：
+      * inputs = 5 个数据 JSON + 原始 video
+      * TOCTOU-safe mtime：经 _safe_mtime 单点 stat，缺失 input → +inf → 强制 miss
+      * video 身份 sidecar（asset.json.video-stamp）：cache key 锁定 path+size+mtime_ns，
+        防止不同 --video（同 mtime/size）误命中陈旧 manifest
     """
     if skip:
         print("[6/6] --skip-export: skipping asset export")
@@ -191,10 +225,27 @@ def step_export(work_dir: str, video: str, stems_source_dir: str,
         os.path.join(work_dir, "prompts.json"),
         video,
     ]
-    inputs_exist = [p for p in inputs if os.path.exists(p)]
+    # TOCTOU-safe mtime：缺失 input → +inf → 强制 cache miss（不再 exists+getmtime 两步）
+    input_mtimes = [_safe_mtime(p) for p in inputs]
+    all_inputs_present = all(m != float("inf") for m in input_mtimes)
+    max_input_mtime = max(input_mtimes)
+
+    # video 身份 sidecar：防止不同 --video（同 mtime/size）误命中陈旧 manifest
+    video_stamp = asset_json + ".video-stamp"
+    cached_video_id = None
+    if os.path.exists(video_stamp):
+        try:
+            with open(video_stamp, encoding="utf-8") as f:
+                cached_video_id = f.read().strip()
+        except OSError:
+            cached_video_id = None
+    current_video_id = _video_identity(video)
+
     if (not force and os.path.exists(asset_json)
-            and inputs_exist
-            and os.path.getmtime(asset_json) > max(os.path.getmtime(p) for p in inputs_exist)):
+            and all_inputs_present
+            and _safe_mtime(asset_json) > max_input_mtime
+            and cached_video_id is not None
+            and cached_video_id == current_video_id):
         print(f"[6/6] cached asset: {asset_json}")
         return asset_json
     cmd = [sys.executable, str(HERE / "scripts" / "export_asset.py"),
@@ -205,6 +256,15 @@ def step_export(work_dir: str, video: str, stems_source_dir: str,
     if force:
         cmd += ["--force"]
     run_step(cmd, "[6/6] ShotTimelineAsset export")
+
+    # 写 video 身份 sidecar —— best-effort；失败仅意味着下次 cache check 多一次重跑
+    if current_video_id is not None:
+        try:
+            with open(video_stamp, "w", encoding="utf-8") as f:
+                f.write(current_video_id)
+        except OSError:
+            pass
+
     return asset_json
 
 
@@ -261,7 +321,9 @@ def main():
     os.makedirs(work_dir, exist_ok=True)
 
     if args.force:
-        for p in (shots_json, frames_json, audio_json, transcript, out_html, asset_json):
+        # 含 asset.json 的 video 身份 sidecar（02-REVIEW WR-07）—— force 时一并清
+        for p in (shots_json, frames_json, audio_json, transcript, out_html,
+                  asset_json, asset_json + ".video-stamp"):
             if os.path.exists(p):
                 os.unlink(p)
         print(f"[force] cleared cache under {work_dir}")
