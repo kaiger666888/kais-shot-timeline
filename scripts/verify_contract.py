@@ -402,7 +402,12 @@ def run_self_test(args) -> tuple:
         for shape, rel in manifest_copy.get("data", {}).items():
             src_data = src_dir / rel
             if src_data.is_file():
-                shutil.copy2(src_data, temp_dir / rel)
+                dst = temp_dir / rel
+                # WR-05：data.<shape> 允许 subdir 段（asset.schema.json L66 pattern
+                # 不禁止），shutil.copy2 在 dst.parent 不存在时抛 FileNotFoundError。
+                # mkdir parents 兜底未来 producer 产 ``subdir/shots.json`` 布局。
+                dst.parent.mkdir(parents=True, exist_ok=True)
+                shutil.copy2(src_data, dst)
 
         # 3. 注入 drift：schema_version "1" → "v1"（违反 pattern 字段）
         manifest_copy["schema_version"] = "v1"
