@@ -1,0 +1,72 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://kais.shot-timeline/spec/schemas/prompts.schema.json",
+  "draft": "2020-12",
+  "title": "Prompts (structured per-shot prompts)",
+  "description": "Structured per-shot prompts derived from first/last frames: decomposed into subject/action/camera/scene/lighting/style facets, plus a ready-to-use prompt_text. Producer: html/gen_prompts_html.py (planned); current producer shape observed in output/《小江湖》第03话…/prompts.json.",
+  "type": "array",
+  "items": {
+    "type": "object",
+    "additionalProperties": false,
+    "required": [
+      "shot_id",
+      "start_sec",
+      "end_sec",
+      "duration",
+      "subject",
+      "action",
+      "camera",
+      "scene",
+      "lighting",
+      "style",
+      "prompt_text"
+    ],
+    "properties": {
+      "shot_id": {
+        "type": "integer",
+        "minimum": 1,
+        "description": "Matches the id field in shots.json."
+      },
+      "start_sec": {
+        "type": "number",
+        "minimum": 0
+      },
+      "end_sec": {
+        "type": "number",
+        "minimum": 0
+      },
+      "duration": {
+        "type": "number",
+        "exclusiveMinimum": 0
+      },
+      "subject": {
+        "type": "string",
+        "description": "Who/what is in the shot (characters, key objects)."
+      },
+      "action": {
+        "type": "string",
+        "description": "What is happening (motion, events)."
+      },
+      "camera": {
+        "type": "string",
+        "description": "Framing and camera movement (shot scale, pan/tilt, etc.)."
+      },
+      "scene": {
+        "type": "string",
+        "description": "Setting/environment."
+      },
+      "lighting": {
+        "type": "string",
+        "description": "Lighting quality and direction."
+      },
+      "style": {
+        "type": "string",
+        "description": "Visual style (medium, render quality, references)."
+      },
+      "prompt_text": {
+        "type": "string",
+        "description": "Ready-to-use prompt text (composed from the above facets)."
+      }
+    }
+  }
+}

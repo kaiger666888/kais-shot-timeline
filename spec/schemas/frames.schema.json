@@ -1,0 +1,30 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://kais.shot-timeline/spec/schemas/frames.schema.json",
+  "draft": "2020-12",
+  "title": "Frames (first/last base64 thumbnails)",
+  "description": "First and last frame thumbnails per shot, embedded as base64 JPEG data URIs so the asset stays self-contained. Producer: html/gen_timeline_html.py:extract_frames_if_needed (extracts via ffmpeg, encodes JPEG as data URI).",
+  "type": "array",
+  "items": {
+    "type": "object",
+    "additionalProperties": false,
+    "required": ["id", "first_frame", "last_frame"],
+    "properties": {
+      "id": {
+        "type": "integer",
+        "minimum": 1,
+        "description": "Matches the id field in shots.json."
+      },
+      "first_frame": {
+        "type": "string",
+        "pattern": "^data:image/jpeg;base64,",
+        "description": "First frame of the shot as a base64 JPEG data URI (prefix is always data:image/jpeg;base64,)."
+      },
+      "last_frame": {
+        "type": "string",
+        "pattern": "^data:image/jpeg;base64,",
+        "description": "Last frame of the shot as a base64 JPEG data URI (prefix is always data:image/jpeg;base64,)."
+      }
+    }
+  }
+}

@@ -1,0 +1,14 @@
+[
+  {
+    "id": 1,
+    "start_sec": 0.0,
+    "end_sec": 1.5,
+    "duration": 1.5
+  },
+  {
+    "id": 2,
+    "start_sec": 1.5,
+    "end_sec": 3.0,
+    "duration": 1.5
+  }
+]

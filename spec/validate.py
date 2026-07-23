@@ -1,0 +1,184 @@
+"""ShotTimelineAsset 规范校验器。
+
+用途:
+  python3 spec/validate.py               # 校验 spec/fixtures/minimal/ 下的最小样例 + 对 output/ 下真实生产产物做 smoke 校验
+  python3 spec/validate.py --strict-smoke # 同上,但 smoke 失败也会让退出码非零(用于 CI 严格模式)
+
+行为:
+  - 对 6 个 schema(shots / audio_analysis / transcript / frames / prompts / asset)
+    各跑一次 Draft202012Validator 校验,每条打印 [valid] 或 [FAIL]。
+  - minimal 样例必须 6 条全部 [valid] 才算通过(决定退出码)。
+  - smoke 阶段:自动在仓库根的 output/ 下查找第一个含 shots.json 的子目录,
+    对其中 5 个数据 JSON 做宽容校验,打印 [smoke-valid] / [smoke-FAIL]。
+    smoke 失败默认不影响退出码(生产端可能有 schema 之外的额外字段,
+    这是 Phase 2 导出器需要清理的有用反馈);加 --strict-smoke 后才计入退出码。
+
+依赖:仅标准库 + jsonschema(系统已装 4.26.0)。无 pip install 步骤。
+"""
+from __future__ import annotations
+
+import argparse
+import json
+import sys
+from pathlib import Path
+from typing import Optional
+
+from jsonschema import Draft202012Validator
+
+
+# === 路径常量 ============================================================
+SPEC_DIR = Path(__file__).parent.resolve()
+SCHEMAS_DIR = SPEC_DIR / "schemas"
+FIXTURE_DIR = SPEC_DIR / "fixtures" / "minimal"
+REPO_ROOT = SPEC_DIR.parent
+
+# 6 个 schema 与对应 fixture 文件名(同名约定)
+SHAPE_TO_FIXTURE = {
+    "shots": "shots.json",
+    "audio_analysis": "audio_analysis.json",
+    "transcript": "transcript.json",
+    "frames": "frames.json",
+    "prompts": "prompts.json",
+    "asset": "asset.json",
+}
+
+# minimal 校验的固定顺序(asset 先,5 个数据形状随后)
+MINIMAL_ORDER = ["asset", "shots", "audio_analysis", "transcript", "frames", "prompts"]
+
+# smoke 阶段只校验 5 个数据形状(asset.json 由 Phase 2 导出器生成,真实生产目录里没有)
+SMOKE_SHAPES = ["shots", "audio_analysis", "transcript", "frames", "prompts"]
+
+
+def load_validator(shape: str) -> Draft202012Validator:
+    """根据形状名加载对应的 Draft202012Validator。"""
+    schema_path = SCHEMAS_DIR / f"{shape}.schema.json"
+    with open(schema_path, encoding="utf-8") as f:
+        schema = json.load(f)
+    return Draft202012Validator(schema)
+
+
+def _format_errors(errors: list) -> str:
+    """把 jsonschema 错误列表格式化为简短多行字符串。"""
+    lines = []
+    for err in errors:
+        loc = "/".join(str(p) for p in err.absolute_path) or "<root>"
+        lines.append(f"    at {loc}: {err.message}")
+    return "\n".join(lines)
+
+
+def validate_minimal() -> int:
+    """对 spec/fixtures/minimal/ 下的 6 个 JSON 跑 schema 校验,返回失败数。"""
+    failures = 0
+    for shape in MINIMAL_ORDER:
+        fixture_path = FIXTURE_DIR / SHAPE_TO_FIXTURE[shape]
+        try:
+            with open(fixture_path, encoding="utf-8") as f:
+                instance = json.load(f)
+        except FileNotFoundError:
+            print(f"[FAIL] {shape}: fixture missing at {fixture_path}")
+            failures += 1
+            continue
+        except json.JSONDecodeError as e:
+            print(f"[FAIL] {shape}: invalid JSON in fixture: {e}")
+            failures += 1
+            continue
+
+        validator = load_validator(shape)
+        errors = sorted(validator.iter_errors(instance), key=lambda e: list(e.absolute_path))
+        if errors:
+            print(f"[FAIL] {shape}: {len(errors)} error(s)")
+            print(_format_errors(errors))
+            failures += 1
+        else:
+            print(f"[valid] {shape}")
+    return failures
+
+
+def discover_producer_fixture() -> Optional[Path]:
+    """扫描 REPO_ROOT/output/,返回第一个含 shots.json 的子目录;没有则返回 None。"""
+    output_root = REPO_ROOT / "output"
+    if not output_root.is_dir():
+        return None
+    for child in sorted(output_root.iterdir()):
+        if child.is_dir() and (child / "shots.json").is_file():
+            return child
+    return None
+
+
+def validate_smoke(producer_dir: Path) -> int:
+    """对真实生产产物跑 5 个数据形状的 schema 校验,返回失败数。
+
+    失败默认不影响退出码(除非 --strict-smoke)。生产端可能 emit
+    schema 之外的额外字段,strict schema 会拒绝——这正是 Phase 2
+    导出器需要清理的有用反馈。
+    """
+    failures = 0
+    for shape in SMOKE_SHAPES:
+        producer_path = producer_dir / f"{shape}.json"
+        if not producer_path.is_file():
+            print(f"[smoke-FAIL] {shape}: producer file missing at {producer_path}")
+            failures += 1
+            continue
+        try:
+            with open(producer_path, encoding="utf-8") as f:
+                instance = json.load(f)
+        except json.JSONDecodeError as e:
+            print(f"[smoke-FAIL] {shape}: invalid JSON: {e}")
+            failures += 1
+            continue
+
+        validator = load_validator(shape)
+        errors = sorted(validator.iter_errors(instance), key=lambda e: list(e.absolute_path))
+        if errors:
+            print(f"[smoke-FAIL] {shape}: {len(errors)} error(s) (informational; producer pre-canonical)")
+            print(_format_errors(errors))
+            failures += 1
+        else:
+            print(f"[smoke-valid] {shape}")
+    return failures
+
+
+def main() -> None:
+    """CLI 入口。"""
+    ap = argparse.ArgumentParser(
+        description="ShotTimelineAsset 规范校验器(对 minimal fixture + 真实生产产物做 schema 校验)"
+    )
+    ap.add_argument(
+        "--strict-smoke",
+        action="store_true",
+        help="smoke 失败也计入退出码(默认 smoke 仅打印,不影响退出码)",
+    )
+    args = ap.parse_args()
+
+    print(f"[validate] minimal fixture = {FIXTURE_DIR}")
+    minimal_failures = validate_minimal()
+
+    producer_dir = discover_producer_fixture()
+    smoke_failures = 0
+    if producer_dir is None:
+        print("[validate] no producer fixture found under output/ — skipping smoke pass")
+    else:
+        print(f"[validate] producer fixture (smoke) = {producer_dir}")
+        smoke_failures = validate_smoke(producer_dir)
+
+    # 决定退出码
+    total_strict_failures = minimal_failures
+    if args.strict_smoke:
+        total_strict_failures += smoke_failures
+
+    print()
+    print(
+        f"[validate] minimal failures={minimal_failures}, "
+        f"smoke failures={smoke_failures} "
+        f"(strict-smoke={'on' if args.strict_smoke else 'off'})"
+    )
+    if total_strict_failures == 0:
+        print("[validate] OK")
+        sys.exit(0)
+    else:
+        print("[validate] FAIL")
+        sys.exit(1)
+
+
+if __name__ == "__main__":
+    main()

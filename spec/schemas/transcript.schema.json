@@ -1,0 +1,62 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://kais.shot-timeline/spec/schemas/transcript.schema.json",
+  "draft": "2020-12",
+  "title": "Transcript (Whisper segments)",
+  "description": "Time-stamped dialogue segments produced by Whisper. Producer: audio/transcribe.py:main (tries faster-whisper first, falls back to openai-whisper).",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["backend", "model", "language", "segments", "text", "duration", "source"],
+  "properties": {
+    "backend": {
+      "enum": ["faster-whisper", "openai-whisper"],
+      "description": "Which Whisper backend produced this transcript (auto-fallback resolved at run time by audio/transcribe.py)."
+    },
+    "model": {
+      "type": "string",
+      "description": "Whisper model id (e.g. \"large-v3\")."
+    },
+    "language": {
+      "type": "string",
+      "description": "Detected/forced language code (ISO-639-1 lower-case, e.g. \"zh\")."
+    },
+    "segments": {
+      "type": "array",
+      "description": "Ordered Whisper segments spanning [0, duration). Adjacent segments are contiguous (end_i == start_{i+1}) except for silence gaps.",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["start", "end", "text"],
+        "properties": {
+          "start": {
+            "type": "number",
+            "minimum": 0,
+            "description": "Segment start time in seconds."
+          },
+          "end": {
+            "type": "number",
+            "minimum": 0,
+            "description": "Segment end time in seconds (must be > start)."
+          },
+          "text": {
+            "type": "string",
+            "description": "Transcribed text for the segment (may be empty string for silence)."
+          }
+        }
+      }
+    },
+    "text": {
+      "type": "string",
+      "description": "Full transcript text (concatenation of all segment texts)."
+    },
+    "duration": {
+      "type": "number",
+      "minimum": 0,
+      "description": "Source media duration in seconds (from ffprobe)."
+    },
+    "source": {
+      "type": "string",
+      "description": "Original source video filename (basename, used for traceability)."
+    }
+  }
+}
