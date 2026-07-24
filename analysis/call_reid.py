@@ -166,30 +166,42 @@ def normalize_clusters(route_data: dict | None) -> list[dict]:
     for r in raw:
         if not isinstance(r, dict):
             continue
-        # members 投影：只留 schema-allowed 字段
-        members = []
-        for m in r.get("members") or []:
-            # shot_id 必须是 int（schema type:integer）；非 int 的 member 跳过
-            # （路由 bug 回 string shot_id 不应流向下游）
-            if isinstance(m, dict) and isinstance(m.get("shot_id"), int):
-                member = {
-                    "shot_id": m["shot_id"],
-                    "frame_pos": m.get("frame_pos", "first"),   # 接受 string 或 number
-                }
-                # mask_quality 可选（schema optional）；有才加
-                if m.get("mask_quality"):
-                    member["mask_quality"] = m["mask_quality"]
-                members.append(member)
-        if not members:
-            continue   # 空 cluster 丢弃（schema minItems:1）
-        mc = r.get("mean_cosine")
-        clusters.append({
-            "cluster_id": r["cluster_id"],                    # schema pattern ^(char|prop)_[0-9]{3}$
-            "review_state": "proposed",                       # CAST-05：producer 永远 emit proposed
-            "tier": _tier_for(mc),                            # auto_merge/review/auto_distinct
-            "mean_cosine": float(mc) if isinstance(mc, (int, float)) else 0.0,
-            "members": members,
-        })
+        # CR-02：畸形 cluster（缺 cluster_id / 类型错 / pattern 不符）一律降级跳过
+        # （defense-in-depth —— 本 docstring 承诺"畸形条目一律降级为空列表"）。
+        # broad try/except 兜底任何未预见畸形（KeyError/TypeError/ValueError/IndexError）。
+        try:
+            cid = r.get("cluster_id")
+            if not (isinstance(cid, str)
+                    and re.match(r"^(char|prop)_[0-9]{3}$", cid)):
+                # cluster_id 缺失 / 非 str / pattern 不符 → 跳过（不 crash）
+                continue
+            # members 投影：只留 schema-allowed 字段
+            members = []
+            for m in r.get("members") or []:
+                # shot_id 必须是 int（schema type:integer）；非 int 的 member 跳过
+                # （路由 bug 回 string shot_id 不应流向下游）
+                if isinstance(m, dict) and isinstance(m.get("shot_id"), int):
+                    member = {
+                        "shot_id": m["shot_id"],
+                        "frame_pos": m.get("frame_pos", "first"),   # 接受 string 或 number
+                    }
+                    # mask_quality 可选（schema optional）；有才加
+                    if m.get("mask_quality"):
+                        member["mask_quality"] = m["mask_quality"]
+                    members.append(member)
+            if not members:
+                continue   # 空 cluster 丢弃（schema minItems:1）
+            mc = r.get("mean_cosine")
+            clusters.append({
+                "cluster_id": cid,                            # schema pattern ^(char|prop)_[0-9]{3}$
+                "review_state": "proposed",                   # CAST-05：producer 永远 emit proposed
+                "tier": _tier_for(mc),                        # auto_merge/review/auto_distinct
+                "mean_cosine": float(mc) if isinstance(mc, (int, float)) else 0.0,
+                "members": members,
+            })
+        except (KeyError, TypeError, ValueError, IndexError):
+            # 任意畸形字段访问 → 跳过本 cluster（graceful-degrade，不 crash pipeline）
+            continue
     return clusters
 
 

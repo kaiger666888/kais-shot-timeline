@@ -295,9 +295,15 @@ def apply_edits(draft_path, edits_path, work_dir, video, shots_path):
     _validate(REGISTRY_EDITS_SCHEMA, edits)
 
     # 3. 构建 clusters dict (copy + stash _members 内部字段)
+    # CR-02：畸形 cluster（非 dict / 缺 cluster_id）降级跳过，不 crash（defense-in-depth；
+    # WR-05 的 schema 预校验是第一道闸，这里是兜底）。
     clusters = {}
     for c in draft.get("clusters", []):
-        cid = c["cluster_id"]
+        if not isinstance(c, dict):
+            continue
+        cid = c.get("cluster_id")
+        if not isinstance(cid, str):
+            continue
         clusters[cid] = {**c, "members": list(c.get("members", []))}
 
     # ========================================================================
