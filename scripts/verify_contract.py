@@ -71,8 +71,15 @@ DEFAULT_E01_ASSET_DIR = (
     / "虫虫武侠小故事《小江湖》第01话：爸爸去哪儿？（ 画面只是工具，情绪才是目的。"
 )
 
-# 6 个 schema 形状（与 spec/validate.py L46 MINIMAL_ORDER 一致）
-SIX_SHAPES = ["asset", "shots", "audio_analysis", "transcript", "frames", "prompts"]
+# 9 个 schema 形状（v1.0 的 6 个 + v1.1 Phase 5 新增 characters/props/registry）。
+# 名字保留 EIGHT_SHAPES（v1.0 历史叫法）以兼容既有 fail-loud self-test 文档引用；
+# 实际是 9 个元素。SIX_SHAPES 别名 = 前 6 个（v1.0 producer-only asset 始终是这 6 个
+# required 形状；characters/props/registry 全是 optional）。
+EIGHT_SHAPES = [
+    "asset", "shots", "audio_analysis", "transcript", "frames", "prompts",
+    "characters", "props", "registry",
+]
+SIX_SHAPES = EIGHT_SHAPES[:6]  # v1.0 backward-compat alias
 
 
 # === 04-02 预定义 helper ================================================
@@ -194,8 +201,14 @@ def validate_asset_json(asset_path) -> list:
     return errors
 
 
-def validate_six_shapes(asset_dir: Path, manifest: dict) -> list:
-    """对 asset + 5 data shapes 跑 6-schema 校验，返回 failures 列表（空=全绿）。
+def validate_eight_shapes(asset_dir: Path, manifest: dict) -> list:
+    """对 asset + 5 required data shapes + 3 v1.1 optional shapes 跑 schema 校验。
+
+    v1.0 的 6 个 shape（asset/shots/audio_analysis/transcript/frames/prompts）始终
+    required；v1.1 新增的 characters/props/registry 全是 OPTIONAL —— absent 不算失败
+    （graceful-degrade，镜像 v1.0 哲学）。characters/props 在 asset.json#data 里
+    （manifest["data"]["characters"] 等）；registry.draft.json 是 pipeline-internal
+    工作产物，不在 asset.json#data，按 canonical 文件名直接查 asset 目录。
 
     模板源：spec/validate.py L52-94（_format_errors + sorted iter_errors 模式）。
     每个 shape 失败时只记第一条错误（actionable + 不刷屏）；self-test / 深度
@@ -213,16 +226,28 @@ def validate_six_shapes(asset_dir: Path, manifest: dict) -> list:
     data_field = manifest.get("data") if isinstance(manifest, dict) else None
     if not isinstance(data_field, dict):
         data_field = {}
-    for shape in SIX_SHAPES:
+    for shape in EIGHT_SHAPES:
         schema_path = SCHEMAS_DIR / f"{shape}.schema.json"
         schema = json.loads(schema_path.read_text(encoding="utf-8"))
-        if shape == "asset":
+        if shape == "registry":
+            # registry.draft.json 不在 asset.json#data（pipeline-internal 工作产物）；
+            # 按 canonical 文件名直接查。absent → skip（v1.0 asset 没有 registry）。
+            reg_path = asset_dir / "registry.draft.json"
+            if not reg_path.is_file():
+                continue
+            try:
+                instance = json.loads(reg_path.read_text(encoding="utf-8"))
+            except json.JSONDecodeError as e:
+                failures.append(f"registry: invalid JSON in {reg_path}: {e}")
+                continue
+        elif shape == "asset":
             instance = manifest
         else:
             rel = data_field.get(shape)
             if not isinstance(rel, str):
                 # data.<shape> 缺失：由 asset-shape iter 报 "data is required"，
-                # 不重复记录；只有「键存在但值非字符串」（schema 抓不到）才 flag
+                # 不重复记录；只有「键存在但值非字符串」（schema 抓不到）才 flag。
+                # v1.1 optional shapes（characters/props）absent 时走这里 continue。
                 if shape not in data_field:
                     continue
                 failures.append(f"{shape}: data.{shape} is not a string: {rel!r}")
@@ -244,6 +269,189 @@ def validate_six_shapes(asset_dir: Path, manifest: dict) -> list:
             loc = "/".join(map(str, errs[0].absolute_path)) or "<root>"
             failures.append(f"{shape} at /{loc}: {errs[0].message}")
     return failures
+
+
+# === v1.1 contract-level checks (Phase 5) ==============================
+def _recover_v1_schema(shape: str):
+    """恢复 v1.0 schema 用于 backward cross-version check（CONTRACT-07）。
+
+    Primary: ``git show v1.0:spec/schemas/<shape>.schema.json`` —— 最真实。
+    Fallback（tag 缺失 / git 不可用）: 程序化剥离 —— deep-copy v1.1 schema，
+    删除 v1.1 Phase 5 已知的 additive keys，得到等价的 v1 schema。两路径任一
+    成功即返回 dict；都失败返回 None（caller 记 failure）。
+
+    已知 v1.1 additive keys（CONTRACT-04/05，全 optional，绝不在 required[]）:
+      asset:    data.properties.characters, data.properties.props,
+                media.properties.characters, media.properties.props
+      prompts:  items.properties.character_refs, items.properties.prop_refs
+    """
+    # Primary: git show v1.0 tag
+    try:
+        r = subprocess.run(
+            ["git", "-C", str(REPO), "show", f"v1.0:spec/schemas/{shape}.schema.json"],
+            capture_output=True, text=True, timeout=5,
+        )
+        if r.returncode == 0 and r.stdout.strip():
+            return json.loads(r.stdout)
+    except (subprocess.SubprocessError, json.JSONDecodeError, OSError):
+        pass
+    # Fallback: programmatic strip of known-added keys
+    import copy
+    try:
+        stripped = copy.deepcopy(
+            json.loads((SCHEMAS_DIR / f"{shape}.schema.json").read_text(encoding="utf-8"))
+        )
+    except (FileNotFoundError, json.JSONDecodeError):
+        return None
+    if shape == "asset":
+        data_props = stripped.get("properties", {}).get("data", {}).get("properties", {})
+        media_props = stripped.get("properties", {}).get("media", {}).get("properties", {})
+        for k in ("characters", "props"):
+            data_props.pop(k, None)
+            media_props.pop(k, None)
+    elif shape == "prompts":
+        item_props = stripped.get("items", {}).get("properties", {})
+        for k in ("character_refs", "prop_refs"):
+            item_props.pop(k, None)
+    return stripped
+
+
+def _cross_version_check() -> tuple:
+    """schema-layer 双向 v1↔v1.1 兼容证明（CONTRACT-07；CONTEXT D-XX lock）。
+
+    (a) FORWARD: spec/fixtures/minimal（v1）对 *当前 v1.1 已扩展* schema 校验 →
+        必须 0 errors。证明 additive 扩展没破坏老资产（Pitfall 11 prevented）。
+    (b) BACKWARD: spec/fixtures/v1.1（v1.1）对 v1 schema（_recover_v1_schema）
+        校验 → 仅 additionalProperties errors（v1.1 新增 optional 字段触发），
+        过滤掉后必须 0 errors。证明共享字段类型对齐，唯一 delta 是新增 optional
+        字段 —— 这就是 "ignored-not-crashed" 的 schema-layer 实现（RESEARCH
+        Pattern 7 实测：filter 后 0 error）。
+
+    真实 TS consumer 的 runtime warn 行为由 Phase 9 验证 —— 本检查不 stub 假
+    Python consumer（CONTEXT 锁）。registry/characters/props 是 v1.1 全新形状，
+    无 v1 instance，故 forward 只跑 6 个 v1.0 形状；backward 只跑被 *扩展* 的
+    asset + prompts（全新形状无 v1 schema 可对）。
+    """
+    failures = []
+    minimal_dir = REPO / "spec" / "fixtures" / "minimal"
+    v11_dir = REPO / "spec" / "fixtures" / "v1.1"
+
+    # (a) FORWARD: v1 minimal fixture vs current (v1.1-extended) schemas
+    forward_shapes = SIX_SHAPES  # the 6 v1.0 shapes
+    for shape in forward_shapes:
+        schema = json.loads((SCHEMAS_DIR / f"{shape}.schema.json").read_text(encoding="utf-8"))
+        instance = json.loads((minimal_dir / f"{shape}.json").read_text(encoding="utf-8"))
+        errs = list(Draft202012Validator(schema).iter_errors(instance))
+        if errs:
+            failures.append(
+                f"forward {shape}: v1 fixture rejected by v1.1 schema with "
+                f"{len(errs)} error(s); first: {errs[0].message}"
+            )
+
+    # (b) BACKWARD: v1.1 fixture vs recovered v1 schemas
+    for shape in ("asset", "prompts"):
+        v1_schema = _recover_v1_schema(shape)
+        if v1_schema is None:
+            failures.append(
+                f"backward {shape}: could not recover v1 schema "
+                f"(git show v1.0 + programmatic strip both failed)"
+            )
+            continue
+        instance = json.loads((v11_dir / f"{shape}.json").read_text(encoding="utf-8"))
+        errs = list(Draft202012Validator(v1_schema).iter_errors(instance))
+        # additionalProperties errors are EXPECTED (v1.1 added optional fields);
+        # the invariant is that NO OTHER error type remains (shared fields aligned).
+        non_addprop = [e for e in errs if e.validator != "additionalProperties"]
+        if non_addprop:
+            failures.append(
+                f"backward {shape}: {len(non_addprop)} non-additionalProperties "
+                f"error(s) (shared fields drifted); first: {non_addprop[0].message}"
+            )
+
+    if failures:
+        return (False, "v1↔v1.1 cross-version drift: " + "; ".join(failures))
+    return (
+        True,
+        "v1↔v1.1 cross-version bidirectional compat proven "
+        "(forward 0 errors; backward 0 non-additive errors)",
+    )
+
+
+def _fixture_consistency_check() -> tuple:
+    """v1.1 fixture 自洽性检查（Pitfall C / 17 prevention）。
+
+    验证 spec/fixtures/v1.1/ 跨文件 ID 一致性（"fixtures we ship don't ship broken"）：
+      - prompts.character_refs[]  ⊆ characters[].id
+      - prompts.prop_refs[]       ⊆ props[].id
+      - characters/props.appearance_shots[] ⊆ shots[].id
+      - registry clusters[].cluster_id 匹配 (char|prop)_[0-9]{3} 且 ⊆ characters+props IDs
+      - registry clusters[].members[].shot_id ⊆ shots[].id
+
+    与 Phase 8 PROMPT-03（producer-emitted 完整 integrity check）区分 —— 本检查
+    只覆盖 Phase 5 ship 的 canonical fixture 样例，是它的早期形态。
+    """
+    import re
+    v11 = REPO / "spec" / "fixtures" / "v1.1"
+    failures = []
+
+    def _load(name):
+        p = v11 / name
+        if not p.is_file():
+            return None
+        return json.loads(p.read_text(encoding="utf-8"))
+
+    chars = _load("characters.json") or []
+    props = _load("props.json") or []
+    shots = _load("shots.json") or []
+    prompts = _load("prompts.json") or []
+    registry = _load("registry.draft.json")
+
+    char_ids = {c.get("id") for c in chars}
+    prop_ids = {p.get("id") for p in props}
+    shot_ids = {s.get("id") for s in shots}
+
+    for shot in prompts:
+        for cref in shot.get("character_refs", []):
+            if cref not in char_ids:
+                failures.append(
+                    f"prompts shot {shot.get('shot_id')} refs unknown character {cref}"
+                )
+        for pref in shot.get("prop_refs", []):
+            if pref not in prop_ids:
+                failures.append(
+                    f"prompts shot {shot.get('shot_id')} refs unknown prop {pref}"
+                )
+
+    for c in chars:
+        for sid in c.get("appearance_shots", []):
+            if sid not in shot_ids:
+                failures.append(f"character {c.get('id')} appearance_shots unknown shot {sid}")
+    for p in props:
+        for sid in p.get("appearance_shots", []):
+            if sid not in shot_ids:
+                failures.append(f"prop {p.get('id')} appearance_shots unknown shot {sid}")
+
+    if registry:
+        for cl in registry.get("clusters", []):
+            cid = cl.get("cluster_id")
+            if not (isinstance(cid, str) and re.match(r"^(char|prop)_[0-9]{3}$", cid)):
+                failures.append(f"registry cluster_id malformed: {cid!r}")
+            elif cid not in (char_ids | prop_ids):
+                failures.append(
+                    f"registry cluster_id {cid} not in characters+props IDs"
+                )
+            for m in cl.get("members", []):
+                if m.get("shot_id") not in shot_ids:
+                    failures.append(
+                        f"registry cluster {cid} member shot_id {m.get('shot_id')} unknown"
+                    )
+
+    if failures:
+        return (
+            False,
+            f"{len(failures)} fixture-consistency issue(s); first: {failures[0]}",
+        )
+    return (True, "v1.1 fixture set cross-file IDs consistent (0 dangling)")
 
 
 def run_producer_check(args) -> tuple:
@@ -294,10 +502,24 @@ def run_producer_check(args) -> tuple:
             )
 
     manifest = json.loads(asset_path.read_text(encoding="utf-8"))
-    failures = validate_six_shapes(asset_dir, manifest)
+    failures = validate_eight_shapes(asset_dir, manifest)
     if failures:
         return (False, "; ".join(failures))
-    return (True, "asset.json + 5 data shapes all schema-valid")
+
+    # v1.1 contract-level checks (Phase 5). 这两个检查跑 spec/fixtures/（确定性
+    # contract invariants），不跑 producer asset dir —— producer 产物是否带 v1.1
+    # 字段是 Phase 6+ 的事，本 harness 只锁 contract 本身的跨版本/自洽不变量。
+    cv_ok, cv_detail = _cross_version_check()
+    if not cv_ok:
+        return (False, cv_detail)
+    fc_ok, fc_detail = _fixture_consistency_check()
+    if not fc_ok:
+        return (False, fc_detail)
+
+    return (
+        True,
+        f"asset.json + data shapes schema-valid; {cv_detail}; {fc_detail}",
+    )
 
 
 # === consumer-side helper ===============================================

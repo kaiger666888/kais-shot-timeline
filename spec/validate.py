@@ -48,6 +48,26 @@ MINIMAL_ORDER = ["asset", "shots", "audio_analysis", "transcript", "frames", "pr
 # smoke 阶段只校验 5 个数据形状(asset.json 由 Phase 2 导出器生成,真实生产目录里没有)
 SMOKE_SHAPES = ["shots", "audio_analysis", "transcript", "frames", "prompts"]
 
+# v1.1 fixture set (Phase 5 additive) —— 9 shapes。minimal 仍 gate 退出码(CONTRACT-09)；
+# v1.1 失败也计入退出码(v1.1 fixture 必须 schema-valid —— Plan 01 schemas 必须接受 Plan 03 fixtures)。
+# registry fixture 文件名是 registry.draft.json(pipeline-internal canonical 名,非 <shape>.json)。
+V11_FIXTURE_DIR = SPEC_DIR / "fixtures" / "v1.1"
+V11_FIXTURE_MAP = {
+    "asset": "asset.json",
+    "shots": "shots.json",
+    "audio_analysis": "audio_analysis.json",
+    "transcript": "transcript.json",
+    "frames": "frames.json",
+    "prompts": "prompts.json",
+    "characters": "characters.json",
+    "props": "props.json",
+    "registry": "registry.draft.json",
+}
+V11_ORDER = [
+    "asset", "shots", "audio_analysis", "transcript", "frames", "prompts",
+    "characters", "props", "registry",
+]
+
 
 def load_validator(shape: str) -> Draft202012Validator:
     """根据形状名加载对应的 Draft202012Validator。"""
@@ -91,6 +111,39 @@ def validate_minimal() -> int:
             failures += 1
         else:
             print(f"[valid] {shape}")
+    return failures
+
+
+def validate_v11() -> int:
+    """对 spec/fixtures/v1.1/ 下的 9 个 v1.1 fixture 跑 schema 校验,返回失败数。
+
+    v1.1 fixture set(Phase 5)= minimal 的 6 形状(复用 substrate)+ characters
+    /props/registry 三个 v1.1 新形状。registry fixture 文件名是 registry.draft.json
+    (pipeline-internal canonical 名)。复用 load_validator + _format_errors,不复制。
+    """
+    failures = 0
+    for shape in V11_ORDER:
+        fixture_path = V11_FIXTURE_DIR / V11_FIXTURE_MAP[shape]
+        try:
+            with open(fixture_path, encoding="utf-8") as f:
+                instance = json.load(f)
+        except FileNotFoundError:
+            print(f"[FAIL-v11] {shape}: fixture missing at {fixture_path}")
+            failures += 1
+            continue
+        except json.JSONDecodeError as e:
+            print(f"[FAIL-v11] {shape}: invalid JSON in fixture: {e}")
+            failures += 1
+            continue
+
+        validator = load_validator(shape)
+        errors = sorted(validator.iter_errors(instance), key=lambda e: list(e.absolute_path))
+        if errors:
+            print(f"[FAIL-v11] {shape}: {len(errors)} error(s)")
+            print(_format_errors(errors))
+            failures += 1
+        else:
+            print(f"[valid-v11] {shape}")
     return failures
 
 
@@ -153,6 +206,9 @@ def main() -> None:
     print(f"[validate] minimal fixture = {FIXTURE_DIR}")
     minimal_failures = validate_minimal()
 
+    print(f"[validate] v1.1 fixture = {V11_FIXTURE_DIR}")
+    v11_failures = validate_v11()
+
     producer_dir = discover_producer_fixture()
     smoke_failures = 0
     if producer_dir is None:
@@ -161,14 +217,16 @@ def main() -> None:
         print(f"[validate] producer fixture (smoke) = {producer_dir}")
         smoke_failures = validate_smoke(producer_dir)
 
-    # 决定退出码
-    total_strict_failures = minimal_failures
+    # 决定退出码:minimal 仍 gate(CONTRACT-09 回归),v1.1 失败也计入(Plan 01 schemas
+    # 必须接受 Plan 03 fixtures —— 否则 contract 本身破裂)。
+    total_strict_failures = minimal_failures + v11_failures
     if args.strict_smoke:
         total_strict_failures += smoke_failures
 
     print()
     print(
         f"[validate] minimal failures={minimal_failures}, "
+        f"v1.1 failures={v11_failures}, "
         f"smoke failures={smoke_failures} "
         f"(strict-smoke={'on' if args.strict_smoke else 'off'})"
     )
