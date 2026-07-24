@@ -253,10 +253,18 @@ def main():
             print(f"[semantic] preflight failed → route_down mode: {msg}")
 
     # 4. 长驻 client（read timeout = --analysis-timeout，故意 > 路由侧 900s）
-    import httpx
-    with httpx.Client(base_url=args.analysis_url,
-                      timeout=httpx.Timeout(connect=5.0, read=args.analysis_timeout,
-                                            write=5.0, pool=5.0)) as client:
+    # WR-02：offline 模式不联网 → 不 import httpx、不建 client（cache-only 在无 httpx
+    # 的 box 上也能跑，沿用 CLAUDE.md optional-dep lazy-import 惯例）。per-shot 循环
+    # 仍跑（读 cache + 写 prompts）；call_route 仅在 `not route_down` 分支被调用，
+    # offline 时 route_down=True → client=None 永不触网。
+    client = None
+    if not args.offline:
+        import httpx
+        client = httpx.Client(
+            base_url=args.analysis_url,
+            timeout=httpx.Timeout(connect=5.0, read=args.analysis_timeout,
+                                  write=5.0, pool=5.0))
+    try:
         # 5. per-shot 循环
         for s in shots_meta:
             sid = s["id"]
@@ -339,6 +347,10 @@ def main():
                 "style": facets["style"],
                 "prompt_text": "",
             })
+    finally:
+        # WR-02：client 仅在非 offline 时建 → 条件 close（None 时跳过）。
+        if client is not None:
+            client.close()
 
     # 6. 写前 schema 自校验（fails loud —— 项目惯例，防映射写错字段流向下游）
     from jsonschema import Draft202012Validator
