@@ -238,6 +238,10 @@ def main():
 
             # (a) cache lookup —— _cache_key 不匹配（video 变 / route_version 旧）= miss
             route_shot = None
+            # cache_stale: cache_file 存在但 _cache_key 不匹配（CR-01：必须与"文件
+            # 缺失"区分开 —— offline + stale-cache 同样要显式记 warning，否则操作员
+            # 拿到空 facets 的 prompts.json 毫无察觉，正是 Pitfall 4 要防的静默降级）。
+            cache_stale = False
             if os.path.exists(cache_file):
                 try:
                     with open(cache_file, encoding="utf-8") as f:
@@ -249,7 +253,9 @@ def main():
                         and ck.get("route_version") == ROUTE_VERSION):
                     print(f"[semantic] shot {sid}: cache hit")
                     route_shot = cached
-                # else: stale → route_shot 保持 None，fall through（Pitfall 5）
+                else:
+                    # 文件在但 key 不匹配（video 变 / ROUTE_VERSION bump）→ stale miss
+                    cache_stale = True   # fall through：route_shot 保持 None（Pitfall 5）
 
             # (b) cache miss + 非 route_down → 联网 per-shot POST（CONTEXT lock: semantic=True, subject=False）
             if route_shot is None and not route_down:
@@ -277,8 +283,18 @@ def main():
                         }}, f, ensure_ascii=False, indent=2)
 
             # (c) cache miss + route_down —— Pitfall 4：不静默，显式记 warning
-            if route_shot is None and route_down and not os.path.exists(cache_file):
-                warnings.append(f"shot {sid}: offline/cache-miss → empty facets")
+            # CR-01 修复：旧实现用 `not os.path.exists(cache_file)` 把"文件存在但
+            # _cache_key 不匹配"的情况漏了 —— 那正是 ROUTE_VERSION bump / video 替换
+            # 后最常见的 offline 场景，操作员会拿到空 facets 的 prompts.json 且零 warning。
+            # 现按 cache_stale 标记区分两种 miss，两种都显式记 warning（schema 合法
+            # 但内容降级 —— 必须让操作员看见输出被降级）。
+            if route_shot is None and route_down:
+                if cache_stale:
+                    warnings.append(
+                        f"shot {sid}: offline/stale-cache (_cache_key mismatch) "
+                        f"→ empty facets")
+                else:
+                    warnings.append(f"shot {sid}: offline/cache-miss → empty facets")
 
             # (d) 映射 → facets（route_shot is None → 全空，schema 仍合法）
             facets = compose_facets(route_shot)
