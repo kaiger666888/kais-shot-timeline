@@ -107,7 +107,22 @@ Plans:
   4. SAM3 multi-frame sampling (N=3-5 per shot at 25/50/75% positions, not just first/last) with `mask_quality` metric; low-quality frames flagged `unusable` and skipped from clustering (Pitfall 6 prevented); best-of-N representative crop auto-selected for `characters/<id>.png`
   5. `step_reid` in `run_pipeline.py` (step 6 of 8) with `--skip-reid` graceful-degrade; DINOv2 cosine threshold τ calibrated on ep01 (planning-phase research spike produces same-person vs different-person cosine histogram + documents the valley pick)
 
-**Plans**: TBD
+**Plans**: 4 plans in 3 waves (mirrors Phase 5/6 contract-first → implementation → integration)
+
+Plans:
+**Wave 1** *(contract-first — unblocks Plans 02/03)*
+
+- [ ] 07-01-PLAN.md — spec/schemas/registry-edits.schema.json + spec/fixtures/v1.1/registry.edits.json + spec/validate.py wiring (10th v1.1 shape) [CAST-06, CAST-07 contract layer]
+
+**Wave 2** *(blocked on Wave 1; Plans 02 + 03 parallel)*
+
+- [ ] 07-02-PLAN.md — analysis/call_reid.py (httpx client + normalize_clusters + per-video cache + preflight + graceful-degrade + warnings sidecar MERGE — mirror call_shot_analysis.py) [CAST-05, CAST-09 degrade]
+- [ ] 07-03-PLAN.md — registry/apply_edits.py (confirmed-only hard gate + idempotent apply + ffmpeg representative PNG) + html/gen_registry_review.py (HITL review HTML — first-class: cluster cards + cosine-sorted queue + three-tier viz + Export edits button) [CAST-06, CAST-07, CAST-08 producer fallback]
+
+**Wave 3** *(blocked on Waves 1 + 2)*
+
+- [ ] 07-04-PLAN.md — run_pipeline.py step_reid (slot 6 of 8) + 20× [N/7]→[N/8] renumber + 3 new flags + --force cache list; scripts/export_asset.py conditional characters/props emission (CONTRACT-06 closure); scripts/verify_contract.py producer registry↔shots integrity + Pitfall 7 assert; scripts/verify_phase7_smoke.py 5-scenario regression; CAST-01/02/03/04/08 deferral documentation [CAST-09, CONTRACT-06, CAST-01/02/03/04/08 deferred]
+
 **UI hint**: yes
 
 ### Phase 8: Prompt Reference System + shot-timeline HTML Gallery
@@ -148,7 +163,7 @@ Plans:
 | 3. Canvas Consumer | v1.0 | 1/1 | Complete | 2026-07-21 |
 | 4. Cross-Repo Contract Verification | v1.0 | 2/2 | Complete | 2026-07-21 |
 | 5. Contract v1.1 | v1.1 | 4/4 | Complete    | 2026-07-24 |
-| 6. Cinematography Auto-Fill (`step_semantic`) | v1.1 | 3/3 | Complete   | 2026-07-24 |
+| 6. Cinematography Auto-Fill (`step_semantic`) | v1.1 | 3/3 | Complete    | 2026-07-24 |
 | 7. Cross-Shot Re-ID Registry + HITL Review (`step_reid`) | v1.1 | 0/? | Planning | - |
 | 8. Prompt Reference System + shot-timeline HTML Gallery | v1.1 | 0/? | Planning | - |
 | 9. Canvas Consumer Integration (cross-repo) | v1.1 | 0/? | Planning | - |
