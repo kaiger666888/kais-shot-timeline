@@ -8,23 +8,33 @@
 
 ```
 spec/
-├── schemas/                       # 6 个机可校验的 JSON Schema 文件(draft 2020-12)
+├── schemas/                       # 9 个机可校验的 JSON Schema 文件(draft 2020-12)
 │   ├── shots.schema.json          # 分镜边界列表
 │   ├── audio_analysis.schema.json # 每镜 Demucs 4-stem 能量/谱/类型
 │   ├── transcript.schema.json     # Whisper 转录段
 │   ├── frames.schema.json         # 首尾帧 base64 data URI
-│   ├── prompts.schema.json        # 结构化分镜 prompt
-│   └── asset.schema.json          # 自描述 manifest(schema_version + 来源 + 生成器 + 5 JSON 清单 + 媒体清单)
-├── fixtures/minimal/              # 一份完整的最小样例资产(6 个 JSON,可被 6 个 schema 全部校验通过)
+│   ├── prompts.schema.json        # 结构化分镜 prompt(v1.1 +character_refs[]/prop_refs[])
+│   ├── asset.schema.json          # 自描述 manifest(schema_version + 来源 + 生成器 + 数据清单 + 媒体清单)
+│   ├── characters.schema.json     # 跨镜角色注册表(^char_[0-9]{3}$ + looks[])。v1.1
+│   ├── props.schema.json          # 跨镜道具注册表(^prop_[0-9]{3}$ + states[])。v1.1
+│   └── registry.schema.json       # re-id 聚类草稿(clusters[] + tier + mean_cosine)。v1.1,pipeline-internal
+├── fixtures/minimal/              # v1.0 最小样例资产(6 JSON,6 schema 全绿)
 │   ├── asset.json
 │   ├── shots.json
 │   ├── audio_analysis.json
 │   ├── transcript.json
 │   ├── frames.json
 │   └── prompts.json
-├── validate.py                    # 校验器(标准库 + jsonschema,无外部依赖)
+├── fixtures/v1.1/                 # v1.1 样例资产(9 JSON — 复用 minimal 2-shot + characters/props/registry)。Phase 5
+│   ├── asset.json                 # schema_version="1.1" + data/media characters+props
+│   ├── shots.json / audio_analysis.json / transcript.json / frames.json  # 复用 minimal substrate(verbatim)
+│   ├── prompts.json               # +character_refs[]/prop_refs[]
+│   ├── characters.json            # 2 角色(char_001 少女 w/ looks[],char_002 路人 minimal)
+│   ├── props.json                 # 1 道具(prop_001 落叶 w/ states[])
+│   └── registry.draft.json        # 3 clusters,one per tier,all review_state=proposed
+├── validate.py                    # 校验器(标准库 + jsonschema;minimal 6/6 + v1.1 9/9 双 pass)
 ├── README.md                      # 本文件
-└── SPEC.md                        # 人读 prose 规范 — 由 Plan 02 产出(pending Plan 02)
+└── SPEC.md                        # 人读 prose 规范(§1-§7,含 v1.1 §5.6 Characters / §5.7 Props)
 ```
 
 ## How to validate
@@ -37,7 +47,7 @@ python3 spec/validate.py
 python3 spec/validate.py --strict-smoke
 ```
 
-预期输出:6 行 `[valid] <shape>`(asset / shots / audio_analysis / transcript / frames / prompts)+ 至少 5 行 `[smoke-valid|smoke-FAIL] <shape>`(只要仓库 `output/` 下有真实生产产物)。
+预期输出:6 行 `[valid] <shape>`(minimal: asset / shots / audio_analysis / transcript / frames / prompts)+ 9 行 `[valid-v11] <shape>`(v1.1: 上述 6 + characters / props / registry)+ 至少 5 行 `[smoke-valid|smoke-FAIL] <shape>`(只要仓库 `output/` 下有真实生产产物)。minimal 仍 gate 退出码(CONTRACT-09);v1.1 失败也计入(Plan 01 schemas 必须接受 Plan 03 fixtures)。
 
 ## Canonical asset layout (CONTEXT D-03)
 
@@ -56,6 +66,8 @@ python3 spec/validate.py --strict-smoke
 
 `asset.json` 的 `schema_version` 字段使用 semver-lite(`"1"`、`"1.1"`,非完整 semver)。schema 严格(`additionalProperties: false`),但消费端**必须**在运行时对未知/更新版本做 graceful-degrade:忽略未知字段、渲染已知部分、emit 一个 warning,不要 reject 或 crash。新增字段=minor bump,破坏性变更=major bump(必须在 prose SPEC 中写迁移说明)。规则全文嵌在 `asset.schema.json` 的 `schema_version.description` 与顶层 `$comment` 里。
 
+> **v1.1 (Phase 5) 是首个 minor bump** — 新增 3 个 optional schema(characters/props/registry)+ asset/prompts additive 扩展(全 optional 字段,`required[]` 与 v1.0 byte-identical,Pitfall 11 prevented)。版本字面量锁在 producer 单一真源 `scripts/export_asset.py:SCHEMA_VERSION = "1.1"`(schema pattern 不变)。详见 `SPEC.md` §4 Changelog。
+
 ## Origin / Provenance
 
 - **生产端**:Phase 2 导出器(待实现),把 `output/<video-stem>/` 下的 5 个 JSON + 媒体重命名为 canonical 布局后写出 `asset.json`。
@@ -65,3 +77,4 @@ python3 spec/validate.py --strict-smoke
 ---
 
 *Created: 2026-07-20 (Phase 01 Plan 01)*
+*Updated: 2026-07-24 (Phase 05 — v1.1 additive extension: +3 schemas, +spec/fixtures/v1.1/, validate.py dual minimal+v1.1 pass, verify_contract.py EIGHT_SHAPES + cross-version + fixture-consistency)*
