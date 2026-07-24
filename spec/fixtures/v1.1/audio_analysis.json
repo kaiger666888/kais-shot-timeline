@@ -1,0 +1,63 @@
+{
+  "episode": "shots",
+  "duration": 3.0,
+  "stems": ["vocals", "drums", "bass", "other"],
+  "shots": [
+    {
+      "shot_id": 1,
+      "start_sec": 0.0,
+      "end_sec": 1.5,
+      "duration": 1.5,
+      "energies": {
+        "vocals": 0.0512,
+        "drums": 0.0089,
+        "bass": 0.0021,
+        "other": 0.0033
+      },
+      "ratios": {
+        "vocals": 0.7853,
+        "drums": 0.1365,
+        "bass": 0.0322,
+        "other": 0.0507
+      },
+      "spectral_centroid": {
+        "vocals": 920.4,
+        "drums": 1842.7,
+        "bass": 9821.3,
+        "other": 3987.5
+      },
+      "dominant_type": "dialogue"
+    },
+    {
+      "shot_id": 2,
+      "start_sec": 1.5,
+      "end_sec": 3.0,
+      "duration": 1.5,
+      "energies": {
+        "vocals": 0.0042,
+        "drums": 0.0873,
+        "bass": 0.0098,
+        "other": 0.0111
+      },
+      "ratios": {
+        "vocals": 0.0379,
+        "drums": 0.7889,
+        "bass": 0.0885,
+        "other": 0.1003
+      },
+      "spectral_centroid": {
+        "vocals": 1102.6,
+        "drums": 2410.8,
+        "bass": 8124.2,
+        "other": 4502.1
+      },
+      "dominant_type": "bgm"
+    }
+  ],
+  "type_distribution": {
+    "dialogue": 1,
+    "bgm": 1,
+    "mixed": 0,
+    "sfx": 0
+  }
+}
