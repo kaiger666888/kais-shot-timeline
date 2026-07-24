@@ -88,7 +88,7 @@ Plans:
 
 **Wave 2** *(blocked on Wave 1)*
 
-- [ ] 06-02-PLAN.md — analysis/call_shot_analysis.py (httpx sync client + compose_facets LOCKED mapping + video_content_hash + per-shot cache + preflight + warnings sidecar) + 7 captured fixtures copied to examples/shot_analysis/ + README install line [CINEMA-01, CINEMA-03, CINEMA-04, CINEMA-05]
+- [x] 06-02-PLAN.md — analysis/call_shot_analysis.py (httpx sync client + compose_facets LOCKED mapping + video_content_hash + per-shot cache + preflight + warnings sidecar) + 7 captured fixtures copied to examples/shot_analysis/ + README install line [CINEMA-01, CINEMA-03, CINEMA-04, CINEMA-05]
 
 **Wave 3** *(blocked on Waves 1 + 2)*
 
@@ -148,7 +148,7 @@ Plans:
 | 3. Canvas Consumer | v1.0 | 1/1 | Complete | 2026-07-21 |
 | 4. Cross-Repo Contract Verification | v1.0 | 2/2 | Complete | 2026-07-21 |
 | 5. Contract v1.1 | v1.1 | 4/4 | Complete    | 2026-07-24 |
-| 6. Cinematography Auto-Fill (`step_semantic`) | v1.1 | 1/3 | Executing (Wave 1 complete) | - |
+| 6. Cinematography Auto-Fill (`step_semantic`) | v1.1 | 2/3 | In Progress|  |
 | 7. Cross-Shot Re-ID Registry + HITL Review (`step_reid`) | v1.1 | 0/? | Planning | - |
 | 8. Prompt Reference System + shot-timeline HTML Gallery | v1.1 | 0/? | Planning | - |
 | 9. Canvas Consumer Integration (cross-repo) | v1.1 | 0/? | Planning | - |

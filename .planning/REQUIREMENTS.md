@@ -24,11 +24,11 @@ v1.1 milestone 范围。每条映射到一个 phase（见 Traceability）。
 
 ### CINEMA — 镜头语言/动作/语义自动填充 (`step_semantic`)
 
-- [ ] **CINEMA-01**: `analysis/call_shot_analysis.py`——httpx 客户端调 `POST /api/v1/production/shot-analysis`，把 `semantic.*`/`geometry.*`/`subject.*` 映射到 prompts 的 `camera`/`action`/`lighting`/`style`/`subject` 字段
+- [x] **CINEMA-01**: `analysis/call_shot_analysis.py`——httpx 客户端调 `POST /api/v1/production/shot-analysis`，把 `semantic.*`/`geometry.*`/`subject.*` 映射到 prompts 的 `camera`/`action`/`lighting`/`style`/`subject` 字段
 - [ ] **CINEMA-02**: `run_pipeline.py` 新增 `step_semantic`（位于 `step_transcribe` 与 `step_timeline` 之间），`[N/8]` 计数全量更新
-- [ ] **CINEMA-03**: 路由不可达时 graceful-degrade——`prompts.json` 仍写出（空 facet 字段、schema 合法），资产仍导出；`--skip-semantic` 旗标
-- [ ] **CINEMA-04**: 每镜路由输出缓存 `output/<asset>/route_cache/shot_analysis/shot_XXX.json`，cache key 含 `(video_content_hash, shot_id, route_name, route_version)`；`--offline` 全局旗标只用缓存不联网
-- [ ] **CINEMA-05**: 步前 preflight 健康检查 + 失败时 `generator.warnings` 记录（per-shot 失败不致命，不阻断资产导出）
+- [x] **CINEMA-03**: 路由不可达时 graceful-degrade——`prompts.json` 仍写出（空 facet 字段、schema 合法），资产仍导出；`--skip-semantic` 旗标
+- [x] **CINEMA-04**: 每镜路由输出缓存 `output/<asset>/route_cache/shot_analysis/shot_XXX.json`，cache key 含 `(video_content_hash, shot_id, route_name, route_version)`；`--offline` 全局旗标只用缓存不联网
+- [x] **CINEMA-05**: 步前 preflight 健康检查 + 失败时 `generator.warnings` 记录（per-shot 失败不致命，不阻断资产导出）
 - [ ] **CINEMA-06**: `--analysis-url` / `--analysis-timeout`（默认 960s，> 路由侧 900s `execFileSync` 上限）旗标
 
 > **外部前置依赖（非 REQ，phase 前置条件）**：`feat/shot-geometry-nodes` + `feat/shot-analysis-route` 两未 merge 分支需先在 kais-aigc-platform 上线，否则 `step_semantic` 无法端到端验证。
@@ -111,11 +111,11 @@ Phase 编号续接 v1.0（Phase 1-4 SHIPPED）。v1.1 从 Phase 5 起，dependen
 | CONTRACT-07 | Phase 5 | Complete |
 | CONTRACT-08 | Phase 5 | Complete |
 | CONTRACT-09 | Phase 5 | Complete |
-| CINEMA-01 | Phase 6 | Pending |
+| CINEMA-01 | Phase 6 | Complete |
 | CINEMA-02 | Phase 6 | Pending |
-| CINEMA-03 | Phase 6 | Pending |
-| CINEMA-04 | Phase 6 | Pending |
-| CINEMA-05 | Phase 6 | Pending |
+| CINEMA-03 | Phase 6 | Complete |
+| CINEMA-04 | Phase 6 | Complete |
+| CINEMA-05 | Phase 6 | Complete |
 | CINEMA-06 | Phase 6 | Pending |
 | CAST-01 | Phase 7 | Pending |
 | CAST-02 | Phase 7 | Pending |

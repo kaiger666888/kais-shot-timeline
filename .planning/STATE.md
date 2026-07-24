@@ -3,15 +3,15 @@ gsd_state_version: 1.0
 milestone: v1.1
 milestone_name: 分镜语义深化 — 镜头语言 + 跨镜角色/道具注册表
 status: executing
-stopped_at: ""v1.1 roadmap created — 5 phases (5-9), 34/34 requirements mapped; ready for `/gsd:plan-phase 5`""
-last_updated: "2026-07-24T14:51:08.908Z"
+stopped_at: "Phase 6 Plan 06-02 complete — analysis/call_shot_analysis.py httpx client + compose_facets LOCKED mapping + per-shot cache + preflight + graceful-degrade landed; 7 captured fixtures copied to examples/shot_analysis/. CINEMA-01/03/04/05 done at component level. Unblocks Plan 06-03 (run_pipeline step_semantic integration + [N/7] renumber + 4 flags + verify_phase6_smoke.py)."
+last_updated: "2026-07-24T15:14:31.353Z"
 last_activity: 2026-07-24
 progress:
   total_phases: 5
   completed_phases: 1
   total_plans: 7
-  completed_plans: 5
-  percent: 71
+  completed_plans: 6
+  percent: 20
 ---
 
 # Project State
@@ -26,9 +26,9 @@ See: .planning/PROJECT.md (updated 2026-07-24)
 ## Current Position
 
 Phase: 6 (Cinematography Auto-Fill (step_semantic)) — EXECUTING
-Plan: 2 of 3
-Status: Plan 06-01 complete (contract-first generator.warnings landed); ready for Plan 06-02 (analysis client)
-Last activity: 2026-07-24 -- Plan 06-01 complete
+Plan: 3 of 3
+Status: Ready to execute
+Last activity: 2026-07-24
 
 **v1.1 phase sequence (dependency-ordered, research-validated):**
 
@@ -67,8 +67,10 @@ Last activity: 2026-07-24 -- Plan 06-01 complete
 |------------|----------|-------|-------|
 | Phase 05 P01-04 | (see Phase 5 SUMMARY) | — | — |
 | Phase 06 P01 | 4min | 2 tasks | 4 files |
+| Phase 06 P02 | 11min | 2 tasks | 9 files |
 
 *v1.1 metrics populate as plans complete*
+| Phase 6 P02 | 11min | 2 tasks | 9 files |
 
 ## Accumulated Context
 
@@ -90,6 +92,8 @@ Carried from v1.0 (still load-bearing):
 - Canvas work happens on branch `feat/canvas-asset-collection` in `kais-aigc-platform`
 - Two-tier authority: schemas are machine-checkable truth, SPEC.md is human-readable overview; on conflict schema wins
 - schema_version pattern `^(0|[1-9]\d*)(\.(0|[1-9]\d*))?$` (semver-lite)
+- [Phase ?]: Phase 6 Plan 02: LOCKED route to prompts mapping (camera=join shot_scale+camera_primitive+camera_speed+geometry.primitive filtering falsy; action/lighting/style from semantic; subject/scene empty) verified against all 7 captured fixtures -> 0 schema errors. analysis/call_shot_analysis.py is the project first network dependency (httpx 0.28.1).
+- [Phase ?]: Phase 6 Plan 02: graceful-degrade via httpx.HTTPError root catch-all + single preflight short-circuit; per-shot cache key (video_content_hash head+tail 1MB sha256, route_name, route_version). CINEMA-01/03/04/05 complete at component level; CINEMA-02/06 close in Plan 03 (run_pipeline step_semantic + flag wiring).
 
 ### Pending Todos
 
@@ -120,8 +124,8 @@ Items acknowledged and carried forward from v1.0 + v1.1 Out-of-Scope:
 
 ## Session Continuity
 
-Last session: 2026-07-24T14:49:43.000Z
-Stopped at: "Phase 6 Plan 06-01 complete — generator.warnings contract channel landed (schema + exporter + SPEC + fixture). Unblocks Plan 06-02 (analysis/call_shot_analysis.py) and Plan 06-03 (run_pipeline integration)."
+Last session: 2026-07-24T15:11:20.248Z
+Stopped at: "Phase 6 Plan 06-02 complete — analysis/call_shot_analysis.py httpx client + compose_facets LOCKED mapping + per-shot cache + preflight + graceful-degrade landed; 7 captured fixtures copied to examples/shot_analysis/. CINEMA-01/03/04/05 done at component level. Unblocks Plan 06-03 (run_pipeline step_semantic integration + [N/7] renumber + 4 flags + verify_phase6_smoke.py)."
 Resume file: None
 
 ## Operator Next Steps
