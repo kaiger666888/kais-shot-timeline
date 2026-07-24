@@ -27,7 +27,7 @@ A repo-agnostic **ShotTimelineAsset** format contract: the canonical "asset coll
 
 Strict-additive, contract-first minor bump on v1.0. Adds two new pipeline stages calling ML HTTP routes in `kais-aigc-platform` (cinematography analysis + cross-shot re-id), three new optional data files (`characters.json`, `props.json`, enriched `prompts.json`), an HITL review HTML deliverable, and a canvas consumer extension. Mirrors v1.0's contract-first sequencing that worked.
 
-- [ ] **Phase 5: Contract v1.1** — schemas + SPEC + fixtures + verify harness (no route dependency)
+- [x] **Phase 5: Contract v1.1** — schemas + SPEC + fixtures + verify harness (no route dependency) (completed 2026-07-24)
 - [ ] **Phase 6: Cinematography Auto-Fill (`step_semantic`)** — httpx client + graceful-degrade + per-shot cache
 - [ ] **Phase 7: Cross-Shot Re-ID Registry + HITL Review (`step_reid`)** — HIGHEST complexity; new route + driver + review HTML
 - [ ] **Phase 8: Prompt Reference System + shot-timeline HTML Gallery** — narrative continuity + producer-side display
@@ -62,7 +62,7 @@ Plans:
 
 **Wave 3** *(blocked on Wave 2 completion)*
 
-- [ ] 05-04-PLAN.md — verify_contract.py EIGHT_SHAPES + _cross_version_check + _fixture_consistency_check + validate.py v1.1 pass + SPEC.md/README.md prose [CONTRACT-07, 08, 09]
+- [x] 05-04-PLAN.md — verify_contract.py EIGHT_SHAPES + _cross_version_check + _fixture_consistency_check + validate.py v1.1 pass + SPEC.md/README.md prose [CONTRACT-07, 08, 09]
 
 ### Phase 6: Cinematography Auto-Fill (`step_semantic`)
 
@@ -132,7 +132,7 @@ Plans:
 | 2. shot-timeline Exporter (Producer) | v1.0 | 2/2 | Complete | 2026-07-20 |
 | 3. Canvas Consumer | v1.0 | 1/1 | Complete | 2026-07-21 |
 | 4. Cross-Repo Contract Verification | v1.0 | 2/2 | Complete | 2026-07-21 |
-| 5. Contract v1.1 | v1.1 | 3/4 | In Progress|  |
+| 5. Contract v1.1 | v1.1 | 4/4 | Complete   | 2026-07-24 |
 | 6. Cinematography Auto-Fill (`step_semantic`) | v1.1 | 0/? | Planning | - |
 | 7. Cross-Shot Re-ID Registry + HITL Review (`step_reid`) | v1.1 | 0/? | Planning | - |
 | 8. Prompt Reference System + shot-timeline HTML Gallery | v1.1 | 0/? | Planning | - |
