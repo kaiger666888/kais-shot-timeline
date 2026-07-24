@@ -133,6 +133,64 @@ def validate_asset_json(asset_dict: dict) -> None:
             + "\n".join(lines))
 
 
+def _build_registry_snapshot(work_dir: str):
+    """读 characters.json + props.json → compact confirmed-only snapshot（PROMPT-04）。
+
+    返回 None 当两个 registry 文件都不存在（graceful-degrade —— asset byte-identical
+    到 v1.0；registry_snapshot 字段 OMITTED，schema optional）。
+    confirmed-only hard filter（Pitfall 7 consistent —— 与 attach_refs._load_registry +
+    apply_edits.py build-time hard gate + _producer_registry_integrity second-line assert
+    对齐；非-confirmed 绝不进 snapshot）。
+    representative_image 仅当 truthy 时 emit（Phase 7 WARNING-2：apply_edits 在 ffmpeg
+    失败时 OMIT representative_image —— snapshot 不携带 dangling path）。
+
+    Returns:
+        dict | None: {characters:[{id,name,representative_image?,appearance_shots}],
+                      props:[{...}]} 或 None（两文件都缺席）。
+    """
+    chars_path = os.path.join(work_dir, "characters.json")
+    props_path = os.path.join(work_dir, "props.json")
+    # 两文件都不存在 → snapshot OMITTED（graceful-degrade；schema optional）
+    if not (os.path.isfile(chars_path) or os.path.isfile(props_path)):
+        return None
+
+    def _project(entries) -> list:
+        """投影 confirmed-only compact shape（id/name/representative_image?/appearance_shots）。"""
+        out = []
+        if isinstance(entries, list):
+            for e in entries:
+                if not isinstance(e, dict):
+                    continue
+                # Pitfall 7 —— confirmed-only snapshot（与 build-time hard gate 对齐）
+                if e.get("review_state") != "confirmed":
+                    continue
+                # representative_image 仅当 truthy（WARNING-2：apply_edits 在 ffmpeg
+                # 失败时 OMIT；snapshot 不携带 dangling path）
+                out.append({
+                    "id": e.get("id"),
+                    "name": e.get("name"),
+                    **({"representative_image": e["representative_image"]}
+                       if e.get("representative_image") else {}),
+                    "appearance_shots": e.get("appearance_shots") or [],
+                })
+        return out
+
+    snapshot: dict = {}
+    if os.path.isfile(chars_path):
+        try:
+            with open(chars_path, encoding="utf-8") as f:
+                snapshot["characters"] = _project(json.load(f))
+        except (OSError, json.JSONDecodeError):
+            snapshot["characters"] = []
+    if os.path.isfile(props_path):
+        try:
+            with open(props_path, encoding="utf-8") as f:
+                snapshot["props"] = _project(json.load(f))
+        except (OSError, json.JSONDecodeError):
+            snapshot["props"] = []
+    return snapshot
+
+
 def build_asset_dict(work_dir: str, video_path: str,
                      warnings: list[str] | None = None) -> dict:
     """从现有 pipeline 产物组装 asset.json dict。
@@ -236,6 +294,11 @@ def build_asset_dict(work_dir: str, video_path: str,
                 warnings.append(_msg)
             # 不 sys.exit —— CAST-09 graceful-degrade（asset 仍导出）
 
+    # Phase 8 (PROMPT-04): registry_snapshot —— 冻结 confirmed-only compact view。
+    # 调用 ONCE 存局部变量（避免重复读文件）。None when 两 registry 文件都不存在
+    # （graceful-degrade —— 老 assets byte-identical 到 v1.0；snapshot OMITTED）。
+    snapshot = _build_registry_snapshot(work_dir)
+
     return {
         "schema_version": SCHEMA_VERSION,
         "asset_type": "shottimeline",
@@ -253,6 +316,11 @@ def build_asset_dict(work_dir: str, video_path: str,
             #   graceful-degrade default = 干净运行缺省，老资产不受影响）。
             # Phase 7: 上方 character/prop PNG race-detection 也 append 到 warnings。
             **({"warnings": warnings} if warnings else {}),
+            # Phase 8 (PROMPT-04): registry_snapshot —— additive conditional emit
+            # （mirror Phase 6 warnings 模式）。None → OMITTED（老 assets / 无 re-id
+            # degrade 保持 byte-identical；schema optional）。非-None 时含 confirmed-only
+            # compact view（Pitfall 7 + WARNING-2 已在 _build_registry_snapshot 内处理）。
+            **({"registry_snapshot": snapshot} if snapshot is not None else {}),
         },
         "data": data_block,
         "media": media_block,
