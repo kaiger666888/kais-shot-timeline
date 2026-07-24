@@ -183,8 +183,24 @@ def step_semantic(video: str, work_dir: str, shots_json: str,
         return prompts_json if os.path.exists(prompts_json) else None
     # TOCTOU-safe mtime cache（mirror step_export 02-REVIEW WR-07）；offline 模式不
     # 跳过（仍需跑子进程读 cache + 写 prompts.json），只在 skip 时短路。
+    # WR-01：mtime 单比不够 —— video 文件被换（同/更老 mtime，如 backup 恢复 /
+    # cp --preserve=timestamps / 版本控制 checkout）会让外层 mtime cache 命中但
+    # 内层 per-shot cache 全 stale（video_content_hash 变了）→ 陈旧 prompts.json
+    # 静默发货。镜像 step_export 的 video 身份 sidecar（path|size|mtime_ns），不同
+    # video 强制 miss 重跑（call_shot_analysis 内层 cache 也会同步失效）。
+    video_stamp = prompts_json + ".video-stamp"
+    cached_video_id = None
+    if os.path.exists(video_stamp):
+        try:
+            with open(video_stamp, encoding="utf-8") as f:
+                cached_video_id = f.read().strip()
+        except OSError:
+            cached_video_id = None
+    current_video_id = _video_identity(video)
     if (os.path.exists(prompts_json)
-            and _safe_mtime(prompts_json) > _safe_mtime(shots_json)):
+            and _safe_mtime(prompts_json) > _safe_mtime(shots_json)
+            and cached_video_id is not None
+            and cached_video_id == current_video_id):
         print(f"[5/7] cached prompts: {prompts_json}")
         return prompts_json
     cmd = [sys.executable, str(HERE / "analysis" / "call_shot_analysis.py"),
@@ -195,6 +211,14 @@ def step_semantic(video: str, work_dir: str, shots_json: str,
     if offline:
         cmd += ["--offline"]
     run_step(cmd, "[5/7] cinematography analysis (shot-analysis route)")
+    # 写 video 身份 sidecar —— best-effort（WR-01）；失败仅意味着下次 cache check
+    # 多一次重跑（cached_video_id=None → 强制 miss）。
+    if current_video_id is not None:
+        try:
+            with open(video_stamp, "w", encoding="utf-8") as f:
+                f.write(current_video_id)
+        except OSError:
+            pass
     return prompts_json if os.path.exists(prompts_json) else None
 
 
@@ -400,6 +424,7 @@ def main():
         for p in (shots_json, frames_json, audio_json, transcript, out_html,
                   asset_json, asset_json + ".video-stamp",
                   prompts_json,                                      # Phase 6
+                  prompts_json + ".video-stamp",                     # Phase 6 WR-01
                   route_cache_dir):                                  # Phase 6
             if os.path.isdir(p):
                 shutil.rmtree(p, ignore_errors=True)
