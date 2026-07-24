@@ -31,7 +31,7 @@ Strict-additive, contract-first minor bump on v1.0. Adds two new pipeline stages
 - [x] **Phase 6: Cinematography Auto-Fill (`step_semantic`)** — httpx client + graceful-degrade + per-shot cache (completed 2026-07-24)
 - [x] **Phase 7: Cross-Shot Re-ID Registry + HITL Review (`step_reid`)** — HIGHEST complexity; new route + driver + review HTML (completed 2026-07-24)
 - [x] **Phase 8: Prompt Reference System + shot-timeline HTML Gallery** — narrative continuity + producer-side display (completed 2026-07-24)
-- [ ] **Phase 9: Canvas Consumer Integration (cross-repo)** — append `"1.1"` + emit character/prop nodes (no renderer / no Zod bump)
+- [x] **Phase 9: Canvas Consumer Integration (cross-repo)** — append `"1.1"` + emit character/prop nodes (no renderer / no Zod bump) (completed 2026-07-24)
 
 ## Phase Details
 
@@ -173,7 +173,7 @@ Plans:
 
 **Wave 2** *(blocked on Wave 1; shot-timeline repo — normal commit flow)*
 
-- [ ] 09-02-PLAN.md — verify_contract.py 3-mode green for v1.1 (producer + consumer; e2e deferred) [PRESENT-06]
+- [x] 09-02-PLAN.md — verify_contract.py 3-mode green for v1.1 (producer + consumer; e2e deferred) [PRESENT-06]
 
 **UI hint**: yes
 
@@ -189,4 +189,4 @@ Plans:
 | 6. Cinematography Auto-Fill (`step_semantic`) | v1.1 | 3/3 | Complete    | 2026-07-24 |
 | 7. Cross-Shot Re-ID Registry + HITL Review (`step_reid`) | v1.1 | 4/4 | Complete    | 2026-07-24 |
 | 8. Prompt Reference System + shot-timeline HTML Gallery | v1.1 | 3/3 | Complete    | 2026-07-24 |
-| 9. Canvas Consumer Integration (cross-repo) | v1.1 | 1/2 | Executing | - |
+| 9. Canvas Consumer Integration (cross-repo) | v1.1 | 2/2 | Complete   | 2026-07-24 |
