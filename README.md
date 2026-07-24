@@ -191,9 +191,10 @@ python html/gen_prompts_html.py \
 - [Demucs](https://github.com/facebookresearch/demucs)
 - [faster-whisper](https://github.com/SYSTRAN/faster-whisper) (推荐) 或 [openai-whisper](https://github.com/openai/whisper)
 - PIL/Pillow, numpy, opencv-python
+- httpx（Phase 6 运镜语义分析路由调用；已用 0.28.1 验证，当前开发环境无需额外安装）
 
 ```bash
-pip install scenedetect demucs faster-whisper pillow numpy opencv-python
+pip install scenedetect demucs faster-whisper pillow numpy opencv-python httpx
 # 或只装 openai-whisper
 pip install openai-whisper
 ```
