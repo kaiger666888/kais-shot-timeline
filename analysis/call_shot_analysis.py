@@ -65,6 +65,7 @@ import argparse
 import hashlib
 import json
 import os
+import re
 import sys
 from pathlib import Path
 
@@ -105,6 +106,20 @@ def video_content_hash(video_path: str) -> str:
             h.update(f.read(1024 * 1024))                # tail 1MB
     h.update(str(size).encode())                         # 文件大小参与 hash
     return h.hexdigest()[:16]
+
+
+def _safe_error(msg: str) -> str:
+    """抹掉 URL 中的 user:pass@ userinfo（WR-05 defense-in-depth）。
+
+    httpx 异常的 str() 通常含请求 URL；若操作员把 basic-auth 嵌进 --analysis-url
+    （http://user:pass@host），warning 串会带凭据 → 流进 route_cache/warnings.json →
+    scripts/export_asset.py → asset.json#generator.warnings 随资产外发。schema
+    （asset.schema.json:59）显式禁止 warnings 含 auth token/body payloads。现代 httpx
+    已在 URL.__str__ 里 mask 成 user:***@，但 exporter 接受任意 list[str] 不做 redaction
+    —— 这里兜底，防 httpx 回归 / 自定义 transport / 路由 message 回显 URL 暴露凭据。
+    无 URL 时是 no-op（正则不匹配）。
+    """
+    return re.sub(r"(https?://)([^@/]+@)", r"\1***@", msg)
 
 
 def compose_facets(route_shot: dict | None) -> dict:
@@ -171,13 +186,18 @@ def call_route(client, body: dict) -> tuple[dict | None, str | None]:
         try:
             payload = resp.json()
         except ValueError as e:
-            return None, f"route returned non-JSON body: {type(e).__name__}: {e}"
+            # WR-05：body 可能是反代 HTML 错误页（回显 URL），_safe_error 兜底抹凭据。
+            return None, _safe_error(
+                f"route returned non-JSON body: {type(e).__name__}: {e}")
         # CR-02：envelope 非 dict（路由 bug 回 bare list/string/number）——
         # payload.get 会 AttributeError；isinstance 守卫走 degrade。
         if not isinstance(payload, dict):
-            return None, f"route envelope not a dict: {type(payload).__name__}"
+            return None, _safe_error(
+                f"route envelope not a dict: {type(payload).__name__}")
         if payload.get("code") != 200:
-            return None, f"route code={payload.get('code')}: {payload.get('message')}"
+            # WR-05：route message 可能回显 URL，_safe_error 兜底。
+            return None, _safe_error(
+                f"route code={payload.get('code')}: {payload.get('message')}")
         # CR-02：data 字段也防御性 isinstance（data 若是非 dict truthy 如 string，
         # `(data or {}).get` 仍会崩）。与 compose_facets 的 sem/geo 守卫同模式。
         data = payload.get("data")
@@ -193,7 +213,8 @@ def call_route(client, body: dict) -> tuple[dict | None, str | None]:
         # HTTPStatusError/NetworkError；其余覆盖 envelope 畸形 / 字段缺失等非
         # httpx 异常（defense-in-depth，防任何漏网访问路径让 step_semantic 崩 →
         # run_pipeline abort）。一律走 degrade：空 facets + warning 记异常类。
-        return None, f"{type(e).__name__}: {e}"
+        # WR-05：str(httpx 异常) 含请求 URL —— 可能带 user:pass@，_safe_error 抹掉。
+        return None, _safe_error(f"{type(e).__name__}: {e}")
 
 
 def preflight(base_url: str, timeout: float = 5.0) -> tuple[bool, str | None]:
@@ -216,7 +237,10 @@ def preflight(base_url: str, timeout: float = 5.0) -> tuple[bool, str | None]:
             probe.get(ROUTE_PATH, timeout=timeout)
         return True, None
     except httpx.HTTPError as e:
-        return False, f"preflight route unreachable: {type(e).__name__}: {e}"
+        # WR-05：str(httpx 异常) 含请求 URL —— 可能带 user:pass@，_safe_error 抹掉
+        # 防凭据流进 warnings sidecar → asset.json#generator.warnings。
+        return False, _safe_error(
+            f"preflight route unreachable: {type(e).__name__}: {e}")
 
 
 def main():
