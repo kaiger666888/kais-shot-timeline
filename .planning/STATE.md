@@ -2,9 +2,9 @@
 gsd_state_version: 1.0
 milestone: v1.1
 milestone_name: 分镜语义深化 — 镜头语言 + 跨镜角色/道具注册表
-status: verifying
-stopped_at: ""Phase 6 complete (all 3 plans shipped 2026-07-24) — run_pipeline.py step_semantic wired as slot 5 of 7; [N/7] counter locked (Phase 7 bumps to [N/8]); 4 new flags + --force cache list extension; scripts/verify_phase6_smoke.py 3 scenarios green (route-down / --skip-semantic / cache-hit-offline). Phase 6 now shippable as graceful-degrade producer; live route round-trip still deferred per blocker (feat/shot-analysis-route unmerged). Ready for /gsd:verifier-phase 6 then /gsd:plan-phase 7.""
-last_updated: "2026-07-24T18:55:40.973Z"
+status: ready_to_plan
+stopped_at: Phase 7 complete (4/4) — ready to discuss Phase 8
+last_updated: 2026-07-24T19:52:06.630Z
 last_activity: 2026-07-24
 progress:
   total_phases: 5
@@ -21,13 +21,13 @@ progress:
 See: .planning/PROJECT.md (updated 2026-07-24)
 
 **Core value:** 把成片解构成可导航、多轨道、带语义的分镜资产（分镜 + 分离音轨 + 对白 + 镜头语言 prompt + 跨镜可复用角色/道具注册表），且形态可移植——能作为下游 `@kais/infinite-canvas` 的「最终资产集合形态」被直接消费。
-**Current focus:** Phase 7 — Cross-Shot Re-ID Registry + HITL Review (step_reid)
+**Current focus:** Phase 8 — prompt reference system + shot timeline html gallery
 
 ## Current Position
 
-Phase: 7 (Cross-Shot Re-ID Registry + HITL Review (step_reid)) — EXECUTING
-Plan: 4 of 4
-Status: Phase complete — ready for verification
+Phase: 8
+Plan: Not started
+Status: Ready to plan
 Last activity: 2026-07-24
 
 **v1.1 phase sequence (dependency-ordered, research-validated):**
@@ -42,7 +42,7 @@ Last activity: 2026-07-24
 
 **Velocity (v1.0 historical):**
 
-- Total plans completed: 16 (across 4 phases)
+- Total plans completed: 20 (across 4 phases)
 - Average duration: ~20min
 - Total execution time: ~40min
 
@@ -56,6 +56,7 @@ Last activity: 2026-07-24
 | 4 | 2 | - | - |
 | 5 | 4 | - | - |
 | 6 | 3 | - | - |
+| 7 | 4 | - | - |
 
 | Phase 02 P02 | 15min | 2 tasks | 3 files |
 | Phase 3 P1 | 45min | 3 tasks | 13 files |
