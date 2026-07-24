@@ -4,13 +4,13 @@ milestone: v1.1
 milestone_name: 分镜语义深化 — 镜头语言 + 跨镜角色/道具注册表
 status: executing
 stopped_at: ""Phase 6 complete (all 3 plans shipped 2026-07-24) — run_pipeline.py step_semantic wired as slot 5 of 7; [N/7] counter locked (Phase 7 bumps to [N/8]); 4 new flags + --force cache list extension; scripts/verify_phase6_smoke.py 3 scenarios green (route-down / --skip-semantic / cache-hit-offline). Phase 6 now shippable as graceful-degrade producer; live route round-trip still deferred per blocker (feat/shot-analysis-route unmerged). Ready for /gsd:verifier-phase 6 then /gsd:plan-phase 7.""
-last_updated: "2026-07-24T18:22:31.749Z"
+last_updated: "2026-07-24T18:29:01.521Z"
 last_activity: 2026-07-24
 progress:
   total_phases: 5
   completed_phases: 2
   total_plans: 11
-  completed_plans: 8
+  completed_plans: 9
   percent: 40
 ---
 
@@ -26,7 +26,7 @@ See: .planning/PROJECT.md (updated 2026-07-24)
 ## Current Position
 
 Phase: 7 (Cross-Shot Re-ID Registry + HITL Review (step_reid)) — EXECUTING
-Plan: 2 of 4
+Plan: 3 of 4
 Status: Ready to execute
 Last activity: 2026-07-24
 
@@ -74,6 +74,7 @@ Last activity: 2026-07-24
 | Phase 6 P02 | 11min | 2 tasks | 9 files |
 | Phase 06 P03 | 10min | 2 tasks | 2 files |
 | Phase 7 P01 | 4min | 2 tasks | 3 files |
+| Phase 07 P02 | 4min | 1 tasks | 1 files |
 
 ## Accumulated Context
 
@@ -100,6 +101,9 @@ Carried from v1.0 (still load-bearing):
 - [Phase ?]: Phase 6 Plan 03: run_pipeline step_semantic integrated as slot 5 of 7; [N/7] counter lock per CONTEXT D-XX (Phase 7 bumps to [N/8]); 4 flags + --force cache list extension; verify_phase6_smoke.py 3 scenarios green.
 - [Phase 7]: registry-edits.schema.json locks the HITL edits round-trip contract (merge_groups/splits/renames/type_overrides/confirm_ids/reject_ids/review_notes) — structured + deterministic + idempotent per CONTEXT Q2; free-form notes rejected; all 7 props optional (empty edits {} valid); apply order merge→split→rename→type_override→confirm/reject guarantees byte-identical re-apply (Pitfall 5)
 - [Phase 7]: registry-edits is the 10th v1.1 fixture-regression shape (spec/validate.py 9→10); NOT an asset-dir shape — verify_contract.py EIGHT_SHAPES untouched (Plan 04 extends); CAST-06/CAST-07 NOT marked complete (split across plans 01 contract-layer + 03 implementation)
+- [Phase ?]: normalize_clusters is CAST-05 shape-agnostic projector: every cluster gets review_state=proposed, extra route fields dropped, empty-member clusters skipped
+- [Phase ?]: Re-id cache is per-video (video_<vch>.json) NOT per-shot — re-id is cross-shot aggregation (Pitfall 4)
+- [Phase ?]: Warnings sidecar READ-merge-write: step_semantic warnings preserved + re-id appended (non-destructive)
 
 ### Pending Todos
 
@@ -130,7 +134,7 @@ Items acknowledged and carried forward from v1.0 + v1.1 Out-of-Scope:
 
 ## Session Continuity
 
-Last session: 2026-07-24T18:18:00.133Z
+Last session: 2026-07-24T18:29:01.514Z
 Stopped at: "Phase 6 complete (all 3 plans shipped 2026-07-24) — run_pipeline.py step_semantic wired as slot 5 of 7; [N/7] counter locked (Phase 7 bumps to [N/8]); 4 new flags + --force cache list extension; scripts/verify_phase6_smoke.py 3 scenarios green (route-down / --skip-semantic / cache-hit-offline). Phase 6 now shippable as graceful-degrade producer; live route round-trip still deferred per blocker (feat/shot-analysis-route unmerged). Ready for /gsd:verifier-phase 6 then /gsd:plan-phase 7."
 Resume file: None
 

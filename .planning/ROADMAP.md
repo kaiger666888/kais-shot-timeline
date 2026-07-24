@@ -116,7 +116,7 @@ Plans:
 
 **Wave 2** *(blocked on Wave 1; Plans 02 + 03 parallel)*
 
-- [ ] 07-02-PLAN.md — analysis/call_reid.py (httpx client + normalize_clusters + per-video cache + preflight + graceful-degrade + warnings sidecar MERGE — mirror call_shot_analysis.py) [CAST-05, CAST-09 degrade]
+- [x] 07-02-PLAN.md — analysis/call_reid.py (httpx client + normalize_clusters + per-video cache + preflight + graceful-degrade + warnings sidecar MERGE — mirror call_shot_analysis.py) [CAST-05, CAST-09 degrade]
 - [ ] 07-03-PLAN.md — registry/apply_edits.py (confirmed-only hard gate + idempotent apply + ffmpeg representative PNG) + html/gen_registry_review.py (HITL review HTML — first-class: cluster cards + cosine-sorted queue + three-tier viz + Export edits button) [CAST-06, CAST-07, CAST-08 producer fallback]
 
 **Wave 3** *(blocked on Waves 1 + 2)*
@@ -164,6 +164,6 @@ Plans:
 | 4. Cross-Repo Contract Verification | v1.0 | 2/2 | Complete | 2026-07-21 |
 | 5. Contract v1.1 | v1.1 | 4/4 | Complete    | 2026-07-24 |
 | 6. Cinematography Auto-Fill (`step_semantic`) | v1.1 | 3/3 | Complete    | 2026-07-24 |
-| 7. Cross-Shot Re-ID Registry + HITL Review (`step_reid`) | v1.1 | 1/4 | In Progress|  |
+| 7. Cross-Shot Re-ID Registry + HITL Review (`step_reid`) | v1.1 | 2/4 | In Progress|  |
 | 8. Prompt Reference System + shot-timeline HTML Gallery | v1.1 | 0/? | Planning | - |
 | 9. Canvas Consumer Integration (cross-repo) | v1.1 | 0/? | Planning | - |
