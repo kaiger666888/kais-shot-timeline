@@ -111,13 +111,19 @@ def compose_facets(route_shot: dict | None) -> dict:
         {"camera", "action", "lighting", "style", "subject", "scene"} 六个 str。
         None/空字段自动滤除（Pitfall 3：防 "None" 字面 + 前导 ", "）。
     """
-    if route_shot is None:
+    # CR-02：route_shot 非 dict（route bug 回 list/string，或 None）→ 全空 facets。
+    # 旧 `if route_shot is None` 漏了 truthy 非 dict —— 后续 .get 会 AttributeError
+    # 逃出 except httpx.HTTPError。统一 isinstance 守卫，None 与非 dict 同走降级。
+    if not isinstance(route_shot, dict):
         return {"camera": "", "action": "", "lighting": "",
                 "style": "", "subject": "", "scene": ""}
 
-    # `or {}` 把 None（路由 Qwen3-VL 低信号镜头偶尔回 null）强转为空 dict。
-    sem = route_shot.get("semantic") or {}
-    geo = route_shot.get("geometry") or {}
+    # CR-02：`or {}` 只能把 None/falsy 强转空 dict —— route bug 回 list/string 时
+    # `route_shot.get("semantic") or {}` 会返回那个 list/string，下一行 .get 崩
+    # （CR-02 第 3 点：compose_facets 在非 dict truthy sem/geo 上崩溃）。改 isinstance
+    # 守卫：非 dict 一律当空 dict（路由 Qwen3-VL 低信号镜头回 null 也由这里兜住）。
+    sem = route_shot.get("semantic") if isinstance(route_shot.get("semantic"), dict) else {}
+    geo = route_shot.get("geometry") if isinstance(route_shot.get("geometry"), dict) else {}
 
     def join(*parts):
         # `if p` 滤除 None / "" / 0 —— Pitfall 3 修复。
@@ -151,15 +157,35 @@ def call_route(client, body: dict) -> tuple[dict | None, str | None]:
     try:
         resp = client.post("/api/v1/production/shot-analysis", json=body)
         resp.raise_for_status()                          # 4xx/5xx → HTTPStatusError
-        payload = resp.json()
+        # CR-02：非 JSON 200 body（反代 HTML 错误页 / 代理 502 伪 200）——
+        # resp.json() raise JSONDecodeError(ValueError)，旧实现 except 只抓
+        # httpx.HTTPError 漏了它 → uncaught traceback → step_semantic 崩。单独
+        # 包一层 except ValueError 走 degrade（graceful-degrade 不可破）。
+        try:
+            payload = resp.json()
+        except ValueError as e:
+            return None, f"route returned non-JSON body: {type(e).__name__}: {e}"
+        # CR-02：envelope 非 dict（路由 bug 回 bare list/string/number）——
+        # payload.get 会 AttributeError；isinstance 守卫走 degrade。
+        if not isinstance(payload, dict):
+            return None, f"route envelope not a dict: {type(payload).__name__}"
         if payload.get("code") != 200:
             return None, f"route code={payload.get('code')}: {payload.get('message')}"
-        shots = payload.get("data", {}).get("shots", [])
+        # CR-02：data 字段也防御性 isinstance（data 若是非 dict truthy 如 string，
+        # `(data or {}).get` 仍会崩）。与 compose_facets 的 sem/geo 守卫同模式。
+        data = payload.get("data")
+        shots = data.get("shots") if isinstance(data, dict) else None
+        shots = shots or []
         if not shots:
             return None, (f"route returned 0 shots for "
                           f"shot_id_range={body.get('shot_id_range')}")
         return shots[0], None                            # per-shot 调用恒取 [0]
-    except httpx.HTTPError as e:
+    except (httpx.HTTPError, ValueError, AttributeError,
+            TypeError, KeyError) as e:
+        # CR-02：broaden except —— httpx.HTTPError 覆盖 ConnectError/Timeout/
+        # HTTPStatusError/NetworkError；其余覆盖 envelope 畸形 / 字段缺失等非
+        # httpx 异常（defense-in-depth，防任何漏网访问路径让 step_semantic 崩 →
+        # run_pipeline abort）。一律走 degrade：空 facets + warning 记异常类。
         return None, f"{type(e).__name__}: {e}"
 
 
