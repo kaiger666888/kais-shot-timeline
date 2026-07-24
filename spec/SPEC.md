@@ -1,9 +1,9 @@
 # ShotTimelineAsset — Contract Specification
 
-**Version:** 1 (`schema_version: "1"`)
+**Version:** 1.1 (active; `schema_version: "1.1"`) — v1.0 (`"1"`) archived
 **Owner:** `kais-shot-timeline` (本仓库,authoritative spec owner)
 **Consumers:** `@kais/infinite-canvas` (`kais-aigc-platform`,跨仓库,branch `feat/canvas-asset-collection`)
-**Status:** Active — Phase 1 v1.0 contract (initial publication 2026-07-20)
+**Status:** Active — Phase 5 v1.1 additive extension (2026-07-24); v1.0 contract published 2026-07-20。v1.1 是首个 minor bump(纯增量,见 §4 Changelog)。
 
 > 这份文档是 **ShotTimelineAsset** 的人读权威契约:它把「一支成片如何被解构为可移植的多轨道分镜资产集合」用 15 分钟可读完的形式写下来,让生产端(本仓库 Phase 2 导出器)和消费端(画布 Phase 3 集合节点)对着同一份描述实现,无需口口相传字段名、类型、媒体路径或版本规则。Tribal knowledge is the failure mode this milestone exists to kill.
 
@@ -15,12 +15,12 @@
 
 | 层级 | 角色 | 文件 |
 |------|------|------|
-| **机器可校验的权威源** | JSON Schema (draft 2020-12) — 生产端导出时被 `spec/validate.py` 校验,消费端可据此生成 TS 类型 | `spec/schemas/*.schema.json` (6 份) |
+| **机器可校验的权威源** | JSON Schema (draft 2020-12) — 生产端导出时被 `spec/validate.py` 校验,消费端可据此生成 TS 类型 | `spec/schemas/*.schema.json` (9 份) |
 | **人读概览(本文档)** | prose spec — 给新贡献者一份 15 分钟可读完的导览,串起 5 数据形状 + 版本规则 + 媒体约定 + 自描述 manifest | `spec/SPEC.md` (本文档) |
 
 两层必须保持一致(schema drift = silent interop bug,见 §5 graceful-degrade 规则不放松 schema 本身)。当文档与 schema 冲突时,**以 schema 为准**;同时本文档的任何与 schema 不一致都视为 Phase 1 缺陷,必须修复。
 
-### 6 个 schema 文件(按 filename 索引)
+### 9 个 schema 文件(按 filename 索引)
 
 | 文件 | 一句话概述 |
 |------|-----------|
@@ -28,10 +28,13 @@
 | `spec/schemas/audio_analysis.schema.json` | 顶层对象 — 每镜 Demucs 4-stem RMS 能量 / 能量比 / 频谱质心 / `dominant_type` 分类 |
 | `spec/schemas/transcript.schema.json` | 顶层对象 — Whisper 时间戳对白段 `{start, end, text}` + backend 元信息 |
 | `spec/schemas/frames.schema.json` | 顶层 JSON 数组 — 每镜首尾帧的 base64 JPEG data URI(内联,非外部文件) |
-| `spec/schemas/prompts.schema.json` | 顶层 JSON 数组 — 每镜结构化 prompt(7 个 facet + `prompt_text`) |
-| `spec/schemas/asset.schema.json` | 顶层对象 — 自描述 manifest(`schema_version` + 来源 + 生成器 + 5 JSON 清单 + 媒体清单) |
+| `spec/schemas/prompts.schema.json` | 顶层 JSON 数组 — 每镜结构化 prompt(7 个 facet + `prompt_text`;v1.1 新增 optional `character_refs[]`/`prop_refs[]`) |
+| `spec/schemas/asset.schema.json` | 顶层对象 — 自描述 manifest(`schema_version` + 来源 + 生成器 + 数据清单 + 媒体清单;v1.1 新增 optional `data.characters`/`data.props` + `media.characters[]`/`media.props[]`) |
+| `spec/schemas/characters.schema.json` | 顶层 JSON 数组 — 跨镜角色注册表(`^char_[0-9]{3}$` ID + name + 代表图 + `appearance_shots[]` + `review_state` + `looks[]`)。**v1.1** |
+| `spec/schemas/props.schema.json` | 顶层 JSON 数组 — 跨镜道具注册表(`^prop_[0-9]{3}$` ID,`states[]` 非 `looks[]` — 道具按状态变体,非造型)。**v1.1** |
+| `spec/schemas/registry.schema.json` | 顶层对象 — re-id 聚类草稿(`clusters[]` refs-only members + `tier` enum + `mean_cosine`)。pipeline-internal 工作产物,**不在** `asset.json#data`。**v1.1** |
 
-**下游 TS 类型生成:** Phase 3 消费端可从这 6 个 schema 生成 TS 类型(`json-schema-to-typescript` 或等价工具);本 phase 不产生 TS 代码。
+**下游 TS 类型生成:** Phase 3 消费端可从这 9 个 schema 生成 TS 类型(`json-schema-to-typescript` 或等价工具);本 phase 不产生 TS 代码。
 
 ---
 
@@ -88,6 +91,10 @@
 | `media.stems.vocals` | string (pattern: `stems/vocals.wav`) | ✓ | 指向 canonical vocals stem |
 | `media.stems.drums` | string (pattern: `stems/drums.wav`) | ✓ | 指向 canonical drums stem |
 | `media.stems.other` | string (pattern: `stems/other.wav`) | ✓ | 指向 canonical other stem |
+| `data.characters` | string (relative path `*.json`) | — (v1.1) | 指向 `characters.json`(canonical confirmed 角色注册表)。仅 re-id 跑过且 HITL 审阅确认条目后 emit;v1 资产缺省,仍合法(graceful-degrade) |
+| `data.props` | string (relative path `*.json`) | — (v1.1) | 指向 `props.json`(canonical confirmed 道具注册表)。同 characters 缺省规则 |
+| `media.characters` | array\<string\> (png path) | — (v1.1) | 角色代表图 inventory(external png 相对路径,**非** base64 — 防 10-50× 资产膨胀)。canonical 命名 `characters/<id>.png`,anti-traversal 强约束 |
+| `media.props` | array\<string\> (png path) | — (v1.1) | 道具代表图 inventory(external png)。canonical 命名 `props/<id>.png` |
 
 **路径 pattern 强约束(防路径穿越):** 所有 data/media 路径都用负向前瞻 `(?!.*\.\.)` 拒绝父目录穿越,并拒绝绝对路径、Windows 保留字符(`:*?"<>|`)。详见 `spec/schemas/asset.schema.json` 的 `pattern` 字段。
 
@@ -149,11 +156,20 @@ Reference schema: `spec/schemas/asset.schema.json`
 
 - **2026-07-20 — `1`(initial contract)** — Phase 1 首次发布。定义 6 schema(shots / audio_analysis / transcript / frames / prompts / asset)、5 canonical 数据形状、自描述 manifest、canonical 媒体布局(`video.mp4` + `stems/{vocals,drums,other}.wav`,bass 剔除)、Range-aware HTTP 206 服务要求。`additionalProperties: false` 全程开启,graceful-degrade 是消费端运行时行为。
 
+- **2026-07-24 — `1.1`(v1.1 additive extension,Phase 5)** — 首个 minor bump,纯增量(无 rename / 语义漂移 / 新增 required 字段 — Pitfall 11 prevented)。变更:
+  - **3 个新 schema**:`characters.schema.json`(`^char_[0-9]{3}$` ID + `looks[]`)、`props.schema.json`(`^prop_[0-9]{3}$` ID,`states[]` 非 `looks[]`)、`registry.schema.json`(re-id 聚类草稿,pipeline-internal,不在 `asset.json#data`)。
+  - **`prompts.schema.json` additive**:新增 optional `character_refs[]` / `prop_refs[]`(ID-pattern string 数组,Phase 8 按 `appearance_shots[]` 挂到对应 shot)。`required[]` 与 v1.0 byte-identical。
+  - **`asset.schema.json` additive**:新增 optional `data.characters` / `data.props`(JSON 路径)+ `media.characters[]` / `media.props[]`(external png 路径数组,**非** base64 — 资产膨胀防护,与 `frames.json` 内联 base64 相反)。
+  - **`schema_version` pattern 不变**(`^(0|[1-9]\d*)(\.(0|[1-9]\d*))?$`)— 版本字面量锁在 producer 单一真源 `scripts/export_asset.py:SCHEMA_VERSION = "1.1"`,**非** schema `const`(否则拒绝 v1 minimal fixture `"1"`,破坏 CONTRACT-09)。
+  - **向后兼容**:`spec/fixtures/minimal/`(v1)仍 6/6 绿(CONTRACT-09);`spec/fixtures/v1.1/`(9 文件)新增;`scripts/verify_contract.py` `_cross_version_check` 实测双向兼容(forward 0 errors;backward 仅 additionalProperties errors → 0 non-additive errors)。
+
 ---
 
 ## 5. The 5 Canonical Data Shapes (SPEC-01)
 
 每种形状都列出:生产端脚本、字段级类型表(名称 / 类型严格对齐 schema)、enum 值(如有)、最小 JSON 片段、参考 schema 文件。
+
+> **v1.1 (Phase 5):** §5.1–§5.5 是 v1.0 的 5 个 required 数据形状;新增 §5.6 **Characters** + §5.7 **Props** 两个 optional 跨镜注册表形状(仅 re-id 跑过且 HITL 审阅后 emit)。registry 是 pipeline-internal 草稿,非 canonical asset 数据形状,故不在此列(见 §1 schema 索引)。
 
 ### Shots
 
@@ -321,6 +337,8 @@ Reference schema: `spec/schemas/frames.schema.json`
 | `lighting` | string | ✓ | 光线质量与方向 |
 | `style` | string | ✓ | 视觉风格(媒介、渲染质感、参考) |
 | `prompt_text` | string | ✓ | 由上述 facet 合成的即用 prompt 文本 |
+| `character_refs` | array\<string\> (`^char_[0-9]{3}$`) | — (v1.1) | 该镜出现的角色 ID 列表(`characters.json#id` 子集)。Phase 8 按 `characters.json#appearance_shots[]` 挂载,实现跨镜叙事连贯。v1 资产缺省,仍合法 |
+| `prop_refs` | array\<string\> (`^prop_[0-9]{3}$`) | — (v1.1) | 该镜出现的道具 ID 列表(`props.json#id` 子集)。同 `character_refs` 挂载规则 |
 
 **最小片段:**
 
@@ -335,6 +353,67 @@ Reference schema: `spec/schemas/frames.schema.json`
 ```
 
 Reference schema: `spec/schemas/prompts.schema.json`
+
+### Characters (v1.1)
+
+**Producer:** `registry/apply_edits.py`(Phase 7/8,pending — 把 HITL 审阅后的 `confirmed` 条目流向 canonical `characters.json`)
+**顶层形状:** JSON 数组 — 跨镜角色注册表。每个角色 = 不可变 ID + 展示名 + 代表图 + 出场镜头 + 审阅状态 + 造型变体。v1.1 全新数据文件;v1 资产缺省(`asset.json#data.characters` absent),仍合法。
+
+| Field | Type | Required | Notes |
+|-------|------|----------|-------|
+| `id` | string (`^char_[0-9]{3}$`) | ✓ | 不可变角色 ID(零填充 3 位)。一旦 confirmed,永不重用或重排版(Pitfall 17 — 保证 `prompts.json#character_refs[]` 引用永不悬空) |
+| `name` | string | ✓ | 展示名(中文/英文均可);reviewer 可编辑,ID 不可编辑 |
+| `representative_image` | string (png path) | — | external png 相对路径(`characters/<id>.png`),anti-traversal 强约束,**非** base64 |
+| `appearance_shots` | array\<integer\> | — | 该角色出场的 shot ID 列表(`shots.json#id` 子集);Phase 8 据此挂 `character_refs[]` |
+| `review_state` | enum | ✓ | `proposed` / `confirmed` / `rejected`。**仅 `confirmed` 流向下游 prompt 引用**(Pitfall 7);`rejected` = 软删除(ID 保留维护引用完整性) |
+| `looks` | array\<object\> | — | 造型/服装变体。每个 look = `{label, image_ref, appearance_shots[]}`,自带出场镜头 → Phase 8 能挂 per-look prompt refs(非仅 per-character) |
+
+**`review_state` enum:**
+
+| 值 | 语义 |
+|----|------|
+| `proposed` | re-id 聚类草稿(`registry.draft.json`)默认值;尚未人工审阅 |
+| `confirmed` | HITL 审阅确认;**唯一**流向 `characters.json` + prompt 引用的状态 |
+| `rejected` | 审阅否决;软删除(ID 永不重用,维护引用完整性) |
+
+**最小片段**(摘自 `spec/fixtures/v1.1/characters.json`):
+
+```json
+[
+  {"id": "char_001", "name": "少女", "representative_image": "characters/char_001.png",
+   "appearance_shots": [1, 2], "review_state": "confirmed",
+   "looks": [{"label": "默认造型", "image_ref": "characters/char_001.png", "appearance_shots": [1, 2]}]}
+]
+```
+
+Reference schema: `spec/schemas/characters.schema.json`
+
+### Props (v1.1)
+
+**Producer:** `registry/apply_edits.py`(Phase 7/8,pending)
+**顶层形状:** JSON 数组 — 跨镜道具注册表。与 characters 同构核心 shape,但变体字段是 `states[]`(道具按状态:开/关、完好/破碎)而非 `looks[]`(服装) — **语义精度优先于 schema 统一**(CONTEXT D-XX lock)。
+
+| Field | Type | Required | Notes |
+|-------|------|----------|-------|
+| `id` | string (`^prop_[0-9]{3}$`) | ✓ | 不可变道具 ID(零填充 3 位);同样 Pitfall 17 ID 不可变 |
+| `name` | string | ✓ | 展示名(如「落叶」「神秘信件」) |
+| `representative_image` | string (png path) | — | `props/<id>.png`,anti-traversal,**非** base64 |
+| `appearance_shots` | array\<integer\> | — | 出场 shot ID 列表 |
+| `review_state` | enum | ✓ | 同 characters:`proposed` / `confirmed` / `rejected` |
+| `states` | array\<object\> | — | 状态变体。每个 state = `{label, image_ref, appearance_shots[]}`(如「完好」/「破碎」)。刻意不与 characters 的 `looks[]` 合并 |
+
+**最小片段**(摘自 `spec/fixtures/v1.1/props.json`):
+
+```json
+[
+  {"id": "prop_001", "name": "落叶", "representative_image": "props/prop_001.png",
+   "appearance_shots": [2], "review_state": "confirmed",
+   "states": [{"label": "完好", "image_ref": "props/prop_001.png", "appearance_shots": [2]},
+              {"label": "破碎", "image_ref": "props/prop_001_broken.png", "appearance_shots": []}]}
+]
+```
+
+Reference schema: `spec/schemas/props.schema.json`
 
 ---
 
@@ -387,6 +466,16 @@ python3 scripts/serve.py <asset-root> 8765
 | `frames.json`(首尾帧) | 单帧 JPEG ~10-50 KB | **内联 base64** | 体积可控,且 frames 与 shot 强绑定 — 内联让 JSON 集合保持自包含,消费端 browse thumbnails 时无需再发 N 个小请求 |
 
 **frames 是唯一例外**(CONTEXT D-04)。这条规则与生产端现有 `frames.json` 模式一致(已 smoke-valid)。
+
+### 6.4 角色与道具代表图(v1.1 — external png,非 base64)
+
+v1.1 新增 `media.characters[]` / `media.props[]` 媒体类别:角色与道具的代表图(cropped portrait)。**刻意外置为 png 文件,不内联 base64** — 与 `frames.json` 的内联策略相反,理由:
+
+| 资源 | 体积 | 处理方式 | 理由 |
+|------|------|---------|------|
+| `characters/<id>.png` / `props/<id>.png` | 单图 ~50-200 KB,但角色/道具数量随内容增长(一部 episode 可达数十-上百) | **external png** | 总量随 registry 增长;内联会使 `characters.json`/`props.json` 膨胀 10-50×,甚于 `frames.json`。外置让 registry JSON 保持精简,图像走 `serve.py` |
+
+**canonical 命名:** `characters/<id>.png` / `props/<id>.png`(如 `characters/char_001.png`)。`representative_image` 与 `looks[].image_ref` / `states[].image_ref` 共用同一 anti-traversal pattern。服务:经 `scripts/serve.py` 暴露(png 体积小,200 OK 足够,Range 非必需,但 serve.py 透明处理)。anti-traversal 在 schema 层强制(`asset.schema.json#media.characters[].pattern` + `characters.schema.json#representative_image.pattern`)。
 
 ---
 
