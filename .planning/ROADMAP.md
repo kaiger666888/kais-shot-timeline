@@ -30,7 +30,7 @@ Strict-additive, contract-first minor bump on v1.0. Adds two new pipeline stages
 - [x] **Phase 5: Contract v1.1** — schemas + SPEC + fixtures + verify harness (no route dependency) (completed 2026-07-24)
 - [x] **Phase 6: Cinematography Auto-Fill (`step_semantic`)** — httpx client + graceful-degrade + per-shot cache (completed 2026-07-24)
 - [x] **Phase 7: Cross-Shot Re-ID Registry + HITL Review (`step_reid`)** — HIGHEST complexity; new route + driver + review HTML (completed 2026-07-24)
-- [ ] **Phase 8: Prompt Reference System + shot-timeline HTML Gallery** — narrative continuity + producer-side display
+- [x] **Phase 8: Prompt Reference System + shot-timeline HTML Gallery** — narrative continuity + producer-side display (completed 2026-07-24)
 - [ ] **Phase 9: Canvas Consumer Integration (cross-repo)** — append `"1.1"` + emit character/prop nodes (no renderer / no Zod bump)
 
 ## Phase Details
@@ -150,7 +150,7 @@ Plans:
 
 **Wave 3** *(blocked on Waves 1 + 2)*
 
-- [ ] 08-03-PLAN.md — html/gen_timeline_html.py gallery + ref-chips + semantic-fill indicator + _esc() + JSON-in-script defense (CR-04 carry) + run_pipeline.py step_timeline attach_refs pre-step + mtime cache prompts_json (Pitfall 9, NO [N/9] bump) + scripts/verify_phase8_smoke.py 6-scenario regression [PRESENT-01, PRESENT-02, PRESENT-03]
+- [x] 08-03-PLAN.md — html/gen_timeline_html.py gallery + ref-chips + semantic-fill indicator + _esc() + JSON-in-script defense (CR-04 carry) + run_pipeline.py step_timeline attach_refs pre-step + mtime cache prompts_json (Pitfall 9, NO [N/9] bump) + scripts/verify_phase8_smoke.py 6-scenario regression [PRESENT-01, PRESENT-02, PRESENT-03]
 **UI hint**: yes
 
 ### Phase 9: Canvas Consumer Integration (cross-repo)
@@ -178,5 +178,5 @@ Plans:
 | 5. Contract v1.1 | v1.1 | 4/4 | Complete    | 2026-07-24 |
 | 6. Cinematography Auto-Fill (`step_semantic`) | v1.1 | 3/3 | Complete    | 2026-07-24 |
 | 7. Cross-Shot Re-ID Registry + HITL Review (`step_reid`) | v1.1 | 4/4 | Complete    | 2026-07-24 |
-| 8. Prompt Reference System + shot-timeline HTML Gallery | v1.1 | 2/3 | In Progress|  |
+| 8. Prompt Reference System + shot-timeline HTML Gallery | v1.1 | 3/3 | Complete   | 2026-07-24 |
 | 9. Canvas Consumer Integration (cross-repo) | v1.1 | 0/? | Planning | - |

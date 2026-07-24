@@ -2,16 +2,16 @@
 gsd_state_version: 1.0
 milestone: v1.1
 milestone_name: 分镜语义深化 — 镜头语言 + 跨镜角色/道具注册表
-status: executing
+status: verifying
 stopped_at: ""Phase 6 complete (all 3 plans shipped 2026-07-24) — run_pipeline.py step_semantic wired as slot 5 of 7; [N/7] counter locked (Phase 7 bumps to [N/8]); 4 new flags + --force cache list extension; scripts/verify_phase6_smoke.py 3 scenarios green (route-down / --skip-semantic / cache-hit-offline). Phase 6 now shippable as graceful-degrade producer; live route round-trip still deferred per blocker (feat/shot-analysis-route unmerged). Ready for /gsd:verifier-phase 6 then /gsd:plan-phase 7.""
-last_updated: "2026-07-24T20:36:53.382Z"
+last_updated: "2026-07-24T20:55:43.862Z"
 last_activity: 2026-07-24
 progress:
   total_phases: 5
-  completed_phases: 3
+  completed_phases: 4
   total_plans: 14
-  completed_plans: 13
-  percent: 60
+  completed_plans: 14
+  percent: 80
 ---
 
 # Project State
@@ -27,7 +27,7 @@ See: .planning/PROJECT.md (updated 2026-07-24)
 
 Phase: 8 (Prompt Reference System + shot-timeline HTML Gallery) — EXECUTING
 Plan: 3 of 3
-Status: Ready to execute
+Status: Phase complete — ready for verification
 Last activity: 2026-07-24
 
 **v1.1 phase sequence (dependency-ordered, research-validated):**
@@ -80,6 +80,7 @@ Last activity: 2026-07-24
 | Phase 07 P04 | 22min | 3 tasks | 4 files |
 | Phase 08 P01 | 2min | 2 tasks | 3 files |
 | Phase 08 P02 | 6min | 3 tasks | 4 files |
+| Phase 08 P03 | 16min | 3 tasks | 3 files |
 
 ## Accumulated Context
 
@@ -120,6 +121,9 @@ Carried from v1.0 (still load-bearing):
 - [Phase 08]: NO schema_version bump for Phase 8 — registry_snapshot stays within '1.1' — STATE.md milestone lock; Pitfall 10 prevented at contract layer
 - [Phase 08]: Pattern 2 recompose template locked (08-02): [style] · [scene] · 角色:[names] · 道具:[names] · [subject] · [action] · [camera] · [lighting] — deterministic, idempotent, identity clauses skipped when refs empty
 - [Phase 08]: Pitfall 17 producer integrity additive (08-02): prompts→registry check extended _producer_registry_integrity in place (no fork); reuses confirmed-ID sets from existing loop
+- [Phase ?]: Phase 8 Plan 03: attach_refs banner omits [N/M] prefix to keep step-banner count at 24 (Pitfall 5 prevented); CONTEXT Q3 lock still honored (no new numbered step)
+- [Phase ?]: Phase 8 Plan 03: gallery data source priority registry_snapshot > characters.json > None (RESEARCH Open Question 2 resolution)
+- [Phase ?]: Phase 8 Plan 03: HTML XSS defense carried verbatim from Phase 7 CR-04 fix 336d04f — Python _esc + JS _esc + JSON-in-script .replace on all 5 inlined JSON literals
 
 ### Pending Todos
 
@@ -150,7 +154,7 @@ Items acknowledged and carried forward from v1.0 + v1.1 Out-of-Scope:
 
 ## Session Continuity
 
-Last session: 2026-07-24T20:34:36.661Z
+Last session: 2026-07-24T20:55:26.493Z
 Stopped at: "Phase 6 complete (all 3 plans shipped 2026-07-24) — run_pipeline.py step_semantic wired as slot 5 of 7; [N/7] counter locked (Phase 7 bumps to [N/8]); 4 new flags + --force cache list extension; scripts/verify_phase6_smoke.py 3 scenarios green (route-down / --skip-semantic / cache-hit-offline). Phase 6 now shippable as graceful-degrade producer; live route round-trip still deferred per blocker (feat/shot-analysis-route unmerged). Ready for /gsd:verifier-phase 6 then /gsd:plan-phase 7."
 Resume file: None
 
