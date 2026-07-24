@@ -9,7 +9,7 @@ frames / prompts）+ 原始视频 + 3 个 canonical stems（vocals / drums / oth
 
 行为：
   * 读取 transcript.json 中的 `source` / `duration` 字段，回退到 ffprobe 兜底。
-  * 写入 asset.json（schema_version="1"，asset_type="shottimeline"，generator
+  * 写入 asset.json（schema_version=SCHEMA_VERSION（当前 "1.1"），asset_type="shottimeline"，generator
     含 tool / version(git SHA) / generated_at(ISO-8601 UTC)）。
   * 建立 4 个 canonical symlinks：
       - video.mp4             → 原始视频的绝对路径（含 audio 流，非 h264.mp4）
@@ -136,7 +136,7 @@ def build_asset_dict(work_dir: str, video_path: str) -> dict:
     """从现有 pipeline 产物组装 asset.json dict。
 
     字段 sourcing（全部对照 output/《小江湖》第03话…/ 实际产物验证过）：
-      * schema_version: 字面量 "1"（spec/fixtures/minimal/asset.json 一致）
+      * schema_version: SCHEMA_VERSION 常量（当前 "1.1"；v1.0 minimal fixture 仍是 "1"，producer emit 的真实资产从此为 "1.1"）
       * asset_type: const "shottimeline"
       * source.video_filename: basename(video_path)；与 transcript.source 交叉
         校验（不一致仅 warn，不 fail）

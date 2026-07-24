@@ -339,8 +339,12 @@ def _cross_version_check() -> tuple:
     # (a) FORWARD: v1 minimal fixture vs current (v1.1-extended) schemas
     forward_shapes = SIX_SHAPES  # the 6 v1.0 shapes
     for shape in forward_shapes:
-        schema = json.loads((SCHEMAS_DIR / f"{shape}.schema.json").read_text(encoding="utf-8"))
-        instance = json.loads((minimal_dir / f"{shape}.json").read_text(encoding="utf-8"))
+        try:
+            schema = json.loads((SCHEMAS_DIR / f"{shape}.schema.json").read_text(encoding="utf-8"))
+            instance = json.loads((minimal_dir / f"{shape}.json").read_text(encoding="utf-8"))
+        except (FileNotFoundError, json.JSONDecodeError) as e:
+            failures.append(f"forward {shape}: could not load schema/fixture: {e}")
+            continue
         errs = list(Draft202012Validator(schema).iter_errors(instance))
         if errs:
             failures.append(
@@ -357,7 +361,11 @@ def _cross_version_check() -> tuple:
                 f"(git show v1.0 + programmatic strip both failed)"
             )
             continue
-        instance = json.loads((v11_dir / f"{shape}.json").read_text(encoding="utf-8"))
+        try:
+            instance = json.loads((v11_dir / f"{shape}.json").read_text(encoding="utf-8"))
+        except (FileNotFoundError, json.JSONDecodeError) as e:
+            failures.append(f"backward {shape}: could not load v1.1 fixture: {e}")
+            continue
         errs = list(Draft202012Validator(v1_schema).iter_errors(instance))
         # additionalProperties errors are EXPECTED (v1.1 added optional fields);
         # the invariant is that NO OTHER error type remains (shared fields aligned).
@@ -383,68 +391,94 @@ def _fixture_consistency_check() -> tuple:
     验证 spec/fixtures/v1.1/ 跨文件 ID 一致性（"fixtures we ship don't ship broken"）：
       - prompts.character_refs[]  ⊆ characters[].id
       - prompts.prop_refs[]       ⊆ props[].id
-      - characters/props.appearance_shots[] ⊆ shots[].id
-      - registry clusters[].cluster_id 匹配 (char|prop)_[0-9]{3} 且 ⊆ characters+props IDs
+      - characters.appearance_shots[] + looks[].appearance_shots[]  ⊆ shots[].id
+      - props.appearance_shots[] + states[].appearance_shots[]      ⊆ shots[].id
+      - registry clusters[].cluster_id 匹配 (char|prop)_[0-9]{3} 且（非 rejected 时）⊆ characters+props IDs
       - registry clusters[].members[].shot_id ⊆ shots[].id
 
-    与 Phase 8 PROMPT-03（producer-emitted 完整 integrity check）区分 —— 本检查
-    只覆盖 Phase 5 ship 的 canonical fixture 样例，是它的早期形态。
+    Robustness：v1.1 目录缺失 / 任一 list-rooted fixture 缺失或非 array → fail-loud
+    （不静默返回 "0 dangling"）。registry.draft.json 是 optional —— 缺失只 skip。
+    与 Phase 8 PROMPT-03（producer-emitted 完整 integrity check）区分。
     """
     import re
     v11 = REPO / "spec" / "fixtures" / "v1.1"
     failures = []
 
-    def _load(name):
+    if not v11.is_dir():
+        return (False, f"v1.1 fixture dir missing: {v11} (fixture set incomplete)")
+
+    def _load_list(name):
+        """加载一个 list-rooted fixture;missing / 非 list / 坏 JSON → 记 failure 返 None。"""
         p = v11 / name
         if not p.is_file():
+            failures.append(f"fixture missing: {p}")
             return None
-        return json.loads(p.read_text(encoding="utf-8"))
+        try:
+            data = json.loads(p.read_text(encoding="utf-8"))
+        except json.JSONDecodeError as e:
+            failures.append(f"fixture {name}: invalid JSON: {e}")
+            return None
+        if not isinstance(data, list):
+            failures.append(f"fixture {name}: expected JSON array, got {type(data).__name__}")
+            return None
+        return data
 
-    chars = _load("characters.json") or []
-    props = _load("props.json") or []
-    shots = _load("shots.json") or []
-    prompts = _load("prompts.json") or []
-    registry = _load("registry.draft.json")
+    chars = _load_list("characters.json")
+    props = _load_list("props.json")
+    shots = _load_list("shots.json")
+    prompts = _load_list("prompts.json")
 
-    char_ids = {c.get("id") for c in chars}
-    prop_ids = {p.get("id") for p in props}
-    shot_ids = {s.get("id") for s in shots}
+    shot_ids = {s.get("id") for s in shots} if shots is not None else set()
+    char_ids = {c.get("id") for c in chars} if chars is not None else set()
+    prop_ids = {p.get("id") for p in props} if props is not None else set()
 
-    for shot in prompts:
-        for cref in shot.get("character_refs", []):
-            if cref not in char_ids:
-                failures.append(
-                    f"prompts shot {shot.get('shot_id')} refs unknown character {cref}"
-                )
-        for pref in shot.get("prop_refs", []):
-            if pref not in prop_ids:
-                failures.append(
-                    f"prompts shot {shot.get('shot_id')} refs unknown prop {pref}"
-                )
-
-    for c in chars:
-        for sid in c.get("appearance_shots", []):
+    def _check_shots(sid_list, owner, sub=""):
+        for sid in sid_list or []:
             if sid not in shot_ids:
-                failures.append(f"character {c.get('id')} appearance_shots unknown shot {sid}")
-    for p in props:
-        for sid in p.get("appearance_shots", []):
-            if sid not in shot_ids:
-                failures.append(f"prop {p.get('id')} appearance_shots unknown shot {sid}")
+                failures.append(f"{owner}{sub} appearance_shots unknown shot {sid}")
 
-    if registry:
-        for cl in registry.get("clusters", []):
-            cid = cl.get("cluster_id")
-            if not (isinstance(cid, str) and re.match(r"^(char|prop)_[0-9]{3}$", cid)):
-                failures.append(f"registry cluster_id malformed: {cid!r}")
-            elif cid not in (char_ids | prop_ids):
-                failures.append(
-                    f"registry cluster_id {cid} not in characters+props IDs"
-                )
-            for m in cl.get("members", []):
-                if m.get("shot_id") not in shot_ids:
-                    failures.append(
-                        f"registry cluster {cid} member shot_id {m.get('shot_id')} unknown"
-                    )
+    if prompts is not None:
+        for shot in prompts:
+            for cref in shot.get("character_refs", []):
+                if cref not in char_ids:
+                    failures.append(f"prompts shot {shot.get('shot_id')} refs unknown character {cref}")
+            for pref in shot.get("prop_refs", []):
+                if pref not in prop_ids:
+                    failures.append(f"prompts shot {shot.get('shot_id')} refs unknown prop {pref}")
+
+    if chars is not None:
+        for c in chars:
+            _check_shots(c.get("appearance_shots"), f"character {c.get('id')}")
+            # WR-02：nested looks[].appearance_shots[] —— Phase 8 per-look prompt refs 依赖它
+            for look in c.get("looks", []):
+                _check_shots(look.get("appearance_shots"), f"character {c.get('id')}",
+                             f" look {look.get('label')!r}")
+    if props is not None:
+        for p in props:
+            _check_shots(p.get("appearance_shots"), f"prop {p.get('id')}")
+            for st in p.get("states", []):
+                _check_shots(st.get("appearance_shots"), f"prop {p.get('id')}",
+                             f" state {st.get('label')!r}")
+
+    # registry (optional —— validate if present)
+    reg_path = v11 / "registry.draft.json"
+    if reg_path.is_file():
+        try:
+            registry = json.loads(reg_path.read_text(encoding="utf-8"))
+        except json.JSONDecodeError as e:
+            failures.append(f"registry.draft.json: invalid JSON: {e}")
+            registry = None
+        if isinstance(registry, dict):
+            for cl in registry.get("clusters", []):
+                cid = cl.get("cluster_id")
+                if not (isinstance(cid, str) and re.match(r"^(char|prop)_[0-9]{3}$", cid)):
+                    failures.append(f"registry cluster_id malformed: {cid!r}")
+                elif cl.get("review_state") != "rejected" and cid not in (char_ids | prop_ids):
+                    # IN-04：rejected 簇的实体可能合法地不在 confirmed registries 里
+                    failures.append(f"registry cluster_id {cid} not in characters+props IDs")
+                for m in cl.get("members", []):
+                    if m.get("shot_id") not in shot_ids:
+                        failures.append(f"registry cluster {cid} member shot_id {m.get('shot_id')} unknown")
 
     if failures:
         return (
@@ -595,7 +629,7 @@ def run_self_test(args) -> tuple:
       1. 创建 /tmp/phase4-selftest-<rand>/ temp dir
       2. 复制真实 ep01 asset.json + 5 referenced data files 到 temp dir
          （shutil.copy2 保留 mtime；不改动真实 output/）
-      3. 加载 asset.json copy → 把 schema_version 从 '1' 改为 'v1'
+      3. 加载 asset.json copy → 把 schema_version 改为 'v1'（违反 pattern；原值是 producer emit 的合法版本号 —— v1.0 资产为 "1"、v1.1 为 "1.1"，注入 'v1' 都会触发 pattern 拒绝）
          （违反 asset.schema.json L13 pattern `^(0|[1-9]\\d*)(\\.(0|[1-9]\\d*))?$`）
       4. atomic write back（tmp + os.replace，per scripts/export_asset.py L308-313）
       5. validate_asset_json(temp_path) —— 期望返 ≥1 error
