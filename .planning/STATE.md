@@ -1,17 +1,16 @@
 ---
 gsd_state_version: 1.0
-milestone: v1.0
-milestone_name: ShotTimelineAsset Contract
-status: Awaiting next milestone
-stopped_at: "Phase 01 complete — both plans done (01-01 schemas + 01-02 SPEC.md); ready for Phase 2 planning"
-last_updated: "2026-07-20T20:15:02.971Z"
-last_activity: 2026-07-20 — Milestone v1.0 completed and archived
+milestone: v1.1
+milestone_name: 分镜语义深化 — 镜头语言 + 跨镜角色/道具注册表
+status: planning
+last_updated: "2026-07-24T02:23:50.672Z"
+last_activity: 2026-07-24
 progress:
-  total_phases: 4
-  completed_phases: 4
-  total_plans: 7
-  completed_plans: 7
-  percent: 100
+  total_phases: 0
+  completed_phases: 0
+  total_plans: 0
+  completed_plans: 0
+  percent: 0
 ---
 
 # Project State
@@ -21,14 +20,14 @@ progress:
 See: .planning/PROJECT.md (updated 2026-07-20)
 
 **Core value:** 把成片解构成可移植的分镜资产集合（分镜 + stems + 转录 + prompts），作为下游 `@kais/infinite-canvas` 可直接消费的一等 collection 形态。
-**Current focus:** Milestone complete
+**Current focus:** v1.1 分镜语义深化 — 镜头语言 + 跨镜角色/道具注册表（defining requirements）
 
 ## Current Position
 
-Phase: Milestone v1.0 complete
+Phase: Not started (defining requirements)
 Plan: —
-Status: Awaiting next milestone
-Last activity: 2026-07-20 — Milestone v1.0 completed and archived
+Status: Defining requirements
+Last activity: 2026-07-24 — Milestone v1.1 started
 
 ## Performance Metrics
 
