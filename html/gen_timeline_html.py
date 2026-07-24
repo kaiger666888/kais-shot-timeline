@@ -21,8 +21,35 @@ import os
 from pathlib import Path
 
 
-def build_shots_js(shots, frames_by_id, audio_by_id, transcript_segments=None):
-    """合并 shots + frames + audio analysis → 前端 SHOTS 数组。"""
+def _esc(s):
+    """HTML-escape 字符串以安全插值进 HTML text/attribute context (CR-04 XSS defense).
+
+    Phase 8 carry-over from html/gen_registry_review.py:79-91 (Phase 7 CR-04 fix
+    commit 336d04f). Operator-influenced character/prop `name` 字段（registry-
+    reviewer-editable per characters.schema.json:21 "reviewer 可编辑"）现在流进
+    gallery card HTML body + chip 徽章 + 内联 JSON，必须 escape。
+
+    转义 5 个字符: & < > " '。顺序固定 (& 先，防双重转义)。
+    Self-contained inline impl (不走 stdlib html.escape) —— 本仓库 html/ 目录是
+    namespace package，避免任何 import-resolution 歧义；符合 standalone-script 约定。
+    输入先 str() 兜底 (非 string 字段如 int shot_id 也安全)。
+    """
+    return (str(s).replace("&", "&amp;")
+                  .replace("<", "&lt;")
+                  .replace(">", "&gt;")
+                  .replace('"', "&quot;")
+                  .replace("'", "&#x27;"))
+
+
+def build_shots_js(shots, frames_by_id, audio_by_id, transcript_segments=None,
+                   prompts_by_id=None):
+    """合并 shots + frames + audio analysis → 前端 SHOTS 数组。
+
+    Phase 8: prompts_by_id (可选 shot_id → prompt entry map) 用于：
+      * route_filled (PRESENT-03) —— ALL of camera/action/lighting/style 非空 → True
+        (green chip)；任一为空 → False (gray chip = offline degraded)。
+      * character_refs[]/prop_refs[] (PRESENT-02) —— 传到前端让 chip 渲染无需另查。
+    """
     seg_by_shot = {}
     if transcript_segments:
         for shot in shots:
@@ -41,6 +68,13 @@ def build_shots_js(shots, frames_by_id, audio_by_id, transcript_segments=None):
         fr = frames_by_id.get(shot["id"], {})
         au = audio_by_id.get(shot["id"], {})
         dlg_segs = au.get("dialogue") or seg_by_shot.get(shot["id"], [])
+        # Phase 8 (PRESENT-02/03): look up prompt entry for this shot.
+        # prompts_by_id=None (no --prompts flag) → refs empty + route_filled=False
+        # (gray chip; per plan: "fill-chip still renders (reads prompts facets;
+        # gray when empty)" when registry/prompts absent).
+        prompt_entry = prompts_by_id.get(shot["id"], {}) if prompts_by_id else {}
+        route_filled = all((prompt_entry.get(f) or "").strip()
+                           for f in ("camera", "action", "lighting", "style"))
         js_shots.append({
             "id": shot["id"],
             "start": round(shot["start_sec"], 2),
@@ -50,6 +84,10 @@ def build_shots_js(shots, frames_by_id, audio_by_id, transcript_segments=None):
             "lf": fr.get("last_frame", ""),
             "type": au.get("dominant_type", "mixed"),
             "dialogue": " ".join(d["text"] for d in dlg_segs) if dlg_segs else "",
+            # Phase 8: prompt refs + route-fill flag (chip rendering in JS)
+            "character_refs": prompt_entry.get("character_refs", []),
+            "prop_refs": prompt_entry.get("prop_refs", []),
+            "route_filled": route_filled,
         })
     return js_shots
 
@@ -98,7 +136,8 @@ def build_js_stems(stems_dir, duration, bucket_ms=350):
 
 def build_html(shots_js, stems_js, duration, video_src, title,
                stem_basename, n_dialogue=None, n_bgm=None, n_sfx=None,
-               n_shots=None, transcript_segments=None):
+               n_shots=None, transcript_segments=None,
+               characters_data=None, props_data=None):
     """生成完整 HTML。
 
     stem_basename: stem 文件名前缀，例如 'ep01'。HTML 内 <audio> 会引用
@@ -106,11 +145,54 @@ def build_html(shots_js, stems_js, duration, video_src, title,
                    {stem_basename}_other.wav。
     transcript_segments: 可选 [{start,end,text}, ...]，用于播放器下的实时字幕条，
                          按 audio/video 的 currentTime 精确匹配。
+    Phase 8:
+      characters_data/props_data: 可选 registry entry list（来自 characters.json
+        或 asset.json#generator.registry_snapshot）。非空 → 渲染 gallery section
+        (PRESENT-01) + 提供 chip 锚点目标。graceful-degrade：None / [] → gallery
+        OMITTED（HTML 仍 schema-valid + self-contained）。
     """
-    shots_json = json.dumps(shots_js, ensure_ascii=False)
-    stems_json = json.dumps(stems_js)
-    transcript_json = json.dumps(transcript_segments or [], ensure_ascii=False)
+    # CR-04 fix carry (commit 336d04f) —— JSON-in-<script> defense：所有 inline JSON
+    # 替换 "</" → "<\/" 防 </script> payload 破出 script block（HTML 解析器见 </script>
+    # 即终止 script，无视 JS string context）。operator-influenced name 含
+    # "</script><script>alert(1)</script>" 时本转义中和攻击（Pattern 4）。
+    # `\/` 是 JS 合法的 `/` 转义，client-side data round-trip 正确。
+    shots_json = json.dumps(shots_js, ensure_ascii=False).replace("</", "<\\/")
+    stems_json = json.dumps(stems_js).replace("</", "<\\/")
+    transcript_json = json.dumps(transcript_segments or [], ensure_ascii=False).replace("</", "<\\/")
+    chars_json = json.dumps(characters_data or [], ensure_ascii=False).replace("</", "<\\/")
+    props_json = json.dumps(props_data or [], ensure_ascii=False).replace("</", "<\\/")
     n_shots_val = n_shots if n_shots is not None else len(shots_js)
+
+    # Phase 8 (PRESENT-01): gallery section —— server-rendered cards。
+    # 每张 card: thumbnail (external PNG via serve.py Range) + _esc(name) + ID +
+    # appearance-shot count。onerror 隐藏坏图 (Pitfall 7: apply_edits OMITS
+    # representative_image on ffmpeg failure — graceful-degrade 不显示 broken icon)。
+    _IMG_ONERROR = " onerror=\"this.style.display='none'\""
+    gallery_cards = []
+    for c in (characters_data or []):
+        cimg = c.get("representative_image", "") or ""
+        cimg_attr = f' src="{_esc(cimg)}"' if cimg else ""
+        gallery_cards.append(
+            f'<div class="gallery-card" id="gallery-{_esc(c.get("id"))}">'
+            f'<img{_IMG_ONERROR}{cimg_attr}>'
+            f'<div class="gname">🧑 {_esc(c.get("name"))}</div>'
+            f'<div class="gid">{_esc(c.get("id"))}</div>'
+            f'<div class="gcount">{len(c.get("appearance_shots", []) or [])} shots</div>'
+            f'</div>')
+    for p in (props_data or []):
+        pimg = p.get("representative_image", "") or ""
+        pimg_attr = f' src="{_esc(pimg)}"' if pimg else ""
+        gallery_cards.append(
+            f'<div class="gallery-card" id="gallery-{_esc(p.get("id"))}">'
+            f'<img{_IMG_ONERROR}{pimg_attr}>'
+            f'<div class="gname">🔧 {_esc(p.get("name"))}</div>'
+            f'<div class="gid">{_esc(p.get("id"))}</div>'
+            f'<div class="gcount">{len(p.get("appearance_shots", []) or [])} shots</div>'
+            f'</div>')
+    # gallery 非空才 emit section；空 → OMITTED (graceful-degrade)
+    gallery_html = ""
+    if gallery_cards:
+        gallery_html = f'<div class="gallery">{"".join(gallery_cards)}</div>'
 
     # 类型统计行（仅在数据存在时显示对应 span）
     stat_spans = ""
@@ -181,6 +263,27 @@ video {{ width:100%; max-height:35vh; border-radius:8px; object-fit:contain; }}
 .type-sfx {{ background:#3e351a; color:#d29922; }}
 .type-mixed {{ background:#2a2a3e; color:#8b949e; }}
 
+/* ===== Phase 8: gallery section (PRESENT-01) + ref-chips (PRESENT-02) + fill-chip (PRESENT-03) ===== */
+.gallery {{ padding:8px 12px; background:#161b22; border-bottom:1px solid #30363d;
+           display:flex; gap:8px; overflow-x:auto; flex-shrink:0; }}
+.gallery-card {{ flex:0 0 auto; width:120px; background:#0d1117; border:1px solid #30363d;
+                border-radius:4px; padding:4px; }}
+.gallery-card img {{ width:100%; aspect-ratio:1; object-fit:cover; border-radius:3px;
+                    background:#161b22; }}
+.gallery-card .gname {{ font-size:11px; color:#c9d1d9; margin-top:2px; }}
+.gallery-card .gid {{ font-size:9px; color:#8b949e; font-family:monospace; }}
+.gallery-card .gcount {{ font-size:9px; color:#58a6ff; }}
+.ref-chip {{ display:inline-block; font-size:9px; padding:0 4px; border-radius:2px;
+            margin-left:3px; text-decoration:none; vertical-align:middle; }}
+.char-chip {{ background:#1a3a5e; color:#58a6ff; }}
+.prop-chip {{ background:#3e351a; color:#d29922; }}
+.ref-chip:hover {{ background:#264f78; }}
+.prop-chip:hover {{ background:#5e4a1a; }}
+.fill-chip {{ display:inline-block; font-size:9px; padding:0 4px; border-radius:2px;
+             margin-left:3px; vertical-align:middle; }}
+.fill-filled {{ background:#1a3e1a; color:#3fb950; }}
+.fill-degraded {{ background:#2a2a3e; color:#8b949e; }}
+
 /* ===== Right: vertical timeline ===== */
 .timeline-inner {{ position:relative; }}
 .time-axis {{ position:absolute; left:0; top:0; width:36px; bottom:0; border-right:1px solid #21262d; z-index:5; }}
@@ -230,6 +333,7 @@ video {{ width:100%; max-height:35vh; border-radius:8px; object-fit:contain; }}
 </div>
 
 <!-- ===== TWO-PANEL LAYOUT ===== -->
+{gallery_html}
 <div class="app" id="app">
   <div class="left-panel" id="leftPanel">
     <div class="shot-list-inner" id="shotListInner"></div>
@@ -248,6 +352,10 @@ video {{ width:100%; max-height:35vh; border-radius:8px; object-fit:contain; }}
 const SHOTS = {shots_json};
 const STEMS = {stems_json};
 const TRANSCRIPT_SEGMENTS = {transcript_json};
+// Phase 8: CHARACTERS/PROPS consts power the ref-chip name resolution (PRESENT-02).
+// JSON-in-script defense applied server-side (.replace("</", "<\\/") — Pattern 4).
+const CHARACTERS = {chars_json};
+const PROPS = {props_json};
 const DURATION = {duration};
 const STEM_BASENAME = {json.dumps(stem_basename)};
 const N_PTS = STEMS.vocals.length;
@@ -256,6 +364,40 @@ const TRACK_W = 120;
 
 let MODE = 'adaptive';
 const MIN_SHOT_PX = 280;
+
+// Phase 8 (PRESENT-02): JS-side _esc — mirrors Python _esc; used by ref-chip
+// template literals (chip badges are client-rendered, names resolve from
+// CHARACTERS/PROPS at click time). 5-char HTML escape (CR-04 carry).
+function _esc(s) {{
+    return String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;')
+                    .replace(/>/g, '&gt;').replace(/"/g, '&quot;')
+                    .replace(/'/g, '&#x27;');
+}}
+
+// Phase 8 (PRESENT-02/03): build ref-chips + fill-chip HTML for one shot.
+// Ref-chips = clickable in-page anchors (#gallery-<id>) that scroll to the
+// matching gallery card (PRESENT-01). Fill-chip = green if route filled ALL
+// four cinematography facets, gray otherwise (PRESENT-03).
+function buildShotChips(s) {{
+    const charChips = (s.character_refs || []).map(function(cid) {{
+        const c = CHARACTERS.find(function(x) {{ return x.id === cid; }});
+        const n = c ? c.name : cid;
+        return '<a href="#gallery-' + encodeURIComponent(cid) + '" '
+             + 'class="ref-chip char-chip" title="' + _esc(n) + '">'
+             + '🧑 ' + _esc(n) + '</a>';
+    }}).join('');
+    const propChips = (s.prop_refs || []).map(function(pid) {{
+        const p = PROPS.find(function(x) {{ return x.id === pid; }});
+        const n = p ? p.name : pid;
+        return '<a href="#gallery-' + encodeURIComponent(pid) + '" '
+             + 'class="ref-chip prop-chip" title="' + _esc(n) + '">'
+             + '🔧 ' + _esc(n) + '</a>';
+    }}).join('');
+    const fillChip = s.route_filled
+        ? '<span class="fill-chip fill-filled" title="运镜分析已路由填充">✓ 运镜</span>'
+        : '<span class="fill-chip fill-degraded" title="运镜分析 offline 降级">○ 降级</span>';
+    return charChips + propChips + fillChip;
+}}
 
 function buildShotLayout() {{
     const layout = [];
@@ -366,7 +508,8 @@ SHOTS.forEach(s => {{
         + `<div class="body">`
         + `<div class="thumbs"><img src="${{s.ff}}"><span class="arrow">→</span><img src="${{s.lf}}"></div>`
         + `<div class="times">${{s.start.toFixed(1)}}→${{s.end.toFixed(1)}} <span class="${{durCls}}">(${{s.dur}}s)</span>`
-        + `<span class="type-badge type-${{s.type}}">${{typeIcons[s.type]||''}} ${{s.type}}</span></div>`
+        + `<span class="type-badge type-${{s.type}}">${{typeIcons[s.type]||''}} ${{s.type}}</span>`
+        + buildShotChips(s) + `</div>`                // Phase 8: ref-chips + fill-chip
         + `<div class="dlg">${{dlg}}</div>`
         + `</div>`;
     shotListInner.appendChild(row);
@@ -819,7 +962,8 @@ function rebuildAll() {{
             + `<div class="body">`
             + `<div class="thumbs"><img src="${{s.ff}}"><span class="arrow">→</span><img src="${{s.lf}}"></div>`
             + `<div class="times">${{s.start.toFixed(1)}}→${{s.end.toFixed(1)}} <span class="${{durCls}}">(${{s.dur}}s)</span>`
-            + `<span class="type-badge type-${{s.type}}">${{typeIcons[s.type]||''}} ${{s.type}}</span></div>`
+            + `<span class="type-badge type-${{s.type}}">${{typeIcons[s.type]||''}} ${{s.type}}</span>`
+            + buildShotChips(s) + `</div>`            // Phase 8: ref-chips + fill-chip
             + `<div class="dlg">${{dlg}}</div>`
             + `</div>`;
 
@@ -1027,6 +1171,19 @@ def main():
                          "(默认 <video-basename>)")
     ap.add_argument("--title", default=None,
                     help="页面标题（默认 '音轨时间轴 - <video basename>'）")
+    # Phase 8: prompt refs + gallery source flags (PRESENT-01/02/03).
+    ap.add_argument("--prompts", default=None,
+                    help="prompts.json 路径（含 character_refs/prop_refs + facets；"
+                         "用于 ref-chip 渲染 + route-fill 指示器）。缺省 → chips 不渲染，"
+                         "fill-chip 始终 gray")
+    ap.add_argument("--characters", default=None,
+                    help="characters.json 路径（gallery 数据源；fallback when 无 --asset-json "
+                         "或 asset 无 registry_snapshot）")
+    ap.add_argument("--props", default=None,
+                    help="props.json 路径（gallery 数据源；与 --characters 同源）")
+    ap.add_argument("--asset-json", default=None,
+                    help="asset.json 路径（preferred：读 generator.registry_snapshot "
+                         "作为 gallery 数据源 —— 冻结 export-time truth）")
     args = ap.parse_args()
 
     with open(args.shots) as f:
@@ -1043,8 +1200,47 @@ def main():
             t = json.load(f)
         transcript_segments = t.get("segments", [])
 
+    # Phase 8: load prompts + registry data (graceful-degrade: None → no chips/gallery).
+    prompts_by_id = None
+    if args.prompts and os.path.exists(args.prompts):
+        with open(args.prompts, encoding="utf-8") as f:
+            prompts_list = json.load(f)
+        if isinstance(prompts_list, list):
+            prompts_by_id = {p.get("shot_id"): p for p in prompts_list
+                             if isinstance(p, dict) and "shot_id" in p}
+
+    # Phase 8 (PRESENT-01): gallery data source priority (RESEARCH Open Question 2):
+    #   1. --asset-json generator.registry_snapshot (preferred — export-time truth)
+    #   2. --characters / --props (fallback — mid-pipeline before export step)
+    #   3. None (graceful-degrade — gallery OMITTED)
+    characters_data = None
+    props_data = None
+    if args.asset_json and os.path.exists(args.asset_json):
+        try:
+            with open(args.asset_json, encoding="utf-8") as f:
+                asset = json.load(f)
+            snapshot = (asset.get("generator", {}) or {}).get("registry_snapshot")
+            if isinstance(snapshot, dict):
+                characters_data = snapshot.get("characters") or None
+                props_data = snapshot.get("props") or None
+        except (OSError, json.JSONDecodeError) as e:
+            print(f"[warn] asset.json unreadable, falling back to --characters/--props: {e}")
+    if characters_data is None and args.characters and os.path.exists(args.characters):
+        try:
+            with open(args.characters, encoding="utf-8") as f:
+                characters_data = json.load(f)
+        except (OSError, json.JSONDecodeError):
+            characters_data = None
+    if props_data is None and args.props and os.path.exists(args.props):
+        try:
+            with open(args.props, encoding="utf-8") as f:
+                props_data = json.load(f)
+        except (OSError, json.JSONDecodeError):
+            props_data = None
+
     frames_by_id = extract_frames_if_needed(shots, args.video, args.frames)
-    shots_js = build_shots_js(shots, frames_by_id, audio_by_id, transcript_segments)
+    shots_js = build_shots_js(shots, frames_by_id, audio_by_id, transcript_segments,
+                              prompts_by_id=prompts_by_id)
 
     duration = shots[-1]["end_sec"] if shots else 0.0
 
@@ -1073,6 +1269,8 @@ def main():
         n_sfx=type_dist.get("sfx"),
         n_shots=len(shots),
         transcript_segments=transcript_segments,
+        characters_data=characters_data,
+        props_data=props_data,
     )
     with open(args.output, "w") as f:
         f.write(html)
