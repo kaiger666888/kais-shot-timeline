@@ -43,9 +43,16 @@ Strict-additive, contract-first minor bump on v1.0. Adds two new pipeline stages
   1. v1 minimal fixture still validates green under v1.1 schema (graceful-degrade promise not broken — Pitfall 11 prevented)
   2. New v1.1 fixture set (`spec/fixtures/v1.1/`) for characters/props/registry/prompts all pass `verify_contract.py EIGHT_SHAPES` validation
   3. Cross-version self-test passes both ways: v1 fixture warns-not-crashes under v1.1-only consumer, AND v1.1 fixture warns-not-crashes under v1-only consumer
-  4. Locked literals: `asset.schema.json#schema_version` const = `"1.1"`; `export_asset.py SCHEMA_VERSION` single-source constant = `1.1`; `characters.schema.json` ID pattern `^char_[0-9]{3}$`; `props.schema.json` ID pattern `^prop_[0-9]{3}$`; all new fields are OPTIONAL (never in `required`)
+  4. Locked literals: `asset.schema.json#schema_version` stays a pattern (NOT `const:"1.1"` — CONTEXT D-XX lock is producer-side); `export_asset.py SCHEMA_VERSION` single-source constant = `1.1`; `characters.schema.json` ID pattern `^char_[0-9]{3}$`; `props.schema.json` ID pattern `^prop_[0-9]{3}$`; all new fields are OPTIONAL (never in `required`)
   5. `SPEC.md` §4 Changelog `1.1` entry + new §5.6/§5.7 document characters/props data shapes and external media convention; `media.characters`/`media.props` path pattern locks external-png-not-base64 decision
-**Plans**: TBD
+
+**Plans**: 4 plans in 3 waves (mirrors v1.0 Phase 1 contract-first sequencing)
+
+Plans:
+- [ ] 05-01-PLAN.md — 5 schemas (3 new: characters/props/registry; 2 extended additively: prompts/asset) [CONTRACT-01..05]
+- [ ] 05-02-PLAN.md — export_asset.py SCHEMA_VERSION="1.1" constant + PROJECT.md drift fix (parallel w/ 01) [CONTRACT-06]
+- [ ] 05-03-PLAN.md — v1.1 fixture set (9 files: 4 reuse + 5 new content) [CONTRACT-01..05 fixtures + CONTRACT-09]
+- [ ] 05-04-PLAN.md — verify_contract.py EIGHT_SHAPES + _cross_version_check + _fixture_consistency_check + validate.py v1.1 pass + SPEC.md/README.md prose [CONTRACT-07, 08, 09]
 
 ### Phase 6: Cinematography Auto-Fill (`step_semantic`)
 **Goal**: shot-timeline can call the kais-aigc-platform `shot-analysis` route and merge its cinematography/subject/scene analysis into `prompts.json`, with mandatory graceful-degrade when the route is unreachable (first-ever network dependency in the previously-offline pipeline).
