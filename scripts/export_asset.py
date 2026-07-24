@@ -43,6 +43,11 @@ from pathlib import Path
 # scripts/export_asset.py → repo root（定位 spec/schemas/asset.schema.json）
 REPO = Path(__file__).parent.parent.resolve()
 
+# Phase 8 REVIEW WR-05 fix：canonical registry schema paths（用于 _build_registry_snapshot
+# 内 schema-validate；mirror attach_refs.py WR-02 + apply_edits.py WR-05 防御）。
+CHARACTERS_SCHEMA = REPO / "spec" / "schemas" / "characters.schema.json"
+PROPS_SCHEMA = REPO / "spec" / "schemas" / "props.schema.json"
+
 # ShotTimelineAsset 契约版本（单一真源）。schema_version pattern 在 spec/schemas/
 # asset.schema.json 里保持宽松（接受 "1"/"1.1"/"2.0"），但实际 emit 的字面量在这里锁死。
 # v1.1 = 纯增量（新增 optional characters/props 数据文件 + 丰富 prompts schema）。改这里
@@ -133,6 +138,38 @@ def validate_asset_json(asset_dict: dict) -> None:
             + "\n".join(lines))
 
 
+class _SchemaInvalid(Exception):
+    """_build_registry_snapshot 内 schema 校验失败的信号异常（不 sys.exit）。
+
+    attach_refs.py WR-02 的 _validate_registry 是 sys.exit（consumer 路径需要 fail
+    loud 给操作者）；export_asset 是 producer 路径，WR-05 选择 warn + OMIT（让
+    export 继续，但 snapshot 字段缺省，corruption 不进 asset.json）。本信号异常
+    让 _build_registry_snapshot 在 try/except 内区分「schema invalid」与
+    「JSON malformed」两类，统一走 warn + return None 路径。
+    """
+    def __init__(self, errors: list):
+        super().__init__("schema invalid")
+        self.errors = errors
+
+
+def _validate_registry_for_snapshot(schema_path, instance, label: str) -> None:
+    """Schema-validate loaded canonical registry；invalid → raise _SchemaInvalid（WR-05）。
+
+    Mirror attach_refs._validate_registry 的 schema 检查逻辑，但 fail-soft（raise
+    而非 sys.exit）—— 让 caller (_build_registry_snapshot) 自己决定 warn+OMIT 或
+    fail-loud。当前 caller 选择 warn + return None（不 emit 空 snapshot 掩盖 corruption）。
+    """
+    # lazy import：沿用 CLAUDE.md 的 optional-dep lazy-import 惯例
+    from jsonschema import Draft202012Validator
+    with open(schema_path, encoding="utf-8") as f:
+        schema = json.load(f)
+    errors = list(Draft202012Validator(schema).iter_errors(instance))
+    if errors:
+        msgs = [f"[{'/'.join(str(p) for p in e.absolute_path) or '<root>'}] {e.message}"
+                for e in errors[:10]]
+        raise _SchemaInvalid(msgs)
+
+
 def _build_registry_snapshot(work_dir: str):
     """读 characters.json + props.json → compact confirmed-only snapshot（PROMPT-04）。
 
@@ -144,9 +181,16 @@ def _build_registry_snapshot(work_dir: str):
     representative_image 仅当 truthy 时 emit（Phase 7 WARNING-2：apply_edits 在 ffmpeg
     失败时 OMIT representative_image —— snapshot 不携带 dangling path）。
 
+    Phase 8 REVIEW WR-05 fix：malformed JSON（JSONDecodeError / OSError）或 schema-
+    invalid 的 canonical registry 文件不再静默降级为空 snapshot（旧行为会把 corruption
+    伪装成 "该视频零角色/零道具" 持久化到 asset.json，下游不可见）。改为：
+      * print [warn] 行（mirror line 437 sidecar pattern）
+      * 返 None → registry_snapshot 字段 OMITTED（不持久化空 snapshot 掩盖 corruption）
+    consistent with attach_refs.py WR-02 schema-gate + apply_edits.py WR-05 pre-write 防御。
+
     Returns:
         dict | None: {characters:[{id,name,representative_image?,appearance_shots}],
-                      props:[{...}]} 或 None（两文件都缺席）。
+                      props:[{...}]} 或 None（两文件都缺席 / 任一文件 malformed）。
     """
     chars_path = os.path.join(work_dir, "characters.json")
     props_path = os.path.join(work_dir, "props.json")
@@ -175,20 +219,28 @@ def _build_registry_snapshot(work_dir: str):
                 })
         return out
 
-    snapshot: dict = {}
-    if os.path.isfile(chars_path):
+    # Phase 8 REVIEW WR-05 fix：任一侧 malformed → 整 snapshot OMITTED（不再返部分空的
+    # snapshot dict）。先尝试 load + schema-validate 每一侧；任一失败 print [warn]
+    # 并立即返 None。schema-validate mirror attach_refs._validate_registry（WR-02）。
+    loaded: dict = {}
+    for path, schema_path, key, label in (
+            (chars_path, CHARACTERS_SCHEMA, "characters", "characters.json"),
+            (props_path, PROPS_SCHEMA, "props", "props.json")):
+        if not os.path.isfile(path):
+            continue
         try:
-            with open(chars_path, encoding="utf-8") as f:
-                snapshot["characters"] = _project(json.load(f))
-        except (OSError, json.JSONDecodeError):
-            snapshot["characters"] = []
-    if os.path.isfile(props_path):
-        try:
-            with open(props_path, encoding="utf-8") as f:
-                snapshot["props"] = _project(json.load(f))
-        except (OSError, json.JSONDecodeError):
-            snapshot["props"] = []
-    return snapshot
+            with open(path, encoding="utf-8") as f:
+                data = json.load(f)
+            _validate_registry_for_snapshot(schema_path, data, label)
+            loaded[key] = _project(data)
+        except (OSError, json.JSONDecodeError) as e:
+            print(f"[warn] {label} malformed → registry_snapshot will be OMITTED: {e}")
+            return None
+        except _SchemaInvalid as e:
+            print(f"[warn] {label} schema-invalid → registry_snapshot will be OMITTED: "
+                  f"{e.errors[0] if e.errors else e}")
+            return None
+    return loaded
 
 
 def build_asset_dict(work_dir: str, video_path: str,
