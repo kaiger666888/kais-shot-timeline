@@ -316,11 +316,35 @@ def step_reid(video: str, work_dir: str, shots_json: str,
 def step_timeline(video: str, work_dir: str, shots_json: str,
                   audio_json: str, transcript: str, frames_json: str,
                   stems_dir: str, out_html: str, video_src: str,
-                  stem_basename: str) -> str:
+                  stem_basename: str,
+                  prompts_json: str = None) -> str:
+    r"""Phase 8 wiring: step_timeline 现含 attach_refs 预处理 + 扩展 mtime cache。
+
+    NO new numbered step / NO counter bump (CONTEXT Q3 lock —— ROADMAP Phase 8
+    success criteria 不需要新 step；attach_refs 是 step_timeline 内的 pre-step，
+    banner 用 plain label 不带 N/M 前缀，保持 step-counter grep count 24 不变)。
+    Pitfall 9 prevention：prompts_json 现入 cache inputs —— attach_refs 重写
+    prompts.json 后新 mtime → cache miss → timeline 重生成（带新 refs/chips）。
+    """
+    # Phase 8: attach_refs pre-step —— 在 mtime cache check 之前跑，保证 attach_refs
+    # 重写 prompts.json 后 cache 立即 miss（Pitfall 9 prevention, part 1）。
+    # GRACEFUL: prompts.json 不存在（step_semantic 被跳过）→ 整段跳过；characters.json/
+    # props.json 不存在（route-down / 未审阅）→ attach_refs 自己 graceful-degrade 写空 refs。
+    if prompts_json and os.path.exists(prompts_json):
+        cmd_refs = [sys.executable, str(HERE / "prompts" / "attach_refs.py"),
+                    "--prompts", prompts_json,
+                    "--work-dir", work_dir]
+        # Banner label 故意不带 numeric 前缀 —— Phase 8 lock 要求 step-banner grep count
+        # 不变（24），因此 attach_refs 用 plain label（避免 Pitfall 5 phantom bump）。
+        run_step(cmd_refs, "prompt-ref attachment (attach_refs pre-step)")
+    # Phase 8: mtime cache 扩展 —— prompts_json 现入输入集（Pitfall 9 prevention,
+    # part 2）。原 inputs = shots/audio/transcript；现 + prompts。attach_refs 在
+    # cache check 之前跑，新 mtime → cache miss → timeline 重生成（含新 refs/chips）。
     if os.path.exists(out_html) and os.path.getmtime(out_html) > max(
             os.path.getmtime(shots_json),
             os.path.getmtime(audio_json) if audio_json else 0,
-            os.path.getmtime(transcript) if transcript else 0):
+            os.path.getmtime(transcript) if transcript else 0,
+            os.path.getmtime(prompts_json) if prompts_json and os.path.exists(prompts_json) else 0):
         print(f"[7/8] cached timeline: {out_html}")
         return out_html
     cmd = [sys.executable, str(HERE / "html" / "gen_timeline_html.py"),
@@ -339,6 +363,23 @@ def step_timeline(video: str, work_dir: str, shots_json: str,
         cmd += ["--video-src", video_src]
     if stem_basename:
         cmd += ["--stem-basename", stem_basename]
+    # Phase 8: pass --prompts + --characters/--props/--asset-json so the HTML
+    # reflects attached refs + gallery data. attach_refs 在上面已跑过；prompts.json
+    # 现含 character_refs/prop_refs + recomposed prompt_text。
+    if prompts_json and os.path.exists(prompts_json):
+        cmd += ["--prompts", prompts_json]
+    chars_path = os.path.join(work_dir, "characters.json")
+    if os.path.exists(chars_path):
+        cmd += ["--characters", chars_path]
+    props_path = os.path.join(work_dir, "props.json")
+    if os.path.exists(props_path):
+        cmd += ["--props", props_path]
+    asset_json_path = os.path.join(work_dir, "asset.json")
+    # asset.json preferred source for gallery (registry_snapshot 是 export-time
+    # truth —— RESEARCH Open Question 2 lock)。gen_timeline_html 内部会优先读
+    # registry_snapshot，回退到 --characters/--props。
+    if os.path.exists(asset_json_path):
+        cmd += ["--asset-json", asset_json_path]
     run_step(cmd, "[7/8] timeline HTML generation")
     return out_html
 
@@ -578,7 +619,8 @@ def main():
     stem_basename = args.stem_basename or stem
     video_src = args.video_src or os.path.basename(video)
     html = step_timeline(video, work_dir, shots, audio, tr, frames_json,
-                         stems_dir, out_html, video_src, stem_basename)
+                         stems_dir, out_html, video_src, stem_basename,
+                         prompts_json=prompts_json)
 
     # 8. ShotTimelineAsset 导出（asset.json + canonical symlinks）
     stems_source_dir = stems_dir  # stems/htdemucs/<stem>/
