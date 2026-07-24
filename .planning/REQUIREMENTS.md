@@ -12,15 +12,15 @@ v1.1 milestone 范围。每条映射到一个 phase（见 Traceability）。
 
 ### CONTRACT — ShotTimelineAsset 契约 minor bump (schema_version 1→1.1，纯增量)
 
-- [ ] **CONTRACT-01**: 新增 `characters.schema.json`——角色注册表：不可变 ID（模式 `^char_[0-9]{3}$`）+ 名称 + 代表图引用 + `appearance_shots[]` + `review_state` + `looks[]`（换装/造型变更）
-- [ ] **CONTRACT-02**: 新增 `props.schema.json`——道具注册表（同构，ID 模式 `^prop_[0-9]{3}$`）
-- [ ] **CONTRACT-03**: 新增 `registry.schema.json`——草稿/审阅形状：`clusters[]`（每簇带 `review_state: proposed|confirmed|rejected` + 三档阈值标记 + 成员 shot/frame 列表）
-- [ ] **CONTRACT-04**: `prompts.schema.json` **纯增量**扩展——新增 optional `character_refs[]` / `prop_refs[]`（不改动现有 6 字段，**不**重构 `camera: string`）
-- [ ] **CONTRACT-05**: `asset.schema.json` **纯增量**扩展——`data` 新增 optional `characters`/`props` 路径；`media` 新增 optional `characters[]`/`props[]`（外置 png 相对路径，**非** base64）；`schema_version` const 升 `1`→`1.1`
-- [ ] **CONTRACT-06**: `export_asset.py` 引入 `SCHEMA_VERSION` 单一源常量 = `1.1`；仅当文件存在时才 emit characters/props（data+media），老资产（无这些文件）仍合法导出
-- [ ] **CONTRACT-07**: `verify_contract.py` `SIX_SHAPES`→`EIGHT_SHAPES` + 新增 v1.1 fixture 集 + 跨版本自检（v1 fixture 过 v1.1 schema、v1.1 fixture 过 v1 schema，各 warn-not-crash）
-- [ ] **CONTRACT-08**: `SPEC.md` §4 Changelog 记 `1.1` 条目 + 新增 §5.6/§5.7（characters/props 数据形状与外置媒体约定）
-- [ ] **CONTRACT-09**: 向后兼容冒烟——`spec/validate.py` 对 v1 `minimal` fixture 仍全绿（graceful-degrade 承诺不破）
+- [x] **CONTRACT-01**: 新增 `characters.schema.json`——角色注册表：不可变 ID（模式 `^char_[0-9]{3}$`）+ 名称 + 代表图引用 + `appearance_shots[]` + `review_state` + `looks[]`（换装/造型变更）
+- [x] **CONTRACT-02**: 新增 `props.schema.json`——道具注册表（同构，ID 模式 `^prop_[0-9]{3}$`）
+- [x] **CONTRACT-03**: 新增 `registry.schema.json`——草稿/审阅形状：`clusters[]`（每簇带 `review_state: proposed|confirmed|rejected` + 三档阈值标记 + 成员 shot/frame 列表）
+- [x] **CONTRACT-04**: `prompts.schema.json` **纯增量**扩展——新增 optional `character_refs[]` / `prop_refs[]`（不改动现有 6 字段，**不**重构 `camera: string`）
+- [x] **CONTRACT-05**: `asset.schema.json` **纯增量**扩展——`data` 新增 optional `characters`/`props` 路径；`media` 新增 optional `characters[]`/`props[]`（外置 png 相对路径，**非** base64）；`schema_version` const 升 `1`→`1.1`
+- [x] **CONTRACT-06**: `export_asset.py` 引入 `SCHEMA_VERSION` 单一源常量 = `1.1`；仅当文件存在时才 emit characters/props（data+media），老资产（无这些文件）仍合法导出
+- [x] **CONTRACT-07**: `verify_contract.py` `SIX_SHAPES`→`EIGHT_SHAPES` + 新增 v1.1 fixture 集 + 跨版本自检（v1 fixture 过 v1.1 schema、v1.1 fixture 过 v1 schema，各 warn-not-crash）
+- [x] **CONTRACT-08**: `SPEC.md` §4 Changelog 记 `1.1` 条目 + 新增 §5.6/§5.7（characters/props 数据形状与外置媒体约定）
+- [x] **CONTRACT-09**: 向后兼容冒烟——`spec/validate.py` 对 v1 `minimal` fixture 仍全绿（graceful-degrade 承诺不破）
 
 ### CINEMA — 镜头语言/动作/语义自动填充 (`step_semantic`)
 
@@ -102,15 +102,15 @@ Phase 编号续接 v1.0（Phase 1-4 SHIPPED）。v1.1 从 Phase 5 起，dependen
 
 | Requirement | Phase | Status |
 |-------------|-------|--------|
-| CONTRACT-01 | Phase 5 | Pending |
-| CONTRACT-02 | Phase 5 | Pending |
-| CONTRACT-03 | Phase 5 | Pending |
-| CONTRACT-04 | Phase 5 | Pending |
-| CONTRACT-05 | Phase 5 | Pending |
-| CONTRACT-06 | Phase 5 | Pending |
-| CONTRACT-07 | Phase 5 | Pending |
-| CONTRACT-08 | Phase 5 | Pending |
-| CONTRACT-09 | Phase 5 | Pending |
+| CONTRACT-01 | Phase 5 | Complete |
+| CONTRACT-02 | Phase 5 | Complete |
+| CONTRACT-03 | Phase 5 | Complete |
+| CONTRACT-04 | Phase 5 | Complete |
+| CONTRACT-05 | Phase 5 | Complete |
+| CONTRACT-06 | Phase 5 | Complete |
+| CONTRACT-07 | Phase 5 | Complete |
+| CONTRACT-08 | Phase 5 | Complete |
+| CONTRACT-09 | Phase 5 | Complete |
 | CINEMA-01 | Phase 6 | Pending |
 | CINEMA-02 | Phase 6 | Pending |
 | CINEMA-03 | Phase 6 | Pending |
