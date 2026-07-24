@@ -75,6 +75,13 @@ from pathlib import Path
 ROUTE_NAME = "shot_analysis"
 ROUTE_VERSION = "feat-shot-analysis-route-v1"
 
+# 路由 path（CONTEXT lock，硬编码 —— 不可由 --analysis-url 自定义）。IN-01：旧实现
+# 把此串散落在 call_route.post / preflight.rsplit / preflight.get 三处，改 path 需
+# 改三行无编译期保证。抽成单一真源。WR-03：--analysis-url 的 /api/v1 之后部分会被
+# 一致 strip 掉（preflight + main client 都 rsplit 到 host root 再拼 ROUTE_PATH），
+# 不再出现"main 用全 URL 作 base、preflight 却 strip"的静默不一致。
+ROUTE_PATH = "/api/v1/production/shot-analysis"
+
 # prompts.schema.json 绝对路径（写前 Draft202012Validator 自校验用）。
 # analysis/call_shot_analysis.py → repo root/spec/schemas/prompts.schema.json
 PROMPTS_SCHEMA = Path(__file__).resolve().parent.parent / "spec" / "schemas" / "prompts.schema.json"
@@ -155,7 +162,7 @@ def call_route(client, body: dict) -> tuple[dict | None, str | None]:
     """
     import httpx  # lazy import —— 沿用 audio/transcribe.py 的 optional-dep 惯例
     try:
-        resp = client.post("/api/v1/production/shot-analysis", json=body)
+        resp = client.post(ROUTE_PATH, json=body)
         resp.raise_for_status()                          # 4xx/5xx → HTTPStatusError
         # CR-02：非 JSON 200 body（反代 HTML 错误页 / 代理 502 伪 200）——
         # resp.json() raise JSONDecodeError(ValueError)，旧实现 except 只抓
@@ -199,13 +206,14 @@ def preflight(base_url: str, timeout: float = 5.0) -> tuple[bool, str | None]:
     """
     import httpx
     # base_url 含 /api/v1/production/shot-analysis path；探测时 rsplit 掉 /api/v1
-    # 之后的部分，重新拼回 /api/v1/production/shot-analysis（保持探测路径一致）。
+    # 之后的部分取 host root，再拼 ROUTE_PATH（WR-03：与 main client 一致 strip，
+    # 不再用散落的字面串 —— ROUTE_PATH 单一真源）。
     base = base_url.rsplit("/api/v1", 1)[0]
     try:
         with httpx.Client(base_url=base,
                           timeout=httpx.Timeout(connect=5.0, read=5.0,
                                                 write=5.0, pool=5.0)) as probe:
-            probe.get("/api/v1/production/shot-analysis", timeout=timeout)
+            probe.get(ROUTE_PATH, timeout=timeout)
         return True, None
     except httpx.HTTPError as e:
         return False, f"preflight route unreachable: {type(e).__name__}: {e}"
@@ -260,8 +268,13 @@ def main():
     client = None
     if not args.offline:
         import httpx
+        # WR-03：base 只取 host root（rsplit 掉 /api/v1 之后部分），post 用 ROUTE_PATH。
+        # 旧实现 base_url=全 URL + post 绝对路径 → RFC 3986 把 /api/v1 之前的 path
+        # 前缀（如反代 /prod/api/v1）静默丢弃，且与 preflight（strip 过）不一致。
+        # 现与 preflight 一致 strip 到 host root；ROUTE_PATH 是 CONTEXT-locked 常量。
+        base = args.analysis_url.rsplit("/api/v1", 1)[0]
         client = httpx.Client(
-            base_url=args.analysis_url,
+            base_url=base,
             timeout=httpx.Timeout(connect=5.0, read=args.analysis_timeout,
                                   write=5.0, pool=5.0))
     try:
