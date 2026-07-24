@@ -163,6 +163,13 @@ def build_html(shots_js, stems_js, duration, video_src, title,
     props_json = json.dumps(props_data or [], ensure_ascii=False).replace("</", "<\\/")
     n_shots_val = n_shots if n_shots is not None else len(shots_js)
 
+    # Phase 8 REVIEW CR-01 fix：title 是 operator-influenced（--title flag 或默认
+    # os.path.basename(args.video)）；Linux 文件名允许 < > " '（仅禁 / 和 NUL），
+    # 所以原始 title 插值进 <title>...</title> / <h1>...</h1> 会被浏览器解析为新元素。
+    # 复用本文件既有的 _esc() (Phase 7 CR-04 carry) 在两个 sink 处统转义。
+    # 同 root cause 的 WR-03 (video_src attribute 插值) 在下方 <source> 单独 _esc。
+    safe_title = _esc(title)
+
     # Phase 8 (PRESENT-01): gallery section —— server-rendered cards。
     # 每张 card: thumbnail (external PNG via serve.py Range) + _esc(name) + ID +
     # appearance-shot count。onerror 隐藏坏图 (Pitfall 7: apply_edits OMITS
@@ -208,7 +215,7 @@ def build_html(shots_js, stems_js, duration, video_src, title,
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>{title}</title>
+<title>{safe_title}</title>
 <style>
 * {{ margin:0; padding:0; box-sizing:border-box; }}
 html {{ scroll-behavior:smooth; }}
@@ -309,7 +316,7 @@ video {{ width:100%; max-height:35vh; border-radius:8px; object-fit:contain; }}
 <!-- ===== STICKY HEADER + PLAYER ===== -->
 <div class="header">
   <div class="header-top">
-    <h1>🎵 {title} ({n_shots_val} shots)</h1>
+    <h1>🎵 {safe_title} ({n_shots_val} shots)</h1>
     <div class="stats">
       <span>⏱ {duration:.1f}s</span>
       {stat_spans}
