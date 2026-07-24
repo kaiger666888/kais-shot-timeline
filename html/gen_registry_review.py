@@ -76,6 +76,21 @@ _FRAME_POS_FRACTIONS = {
 # Helpers (mirror apply_edits.py — small enough to inline; no cross-module dep)
 # ============================================================================
 
+def _esc(s):
+    """HTML-escape 字符串以安全插值进 HTML text/attribute context (CR-04 XSS defense)。
+
+    转义 5 个字符: & < > " '。顺序固定 (& 先，防双重转义)。
+    Self-contained inline impl (不走 stdlib html.escape) —— 本仓库 html/ 目录是
+    namespace package，避免任何 import-resolution 歧义；符合 standalone-script 约定。
+    输入先 str() 兜底 (非 string 字段如 int shot_id 也安全)。
+    """
+    return (str(s).replace("&", "&amp;")
+                  .replace("<", "&lt;")
+                  .replace(">", "&gt;")
+                  .replace('"', "&quot;")
+                  .replace("'", "&#x27;"))
+
+
 def _resolve_frame_ts(shot_id, frame_pos, shots_meta):
     """frame_pos ('first'/'last'/'25%'/'50%'/'75%' 或 number) → 绝对秒数。
 
@@ -183,50 +198,61 @@ def _cluster_card_html(cluster, thumbnail_b64, index):
     thumb_src = thumbnail_b64 if thumbnail_b64 else _PLACEHOLDER_SVG
     cosine_pct = max(0.0, min(1.0, mean_cosine)) * 100.0
 
+    # CR-04: html-escape 所有插值进 HTML body 的字符串字段（defense-in-depth ——
+    # cid/tier 虽 schema-pattern-locked，但 route-controlled 字段如 default_name
+    # 来自 cluster_id 派生仍走 _esc；mask_quality 等已在 member_lis 单独处理）。
+    esc_cid = _esc(cid)
+    esc_tier = _esc(tier)
+    esc_default_name = _esc(default_name)
+
     # members list items
+    # CR-04: mask_quality / frame_pos / shot_id 全是 route-controlled（NOT pattern-locked）
+    # → MUST html-escape 防注入（route compromise / cache poisoning / 手改 draft 都可达）。
     member_lis = []
     for m in members:
         mq = m.get("mask_quality", "unknown")
         member_lis.append(
-            f'<li>shot {m.get("shot_id", "?")} · {m.get("frame_pos", "?")} '
-            f'· <span class="quality-chip">{mq}</span></li>'
+            f'<li>shot {_esc(m.get("shot_id", "?"))} · {_esc(m.get("frame_pos", "?"))} '
+            f'· <span class="quality-chip">{_esc(mq)}</span></li>'
         )
     members_html = "\n".join(member_lis) if member_lis else "<li>(无 members)</li>"
 
     # IMPORTANT: this f-string is a Python f-string; literal { } in the inline JS
     # onclick handlers MUST be doubled ({{ }}) per gen_timeline_html.py convention.
     # We keep the onclick handlers minimal — JS logic is centralized in the <script> block.
-    return f"""    <div class="cluster-card" id="card-{cid}" data-cluster-id="{cid}"
-         data-tier="{tier}" data-mean-cosine="{mean_cosine:.4f}"
-         data-default-name="{default_name}">
+    # CR-04: cid 经 _esc 后插值进 onclick JS string context —— cid 虽 schema-pattern-locked
+    # (^(char|prop)_[0-9]{3}$，无引号/尖括号可达)，_esc 在此是无害 no-op + defense-in-depth。
+    return f"""    <div class="cluster-card" id="card-{esc_cid}" data-cluster-id="{esc_cid}"
+         data-tier="{esc_tier}" data-mean-cosine="{mean_cosine:.4f}"
+         data-default-name="{esc_default_name}">
       <div class="card-thumb-wrap">
-        <img src="{thumb_src}" class="cluster-thumb" alt="{cid} representative frame" loading="lazy">
+        <img src="{thumb_src}" class="cluster-thumb" alt="{esc_cid} representative frame" loading="lazy">
       </div>
       <div class="card-body">
         <div class="card-header">
-          <span class="cluster-id">{cid}</span>
-          <span class="tier-badge" style="background:{tier_color}">{tier}</span>
+          <span class="cluster-id">{esc_cid}</span>
+          <span class="tier-badge" style="background:{tier_color}">{esc_tier}</span>
           <span class="cosine-label">cos={mean_cosine:.3f}</span>
         </div>
         <div class="cosine-bar-container">
           <div class="cosine-bar" style="width:{cosine_pct:.1f}%; background:{tier_color}"></div>
         </div>
-        <input type="text" class="cluster-name" value="{default_name}"
-               placeholder="展示名" data-cluster-id="{cid}">
+        <input type="text" class="cluster-name" value="{esc_default_name}"
+               placeholder="展示名" data-cluster-id="{esc_cid}">
         <ul class="members-list">
 {members_html}
         </ul>
         <div class="card-actions">
-          <button class="action-button action-confirm" data-cluster-id="{cid}"
-                  onclick="toggleConfirm('{cid}')">✓ Confirm</button>
-          <button class="action-button action-reject" data-cluster-id="{cid}"
-                  onclick="toggleReject('{cid}')">✗ Reject</button>
-          <button class="action-button action-merge" data-cluster-id="{cid}"
-                  onclick="mergeWith('{cid}')">↔ Merge</button>
-          <button class="action-button action-split" data-cluster-id="{cid}"
-                  onclick="splitCluster('{cid}')">✂ Split</button>
-          <button class="action-button action-type" data-cluster-id="{cid}"
-                  onclick="toggleType('{cid}')">🔄 Type</button>
+          <button class="action-button action-confirm" data-cluster-id="{esc_cid}"
+                  onclick="toggleConfirm('{esc_cid}')">✓ Confirm</button>
+          <button class="action-button action-reject" data-cluster-id="{esc_cid}"
+                  onclick="toggleReject('{esc_cid}')">✗ Reject</button>
+          <button class="action-button action-merge" data-cluster-id="{esc_cid}"
+                  onclick="mergeWith('{esc_cid}')">↔ Merge</button>
+          <button class="action-button action-split" data-cluster-id="{esc_cid}"
+                  onclick="splitCluster('{esc_cid}')">✂ Split</button>
+          <button class="action-button action-type" data-cluster-id="{esc_cid}"
+                  onclick="toggleType('{esc_cid}')">🔄 Type</button>
         </div>
       </div>
     </div>
@@ -267,9 +293,12 @@ def build_html(draft, video, shots_meta, asset_name):
         mc = float(cluster.get("mean_cosine", 0.0))
         tier_color = TIER_COLORS.get(tier, TIER_COLORS["review"])
         cosine_pct = max(0.0, min(1.0, mc)) * 100.0
+        # CR-04: queue cid/tier html-escape（同 card —— defense-in-depth）
+        esc_cid = _esc(cid)
+        esc_tier = _esc(tier)
         queue_html_parts.append(
-            f'    <a href="#card-{cid}" class="queue-item" data-tier="{tier}">'
-            f'<span class="queue-id">{cid}</span>'
+            f'    <a href="#card-{esc_cid}" class="queue-item" data-tier="{esc_tier}">'
+            f'<span class="queue-id">{esc_cid}</span>'
             f'<span class="queue-cos-bar" style="width:{cosine_pct:.1f}%; background:{tier_color}"></span>'
             f'<span class="queue-cos-num">{mc:.3f}</span></a>'
         )
@@ -277,8 +306,14 @@ def build_html(draft, video, shots_meta, asset_name):
     cards_html = "\n".join(cards_html_parts) if cards_html_parts else "<p>(空 draft —— 无 cluster 可审阅)</p>"
     queue_html = "\n".join(queue_html_parts) if queue_html_parts else "<p>(无)</p>"
 
-    # Inline the draft JSON for client-side state bootstrap (no external fetch)
-    draft_json = json.dumps(draft, ensure_ascii=False)
+    # Inline the draft JSON for client-side state bootstrap (no external fetch).
+    # CR-04: JSON-in-<script> defense —— 替换 "</" → "<\/" 防 </script> payload 破出
+    # （HTML 解析器见 </script> 即终止 script block，无视 JS string context）。
+    # route-controlled 字段（mask_quality 等）含 "</script>" 时本转义中和攻击。
+    draft_json = json.dumps(draft, ensure_ascii=False).replace("</", "<\\/")
+
+    # CR-04: asset_name 来自 draft 路径父目录名（可含特殊字符）—— html-escape。
+    esc_asset_name = _esc(asset_name)
 
     # IMPORTANT: the entire HTML body below is an f-string. Literal { } in CSS / JS
     # blocks MUST be doubled to {{ }} to escape them (gen_timeline_html.py:131-941 convention).
@@ -287,7 +322,7 @@ def build_html(draft, video, shots_meta, asset_name):
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>HITL 审阅 — {asset_name}</title>
+<title>HITL 审阅 — {esc_asset_name}</title>
 <style>
 * {{ margin: 0; padding: 0; box-sizing: border-box; }}
 html {{ scroll-behavior: smooth; scroll-padding-top: 80px; }}
@@ -415,7 +450,7 @@ body {{
 <body>
 
 <div class="header">
-  <h1>HITL 审阅 — {asset_name}</h1>
+  <h1>HITL 审阅 — {esc_asset_name}</h1>
   <div class="summary">
     <span>📊 {len(clusters)} 簇</span>
     <span class="pill merge">🟢 {n_merge} auto-merge</span>
