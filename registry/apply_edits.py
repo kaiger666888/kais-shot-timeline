@@ -346,26 +346,54 @@ def apply_edits(draft_path, edits_path, work_dir, video, shots_path):
         canonical["members"] = merged_members
         canonical["mean_cosine"] = (sum_cos / n_cos) if n_cos else 0.0
 
-    # --- 4b. splits (deterministic ID allocation: max_existing_N + 1) ---
-    # 内部 cache 避免 _next_id 在循环里重复扫
+    # --- 4b. splits (成员分区；deterministic ID allocation: max_existing_N + 1) ---
+    # CR-01 fix:旧实现把源 members 全量 clone 到每个 child(语义错误——两个新簇
+    # 拥有 byte-identical appearance_shots)。新 shape (registry-edits.schema.json)
+    # 强制 operator 显式 partition:每个 child 携带 member_indexes(0-based 索引到
+    # 源 cluster.members[])。apply_edits 校验完整分区(无遗漏/重叠/越界)→ FAIL on 违规。
     splits = edits.get("splits", {}) or {}
     # 按源 cluster_id 字典序处理 (idempotency guard)
     for src_id in sorted(splits.keys()):
-        new_labels = splits[src_id] or []
-        if src_id not in clusters or len(new_labels) < 2:
+        children_def = splits[src_id] or []
+        if src_id not in clusters or len(children_def) < 2:
             continue
         src = clusters[src_id]
         prefix = src_id.split("_", 1)[0]  # "char" 或 "prop"
-        # 为每个 label 分配新 ID (按 label 字典序 —— deterministic binding)
-        for label in sorted(new_labels):
+        src_members = src.get("members", []) or []
+        n_members = len(src_members)
+
+        # 校验完整分区：每个 member 恰好分配到一个 child
+        assigned: set[int] = set()
+        for child in children_def:
+            if not isinstance(child, dict):
+                sys.exit(f"[apply-edits] FAIL: split {src_id} child def is not an object: {child!r}")
+            for idx in child.get("member_indexes") or []:
+                if not isinstance(idx, int) or idx < 0 or idx >= n_members:
+                    sys.exit(f"[apply-edits] FAIL: split {src_id} member_index {idx} "
+                             f"out of range [0, {n_members}) (malformed partition)")
+                if idx in assigned:
+                    sys.exit(f"[apply-edits] FAIL: split {src_id} member_index {idx} "
+                             f"assigned to multiple children (overlap — use disjoint indexes)")
+                assigned.add(idx)
+        if len(assigned) != n_members:
+            missing = set(range(n_members)) - assigned
+            sys.exit(f"[apply-edits] FAIL: split {src_id} incomplete partition — "
+                     f"member_indexes {sorted(missing)} unassigned "
+                     f"(must partition ALL {n_members} source members; no silent data loss)")
+
+        # 按 label 字典序确定性分配新 ID (deterministic binding —— idempotency guard)
+        for child in sorted(children_def, key=lambda c: c.get("label", "")):
+            label = child.get("label", "")
+            part_idxs = child.get("member_indexes") or []
             new_id = _next_id(prefix, clusters.keys())
             new_cluster = {
                 "cluster_id": new_id,
                 "review_state": src.get("review_state", "proposed"),
                 "tier": src.get("tier", "review"),
                 "mean_cosine": src.get("mean_cosine", 0.0),
-                "members": list(src.get("members", [])),
-                "name_hint": label,  # 临时字段，build-entry 时若 renames 没覆盖则用作 name
+                # CR-01: 按 member_indexes 分区(非 clone-all)
+                "members": [src_members[i] for i in sorted(part_idxs)],
+                "name_hint": label,  # 保留供操作员审计/未来 _build_*_entry fallback；当前 _build_*_entry 仅查 renames
             }
             clusters[new_id] = new_cluster
         # 软退役源 ID

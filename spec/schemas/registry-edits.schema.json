@@ -19,12 +19,26 @@
     },
     "splits": {
       "type": "object",
-      "description": "簇拆分:key=源 cluster_id,value=新 label 列表(apply_edits 按顺序分配新 ID:max_existing_N + 1,确定性 + 幂等)。apply_edits 应用顺序第 2 步。",
+      "description": "簇拆分(成员分区):key=源 cluster_id,value=子簇定义数组(label + member_indexes)。CR-01 fix:旧 shape 是 string[] of labels(无法表达成员分区→实现错误地 clone-all 到每个 child);新 shape 强制 operator 显式 partition 每个 member 到恰好一个 child。apply_edits 校验完整分区:未分配 / 重叠 / 越界 member_index 一律 FAIL(不静默丢弃/复制)。apply_edits 应用顺序第 2 步,按 label 字典序确定性分配新 ID(max_existing_N + 1)。",
       "additionalProperties": false,
       "patternProperties": {
         "^(char|prop)_[0-9]{3}$": {
           "type": "array",
-          "items": {"type": "string", "minLength": 1},
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["label", "member_indexes"],
+            "properties": {
+              "label": {"type": "string", "minLength": 1, "description": "子簇展示 label(也作 name_hint 供操作员审计/未来 build-entry fallback)。"},
+              "member_indexes": {
+                "type": "array",
+                "items": {"type": "integer", "minimum": 0},
+                "minItems": 1,
+                "uniqueItems": true,
+                "description": "源 cluster.members[] 的 0-based 索引列表(分区,非克隆)。所有 child 的 member_indexes 并集必须 == {0..len(members)-1}(完整分区)。"
+              }
+            }
+          },
           "minItems": 2
         }
       }

@@ -572,15 +572,53 @@ function mergeWith(cid) {{
 }}
 
 function splitCluster(cid) {{
-    const labelsStr = prompt(`拆分 ${{cid}} 为 N 个新簇。输入新 label 列表，逗号分隔（≥2 个）：\n例如：少年, 老年`);
+    // CR-01: split 现在是 partition（成员分区），不是 clone-all。
+    // UX: 先收 label 列表，再逐 label 收 member_indexes（最后一个 child 自动收剩余）。
+    const cluster = DRAFT.clusters.find(c => c.cluster_id === cid);
+    if (!cluster || !cluster.members || cluster.members.length < 2) {{
+        alert(`无法拆分 ${{cid}}：少于 2 个 member（分区需要 ≥2 member）`);
+        return;
+    }}
+    const nMembers = cluster.members.length;
+    const memberList = cluster.members.map((m, i) =>
+        `[${{i}}] shot ${{m.shot_id}}·${{m.frame_pos || '?'}}`).join('\\n');
+    const labelsStr = prompt(`拆分 ${{cid}} 为 N 个新簇（PARTITION，非克隆）。\n`
+        + `成员列表（0-based 索引）：\n${{memberList}}\n\n`
+        + `输入新 label 列表，逗号分隔（≥2 个）：\n例如：少年, 老年`);
     if (!labelsStr) return;
     const labels = labelsStr.split(',').map(s => s.trim()).filter(Boolean);
     if (labels.length < 2) {{
         alert('需要至少 2 个 label 才能拆分');
         return;
     }}
-    state.splits[cid] = labels;
-    alert(`已记录拆分：${{cid}} → [${{labels.join(', ')}}] (apply_edits 分配新 ID：max+1)`);
+    if (labels.length > nMembers) {{
+        alert(`label 数 (${{labels.length}}) 超过 member 数 (${{nMembers}})——每个 child 至少 1 member`);
+        return;
+    }}
+    // 逐 label（除最后一个）收 member_indexes；最后一个自动收剩余（保证完整分区）
+    const children = [];
+    const usedIdx = new Set();
+    for (let li = 0; li < labels.length - 1; li++) {{
+        const idxStr = prompt(`label "${{labels[li]}}" 的 member 索引（逗号分隔，0-based，至少 1 个）：\n`
+            + `剩余可选：[${{[...Array(nMembers).keys()].filter(i => !usedIdx.has(i)).join(', ')}}]`);
+        if (!idxStr) return;  // cancel
+        const idxs = idxStr.split(',').map(s => s.trim()).filter(Boolean).map(Number);
+        if (idxs.length < 1 || idxs.some(i => isNaN(i) || i < 0 || i >= nMembers || usedIdx.has(i))) {{
+            alert(`无效或重复的索引：${{idxStr}}（取消拆分）`);
+            return;
+        }}
+        idxs.forEach(i => usedIdx.add(i));
+        children.push({{label: labels[li], member_indexes: idxs}});
+    }}
+    // 最后一个 label 收剩余未分配的（保证完整分区 —— apply_edits 拒绝不完整分区）
+    const remainder = [...Array(nMembers).keys()].filter(i => !usedIdx.has(i));
+    if (remainder.length < 1) {{
+        alert(`label "${{labels[labels.length - 1]}}" 无剩余 member——已全分配给前面的 label（取消拆分）`);
+        return;
+    }}
+    children.push({{label: labels[labels.length - 1], member_indexes: remainder}});
+    state.splits[cid] = children;
+    alert(`已记录拆分（PARTITION）：${{cid}} → ${{children.map(c => c.label + '[' + c.member_indexes.length + ']').join(', ')}}`);
 }}
 
 // Capture rename edits on input blur

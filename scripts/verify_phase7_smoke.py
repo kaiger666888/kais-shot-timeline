@@ -436,10 +436,10 @@ def scenario_apply_edits_idempotent(verbose: bool = False) -> tuple:
                                    f"references unknown shot {sid}")
 
         # (e) "proposed" cluster 在 fixture 但不在 confirm_ids → 不出现在 canonical
-        # fixture draft 有 char_001 / char_002 / prop_001，全部在 confirm_ids。
-        # 为硬验证 Pitfall 7 second-line：检查 fixture 真的没有 proposed 泄漏 ——
-        # 因为所有 fixture cluster_ids 都 confirm，这里只需确认 canonical IDs 集合
-        # ⊆ confirm_ids 集合（不会多）。
+        # fixture draft 有 char_001 / char_002 / prop_001；char_001 被 splits 拆分为
+        # char_003 + char_004（CR-01 partition），char_001 自身退役不在 confirm_ids。
+        # 为硬验证 Pitfall 7 second-line：确认 canonical IDs 集合 ⊆ confirm_ids 集合
+        # （不会多；char_001 退役后不出现在 canonical）。
         edits_data = json.loads(fixture_edits.read_text(encoding="utf-8"))
         confirm_set = set(edits_data.get("confirm_ids", []))
         canonical_ids = {e.get("id") for e in chars + props}
