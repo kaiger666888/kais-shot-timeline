@@ -415,6 +415,16 @@ def main():
         registry_schema = json.load(f)
     errors = list(Draft202012Validator(registry_schema).iter_errors(registry_draft))
     if errors:
+        # WR-02：invalidate poisoned cache。覆盖两条路径：
+        #   (a) 本轮 fresh route response 已写 cache（步骤 7）后 normalize 仍 fail；
+        #   (b) cache hit 的 stale 畸形数据（normalize 未完全修复，如 frame_pos=list）。
+        # 删除 cache_file 让下一轮重新拉路由 / degrade，而非永久 poison。
+        if os.path.exists(cache_file):
+            try:
+                os.unlink(cache_file)
+                print(f"[reid] invalidated poisoned cache: {cache_file}")
+            except OSError:
+                pass   # best-effort；不阻塞 fail-loud
         sys.exit(
             f"registry.draft.json schema validation failed ({len(errors)} errors): "
             + "; ".join(f"{'/'.join(map(str, e.absolute_path))}: {e.message}"
