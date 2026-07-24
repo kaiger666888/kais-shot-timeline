@@ -278,8 +278,7 @@ ffmpeg -version       # 6.1.1-3ubuntu5
 ### Recommended Project Structure（Phase 7 增量）
 
 ```
-analysis/                                  # 已存在（Phase 6）
-├── __init__.py
+analysis/                                  # 已存在（Phase 6, flat-file — NO __init__.py per CLAUDE.md）
 └── call_reid.py                            # NEW — httpx client + normalize + cache (mirror call_shot_analysis.py)
 registry/                                  # NEW directory (Phase 7 创建)
 └── apply_edits.py                          # NEW — draft+edits → canonical characters/props (confirmed-only)
@@ -603,7 +602,7 @@ def build_asset_dict(work_dir: str, video_path: str,
 
 ### Pattern 6: step_reid integration into run_pipeline.py
 
-**Step counter `[N/7]` → `[N/8]` 全量更新点**（直接 grep 出的 18 处，mirror Phase 6 的 17 处 [N/6]→[N/7]）：
+**Step counter `[N/7]` → `[N/8]` 全量更新点**（直接 grep 出的 20 处，mirror Phase 6 的 17 处 [N/6]→[N/7]）：
 
 | File:line | 当前 (Phase 6) | Phase 7 后 |
 |-----------|----------------|------------|
@@ -996,22 +995,25 @@ def call_reid_route(client, body, timeout):
 | A7 | `ROUTE_VERSION = "deferred-character-reid-route-v1"` 是合理初始串 | Pattern 1 | 极低 — cache invalidation 旋钮；route merge 后 bump |
 | A8 | httpx 0.28.1 是合法包（slopcheck 无 verify-only 模式，但 pip show + 下游依赖强证据） | Standard Stack / Package Audit | 极低 — Phase 6 已用 + 验证；env 已装；Author=Tom Christie；BSD-3-Clause；9 下游知名包依赖 |
 
-## Open Questions
+## Open Questions (RESOLVED)
 
 1. **`character-reid` 路由的实际 request/response shape？**
    - What we know: 镜像 shot-analysis THIN-wrapper 模式（CONTEXT Q1 lock）；endpoint `/api/v1/production/character-reid`（CONTEXT Q3）。
    - What's unclear: 精确 body 字段（mask_samples? embedding_model? tau? 是否 per-shot 还是整批？）；response envelope 的 `data.clusters` 是否就是 registry.schema.json#clusters[] shape 还是需要 normalize。
    - Recommendation: call_reid.py **不假设 shape 超过 registry.schema.json 约束**（Pattern 1 显式投影）；route 出货后实测调整 normalize 函数。STATE.md 已记录 deferred blocker。
+   - **— RESOLVED: deferred per CONTEXT `<deferred>` + STATE.md blocker; call_reid.py (Plan 07-02 Task 1) implemented as shape-agnostic projector — `normalize_clusters` projects whatever the route emits onto registry.schema.json#clusters[] allowed fields (drops extras via additionalProperties:false). Live shape confirmed post-merge.**
 
 2. **HITL review HTML 是否需要 batch 操作（如"全选 auto_merge confirm"）？**
    - What we know: CONTEXT Q1 lock "cosine-sorted queue surface mid-band first"；auto_merge/auto_distinct 默认行为未明示。
    - What's unclear: 默认是否预选 auto_merge 全 confirm？还是要求人逐个点？
    - Recommendation: Claude's Discretion 范围（CONTEXT 列）；建议 auto_merge 默认预选 confirm（reviewer 可改），auto_distinct 默认预选 confirm 为独立实体，review band 必须人逐个决定。这降低 reviewer 负担且符合"feature not polish"精神。
+   - **— RESOLVED: Claude's Discretion lock confirmed; Plan 07-03 Task 2 (`html/gen_registry_review.py`) implements pre-select-confirm for auto_merge (≥0.85) + auto_distinct (<0.6) tiers, and forces explicit human review on the mid-band 0.6–0.85 review tier. `_tier_for` defaults locked in Plan 07-02 Task 1.**
 
 3. **apply_edits.py splits 的新 ID 分配算法？**
    - What we know: CONTEXT Q2 lock "deterministic + idempotent"；新 ID 不可重用已 retired 的（Pitfall 17）。
    - What's unclear: split 一个 char_001 成两个时，新 ID 是 char_001 + char_004（max+1）还是别的？
    - Recommendation: 源 ID 保留（char_001），新分裂出的用 `max_existing_N + 1`（按 cluster_id 数值部分排序）；apply_edits 内部文档化此规则。Pitfall 5 守护。
+   - **— RESOLVED: implemented in Plan 07-03 Task 1 `_next_id(prefix, existing_ids)` — extracts numeric suffixes from existing IDs with the same prefix, takes `max_N + 1` (default 0 if none), returns `f"{prefix}_{max_N + 1:03d}"`. Deterministic + idempotent (Pitfall 5 guard). Inline test: `_next_id('char', {'char_001', 'char_003'}) == 'char_004'`.**
 
 ## Environment Availability
 
@@ -1058,7 +1060,7 @@ def call_reid_route(client, body, timeout):
 | CAST-07 (appearance_shots ⊆ shots) | every appearance_shots[] in characters.json/props.json exists in shots.json | contract-integrity | `python3 scripts/verify_contract.py --mode=producer` (extended) | ✅ (verify_contract.py exists, extended in Phase 7) |
 | CAST-09 (route down degrade) | unreachable URL → registry.draft.json absent + asset exports without characters/props + generator.warnings non-empty | graceful-degrade | `python3 scripts/verify_phase7_smoke.py` (scenario 1) | ❌ Wave 0 (script) |
 | CAST-09 (--skip-reid) | `--skip-reid` → step returns None, no subprocess | CLI | `python3 scripts/verify_phase7_smoke.py` (scenario 2) | ❌ Wave 0 |
-| CAST-09 (counter [N/8]) | run_pipeline.py has 18 `[N/8]` occurrences + step_reid in slot 6 | integration | `grep -c "\[N/8\]" run_pipeline.py` + step order check | ❌ Wave 0 |
+| CAST-09 (counter [N/8]) | run_pipeline.py has 24 `[N/8]` occurrences (20 renumbered + 4 new step_reid [6/8]) + step_reid in slot 6 | integration | `grep -c "\[N/8\]" run_pipeline.py` + step order check | ❌ Wave 0 |
 | CONTRACT-06 (conditional emit) | asset.json with characters.json present → emit data.characters/props; without → omit (byte-identical to v1.0) | contract-conformance | `python3 scripts/verify_phase7_smoke.py` (scenario 1 + 3) | ❌ Wave 0 |
 | CONTRACT-06 (media.characters[] pattern) | media.characters[] paths match `^(?!.*\\.\\.)([^/]+/)*characters/[^:*?"<>|]+\\.png$` | schema-validity | `python3 spec/validate.py` (v1.1 asset fixture green) | ✅ |
 | registry-edits schema | registry.edits.json fixture validates against registry-edits.schema.json | schema-validity | `python3 spec/validate.py` (extended EIGHT_SHAPES → NINE_SHAPES) | ❌ Wave 0 (schema + fixture) |
@@ -1077,7 +1079,7 @@ def call_reid_route(client, body, timeout):
 - [ ] `scripts/export_asset.py` — MODIFY build_asset_dict (conditional characters/props emission)
 - [ ] `scripts/verify_contract.py` — MODIFY _fixture_consistency_check (registry↔shots + confirmed-only assert)
 - [ ] `scripts/verify_phase7_smoke.py` — NEW 5-scenario regression (mirror verify_phase6_smoke.py)
-- [ ] `run_pipeline.py` — MODIFY +step_reid + 18× `[N/7]`→`[N/8]` + 4 flags + --force cache list
+- [ ] `run_pipeline.py` — MODIFY +step_reid + 20× `[N/7]`→`[N/8]` + 4 flags + --force cache list
 - [ ] `spec/validate.py` — MODIFY EIGHT_SHAPES → NINE_SHAPES (add registry-edits)
 - [ ] `README.md` install line — no change (zero new deps; httpx already documented Phase 6)
 
@@ -1130,7 +1132,7 @@ def call_reid_route(client, body, timeout):
   - `scripts/verify_phase6_smoke.py` — DIRECT template for `verify_phase7_smoke.py`（4-scenario → 5-scenario）。
   - `html/gen_timeline_html.py:99-260` (palette + monolithic HTML pattern) — `gen_registry_review.py` 复用 GitHub-dark tokens + f-string template 模式。
   - `html/gen_shots_preview.py:24-39` (`extract_frame_b64` ffmpeg pattern) — apply_edits.py representative PNG 抽取模板。
-  - `run_pipeline.py` 全文 grep：18 处 `[N/7]`（mirror Phase 6 的 17 处 `[N/6]` renumber）。
+  - `run_pipeline.py` 全文 grep：20 处 `[N/7]`（mirror Phase 6 的 17 处 `[N/6]` renumber）。
 - **Phase 5 已 SHIPPED contract layer（frozen target shapes）**:
   - `spec/schemas/registry.schema.json` — clusters[] shape + tier enum + $comment 三档阈值约定（advisory）。
   - `spec/schemas/characters.schema.json` + `props.schema.json` — canonical confirmed-only shape + anti-traversal PNG pattern + ID immutability。
@@ -1156,7 +1158,7 @@ def call_reid_route(client, body, timeout):
 **Confidence breakdown:**
 - Standard stack: **HIGH** — httpx 0.28.1 Phase 6 已装 + 验证 + 用；jsonschema v1.0 基线；ffmpeg 6.1.1 env；零新依赖（sklearn/torch 刻意不在 env）。
 - Contract layer: **HIGH** — Phase 5 已 SHIPPED registry/characters/props/asset schemas + v1.1 fixture set；本 phase 是纯 producer 实现 + 一个新 schema（registry-edits）。
-- Architecture (run_pipeline 整合): **HIGH** — step_semantic 是 DIRECT template；插入点 + 18 处 renumber 已 grep 定位；Pattern proven。
+- Architecture (run_pipeline 整合): **HIGH** — step_semantic 是 DIRECT template；插入点 + 20 处 renumber 已 grep 定位；Pattern proven。
 - HITL HTML: **HIGH** — gen_timeline_html palette + monolithic pattern 已证；gen_shots_preview ffmpeg-base64 已证；UX 是 Claude's Discretion。
 - apply_edits.py (confirmed-only gate): **HIGH** — schema $comment 明列 Pitfall 7 gating；hard-gate pattern 清晰；idempotency 算法明确。
 - Conditional emission: **HIGH** — asset.schema.json 已支持 optional characters/props；build_asset_dict 扩展点清晰；byte-identical 保证（条件式）。
