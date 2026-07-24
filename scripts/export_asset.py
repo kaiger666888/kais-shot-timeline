@@ -42,6 +42,12 @@ from pathlib import Path
 # scripts/export_asset.py → repo root（定位 spec/schemas/asset.schema.json）
 REPO = Path(__file__).parent.parent.resolve()
 
+# ShotTimelineAsset 契约版本（单一真源）。schema_version pattern 在 spec/schemas/
+# asset.schema.json 里保持宽松（接受 "1"/"1.1"/"2.0"），但实际 emit 的字面量在这里锁死。
+# v1.1 = 纯增量（新增 optional characters/props 数据文件 + 丰富 prompts schema）。改这里
+# 即改全资产 emit；Pitfall 12（schema 变更后忘 bump 版本号）因此结构上不可能。
+SCHEMA_VERSION = "1.1"
+
 
 def _probe_duration(path: str) -> float:
     """ffprobe 读取视频时长（秒）；失败回退 0.0。
@@ -157,7 +163,7 @@ def build_asset_dict(work_dir: str, video_path: str) -> dict:
         duration = _probe_duration(video_path)
 
     return {
-        "schema_version": "1",
+        "schema_version": SCHEMA_VERSION,
         "asset_type": "shottimeline",
         "source": {
             "video_filename": video_filename,
