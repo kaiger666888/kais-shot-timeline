@@ -57,6 +57,56 @@
           "type": "array",
           "items": { "type": "string" },
           "description": "v1.1 additive (OPTIONAL — Phase 6). Non-fatal warnings encountered during asset generation (e.g. cinematography route unreachable → empty prompts facets). Older assets omit it and still validate (graceful-degrade). Producer emits the field only when the list is non-empty; absent on clean runs. Operator-facing failure reasons only (exception class + message, route status codes) — no PII, no auth tokens, no body payloads."
+        },
+        "registry_snapshot": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["characters", "props"],
+          "description": "v1.1 additive (OPTIONAL — Phase 8). generator.registry_snapshot is a frozen-at-export-time compact view of confirmed registry entries (characters + props). Embeds id/name/representative_image/appearance_shots per entry — enough for a consumer to resolve prompts.character_refs[]/prop_refs[] and render a gallery WITHOUT re-reading external characters.json/props.json. The registry_snapshot is the export-time truth: later registry mutations (re-review, re-cluster, rename) cannot invalidate already-exported prompt references (Pitfall 18 prevented). Older assets omit registry_snapshot and still validate (graceful-degrade). Producer emits registry_snapshot only when characters.json or props.json exists at export time; absent on assets produced without re-id (v1.0 byte-identical).",
+          "properties": {
+            "characters": {
+              "type": "array",
+              "description": "Character entries in registry_snapshot — confirmed-only (review_state=='confirmed') projection of characters.json at export time. Compact 4-field shape (id/name/representative_image/appearance_shots); omits looks[].",
+              "items": {
+                "type": "object",
+                "additionalProperties": false,
+                "required": ["id", "name", "appearance_shots"],
+                "properties": {
+                  "id": { "type": "string", "pattern": "^char_[0-9]{3}$" },
+                  "name": { "type": "string", "minLength": 1 },
+                  "representative_image": {
+                    "type": "string",
+                    "pattern": "^(?!.*\\.\\.)([^/]+/)*characters/[^:*?\"<>|]+\\.png$"
+                  },
+                  "appearance_shots": {
+                    "type": "array",
+                    "items": { "type": "integer", "minimum": 1 }
+                  }
+                }
+              }
+            },
+            "props": {
+              "type": "array",
+              "description": "Prop entries in registry_snapshot — confirmed-only projection of props.json at export time. Same compact 4-field shape as characters; omits states[].",
+              "items": {
+                "type": "object",
+                "additionalProperties": false,
+                "required": ["id", "name", "appearance_shots"],
+                "properties": {
+                  "id": { "type": "string", "pattern": "^prop_[0-9]{3}$" },
+                  "name": { "type": "string", "minLength": 1 },
+                  "representative_image": {
+                    "type": "string",
+                    "pattern": "^(?!.*\\.\\.)([^/]+/)*props/[^:*?\"<>|]+\\.png$"
+                  },
+                  "appearance_shots": {
+                    "type": "array",
+                    "items": { "type": "integer", "minimum": 1 }
+                  }
+                }
+              }
+            }
+          }
         }
       }
     },
