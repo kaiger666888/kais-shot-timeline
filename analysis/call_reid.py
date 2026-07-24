@@ -191,12 +191,18 @@ def normalize_clusters(route_data: dict | None) -> list[dict]:
                     members.append(member)
             if not members:
                 continue   # 空 cluster 丢弃（schema minItems:1）
-            mc = r.get("mean_cosine")
+            # WR-03：clamp mean_cosine 到 schema range [-1, 1]（registry.schema.json:46-47）。
+            # 路由 bug 回 2.5 / -1.7 等越界值若直通 → draft schema 校验 fail → pipeline crash。
+            mc_raw = r.get("mean_cosine")
+            if isinstance(mc_raw, (int, float)):
+                mc = max(-1.0, min(1.0, float(mc_raw)))   # clamp 到合法 range
+            else:
+                mc = 0.0
             clusters.append({
                 "cluster_id": cid,                            # schema pattern ^(char|prop)_[0-9]{3}$
                 "review_state": "proposed",                   # CAST-05：producer 永远 emit proposed
                 "tier": _tier_for(mc),                        # auto_merge/review/auto_distinct
-                "mean_cosine": float(mc) if isinstance(mc, (int, float)) else 0.0,
+                "mean_cosine": mc,
                 "members": members,
             })
         except (KeyError, TypeError, ValueError, IndexError):
