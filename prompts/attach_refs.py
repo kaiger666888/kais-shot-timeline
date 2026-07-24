@@ -41,24 +41,72 @@ def _load_registry(work_dir: str) -> tuple:
     """读 characters.json + props.json；任一缺席 → 返 [] for that side。
 
     graceful-degrade —— registry 缺席时 refs 空，prompt_text 仍可重组自 facets。
-    仅 review_state == "confirmed" 条目参与（Pitfall 7 consistent）。
+    仅 review_state == "confirmed" 条目参与（Pitfall 7 consistent ——
+    与 apply_edits.py build-time hard gate + _producer_registry_integrity second-line
+    assert 对齐，非-confirmed 绝不进 prompt refs）。
+    坏 JSON / OSError 静默降级（不阻断 timeline 生成）。
     """
-    # STUB (RED) —— 真实实现见 GREEN 阶段
-    return [], []
+    chars: list = []
+    props: list = []
+    cp = os.path.join(work_dir, "characters.json")
+    pp = os.path.join(work_dir, "props.json")
+    if os.path.isfile(cp):
+        try:
+            with open(cp, encoding="utf-8") as f:
+                loaded = json.load(f)
+            if isinstance(loaded, list):
+                # 仅 confirmed 条目参与 prompt refs（Pitfall 7 consistent）
+                chars = [c for c in loaded
+                         if isinstance(c, dict)
+                         and c.get("review_state") == "confirmed"]
+        except (OSError, json.JSONDecodeError):
+            pass   # 静默降级 —— 不阻断 timeline 生成
+    if os.path.isfile(pp):
+        try:
+            with open(pp, encoding="utf-8") as f:
+                loaded = json.load(f)
+            if isinstance(loaded, list):
+                props = [p for p in loaded
+                         if isinstance(p, dict)
+                         and p.get("review_state") == "confirmed"]
+        except (OSError, json.JSONDecodeError):
+            pass
+    return chars, props
 
 
 def attach(prompts, chars, props):
     """对每个 prompt 条目挂 character_refs[]/prop_refs[] + 重组 prompt_text。
 
     Idempotent: 同输入 → 同输出（sorted refs; prompt_text deterministic）。
+    refs 来自 appearance_shots[] 反向索引（sorted(set(...)) —— Pitfall 2 防漂移）。
     """
-    # STUB (RED) —— 不挂 refs、不重组 prompt_text；行为断言将 FAIL
+    # 反向索引：shot_id → [char_id, ...]；name_by_char: id → name
+    char_by_shot: dict = {}
+    name_by_char: dict = {}
+    for c in chars:
+        cid = c.get("id")
+        name_by_char[cid] = c.get("name", cid)
+        for sid in c.get("appearance_shots") or []:
+            char_by_shot.setdefault(sid, []).append(cid)
+    prop_by_shot: dict = {}
+    name_by_prop: dict = {}
+    for p in props:
+        pid = p.get("id")
+        name_by_prop[pid] = p.get("name", pid)
+        for sid in p.get("appearance_shots") or []:
+            prop_by_shot.setdefault(sid, []).append(pid)
+
     out = []
     for entry in prompts:
-        new_entry = dict(entry)
-        new_entry["character_refs"] = []
-        new_entry["prop_refs"] = []
-        # prompt_text 保持原值（不重组）—— RED 断言会 FAIL
+        sid = entry.get("shot_id")
+        # sorted(set(...)) —— idempotent guarantee（Pitfall 2 prevention）
+        crefs = sorted(set(char_by_shot.get(sid, [])))
+        prefs = sorted(set(prop_by_shot.get(sid, [])))
+        new_entry = dict(entry)   # 浅拷贝 —— 保留所有现有 facet 字段
+        new_entry["character_refs"] = crefs
+        new_entry["prop_refs"] = prefs
+        new_entry["prompt_text"] = _recompose(
+            entry, crefs, prefs, name_by_char, name_by_prop)
         out.append(new_entry)
     return out
 
@@ -73,8 +121,29 @@ def _recompose(entry, crefs, prefs, name_by_char, name_by_prop) -> str:
     refs 空时跳过对应 identity 子句。
     Names 仅来自 confirmed registry（无 fabrication）。
     """
-    # STUB (RED) —— 返空串；行为断言将 FAIL
-    return ""
+    parts: list = []
+
+    # Facet parts —— 固定顺序，跳过空值
+    for facet in ("style", "scene"):
+        v = (entry.get(facet) or "").strip()
+        if v:
+            parts.append(v)
+
+    # Identity clauses —— 仅当 refs 非空
+    if crefs:
+        names = [name_by_char.get(cid, cid) for cid in crefs]
+        parts.append(f"角色:[{', '.join(names)}]")
+    if prefs:
+        names = [name_by_prop.get(pid, pid) for pid in prefs]
+        parts.append(f"道具:[{', '.join(names)}]")
+
+    # Remaining facets —— 固定顺序，跳过空值
+    for facet in ("subject", "action", "camera", "lighting"):
+        v = (entry.get(facet) or "").strip()
+        if v:
+            parts.append(v)
+
+    return _SEP.join(parts)
 
 
 def main():
