@@ -1,0 +1,9 @@
+{
+  "confirm_ids": ["char_001", "char_002", "prop_001"],
+  "renames": {
+    "char_001": "少女",
+    "char_002": "路人",
+    "prop_001": "落叶"
+  },
+  "review_notes": "ep01 fixture: 3 clusters all confirmed via HITL review. char_001 auto-merge (mean_cosine 0.92, high confidence); char_002 review band (manually verified distinct from char_001); prop_001 auto-distinct (clearly a prop, not a character)."
+}

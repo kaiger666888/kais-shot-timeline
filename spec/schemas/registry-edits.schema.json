@@ -1,0 +1,63 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://kais.shot-timeline/spec/schemas/registry-edits.schema.json",
+  "draft": "2020-12",
+  "title": "Registry HITL 审阅 edits (review HTML 产 → apply_edits.py 消费)",
+  "description": "Structured HITL review edits round-trip shape (merge_groups/splits/renames/type_overrides/confirm_ids/reject_ids)。Producer by html/gen_registry_review.py (CAST-06 HITL 审阅界面导出按钮);consumer by registry/apply_edits.py (CAST-07 draft+edits → canonical characters.json/props.json)。严格遵守 v1.0 的 strict-schema × lenient-consumer 原则:schema 校验时 additionalProperties:false 全程生效。",
+  "$comment": "CONTEXT Q2 lock (Phase 7):structured + deterministic + idempotent;free-form notes 显式 REJECTED。apply_edits.py 按固定顺序应用:merge → split → rename → type_override → confirm/reject。同一 edits.json 重复 apply 产生 byte-identical characters.json/props.json(Pitfall 5 idempotency guard:splits 新 ID 用 max_existing_N + 1 确定性分配,按 label 字典序绑定)。Pitfall 7 (confirmed-only gate downstream):只有 confirm_ids 中的条目流向 canonical characters.json/props.json;reject_ids 软删除(ID 保留以维护引用完整性)。T-07-01 (Tampering):cluster_id pattern ^(char|prop)_[0-9]{3}$ 拒绝任何 path-traversal 或畸形 ID。T-07-02 (Tampering):apply_edits.py MUST 在 apply 前 Draft202012Validator 预校验本 schema(本 plan 提供 schema;Plan 07-03 强制)。所有字段可选 —— 空 edits {} schema-valid(操作员审阅但无改动的情况)。",
+  "type": "object",
+  "additionalProperties": false,
+  "properties": {
+    "merge_groups": {
+      "type": "array",
+      "description": "簇合并:每组 cluster_id 合并为一个(首个 ID 作 canonical,其余 members 并入)。apply_edits 应用顺序第 1 步。",
+      "items": {
+        "type": "array",
+        "items": {"type": "string", "pattern": "^(char|prop)_[0-9]{3}$"},
+        "minItems": 2
+      }
+    },
+    "splits": {
+      "type": "object",
+      "description": "簇拆分:key=源 cluster_id,value=新 label 列表(apply_edits 按顺序分配新 ID:max_existing_N + 1,确定性 + 幂等)。apply_edits 应用顺序第 2 步。",
+      "additionalProperties": false,
+      "patternProperties": {
+        "^(char|prop)_[0-9]{3}$": {
+          "type": "array",
+          "items": {"type": "string", "minLength": 1},
+          "minItems": 2
+        }
+      }
+    },
+    "renames": {
+      "type": "object",
+      "description": "簇重命名:key=cluster_id,value=新展示名(ID 不变)。apply_edits 应用顺序第 3 步。",
+      "additionalProperties": false,
+      "patternProperties": {
+        "^(char|prop)_[0-9]{3}$": {"type": "string", "minLength": 1}
+      }
+    },
+    "type_overrides": {
+      "type": "object",
+      "description": "簇类型纠正:key=cluster_id,value=新 type(决定 ID prefix char_/prop_ + 流向 characters/props)。apply_edits 应用顺序第 4 步。",
+      "additionalProperties": false,
+      "patternProperties": {
+        "^(char|prop)_[0-9]{3}$": {"type": "string", "enum": ["char", "prop"]}
+      }
+    },
+    "confirm_ids": {
+      "type": "array",
+      "description": "确认条目(→ review_state='confirmed',流向 canonical characters.json/props.json)。apply_edits 应用顺序第 5a 步。",
+      "items": {"type": "string", "pattern": "^(char|prop)_[0-9]{3}$"}
+    },
+    "reject_ids": {
+      "type": "array",
+      "description": "拒绝条目(→ review_state='rejected',软删除,不流向 canonical 但 ID 保留以维护引用完整性)。apply_edits 应用顺序第 5b 步。",
+      "items": {"type": "string", "pattern": "^(char|prop)_[0-9]{3}$"}
+    },
+    "review_notes": {
+      "type": "string",
+      "description": "可选自由文本审阅备注(apply_edits 忽略;审计用)。T-07-03 (Repudiation):提供审计 trail;无加密签名(YAGNI —— 单操作员本地工具)。"
+    }
+  }
+}
