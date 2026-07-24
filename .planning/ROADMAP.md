@@ -112,7 +112,7 @@ Plans:
 Plans:
 **Wave 1** *(contract-first — unblocks Plans 02/03)*
 
-- [ ] 07-01-PLAN.md — spec/schemas/registry-edits.schema.json + spec/fixtures/v1.1/registry.edits.json + spec/validate.py wiring (10th v1.1 shape) [CAST-06, CAST-07 contract layer]
+- [x] 07-01-PLAN.md — spec/schemas/registry-edits.schema.json + spec/fixtures/v1.1/registry.edits.json + spec/validate.py wiring (10th v1.1 shape) [CAST-06, CAST-07 contract layer]
 
 **Wave 2** *(blocked on Wave 1; Plans 02 + 03 parallel)*
 
@@ -164,6 +164,6 @@ Plans:
 | 4. Cross-Repo Contract Verification | v1.0 | 2/2 | Complete | 2026-07-21 |
 | 5. Contract v1.1 | v1.1 | 4/4 | Complete    | 2026-07-24 |
 | 6. Cinematography Auto-Fill (`step_semantic`) | v1.1 | 3/3 | Complete    | 2026-07-24 |
-| 7. Cross-Shot Re-ID Registry + HITL Review (`step_reid`) | v1.1 | 0/? | Planning | - |
+| 7. Cross-Shot Re-ID Registry + HITL Review (`step_reid`) | v1.1 | 1/4 | In Progress|  |
 | 8. Prompt Reference System + shot-timeline HTML Gallery | v1.1 | 0/? | Planning | - |
 | 9. Canvas Consumer Integration (cross-repo) | v1.1 | 0/? | Planning | - |

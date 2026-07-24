@@ -4,13 +4,13 @@ milestone: v1.1
 milestone_name: 分镜语义深化 — 镜头语言 + 跨镜角色/道具注册表
 status: executing
 stopped_at: ""Phase 6 complete (all 3 plans shipped 2026-07-24) — run_pipeline.py step_semantic wired as slot 5 of 7; [N/7] counter locked (Phase 7 bumps to [N/8]); 4 new flags + --force cache list extension; scripts/verify_phase6_smoke.py 3 scenarios green (route-down / --skip-semantic / cache-hit-offline). Phase 6 now shippable as graceful-degrade producer; live route round-trip still deferred per blocker (feat/shot-analysis-route unmerged). Ready for /gsd:verifier-phase 6 then /gsd:plan-phase 7.""
-last_updated: "2026-07-24T18:08:51.906Z"
-last_activity: 2026-07-24 -- Phase 7 planning complete
+last_updated: "2026-07-24T18:22:31.749Z"
+last_activity: 2026-07-24
 progress:
   total_phases: 5
   completed_phases: 2
   total_plans: 11
-  completed_plans: 7
+  completed_plans: 8
   percent: 40
 ---
 
@@ -21,14 +21,14 @@ progress:
 See: .planning/PROJECT.md (updated 2026-07-24)
 
 **Core value:** 把成片解构成可导航、多轨道、带语义的分镜资产（分镜 + 分离音轨 + 对白 + 镜头语言 prompt + 跨镜可复用角色/道具注册表），且形态可移植——能作为下游 `@kais/infinite-canvas` 的「最终资产集合形态」被直接消费。
-**Current focus:** Phase 7 — cross shot re id registry + hitl review (`step_reid`)
+**Current focus:** Phase 7 — Cross-Shot Re-ID Registry + HITL Review (step_reid)
 
 ## Current Position
 
-Phase: 7
-Plan: Not started
+Phase: 7 (Cross-Shot Re-ID Registry + HITL Review (step_reid)) — EXECUTING
+Plan: 2 of 4
 Status: Ready to execute
-Last activity: 2026-07-24 -- Phase 7 planning complete
+Last activity: 2026-07-24
 
 **v1.1 phase sequence (dependency-ordered, research-validated):**
 
@@ -73,6 +73,7 @@ Last activity: 2026-07-24 -- Phase 7 planning complete
 *v1.1 metrics populate as plans complete*
 | Phase 6 P02 | 11min | 2 tasks | 9 files |
 | Phase 06 P03 | 10min | 2 tasks | 2 files |
+| Phase 7 P01 | 4min | 2 tasks | 3 files |
 
 ## Accumulated Context
 
@@ -97,6 +98,8 @@ Carried from v1.0 (still load-bearing):
 - [Phase ?]: Phase 6 Plan 02: LOCKED route to prompts mapping (camera=join shot_scale+camera_primitive+camera_speed+geometry.primitive filtering falsy; action/lighting/style from semantic; subject/scene empty) verified against all 7 captured fixtures -> 0 schema errors. analysis/call_shot_analysis.py is the project first network dependency (httpx 0.28.1).
 - [Phase ?]: Phase 6 Plan 02: graceful-degrade via httpx.HTTPError root catch-all + single preflight short-circuit; per-shot cache key (video_content_hash head+tail 1MB sha256, route_name, route_version). CINEMA-01/03/04/05 complete at component level; CINEMA-02/06 close in Plan 03 (run_pipeline step_semantic + flag wiring).
 - [Phase ?]: Phase 6 Plan 03: run_pipeline step_semantic integrated as slot 5 of 7; [N/7] counter lock per CONTEXT D-XX (Phase 7 bumps to [N/8]); 4 flags + --force cache list extension; verify_phase6_smoke.py 3 scenarios green.
+- [Phase 7]: registry-edits.schema.json locks the HITL edits round-trip contract (merge_groups/splits/renames/type_overrides/confirm_ids/reject_ids/review_notes) — structured + deterministic + idempotent per CONTEXT Q2; free-form notes rejected; all 7 props optional (empty edits {} valid); apply order merge→split→rename→type_override→confirm/reject guarantees byte-identical re-apply (Pitfall 5)
+- [Phase 7]: registry-edits is the 10th v1.1 fixture-regression shape (spec/validate.py 9→10); NOT an asset-dir shape — verify_contract.py EIGHT_SHAPES untouched (Plan 04 extends); CAST-06/CAST-07 NOT marked complete (split across plans 01 contract-layer + 03 implementation)
 
 ### Pending Todos
 
@@ -127,7 +130,7 @@ Items acknowledged and carried forward from v1.0 + v1.1 Out-of-Scope:
 
 ## Session Continuity
 
-Last session: 2026-07-24T15:29:57.776Z
+Last session: 2026-07-24T18:18:00.133Z
 Stopped at: "Phase 6 complete (all 3 plans shipped 2026-07-24) — run_pipeline.py step_semantic wired as slot 5 of 7; [N/7] counter locked (Phase 7 bumps to [N/8]); 4 new flags + --force cache list extension; scripts/verify_phase6_smoke.py 3 scenarios green (route-down / --skip-semantic / cache-hit-offline). Phase 6 now shippable as graceful-degrade producer; live route round-trip still deferred per blocker (feat/shot-analysis-route unmerged). Ready for /gsd:verifier-phase 6 then /gsd:plan-phase 7."
 Resume file: None
 
