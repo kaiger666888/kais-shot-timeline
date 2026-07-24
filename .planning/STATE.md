@@ -3,10 +3,10 @@ gsd_state_version: 1.0
 milestone: v1.1
 milestone_name: 分镜语义深化 — 镜头语言 + 跨镜角色/道具注册表
 status: planning
-last_updated: "2026-07-24T02:23:50.672Z"
+last_updated: "2026-07-24T13:30:00.000Z"
 last_activity: 2026-07-24
 progress:
-  total_phases: 0
+  total_phases: 5
   completed_phases: 0
   total_plans: 0
   completed_plans: 0
@@ -17,27 +17,34 @@ progress:
 
 ## Project Reference
 
-See: .planning/PROJECT.md (updated 2026-07-20)
+See: .planning/PROJECT.md (updated 2026-07-24)
 
-**Core value:** 把成片解构成可移植的分镜资产集合（分镜 + stems + 转录 + prompts），作为下游 `@kais/infinite-canvas` 可直接消费的一等 collection 形态。
-**Current focus:** v1.1 分镜语义深化 — 镜头语言 + 跨镜角色/道具注册表（defining requirements）
+**Core value:** 把成片解构成可导航、多轨道、带语义的分镜资产（分镜 + 分离音轨 + 对白 + 镜头语言 prompt + 跨镜可复用角色/道具注册表），且形态可移植——能作为下游 `@kais/infinite-canvas` 的「最终资产集合形态」被直接消费。
+**Current focus:** v1.1 分镜语义深化 — Phase 5-9 roadmap drafted, awaiting planning start
 
 ## Current Position
 
-Phase: Not started (defining requirements)
+Phase: Phase 5 (Contract v1.1) — planning not yet started
 Plan: —
-Status: Defining requirements
-Last activity: 2026-07-24 — Milestone v1.1 started
+Status: Roadmap drafted (5 phases, 34/34 requirements mapped); ready for `/gsd:plan-phase 5`
+Last activity: 2026-07-24 — v1.1 roadmap created
+
+**v1.1 phase sequence (dependency-ordered, research-validated):**
+1. Phase 5 — Contract v1.1 (no route dep; mirrors v1.0 contract-first)
+2. Phase 6 — Cinematography Auto-Fill `step_semantic` (blocked on cross-repo branch merges)
+3. Phase 7 — Cross-Shot Re-ID Registry + HITL Review `step_reid` (HIGHEST complexity)
+4. Phase 8 — Prompt Reference System + shot-timeline HTML Gallery
+5. Phase 9 — Canvas Consumer Integration (cross-repo, highest coordination cost)
 
 ## Performance Metrics
 
-**Velocity:**
+**Velocity (v1.0 historical):**
 
-- Total plans completed: 9
+- Total plans completed: 9 (across 4 phases)
 - Average duration: ~20min
 - Total execution time: ~40min
 
-**By Phase:**
+**By Phase (v1.0):**
 
 | Phase | Plans | Total | Avg/Plan |
 |-------|-------|-------|----------|
@@ -46,74 +53,67 @@ Last activity: 2026-07-24 — Milestone v1.1 started
 | 3 | 1 | - | - |
 | 4 | 2 | - | - |
 
-*Updated after each plan completion*
 | Phase 02 P02 | 15min | 2 tasks | 3 files |
 | Phase 3 P1 | 45min | 3 tasks | 13 files |
 | Phase 04 P01 | 12min | 2 tasks | 1 files |
 | Phase 04 P02 | 7min | 2 tasks | 2 files |
+
+*v1.1 metrics populate as plans complete*
 
 ## Accumulated Context
 
 ### Decisions
 
 Decisions are logged in PROJECT.md Key Decisions table.
-Recent decisions affecting current work:
+Recent decisions affecting current v1.1 work (post-milestone-bootstrap):
 
-- v1.0 bootstrap: shot-timeline is the authoritative spec owner / external producer (loose coupling)
-- v1.0 bootstrap: canvas uses structural parent node (zone/phase pattern) — reuses 5 renderers, no contract bump
-- v1.0 bootstrap: canvas work happens on branch `feat/canvas-asset-collection` in `kais-aigc-platform`
-- Plan 01-01: schema_version pattern `^(0|[1-9]\d*)(\.(0|[1-9]\d*))?$` (semver-lite; "1" / "1.1" accepted, "v1" / "1.1.1" rejected)
-- Plan 01-01: asset schema additionalProperties:false (strict) — graceful-degrade is runtime consumer behavior, not schema-loosening
-- Plan 01-01: media.stems rejects bass.wav (canonical = vocals/drums/other only — consumer frontend renders 3 stems)
-- Plan 01-01: producer's 5 data JSON shapes already conform to strict schemas (smoke 5/5 valid) — Phase 2 only needs to add asset.json + canonical media rename
-- Plan 01-02 Task 1: SPEC.md is 455 lines, bilingual style matching repo convention; quotes graceful-degrade rule verbatim from asset.schema.json#schema_version.description; covers all 4 phase success criteria + all 6 schema filename references
-- Plan 01-02 Task 2: Human-verify checkpoint APPROVED on first review — SPEC.md confirmed implementable without tribal knowledge; SPEC↔schema drift check passed character-for-character on the graceful-degrade rule quote
-- Plan 01-02: Two-tier authority formalized — schemas are machine-checkable truth, SPEC.md is human-readable overview; on conflict, schema wins; verbatim quoting is the structural mitigation against SPEC↔schema drift (T-01-05)
-- Phase 01 closed: all 4 SPEC-* requirements satisfied; Phase 2 (EXPORT) unblocked — only asset.json manifest + canonical media rename needed (5 data shapes already smoke-valid)
-- [Phase ?]: Plan 02-01: scripts/export_asset.py 产出 ShotTimelineAsset manifest + inline Draft202012Validator 自校验
-- [Phase 02]: Plan 02-01: run_pipeline.py 升级到 6 步 (step_export + --skip-export + --force asset.json + [N/5]→[N/6] 全量替换); fails loud 惯例
-- [Phase 02]: Plan 02-01: video.mp4 canonical symlink target = --video abs path (非 work_dir 内 <orig>.mp4; 后者链到 -an 去 audio 的 h264.mp4)
-- [Phase 02]: Plan 02-01: prompts.json 视作 opaque external input (无 in-repo producer); SPEC.md §5 提到的 gen_prompts_html.py 不存在
-- [Phase 02]: Plan 02-01 (Rule 1 deviation): export_asset.py main 顶部统一 abspath 化所有路径 args —— 修复相对 --stems-source-dir 导致 stem symlinks target 按 symlink 所在目录解析失效
-- [Phase 02]: Plan 02-02: scripts/serve.py _Partial 类重构为 __init__(self, f, start, end, chunk_size) + read() + close()；closure var f → self._f；close() 调 self._f.close() —— 修复 206 success path 的 AttributeError 导致的 FD 泄漏
-- [Phase 02]: Plan 02-02: scripts/check_range.py 落地为 standalone verifier (不接 step_export) —— 避免 port 并发 + producer/server concern 分离；find_free_port + try/finally tear-down
-- [Phase 02]: Plan 02-02: 416/NOT_FOUND/200 分支 deliberately untouched (02-RESEARCH Pitfall 2 verified 它们本就正确)
-- [Phase ?]: Phase 3 Plan 01: Solution A locked (RawArtifact.canvasType + buildPhaseTree L804 override) — 1-line additive change vs Solution B ~80行 parallel builder
-- [Phase ?]: Phase 3 Plan 01: phasePrefix=p13 (P13 · 交付) — master video 是已交付 artifact,语义最贴
-- [Phase ?]: Phase 3 Plan 01: summary + zone 不参与 per-type Zod 断言 (.type 反映 phase renderer 但 data 非媒体); plan SC 全部子节点 指 media-bearing children
-- [Phase ?]: Phase 3 Plan 01: 3 Rule 1 auto-fixes (EXPECTED warn effective type, zone label override, verify childNodes filter) — additive,既有 13 phase 零行为变化
-- [Phase ?]: test
-- [Phase ?]: Plan 04-01: verify_contract.py canonical harness — 3 modes (producer/consumer/e2e placeholder) + self-test; inline jsonschema on 6 schemas (asset shape NOT subprocessed to spec/validate.py since SMOKE_SHAPES excludes it)
-- [Phase ?]: Plan 04-01: self-test semantics — PASS=harness detects drift (exit 0); FAIL=harness broken (exit 1). Aligned with RESEARCH §Regression Invariants (meta-test of fail-loud property)
-- [Phase ?]: Plan 04-02: e2e backend teardown requires start_new_session=True + os.killpg (Rule 1 fix) — npx tsx forks child node process; SIGTERM-only on npx parent leaves orphan backend
-- [Phase ?]: Plan 04-02: e2e SQL 直查 o_agentWorkData JSON blob (Pitfall 1) — /api/canvas/v2/load-v2 reads relational canvas_nodes which import-from-dir doesn't write
-- [Phase ?]: Plan 04-02: SC-1 prompt-children scope reduction formally recorded — Phase 3 D3 deferred prompts/transcript to sidecar data refs; observable collection = storyboard/audio/video (not a gap)
-- [Phase ?]: Plan 04-02: WR-01/04 formally accepted (not fixing in v1.0) — primary appendAndSync path unaffected; save-v2 latent bugs belong to consumer-repo backlog
+- **v1.1 schema_version**: `"1.1"` (minor bump, NOT `"2"`) — per project SPEC semver-lite rule; pure additive changes = minor; reserve major for future genuinely-breaking change. Research SUMMARY OPEN DECISION resolved.
+- **v1.1 new analysis**: shot-timeline calls kais-aigc-platform HTTP routes (thin httpx client, zero ML deps) — reuses validated cinematography infra; maintains v1.0 loose coupling
+- **v1.1 re-id**: cross-shot registry with mandatory HITL review (accept SOTA 60-80% mAP, treat review as feature not polish)
+- **v1.1 canvas edit scope**: append `"1.1"` to `SHOT_TIMELINE_KNOWN_VERSIONS` + emit character/prop child nodes as `type:"asset"` + `assetType:"character"|"prop"` — NO custom renderer, NO Zod bump (canvas Zod already permissive on `assetType`)
+
+Carried from v1.0 (still load-bearing):
+- shot-timeline is authoritative spec owner / external producer (loose coupling)
+- Canvas uses structural parent node (zone/phase pattern) — reuses 5 renderers, no contract bump
+- Canvas work happens on branch `feat/canvas-asset-collection` in `kais-aigc-platform`
+- Two-tier authority: schemas are machine-checkable truth, SPEC.md is human-readable overview; on conflict schema wins
+- schema_version pattern `^(0|[1-9]\d*)(\.(0|[1-9]\d*))?$` (semver-lite)
 
 ### Pending Todos
 
-None yet.
+None yet for v1.1 execution (planning not yet started).
 
 ### Blockers/Concerns
 
-- Cross-repo coordination: Phase 3 + 4 involve `kais-aigc-platform` (separate GSD project, v2.0). Plan-phase must surface the branch + repo path explicitly.
-- `scripts/serve.py` has known concerns (FD leak on client disconnect, binds `0.0.0.0` unauth). EXPORT-03 depends on this server; may need targeted hardening inside Phase 2.
+- **Cross-repo branch merge (Phase 6 hard prerequisite):** kais-aigc-platform branches `feat/shot-geometry-nodes` + `feat/shot-analysis-route` are unmerged. Phase 6 contract/coding can proceed, but end-to-end verification is blocked until both merge. Flag explicitly in `/gsd:plan-phase 6`.
+- **DINOv2 threshold calibration (Phase 7 research spike):** Literature τ≈0.30 cosine distance unvalidated on 《小江湖》-style animation. Plan-phase 7 must run `/gsd:plan-phase --research-phase 7` to produce ep01 same-person vs different-person cosine histogram and document the valley pick before locking the default τ.
+- **Cross-repo coordination cost (Phase 9):** ~30% overhead measured in v1.0 for consumer-side work in kais-aigc-platform `feat/canvas-asset-collection` worktree at `/data/workspace/kst-canvas-consumer`.
+- **`character-reid` route does not yet exist (Phase 7):** Only `shot-analysis` exists today. Phase 7 includes building the new route + driver in kais-aigc-platform (THIN wrapper mirroring `shot-analysis`).
+- **`prompts.json#scene` field unmapped:** Current `shot-analysis` route output has no scene source. Phase 6 must decide leave-empty vs future Qwen-VL extension. Do NOT fabricate.
 
 ## Deferred Items
 
-Items acknowledged and carried forward from milestone bootstrap:
+Items acknowledged and carried forward from v1.0 + v1.1 Out-of-Scope:
 
 | Category | Item | Status | Deferred At |
 |----------|------|--------|-------------|
-| v2 (Out of Scope) | NATIVE-01/02: canvas native timeline renderer + native Range media service | Deferred to next milestone | 2026-07-20 |
-| v2 (Out of Scope) | ORCH-01: shot-timeline as canvas orchestration skill (tight-coupling alt) | Deferred — evaluate post-v1.0 | 2026-07-20 |
+| v1.0 (Out of Scope) | NATIVE-01/02: canvas native timeline renderer + native Range media service | Deferred — next milestone | 2026-07-20 |
+| v1.0 (Out of Scope) | ORCH-01: shot-timeline as canvas orchestration skill (tight-coupling alt) | Deferred — evaluate post-v1.0 | 2026-07-20 |
+| v1.0 (Accepted) | WR-01/WR-04: save-v2 secondary-path latent bugs | Consumer-repo backlog | 2026-07-21 |
+| v1.1 (v2) | REID-01: InsightFace `antelopev2`/`buffalo_l` face fusion signal | Deferred — non-commercial license; evaluate if DINOv2 underperforms | 2026-07-24 |
+| v1.1 (v2) | PROMPT-DIALECT-01: prompt_text dialect switch (paragraph vs keyword) | Deferred — v2 | 2026-07-24 |
+| v1.1 (v2) | CROSSVIDEO-01: cross-video character continuity | Deferred — v2 | 2026-07-24 |
+| v1.1 (v2) | SPEAKER-01: dialogue → speaker attribution | Deferred — v2 | 2026-07-24 |
+| v1.1 (v2) | BBOX-01/CANVAS-EDGE-01/TURNAROUND-01: display enhancements | Deferred — v2 | 2026-07-24 |
 
 ## Session Continuity
 
-Last session: 2026-07-20T19:47:03.564Z
-Stopped at: "Phase 01 complete — both plans done (01-01 schemas + 01-02 SPEC.md); ready for Phase 2 planning"
+Last session: 2026-07-24T13:30:00.000Z
+Stopped at: "v1.1 roadmap created — 5 phases (5-9), 34/34 requirements mapped; ready for `/gsd:plan-phase 5`"
 Resume file: None
 
 ## Operator Next Steps
 
-- Start the next milestone with /gsd-new-milestone
+- `/gsd:plan-phase 5` — Plan the Contract v1.1 phase (no external dependencies, unblock first)
+- After Phase 5: `/gsd:plan-phase 6` — flag cross-repo branch merge prerequisite in the plan
+- `/gsd:plan-phase 7` — use `--research-phase 7` for DINOv2 τ calibration spike

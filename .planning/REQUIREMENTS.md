@@ -8,7 +8,7 @@
 
 ## v1 Requirements
 
-v1.1 milestone 范围。每条映射到一个 phase（见 Traceability，roadmapper 填）。
+v1.1 milestone 范围。每条映射到一个 phase（见 Traceability）。
 
 ### CONTRACT — ShotTimelineAsset 契约 minor bump (schema_version 1→1.1，纯增量)
 
@@ -89,7 +89,7 @@ v1.1 milestone 范围。每条映射到一个 phase（见 Traceability，roadmap
 | 角色图 base64 内嵌 `characters.json` | 资产膨胀 10-50×（甚于 frames.json）；用外置 `characters/<id>.png` + `serve.py` |
 | 把 `camera: string` 重构成 `{shot_scale, primitive, speed}` 结构对象 | 破坏性 semantic shift → 触发 major bump（违反 minor-only 决定）；要结构化就**并列**加新字段 |
 | shot-timeline 内重跑 ML（SAM3/DINOv2/聚类/Whisper） | 走外部 kais-aigc-platform 路由，shot-timeline 保持 thin（仅 httpx，零 ML 依赖） |
-| 画布 custom renderer / 新 canvasType | 复用现有 `asset` 节点 + `assetType`，v1.0 已透传 structural types，零 contract bump |
+| 画布 custom renderer / 新 canvasType | 复用现有 `asset` 节点 + `assetType`，v1.0 已透传 structural Types，零 contract bump |
 | CLIP / OpenCLIP 做 re-id embedding | image-text 对齐不适合实例身份识别；DINOv2 自监督才是正解 |
 | schema_version 跳 `"2"` / `"3"` | 按项目 SPEC semver-lite：纯增量 = minor (`1.1`)；major 留给未来破坏性变更 |
 | 修改 shot-timeline 现有检测/转录/分离算法 | validated 基线不动；新分析全部走外部路由 |
@@ -98,17 +98,57 @@ v1.1 milestone 范围。每条映射到一个 phase（见 Traceability，roadmap
 
 ## Traceability
 
-roadmapper 创建时填充（phase 编号续接 v1.0，从 Phase 5 起）。
+Phase 编号续接 v1.0（Phase 1-4 SHIPPED）。v1.1 从 Phase 5 起，dependency-ordered。
 
 | Requirement | Phase | Status |
 |-------------|-------|--------|
-| *(待 roadmap 填)* | | |
+| CONTRACT-01 | Phase 5 | Pending |
+| CONTRACT-02 | Phase 5 | Pending |
+| CONTRACT-03 | Phase 5 | Pending |
+| CONTRACT-04 | Phase 5 | Pending |
+| CONTRACT-05 | Phase 5 | Pending |
+| CONTRACT-06 | Phase 5 | Pending |
+| CONTRACT-07 | Phase 5 | Pending |
+| CONTRACT-08 | Phase 5 | Pending |
+| CONTRACT-09 | Phase 5 | Pending |
+| CINEMA-01 | Phase 6 | Pending |
+| CINEMA-02 | Phase 6 | Pending |
+| CINEMA-03 | Phase 6 | Pending |
+| CINEMA-04 | Phase 6 | Pending |
+| CINEMA-05 | Phase 6 | Pending |
+| CINEMA-06 | Phase 6 | Pending |
+| CAST-01 | Phase 7 | Pending |
+| CAST-02 | Phase 7 | Pending |
+| CAST-03 | Phase 7 | Pending |
+| CAST-04 | Phase 7 | Pending |
+| CAST-05 | Phase 7 | Pending |
+| CAST-06 | Phase 7 | Pending |
+| CAST-07 | Phase 7 | Pending |
+| CAST-08 | Phase 7 | Pending |
+| CAST-09 | Phase 7 | Pending |
+| PROMPT-01 | Phase 8 | Pending |
+| PROMPT-02 | Phase 8 | Pending |
+| PROMPT-03 | Phase 8 | Pending |
+| PROMPT-04 | Phase 8 | Pending |
+| PRESENT-01 | Phase 8 | Pending |
+| PRESENT-02 | Phase 8 | Pending |
+| PRESENT-03 | Phase 8 | Pending |
+| PRESENT-04 | Phase 9 | Pending |
+| PRESENT-05 | Phase 9 | Pending |
+| PRESENT-06 | Phase 9 | Pending |
 
 **Coverage:**
 - v1 requirements: 34 total
-- Mapped to phases: 0（待 roadmap）
-- Unmapped: 34 ⚠️（roadmap 阶段清零）
+- Mapped to phases: 34 ✓
+- Unmapped: 0
+
+**Phase distribution:**
+- Phase 5 (Contract v1.1): 9 requirements — CONTRACT-01..09
+- Phase 6 (Cinematography Auto-Fill): 6 requirements — CINEMA-01..06
+- Phase 7 (Cross-Shot Re-ID + HITL Review): 9 requirements — CAST-01..09
+- Phase 8 (Prompt Reference + HTML Gallery): 7 requirements — PROMPT-01..04, PRESENT-01..03
+- Phase 9 (Canvas Consumer Integration): 3 requirements — PRESENT-04..06
 
 ---
 *Requirements defined: 2026-07-24*
-*Last updated: 2026-07-24 after /gsd-new-milestone v1.1 requirements definition*
+*Last updated: 2026-07-24 after /gsd:new-project roadmap creation — 34/34 requirements mapped, 0 unmapped*
