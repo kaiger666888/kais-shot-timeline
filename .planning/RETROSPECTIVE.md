@@ -47,6 +47,55 @@ A repo-agnostic ShotTimelineAsset format contract spanning two repos (loose coup
 
 ---
 
+## Milestone: v1.1 — 分镜语义深化 (镜头语言 + 跨镜角色/道具注册表)
+
+**Shipped:** 2026-07-25
+**Phases:** 5 | **Plans:** 16 | **Tasks:** 32 | **Requirements:** 34/34 satisfied
+
+### What Was Built
+- v1.1 ShotTimelineAsset contract (3 new registry schemas + 2 additive schema extensions; schema_version `1`→`1.1` producer-locked; v1↔v1.1 bidirectional cross-version self-test).
+- Cinematography auto-fill `step_semantic` (httpx client + LOCKED route→prompts mapping + per-shot cache + graceful-degrade + generator.warnings).
+- Cross-shot re-id registry + first-class HITL review HTML (`call_reid.py` + `apply_edits.py` confirmed-only gate + `gen_registry_review.py` + registry-edits schema; `step_reid` slot 6 of 8).
+- Prompt reference system (`attach_refs.py` deterministic recompose + `registry_snapshot` freeze + gallery/chips/indicator + XSS hardening).
+- Canvas consumer v1.1 (character/prop `asset` nodes via §7 post-process + typeIcons; no custom renderer / no Zod bump; 29/29 verify).
+
+### What Worked
+- **Contract-first sequencing held** (Phase 5 schemas → Phase 6-9 producer): zero "shape churn" — every producer wrote against a frozen contract. The v1.0 pattern reproduced cleanly.
+- **Code review caught real blockers every phase** (Phase 6: 2, Phase 7: 5, Phase 8: 1, Phase 9: 1 — total 9 blockers + 22 warnings, ALL fixed + empirically verified). The empirically-reproduce-before-reporting discipline was load-bearing (especially the Phase 9 CR-01 filePath-missing bug hidden by a verify harness that skipped Zod on the v1.1 run).
+- **Graceful-degrade as first-class** let every cross-repo route dependency (shot-analysis, character-reid, e2e) be DEFERRED without blocking the producer/contract side — the milestone shipped complete-in-this-repo with documented pre-authorized deferrals.
+- **Phase 7 CR-04 XSS lesson carried forward** to Phase 8 (title/video_src) — the lesson propagated, though it still found new sinks each phase (worth a project-wide XSS pass next).
+- **Cross-repo execution via explicit-file `git add` discipline** preserved the user's uncommitted WIP in the consumer worktree across all 8+ consumer commits.
+
+### What Was Inefficient
+- **`wave_0_complete: false` frontmatter flags stale on 07/08/09** — the VALIDATION.md frontmatter wasn't flipped after execution (the Wave 0 work IS done). Minor doc staleness; the actual verification (validate.py + smoke) is authoritative.
+- **`__file__`-in-`python3 -c` blocker recurred in Phase 7 planning** — the Phase 6 close-fix had fixed it in code, but the Phase 7 PLAN re-introduced it in verify blocks. The plan-checker caught it, but a project-wide lint/checklist would prevent recurrence.
+- **Assert E baseline (`origin/master..HEAD`) was structurally broken** on the consumer branch (origin/master advanced past the branch tip) — discovered in Phase 9 review, fixed to `merge-base`. A pre-flight check of the baseline before relying on it would help.
+
+### Patterns Established
+- **Graceful-degrade deferral pattern**: cross-repo route unavailable → schema-valid empty/absent field + generator.warnings + asset still exports. Enables shipping the producer/contract side ahead of the cross-repo route.
+- **Confirmed-only gating at N defense-in-depth layers** (build + attach + snapshot + verify + consumer filter) — Pitfall 7 enforced redundantly.
+- **`registry_snapshot` freeze (Pitfall 18)**: export-time truth embedded in asset.json so later registry mutations can't invalidate exported refs.
+- **§7 buildPhaseTree post-process workaround**: emit asset nodes via RawArtifact push + post-process `tree.artifactNodes[*].data.assetType` (because the extra-merge guard drops it). Documented for future canvas node-type additions.
+
+### Key Lessons
+- **A green verify harness can still hide blockers** if it skips a check on the new code path (Phase 9 CR-01: v1.1 run skipped `validateGraphNodes`). New-code-path verification must mirror the v1.0 path's rigor.
+- **The deferred cross-repo routes are the critical path for v1.1's full value** — the producer/contract side is done, but the user only gets real cinematography/re-id when `feat/shot-analysis-route` merges + `character-reid` is built. Track these as post-merge smoke items.
+
+### Cost Observations
+- **Model mix:** planner=opus, executors/researchers/checkers/verifiers/code-reviewers/code-fixers/integration-checker=sonnet, consumer-map=Explore. Opus planning produced clean wave splits + caught the §7 caveat.
+- **Subagents spawned:** ~35 across the milestone (5× {researcher, planner, checker, executor×waves, code-reviewer, code-fixer, verifier} + integration-checker + 1 Explore + 2 inline revisions).
+- **Code review ROI high**: 9 blockers caught before ship — without it, the Phase 9 save-v2 HTTP 400 + the Phase 7/8 XSS + the Phase 7 silent-data-loss bugs would have shipped.
+
+---
+
 ## Cross-Milestone Trends
 
-*(First milestone — trends populate as v1.1+ ship.)*
+*(2 milestones shipped. Trends below compare v1.0 → v1.1.)*
+
+| Trend | v1.0 | v1.1 |
+|-------|------|------|
+| Phases / Plans | 4 / 7 | 5 / 16 |
+| Code-review blockers caught | (not run uniformly) | 9 (all fixed) |
+| Cross-repo overhead | ~30% | ~30% (consistent) |
+| Deferred-at-ship items | 2 (WR-01/04) | 3 (cross-repo routes + e2e) |
+| Graceful-degrade deferrals | 1 (canvas) | 3 (shot-analysis, character-reid, e2e) — pattern now standard |
