@@ -48,9 +48,10 @@ MINIMAL_ORDER = ["asset", "shots", "audio_analysis", "transcript", "frames", "pr
 # smoke 阶段只校验 5 个数据形状(asset.json 由 Phase 2 导出器生成,真实生产目录里没有)
 SMOKE_SHAPES = ["shots", "audio_analysis", "transcript", "frames", "prompts"]
 
-# v1.1 fixture set (Phase 5 additive) —— 9 shapes。minimal 仍 gate 退出码(CONTRACT-09)；
-# v1.1 失败也计入退出码(v1.1 fixture 必须 schema-valid —— Plan 01 schemas 必须接受 Plan 03 fixtures)。
-# registry fixture 文件名是 registry.draft.json(pipeline-internal canonical 名,非 <shape>.json)。
+# v1.1 fixture set (Phase 5 additive + Phase 7 additive) —— 10 shapes. minimal 仍 gate 退出码
+# (CONTRACT-09);v1.1 失败也计入退出码(v1.1 fixture 必须 schema-valid)。registry fixture 文件名
+# 是 registry.draft.json (pipeline-internal canonical 名);registry-edits fixture 文件名是
+# registry.edits.json (HITL review round-trip canonical 名 —— Plan 07-01 新增)。
 V11_FIXTURE_DIR = SPEC_DIR / "fixtures" / "v1.1"
 V11_FIXTURE_MAP = {
     "asset": "asset.json",
@@ -62,10 +63,11 @@ V11_FIXTURE_MAP = {
     "characters": "characters.json",
     "props": "props.json",
     "registry": "registry.draft.json",
+    "registry-edits": "registry.edits.json",
 }
 V11_ORDER = [
     "asset", "shots", "audio_analysis", "transcript", "frames", "prompts",
-    "characters", "props", "registry",
+    "characters", "props", "registry", "registry-edits",
 ]
 
 
@@ -115,11 +117,13 @@ def validate_minimal() -> int:
 
 
 def validate_v11() -> int:
-    """对 spec/fixtures/v1.1/ 下的 9 个 v1.1 fixture 跑 schema 校验,返回失败数。
+    """对 spec/fixtures/v1.1/ 下的 10 个 v1.1 fixture 跑 schema 校验,返回失败数。
 
-    v1.1 fixture set(Phase 5)= minimal 的 6 形状(复用 substrate)+ characters
-    /props/registry 三个 v1.1 新形状。registry fixture 文件名是 registry.draft.json
-    (pipeline-internal canonical 名)。复用 load_validator + _format_errors,不复制。
+    v1.1 fixture set(Phase 5 + Phase 7)= minimal 的 6 形状(复用 substrate)
+    + characters/props/registry 三个 Phase 5 新形状 + registry-edits 一个 Phase 7
+    新形状(HITL review round-trip canonical 名)。registry fixture 文件名是
+    registry.draft.json(pipeline-internal canonical 名)。复用 load_validator
+    + _format_errors,不复制。
     """
     failures = 0
     for shape in V11_ORDER:
