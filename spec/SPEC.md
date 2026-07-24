@@ -331,7 +331,7 @@ Reference schema: `spec/schemas/frames.schema.json`
 | `end_sec` | number (≥0) | ✓ | 镜头结束秒 |
 | `duration` | number (>0) | ✓ | 镜头时长 |
 | `subject` | string | ✓ | 画面主体(角色、关键物件) |
-| `action` | string | ✓ | 动作 / 事件 |
+| `action` | string | ✓ | **完整物理动作链**(谁→做什么→一步步→物理合理,如"抬头→伸手接住浆果→捧到嘴边→张嘴咬下→咀嚼,表情舒展")。不要只写一句话("缓缓抬头"不够)——下游视频模型靠这条链路演动作,写简了会瞎演/违反物理。运镜放 `camera` |
 | `camera` | string | ✓ | 镜头语言(景别、运镜) |
 | `scene` | string | ✓ | 场景 / 环境 |
 | `lighting` | string | ✓ | 光线质量与方向 |
@@ -345,10 +345,10 @@ Reference schema: `spec/schemas/frames.schema.json`
 ```json
 [
   {"shot_id": 1, "start_sec": 0.0, "end_sec": 1.5, "duration": 1.5,
-   "subject": "少女特写", "action": "缓缓抬头",
+   "subject": "少女特写", "action": "垂眸片刻后缓缓抬起头,目光从地面移向窗外,嘴角微微上扬,几缕发丝随抬头动作轻轻晃动",
    "camera": "近景,固定机位", "scene": "室内,逆光",
    "lighting": "侧逆光,柔光", "style": "动画赛璐珞质感",
-   "prompt_text": "近景固定机位,少女在室内逆光下缓缓抬头,侧逆光柔和,动画赛璐珞质感"}
+   "prompt_text": "近景固定机位,少女在室内逆光下垂眸片刻后缓缓抬起头,目光移向窗外,嘴角微扬,发丝轻晃,侧逆光柔和,动画赛璐珞质感"}
 ]
 ```
 
