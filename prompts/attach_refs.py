@@ -24,9 +24,43 @@ from pathlib import Path
 
 REPO = Path(__file__).resolve().parent.parent
 PROMPTS_SCHEMA = REPO / "spec" / "schemas" / "prompts.schema.json"
+CHARACTERS_SCHEMA = REPO / "spec" / "schemas" / "characters.schema.json"
+PROPS_SCHEMA = REPO / "spec" / "schemas" / "props.schema.json"
 
 # Pattern 2 separator —— U+00B7 middle dot, 空格分隔
 _SEP = " · "
+
+
+def _validate_registry(schema_path: Path, instance, label: str) -> None:
+    """Schema-validate loaded canonical registry BEFORE consuming（WR-02 fix）。
+
+    Mirror apply_edits.py:239 _validate pattern（Phase 7 WR-05 "validate draft
+    pre-apply" fix）。canonical characters.json/props.json 由 apply_edits 写出
+    时 schema-valid；若 attach_refs 读到的内容 schema invalid（如手改导致
+    `"name": null`），说明文件被外部损坏 —— fail loud (sys.exit) 而非让畸形
+    entry 流到 ', '.join([None, ...]) 触发 TypeError traceback。
+
+    Args:
+        schema_path: Path 对象（characters.schema.json / props.schema.json）。
+        instance:    json.load 后的 Python 对象。
+        label:       'characters' / 'props'，仅用于错误消息。
+
+    On validation error: sys.exit non-zero with descriptive message（fails loud）。
+    """
+    # lazy import：沿用 CLAUDE.md 的 optional-dep lazy-import 惯例（同 main() 的
+    # PROMPTS_SCHEMA 校验）
+    from jsonschema import Draft202012Validator
+    with open(schema_path, encoding="utf-8") as f:
+        schema = json.load(f)
+    errors = list(Draft202012Validator(schema).iter_errors(instance))
+    if errors:
+        msgs = [f"  - [{'/'.join(str(p) for p in e.absolute_path) or '<root>'}] {e.message}"
+                for e in errors[:10]]
+        sys.exit(
+            f"[attach-refs] FAIL: {label} registry ({schema_path.name}) "
+            f"validation failed ({len(errors)} errors):\n" + "\n".join(msgs)
+            + (f"\n  ... and {len(errors) - 10} more" if len(errors) > 10 else "")
+        )
 
 
 def _atomic_write(path: str, data) -> None:
@@ -45,6 +79,9 @@ def _load_registry(work_dir: str) -> tuple:
     与 apply_edits.py build-time hard gate + _producer_registry_integrity second-line
     assert 对齐，非-confirmed 绝不进 prompt refs）。
     坏 JSON / OSError 静默降级（不阻断 timeline 生成）。
+    Schema-invalid canonical registry（如 name: null）→ fail loud (sys.exit) ——
+    WR-02 fix：mirror apply_edits._validate，让畸形 entry 不流到 ', '.join 触发
+    TypeError traceback，而是给操作者清晰的 "[attach-refs] FAIL" 错误。
     """
     chars: list = []
     props: list = []
@@ -55,17 +92,24 @@ def _load_registry(work_dir: str) -> tuple:
             with open(cp, encoding="utf-8") as f:
                 loaded = json.load(f)
             if isinstance(loaded, list):
+                # Phase 8 REVIEW WR-02 fix：schema-validate BEFORE filter/consume。
+                # canonical 文件应是 apply_edits 产出的 schema-valid 内容；若 invalid
+                # 说明被外部手改/损坏 → fail loud (sys.exit) 给操作者清晰信号，
+                # 不让畸形 entry 流到 ', '.join([None, ...]) 触发 TypeError。
+                _validate_registry(CHARACTERS_SCHEMA, loaded, "characters")
                 # 仅 confirmed 条目参与 prompt refs（Pitfall 7 consistent）
                 chars = [c for c in loaded
                          if isinstance(c, dict)
                          and c.get("review_state") == "confirmed"]
         except (OSError, json.JSONDecodeError):
-            pass   # 静默降级 —— 不阻断 timeline 生成
+            pass   # 静默降级 —— 不阻断 timeline 生成（IN-02）
     if os.path.isfile(pp):
         try:
             with open(pp, encoding="utf-8") as f:
                 loaded = json.load(f)
             if isinstance(loaded, list):
+                # Phase 8 REVIEW WR-02 fix：同上，schema-validate BEFORE consume。
+                _validate_registry(PROPS_SCHEMA, loaded, "props")
                 props = [p for p in loaded
                          if isinstance(p, dict)
                          and p.get("review_state") == "confirmed"]
