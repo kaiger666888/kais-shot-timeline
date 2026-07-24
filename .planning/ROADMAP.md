@@ -28,7 +28,7 @@ A repo-agnostic **ShotTimelineAsset** format contract: the canonical "asset coll
 Strict-additive, contract-first minor bump on v1.0. Adds two new pipeline stages calling ML HTTP routes in `kais-aigc-platform` (cinematography analysis + cross-shot re-id), three new optional data files (`characters.json`, `props.json`, enriched `prompts.json`), an HITL review HTML deliverable, and a canvas consumer extension. Mirrors v1.0's contract-first sequencing that worked.
 
 - [x] **Phase 5: Contract v1.1** — schemas + SPEC + fixtures + verify harness (no route dependency) (completed 2026-07-24)
-- [ ] **Phase 6: Cinematography Auto-Fill (`step_semantic`)** — httpx client + graceful-degrade + per-shot cache
+- [x] **Phase 6: Cinematography Auto-Fill (`step_semantic`)** — httpx client + graceful-degrade + per-shot cache (completed 2026-07-24)
 - [ ] **Phase 7: Cross-Shot Re-ID Registry + HITL Review (`step_reid`)** — HIGHEST complexity; new route + driver + review HTML
 - [ ] **Phase 8: Prompt Reference System + shot-timeline HTML Gallery** — narrative continuity + producer-side display
 - [ ] **Phase 9: Canvas Consumer Integration (cross-repo)** — append `"1.1"` + emit character/prop nodes (no renderer / no Zod bump)
@@ -92,7 +92,7 @@ Plans:
 
 **Wave 3** *(blocked on Waves 1 + 2)*
 
-- [ ] 06-03-PLAN.md — run_pipeline.py step_semantic (slots between transcribe + timeline) + 17 [N/6]→[N/7] renumber + 4 new flags (--skip-semantic/--offline/--analysis-url/--analysis-timeout) + --force cache list extension + scripts/verify_phase6_smoke.py 3-scenario regression [CINEMA-02, CINEMA-03, CINEMA-06]
+- [x] 06-03-PLAN.md — run_pipeline.py step_semantic (slots between transcribe + timeline) + 17 [N/6]→[N/7] renumber + 4 new flags (--skip-semantic/--offline/--analysis-url/--analysis-timeout) + --force cache list extension + scripts/verify_phase6_smoke.py 3-scenario regression [CINEMA-02, CINEMA-03, CINEMA-06]
 
 ### Phase 7: Cross-Shot Re-ID Registry + HITL Review (`step_reid`)
 
@@ -148,7 +148,7 @@ Plans:
 | 3. Canvas Consumer | v1.0 | 1/1 | Complete | 2026-07-21 |
 | 4. Cross-Repo Contract Verification | v1.0 | 2/2 | Complete | 2026-07-21 |
 | 5. Contract v1.1 | v1.1 | 4/4 | Complete    | 2026-07-24 |
-| 6. Cinematography Auto-Fill (`step_semantic`) | v1.1 | 2/3 | In Progress|  |
+| 6. Cinematography Auto-Fill (`step_semantic`) | v1.1 | 3/3 | Complete   | 2026-07-24 |
 | 7. Cross-Shot Re-ID Registry + HITL Review (`step_reid`) | v1.1 | 0/? | Planning | - |
 | 8. Prompt Reference System + shot-timeline HTML Gallery | v1.1 | 0/? | Planning | - |
 | 9. Canvas Consumer Integration (cross-repo) | v1.1 | 0/? | Planning | - |
