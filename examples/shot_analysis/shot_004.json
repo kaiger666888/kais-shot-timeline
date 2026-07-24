@@ -1,0 +1,33 @@
+{
+  "shot_id": "shot_004",
+  "geometry": {
+    "primitive": "dolly_or_zoom_in",
+    "ambiguous": true,
+    "note": "2D层无法区分前推(dolly)与变焦(zoom)，需语义层或焦距估计复核",
+    "camera": {
+      "pan_px_per_frame": -0.085,
+      "tilt_px_per_frame": -0.669,
+      "zoom_px_per_frame": 4.462,
+      "roll_deg_per_frame": 0.0056
+    },
+    "speed": "medium",
+    "flow_agreement": 0.251,
+    "frames_analyzed": 34,
+    "resolution": [
+      1920,
+      1080
+    ]
+  },
+  "semantic": {
+    "shot_scale": "中景",
+    "camera_primitive": "follow",
+    "camera_speed": "fast",
+    "subject_motion": "向前奔跑",
+    "lens_feel": "normal",
+    "lighting": "自然光"
+  },
+  "conflict": [
+    "geometry=dolly_or_zoom_in vs semantic=follow"
+  ],
+  "need_api_review": true
+}

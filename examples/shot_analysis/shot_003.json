@@ -1,0 +1,31 @@
+{
+  "shot_id": "shot_003",
+  "geometry": {
+    "primitive": "pan_right",
+    "ambiguous": true,
+    "note": "2D层无法区分摇镜(pan/tilt)与平移轨(truck/pedestal)，短镜头内观感近似",
+    "camera": {
+      "pan_px_per_frame": 18.009,
+      "tilt_px_per_frame": -2.853,
+      "zoom_px_per_frame": -0.009,
+      "roll_deg_per_frame": 0.0081
+    },
+    "speed": "fast",
+    "flow_agreement": 0.389,
+    "frames_analyzed": 41,
+    "resolution": [
+      1920,
+      1080
+    ]
+  },
+  "semantic": {
+    "shot_scale": "中景",
+    "camera_primitive": "follow",
+    "camera_speed": "fast",
+    "subject_motion": "飞虫持刀向前飞行",
+    "lens_feel": "normal",
+    "lighting": "雾气弥漫"
+  },
+  "conflict": [],
+  "need_api_review": true
+}

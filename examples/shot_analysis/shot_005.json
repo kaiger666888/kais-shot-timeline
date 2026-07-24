@@ -1,0 +1,31 @@
+{
+  "shot_id": "shot_005",
+  "geometry": {
+    "primitive": "static",
+    "ambiguous": false,
+    "note": "",
+    "camera": {
+      "pan_px_per_frame": 0.273,
+      "tilt_px_per_frame": 0.001,
+      "zoom_px_per_frame": -0.007,
+      "roll_deg_per_frame": -0.0004
+    },
+    "speed": "static",
+    "flow_agreement": 0.993,
+    "frames_analyzed": 39,
+    "resolution": [
+      1920,
+      1080
+    ]
+  },
+  "semantic": {
+    "shot_scale": null,
+    "camera_primitive": "static",
+    "camera_speed": "slow",
+    "subject_motion": "",
+    "lens_feel": "wide",
+    "lighting": "自然光"
+  },
+  "conflict": [],
+  "need_api_review": false
+}

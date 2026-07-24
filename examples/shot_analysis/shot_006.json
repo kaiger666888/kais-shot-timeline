@@ -1,0 +1,33 @@
+{
+  "shot_id": "shot_006",
+  "geometry": {
+    "primitive": "pan_right",
+    "ambiguous": true,
+    "note": "2D层无法区分摇镜(pan/tilt)与平移轨(truck/pedestal)，短镜头内观感近似",
+    "camera": {
+      "pan_px_per_frame": 24.097,
+      "tilt_px_per_frame": -0.607,
+      "zoom_px_per_frame": -3.666,
+      "roll_deg_per_frame": 0.2801
+    },
+    "speed": "fast",
+    "flow_agreement": 0.243,
+    "frames_analyzed": 76,
+    "resolution": [
+      1920,
+      1080
+    ]
+  },
+  "semantic": {
+    "shot_scale": "近景",
+    "camera_primitive": "dolly_in",
+    "camera_speed": "fast",
+    "subject_motion": "向前冲刺挥刀",
+    "lens_feel": "normal",
+    "lighting": "自然光"
+  },
+  "conflict": [
+    "geometry=pan_right vs semantic=dolly_in"
+  ],
+  "need_api_review": true
+}
