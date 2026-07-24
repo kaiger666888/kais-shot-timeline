@@ -1,13 +1,13 @@
 #!/usr/bin/env python3
 """Phase 6 graceful-degrade + 缓存回归校验 harness（standalone，无 pytest）。
 
-本 harness 锁 Phase 6 三条 verifiable 路径（live route round-trip DEFERRED —
+本 harness 锁 Phase 6 四条 verifiable 路径（live route round-trip DEFERRED —
 feat/shot-analysis-route unmerged，见 STATE.md blocker + 06-VALIDATION.md
 "Manual-Only Verifications"）。沿用 scripts/verify_contract.py 风格：
 bracketed prefix tags + sys.exit(0/1) 退出码契约 + 仅 stdlib + 已在 env 的
 jsonschema。
 
-3 个 scenarios（每个独立 temp work_dir，互不污染）：
+4 个 scenarios（每个独立 temp work_dir，互不污染）：
 
   route_down (CINEMA-03)
       对 unreachable URL（http://127.0.0.1:1/）跑 call_shot_analysis.py，
@@ -29,8 +29,15 @@ jsonschema。
       （camera="中景, follow, fast, pan_right"）+ stdout 含
       "[semantic] shot 1: cache hit" + 0 网络调用（offline + cache hit 双保险）。
 
+  stale_cache_offline (CR-01 regression guard, WR-06)
+      预填 cache 含 WRONG _cache_key（video_content_hash 故意不匹配）+ --offline
+      跑。断言：exit 0 + route-sourced facets 全空（降级）+ schema 合法 +
+      warnings ≥1 且含 "stale-cache"。这是 CR-01（stale-cache + offline 静默降级
+      为空 facets 且零 warning）的永久回归守卫 —— 正是当初 3/3 绿漏掉 CR-01 的
+      harness 缺口。
+
 退出码：
-    0 = 3 个 scenario 全绿（"[phase6-smoke] OK: 3/3 scenarios green"）
+    0 = 4 个 scenario 全绿（"[phase6-smoke] OK: 4/4 scenarios green"）
     1 = 任一 scenario fail（detail 行说明哪个 + 为何）
 
 用法：
@@ -348,12 +355,119 @@ def scenario_cache_hit_offline(verbose: bool = False) -> tuple:
         shutil.rmtree(work_dir, ignore_errors=True)
 
 
+# === scenario 4: stale-cache + offline (CR-01 regression guard) =======
+def scenario_stale_cache_offline(verbose: bool = False) -> tuple:
+    """预填 cache 含 WRONG _cache_key + --offline 跑，断言 warning 被记。
+
+    CR-01 回归守卫（WR-06 补的 harness 缺口 —— 正是 CR-01 当初未被 3/3 绿捉住
+    的原因）：cache 文件存在但 _cache_key 不匹配（video 换 / ROUTE_VERSION bump /
+    route_name 异）+ offline → 旧实现静默降级为空 facets 且零 warning（操作员
+    毫无察觉，正是 Pitfall 4 要防的）。现必须：
+      (a) exit 0（graceful-degrade 不 fail）
+      (b) route-sourced facets 全空（降级）
+      (c) schema 合法
+      (d) warnings ≥1 且含 "stale-cache"（不静默 —— 操作员必须看见输出被降级）
+    """
+    work_dir = _tmp_work_dir()
+    try:
+        shots_json = os.path.join(work_dir, "shots.json")
+        prompts_json = os.path.join(work_dir, "prompts.json")
+        # 1 shot，id=1 —— 与预填 cache 文件名 shot_001.json 对应
+        _write_synthetic_shots(shots_json, count=1)
+
+        # 预填 cache：复制 shot_003 fixture → shot_001.json，但注入 WRONG
+        # video_content_hash（故意不匹配 tiny test 文件 → stale miss）。
+        fixture_src = EXAMPLES_DIR / "shot_003.json"
+        if not fixture_src.is_file():
+            return (False, f"captured fixture missing: {fixture_src}")
+        cache_dir = os.path.join(work_dir, "route_cache", "shot_analysis")
+        os.makedirs(cache_dir, exist_ok=True)
+        cache_file = os.path.join(cache_dir, "shot_001.json")
+
+        sys.path.insert(0, str(REPO))
+        try:
+            from analysis.call_shot_analysis import ROUTE_NAME, ROUTE_VERSION
+        finally:
+            if str(REPO) in sys.path:
+                sys.path.remove(str(REPO))
+
+        fixture = json.loads(fixture_src.read_text(encoding="utf-8"))
+        # 注入 WRONG _cache_key（video_content_hash 故意不匹配 —— 模拟 video 文件
+        # 被换 / ROUTE_VERSION bump 后未刷 cache 的场景）。
+        fixture["_cache_key"] = {
+            "video_content_hash": "WRONG_HASH_VALUE_STALE_CACHE_TEST",
+            "route_name": ROUTE_NAME,
+            "route_version": ROUTE_VERSION,
+        }
+        Path(cache_file).write_text(
+            json.dumps(fixture, ensure_ascii=False, indent=2), encoding="utf-8")
+
+        # 跑 --offline（URL 不可达；cache 文件存在但 stale）
+        cmd = [
+            sys.executable, str(REPO / "analysis" / "call_shot_analysis.py"),
+            "--video", str(TINY_VIDEO),
+            "--shots", shots_json,
+            "--work-dir", work_dir,
+            "--output", prompts_json,
+            "--offline",
+            "--analysis-url", UNREACHABLE_URL,
+            "--analysis-timeout", "2",
+        ]
+        r = _run(cmd, timeout=30)
+        if verbose and r.stdout:
+            sys.stdout.write(r.stdout)
+        if verbose and r.stderr:
+            sys.stderr.write(r.stderr)
+
+        # (a) exit 0（graceful-degrade 不 fail）
+        if r.returncode != 0:
+            return (False, f"expected exit 0 (graceful-degrade), got {r.returncode}; "
+                           f"stderr: {(r.stderr or '').strip()[:300]}")
+
+        # (b) prompts.json 写出 + route-sourced facets 全空（降级）
+        if not os.path.isfile(prompts_json):
+            return (False, f"prompts.json not written at {prompts_json}")
+        prompts = json.loads(Path(prompts_json).read_text(encoding="utf-8"))
+        if len(prompts) != 1:
+            return (False, f"expected 1 shot, got {len(prompts)}")
+        for facet in ("camera", "action", "lighting", "style"):
+            val = prompts[0].get(facet)
+            if val != "":
+                return (False, f"stale-cache should degrade facet {facet} to '', "
+                               f"got {val!r}")
+
+        # (c) schema 合法
+        errs = _check_prompts_valid(work_dir)
+        if errs:
+            loc = "/".join(map(str, errs[0].absolute_path)) or "<root>"
+            return (False, f"prompts.json schema-invalid: /{loc}: {errs[0].message}")
+
+        # (d) warnings ≥1 且含 "stale-cache"（CR-01 核心：不静默降级）
+        warnings_path = os.path.join(work_dir, "route_cache", "warnings.json")
+        if not os.path.isfile(warnings_path):
+            return (False, f"warnings sidecar missing at {warnings_path}")
+        warnings_list = json.loads(
+            Path(warnings_path).read_text(encoding="utf-8")).get("warnings", [])
+        if len(warnings_list) < 1:
+            return (False, f"CR-01 regression: stale-cache + offline produced "
+                           f"0 warnings (silent degrade); expected ≥1")
+        if not any("stale-cache" in w for w in warnings_list):
+            return (False, f"CR-01 regression: no warning mentions 'stale-cache'; "
+                           f"got: {warnings_list!r}")
+
+        return (True, f"stale-cache offline OK: degraded to empty facets + "
+                      f"{len(warnings_list)} warning(s) (no silent degrade)")
+    finally:
+        shutil.rmtree(work_dir, ignore_errors=True)
+
+
 # === CLI ================================================================
 def main():
-    """Run 3 scenarios in order; collect (name, ok, detail); exit 0/1."""
+    """Run 4 scenarios in order; collect (name, ok, detail); exit 0/1."""
     ap = argparse.ArgumentParser(
         description="Phase 6 graceful-degrade + cache 回归校验 "
-                    "(route-down / --skip-semantic / cache-hit-offline)")
+                    "(route-down / --skip-semantic / cache-hit-offline / "
+                    "stale-cache-offline)")
     ap.add_argument("--verbose", action="store_true",
                     help="透传子进程 stdout/stderr（debug 用）")
     args = ap.parse_args()
@@ -362,6 +476,7 @@ def main():
         ("route_down", scenario_route_down),
         ("skip_semantic", scenario_skip_semantic),
         ("cache_hit_offline", scenario_cache_hit_offline),
+        ("stale_cache_offline", scenario_stale_cache_offline),
     ]
 
     results = []
