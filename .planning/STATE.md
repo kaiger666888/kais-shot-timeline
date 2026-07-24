@@ -4,13 +4,13 @@ milestone: v1.1
 milestone_name: 分镜语义深化 — 镜头语言 + 跨镜角色/道具注册表
 status: executing
 stopped_at: ""Phase 6 complete (all 3 plans shipped 2026-07-24) — run_pipeline.py step_semantic wired as slot 5 of 7; [N/7] counter locked (Phase 7 bumps to [N/8]); 4 new flags + --force cache list extension; scripts/verify_phase6_smoke.py 3 scenarios green (route-down / --skip-semantic / cache-hit-offline). Phase 6 now shippable as graceful-degrade producer; live route round-trip still deferred per blocker (feat/shot-analysis-route unmerged). Ready for /gsd:verifier-phase 6 then /gsd:plan-phase 7.""
-last_updated: "2026-07-24T18:29:01.521Z"
+last_updated: "2026-07-24T18:42:05.834Z"
 last_activity: 2026-07-24
 progress:
   total_phases: 5
   completed_phases: 2
   total_plans: 11
-  completed_plans: 9
+  completed_plans: 10
   percent: 40
 ---
 
@@ -26,7 +26,7 @@ See: .planning/PROJECT.md (updated 2026-07-24)
 ## Current Position
 
 Phase: 7 (Cross-Shot Re-ID Registry + HITL Review (step_reid)) — EXECUTING
-Plan: 3 of 4
+Plan: 4 of 4
 Status: Ready to execute
 Last activity: 2026-07-24
 
@@ -75,6 +75,7 @@ Last activity: 2026-07-24
 | Phase 06 P03 | 10min | 2 tasks | 2 files |
 | Phase 7 P01 | 4min | 2 tasks | 3 files |
 | Phase 07 P02 | 4min | 1 tasks | 1 files |
+| Phase 07 P03 | 18min | 2 tasks | 2 files |
 
 ## Accumulated Context
 
@@ -104,6 +105,9 @@ Carried from v1.0 (still load-bearing):
 - [Phase ?]: normalize_clusters is CAST-05 shape-agnostic projector: every cluster gets review_state=proposed, extra route fields dropped, empty-member clusters skipped
 - [Phase ?]: Re-id cache is per-video (video_<vch>.json) NOT per-shot — re-id is cross-shot aggregation (Pitfall 4)
 - [Phase ?]: Warnings sidecar READ-merge-write: step_semantic warnings preserved + re-id appended (non-destructive)
+- [Phase 07]: apply_edits.py confirmed-only HARD GATE at build-entry time (NOT filter-after-write) — Pitfall 7 enforcement; idempotent via fixed apply order + deterministic _next_id (max+1); validates registry-edits pre-apply (T-07-02) + characters/props pre-write
+- [Phase 07]: representative_image OMITTED on ffmpeg failure (WARNING-2 fix authoritative over verify-block assertions) — schema-optional, no dangling PNG path reaches export_asset glob
+- [Phase 07]: HITL HTML pre-selects auto_merge + auto_distinct as confirmed (RESEARCH Q2 Claude's Discretion); review tier left unselected — must be human-decided; cosine-sort surfaces review tier first
 
 ### Pending Todos
 
@@ -134,7 +138,7 @@ Items acknowledged and carried forward from v1.0 + v1.1 Out-of-Scope:
 
 ## Session Continuity
 
-Last session: 2026-07-24T18:29:01.514Z
+Last session: 2026-07-24T18:42:05.826Z
 Stopped at: "Phase 6 complete (all 3 plans shipped 2026-07-24) — run_pipeline.py step_semantic wired as slot 5 of 7; [N/7] counter locked (Phase 7 bumps to [N/8]); 4 new flags + --force cache list extension; scripts/verify_phase6_smoke.py 3 scenarios green (route-down / --skip-semantic / cache-hit-offline). Phase 6 now shippable as graceful-degrade producer; live route round-trip still deferred per blocker (feat/shot-analysis-route unmerged). Ready for /gsd:verifier-phase 6 then /gsd:plan-phase 7."
 Resume file: None
 
