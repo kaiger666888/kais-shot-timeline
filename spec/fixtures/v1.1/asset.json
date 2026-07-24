@@ -8,7 +8,11 @@
   "generator": {
     "tool": "kais-shot-timeline",
     "version": "0.2.0-spec-fixture-v1.1",
-    "generated_at": "2026-07-24T00:00:00Z"
+    "generated_at": "2026-07-24T00:00:00Z",
+    "warnings": [
+      "preflight route unreachable: ConnectError: [Errno 111] Connection refused",
+      "shot 3: route code=500: SHOT_ANALYSIS_DRIVER_FAILED"
+    ]
   },
   "data": {
     "shots": "shots.json",

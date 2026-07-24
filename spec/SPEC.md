@@ -82,6 +82,7 @@
 | `generator.tool` | string | ✓ | 工具名(如 `"kais-shot-timeline"`) |
 | `generator.version` | string | ✓ | 工具版本(任意字符串 — semver / git SHA / build id 均可) |
 | `generator.generated_at` | string (ISO-8601) | ✓ | 导出时间戳(UTC 推荐,如 `"2026-07-20T00:00:00Z"`) |
+| `generator.warnings` | array\<string\> | — (v1.1) | 非致命警告列表(如运镜路由不可达 → prompts 空字段降级)。仅在非空时 emit;老资产及干净运行缺省仍合法(graceful-degrade)。Producer: Plan 02 `analysis/call_shot_analysis.py` 在路由失败时写 `route_cache/warnings.json` sidecar,由 `scripts/export_asset.py:main` best-effort 读入合并进 `generator.warnings`。Operator-facing failure reasons only(exception class + message, route status codes)— no PII, no auth tokens, no body payloads |
 | `data.shots` | string (relative path `*.json`) | ✓ | 指向 `shots.json`(相对资产根,不可含 `..`,不可含 Windows 保留字符) |
 | `data.audio_analysis` | string (relative path `*.json`) | ✓ | 指向 `audio_analysis.json` |
 | `data.transcript` | string (relative path `*.json`) | ✓ | 指向 `transcript.json` |
@@ -156,12 +157,13 @@ Reference schema: `spec/schemas/asset.schema.json`
 
 - **2026-07-20 — `1`(initial contract)** — Phase 1 首次发布。定义 6 schema(shots / audio_analysis / transcript / frames / prompts / asset)、5 canonical 数据形状、自描述 manifest、canonical 媒体布局(`video.mp4` + `stems/{vocals,drums,other}.wav`,bass 剔除)、Range-aware HTTP 206 服务要求。`additionalProperties: false` 全程开启,graceful-degrade 是消费端运行时行为。
 
-- **2026-07-24 — `1.1`(v1.1 additive extension,Phase 5)** — 首个 minor bump,纯增量(无 rename / 语义漂移 / 新增 required 字段 — Pitfall 11 prevented)。变更:
+- **2026-07-24 — `1.1`(v1.1 additive extension,Phases 5-9)** — 首个 minor bump,纯增量(无 rename / 语义漂移 / 新增 required 字段 — Pitfall 11 prevented)。整个 v1.1 milestone(phases 5-9)共享此版本号,各 phase 仅做 optional 字段增量;无 schema_version bump 直到 v2。变更:
   - **3 个新 schema**:`characters.schema.json`(`^char_[0-9]{3}$` ID + `looks[]`)、`props.schema.json`(`^prop_[0-9]{3}$` ID,`states[]` 非 `looks[]`)、`registry.schema.json`(re-id 聚类草稿,pipeline-internal,不在 `asset.json#data`)。
   - **`prompts.schema.json` additive**:新增 optional `character_refs[]` / `prop_refs[]`(ID-pattern string 数组,Phase 8 按 `appearance_shots[]` 挂到对应 shot)。`required[]` 与 v1.0 byte-identical。
   - **`asset.schema.json` additive**:新增 optional `data.characters` / `data.props`(JSON 路径)+ `media.characters[]` / `media.props[]`(external png 路径数组,**非** base64 — 资产膨胀防护,与 `frames.json` 内联 base64 相反)。
   - **`schema_version` pattern 不变**(`^(0|[1-9]\d*)(\.(0|[1-9]\d*))?$`)— 版本字面量锁在 producer 单一真源 `scripts/export_asset.py:SCHEMA_VERSION = "1.1"`,**非** schema `const`(否则拒绝 v1 minimal fixture `"1"`,破坏 CONTRACT-09)。
   - **向后兼容**:`spec/fixtures/minimal/`(v1)仍 6/6 绿(CONTRACT-09);`spec/fixtures/v1.1/`(9 文件)新增;`scripts/verify_contract.py` `_cross_version_check` 实测双向兼容(forward 0 errors;backward 仅 additionalProperties errors → 0 non-additive errors)。
+  - **Phase 6 (cinematography auto-fill)**: `asset.schema.json#generator` 新增 optional `warnings: array<string>`(Plan 01)。Producer(`scripts/export_asset.py`)在 step_semantic 路由失败时从 `route_cache/warnings.json` sidecar 读入失败原因列表,非空时 emit `generator.warnings`;None / 空列表时缺省。仍是 v1.1 纯增量(无 schema_version bump、`required[]` 不变、`additionalProperties:false` 保留)。
 
 ---
 
