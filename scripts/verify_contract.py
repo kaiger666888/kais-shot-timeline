@@ -524,6 +524,13 @@ def _producer_registry_integrity(asset_dir: Path) -> list:
         return [f"shots.json unreadable in {asset_dir}"]
 
     # Check each canonical file that exists
+    # Phase 8: collect confirmed-ID sets for the downstream prompts→registry
+    # integrity check (Pitfall 17). Phase 7 already asserts !=confirmed fails;
+    # this additionally accumulates the confirmed IDs so prompts refs can be
+    # validated against them. Both sets stay empty when the file is absent
+    # (graceful-degrade —— no registry, nothing to check prompts against).
+    char_confirmed_ids: set = set()
+    prop_confirmed_ids: set = set()
     for name, id_prefix in (("characters.json", "char_"), ("props.json", "prop_")):
         path = asset_dir / name
         if not path.is_file():
@@ -560,12 +567,52 @@ def _producer_registry_integrity(asset_dir: Path) -> list:
                 failures.append(
                     f"{name} {eid}: review_state={entry.get('review_state')!r} "
                     f"in canonical (must be 'confirmed' — Pitfall 7)")
+            else:
+                # Phase 8: accumulate confirmed ID for prompts→registry check.
+                # Pitfall 7 already failed above for non-confirmed; only confirmed
+                # entries are legal prompt-ref targets.
+                if id_prefix == "char_":
+                    char_confirmed_ids.add(eid)
+                elif id_prefix == "prop_":
+                    prop_confirmed_ids.add(eid)
             # (a) appearance_shots ⊆ shots
             for sid in entry.get("appearance_shots", []) or []:
                 if sid not in shot_ids:
                     failures.append(
                         f"{name} {eid}: appearance_shots references "
                         f"unknown shot {sid}")
+
+    # (e) Phase 8 (PROMPT-03, Pitfall 17): prompts.character_refs[]/prop_refs[]
+    #     MUST ⊆ confirmed characters.json/props.json IDs. Additive —— gated on
+    #     prompts.json existence (graceful-degrade: no prompts → nothing to check).
+    #     Mirrors the fixture-side _fixture_consistency_check (lines ~440-447); the
+    #     producer-side extension is the runtime gate against real asset dirs. By
+    #     construction attach_refs.py cannot produce a dangling ref (it attaches
+    #     ONLY from confirmed registry inversion); this catches hand-edited drift.
+    prompts_path = asset_dir / "prompts.json"
+    if prompts_path.is_file():
+        try:
+            prompts = json.loads(prompts_path.read_text(encoding="utf-8"))
+        except json.JSONDecodeError as e:
+            failures.append(f"prompts.json: invalid JSON: {e}")
+            prompts = None
+        if isinstance(prompts, list):
+            for entry in prompts:
+                if not isinstance(entry, dict):
+                    continue
+                sid = entry.get("shot_id")
+                for cref in entry.get("character_refs", []) or []:
+                    if cref not in char_confirmed_ids:
+                        failures.append(
+                            f"prompts.json shot {sid}: character_ref {cref!r} "
+                            f"not in confirmed characters.json IDs "
+                            f"(Pitfall 17 — prompt dangling ref)")
+                for pref in entry.get("prop_refs", []) or []:
+                    if pref not in prop_confirmed_ids:
+                        failures.append(
+                            f"prompts.json shot {sid}: prop_ref {pref!r} "
+                            f"not in confirmed props.json IDs "
+                            f"(Pitfall 17 — prompt dangling ref)")
 
     # (b) registry cluster members ⊆ shots.json
     reg_path = asset_dir / "registry.draft.json"
