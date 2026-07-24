@@ -80,7 +80,7 @@
 - **不动 shot-timeline 核心算法**：分镜检测/转录/分离仍是 validated 基线；v1.1 新分析（镜头语言/角色道具）**全部走 kais-aigc-platform 路由**，不在 shot-timeline 内重跑 ML
 - **路由依赖**：shot-timeline 的镜头语言/角色道具填充依赖 kais-aigc-platform 路由可用 + 两未 merge 运镜分支先上线；路由不可用时 shot-timeline 必须能 graceful-degrade（跳过该步、资产仍可生成）
 - **re-id 精度上限**：跨镜 re-id 不可能 100% 准，必须 human-in-the-loop review；接受「够用即可」，不追求全自动
-- **契约仅 minor bump**：v1.1 把 schema_version 升到 `"2"`，新增字段/数据文件，但不做破坏性变更（无 rename/语义漂移/删除）；老消费者靠 graceful-degrade 不崩。仍不引入画布 custom renderer（新节点类型复用现有渲染器）
+- **契约仅 minor bump**：v1.1 把 schema_version 升到 `"1.1"`，新增字段/数据文件，但不做破坏性变更（无 rename/语义漂移/删除）；老消费者靠 graceful-degrade 不崩。仍不引入画布 custom renderer（新节点类型复用现有渲染器）
 - **媒体服务**：导出约定需覆盖 Range-aware HTTP 服务（画布消费 stem/视频 seek 依赖 206 响应）；角色/道具图作为新媒体类别纳入约定
 
 ## Key Decisions
