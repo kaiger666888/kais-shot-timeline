@@ -104,6 +104,11 @@ def _resolve_frame_ts(shot_id, frame_pos, shots_meta):
     end = shot.get("end_sec", start)
     if isinstance(frame_pos, (int, float)):
         return float(frame_pos)
+    # WR-06：string-encoded number 先 float() parse → 绝对秒；失败再当 keyword。
+    try:
+        return float(frame_pos)
+    except (TypeError, ValueError):
+        pass
     fraction = _FRAME_POS_FRACTIONS.get(str(frame_pos), 0.5)
     return float(start) + float(end - start) * fraction
 

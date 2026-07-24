@@ -93,6 +93,13 @@ def _resolve_frame_ts(shot_id, frame_pos, shots_meta):
     # number → 绝对秒数（直接返回）
     if isinstance(frame_pos, (int, float)):
         return float(frame_pos)
+    # WR-06：string-encoded number ('15.0' / '7.5') 先尝试 float() parse → 绝对秒；
+    # 失败再当 keyword ('first'/'last'/'25%'/'50%'/'75%') 处理。
+    # 未知 keyword → 0.5 (mid) —— 仅在真正非数值时才 fallback（documented）。
+    try:
+        return float(frame_pos)   # string-encoded number → 绝对秒
+    except (TypeError, ValueError):
+        pass
     # string keyword → shot 内插值
     fraction = _FRAME_POS_FRACTIONS.get(str(frame_pos), 0.5)
     return float(start) + float(end - start) * fraction
