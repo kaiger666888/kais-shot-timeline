@@ -746,22 +746,22 @@ shot_007   中景, static, slow, pan_right                                      
 | A5 | 路由 `/api/v1/production/shot-analysis` 路径前缀正确（`/api/v1` 版本前缀） | Route REQUEST Contract | 极低 — `index.ts` 默认 export router，aigc-platform typical mount point；branch merge 后用户 verify。 |
 | A6 | 路由 base host 是 `127.0.0.1`（本地开发） | flags 默认 | 低 — 生产可改；CONTEXT 决策 URL 可配。 |
 
-## Open Questions
+## Open Questions (RESOLVED — all addressed in plans 06-02 / 06-03)
 
 1. **aigc-platform 路由实际监听哪个端口？**
    - What we know: `--analysis-url` 默认值需要 host:port；CONTEXT 给的是 `http://127.0.0.1:<port>/api/v1/production/shot-analysis`（`<port>` 占位符）。
    - What's unclear: aigc-platform 服务的 default dev port（8000? 3000? 自定义?）— 路由分支 unmerged，没机会启动验证。
-   - Recommendation: planner 把默认 URL 设为 `http://127.0.0.1:8000/...`（typical Express dev port），文档化"用户首跑需 verify 端口"。STATE.md 已记录 live round-trip deferred。
+   - RESOLVED: Plan 03 把默认 URL 设为 `http://127.0.0.1:8000/api/v1/production/shot-analysis`（typical dev port），文档化"用户首跑需 verify 端口"。STATE.md 已记录 live round-trip deferred（路由 unmerged）。
 
 2. **`step_semantic` 是否应该读 `prompts/merge_prompts.py` 的 `part_*.json` 产物？**
    - What we know: CONTEXT 决策 "若 `part_*.json` 存在 route wins for 5 fields"。
    - What's unclear: 当前 `merge_prompts.py` 是手动外部步骤，未接 run_pipeline；step_semantic 应该 call 它、还是仅做"route 不存在的字段回退到 part_*.json"？
-   - Recommendation: step_semantic 直接读 `part_*.json`（若存在）做 fallback base，再 overlay route facets；不必 subprocess 到 merge_prompts.py（避免双 producer 冲突）。这是 Claude's Discretion 范围内，可在 plan-phase 决定。
+   - RESOLVED (documented deviation): merge **NOT** implemented in Plan 02 — `merge_prompts.py` 当前是手动外部步骤，**未**接 run_pipeline，pipeline run 期间不产 `part_*.json`。Plan 02 直接从 route facets 写 prompts.json（`prompt_text=""`、`subject=""`），并在 objective 显式记录该 deviation + 未来 wiring 路径（merge_prompts.py 接入后扩展 Task 1 compose step 预载 part_*.json 作 base）。Q2 的 Recommendation（直接读 part_*.json）因前提不成立而 deferred，非静默丢弃。
 
 3. **ROUTE_VERSION 字符串应在哪定义？**
    - What we know: cache key 须含它，否则路由逻辑改后 cache 陈旧。
    - What's unclear: 是硬编码在 `call_shot_analysis.py` 顶层常量、还是从路由 response 探测（路由没显式返回版本）？
-   - Recommendation: 硬编码常量（`ROUTE_VERSION = "feat-shot-analysis-route-v1"`），路由 merge 后手动 bump。响应里没版本字段，无法自动探测。
+   - RESOLVED: Plan 02 硬编码 module-level 常量 `ROUTE_VERSION = "feat-shot-analysis-route-v1"`（响应无版本字段，无法自动探测）；路由 merge 后手动 bump 即失效全部 cache。
 
 ## Environment Availability
 
@@ -783,6 +783,8 @@ shot_007   中景, static, slow, pan_right                                      
 ## Validation Architecture
 
 > `workflow.nyquist_validation: true`（config.json 确认）— 本 section REQUIRED。
+>
+> **OVERRIDDEN by `06-VALIDATION.md`** (newer, `status: approved` 2026-07-24): the project stays **pytest-free** per CLAUDE.md / v1.0 RETROSPECTIVE ("no test framework; standalone `sys.exit(0/1)` scripts"). The pytest + `tests/` recommendations below were the researcher's default framing; the actual assertion engine is inline `python3 -c` checks + the standalone `scripts/verify_phase6_smoke.py` (Plan 03, mirrors `scripts/verify_contract.py`). Plans follow VALIDATION.md, not the pytest suggestions below.
 
 ### Test Framework
 | Property | Value |
