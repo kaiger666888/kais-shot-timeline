@@ -57,8 +57,8 @@ v1.1 milestone 范围。每条映射到一个 phase（见 Traceability）。
 - [x] **PRESENT-01**: `gen_timeline_html.py` 扩展——角色/道具画廊区（外置 png 经 `serve.py` 提供）+ 点击跳转
 - [x] **PRESENT-02**: prompt 渲染加 reference chip（角色/道具可点击徽章，链接到画廊条目）
 - [x] **PRESENT-03**: 每镜「运镜分析填充」指示器（绿 chip = 路由填充；灰 chip = offline 降级空字段）
-- [ ] **PRESENT-04**: canvas 消费者（kais-aigc-platform `feat/canvas-asset-collection`）——`import-from-dir.ts` `SHOT_TIMELINE_KNOWN_VERSIONS` 追加 `"1.1"` + `extractShotTimelineArtifacts` emit character/prop 子节点（`type:"asset"` + `assetType:"character"|"prop"`，gated on 新版本）；**不引入** custom renderer / 不 bump Zod
-- [ ] **PRESENT-05**: `AssetNode.tsx` `typeIcons` 加 `character:'🧑'`/`prop:'🔧'`（cosmetic）+ `verify-canvas-shot-timeline.ts` 扩展 v1.1 character/prop 节点计数断言
+- [x] **PRESENT-04**: canvas 消费者（kais-aigc-platform `feat/canvas-asset-collection`）——`import-from-dir.ts` `SHOT_TIMELINE_KNOWN_VERSIONS` 追加 `"1.1"` + `extractShotTimelineArtifacts` emit character/prop 子节点（`type:"asset"` + `assetType:"character"|"prop"`，gated on 新版本）；**不引入** custom renderer / 不 bump Zod
+- [x] **PRESENT-05**: `AssetNode.tsx` `typeIcons` 加 `character:'🧑'`/`prop:'🔧'`（cosmetic）+ `verify-canvas-shot-timeline.ts` 扩展 v1.1 character/prop 节点计数断言
 - [ ] **PRESENT-06**: 3-mode `verify_contract.py` harness 对 v1.1 fixture 全绿（producer / consumer / e2e 三模式）
 
 ## v2 Requirements
@@ -133,8 +133,8 @@ Phase 编号续接 v1.0（Phase 1-4 SHIPPED）。v1.1 从 Phase 5 起，dependen
 | PRESENT-01 | Phase 8 | Complete |
 | PRESENT-02 | Phase 8 | Complete |
 | PRESENT-03 | Phase 8 | Complete |
-| PRESENT-04 | Phase 9 | Pending |
-| PRESENT-05 | Phase 9 | Pending |
+| PRESENT-04 | Phase 9 | Complete |
+| PRESENT-05 | Phase 9 | Complete |
 | PRESENT-06 | Phase 9 | Pending |
 
 **Coverage:**

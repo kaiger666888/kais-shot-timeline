@@ -2,16 +2,16 @@
 gsd_state_version: 1.0
 milestone: v1.1
 milestone_name: 分镜语义深化 — 镜头语言 + 跨镜角色/道具注册表
-status: ready_to_plan
-stopped_at: Phase 8 complete (3/3) — ready to discuss Phase 9
-last_updated: 2026-07-24T21:23:00.575Z
-last_activity: 2026-07-24
+status: executing
+stopped_at: ""Phase 9 Plan 01 complete (consumer PRESENT-04/05 shipped 2026-07-24 in kais-aigc-platform feat/canvas-asset-collection @ 90812e9d) — consumer @kais/infinite-canvas now v1.1-aware: SHOT_TIMELINE_KNOWN_VERSIONS += '1.1'; extractShotTimelineArtifacts emits 2 character + 1 prop child nodes as type:'asset' (assetType character/prop, NOT delivery) via §7 buildPhaseTree post-process (push RawArtifact before, overwrite data.assetType after — extra.assetType silently dropped by :724 merge guard); AssetNode typeIcons += 🧑/🔧; verify-canvas-shot-timeline.ts 27/27 green (v1.0 regression + v1.1 asserts + §7 zero-delivery-leak + graceful-degrade + Assert E scoped relaxation HEAD~1..HEAD). v1.0 WIP untouched. Ready for /gsd:execute-phase 9 plan 09-02 (PRESENT-06 verify_contract.py 3-mode bridge).""
+last_updated: "2026-07-24T22:08:40Z"
+last_activity: 2026-07-24 -- Phase 9 Plan 01 complete (consumer PRESENT-04/05)
 progress:
   total_phases: 5
   completed_phases: 4
-  total_plans: 14
-  completed_plans: 14
-  percent: 80
+  total_plans: 16
+  completed_plans: 15
+  percent: 88
 ---
 
 # Project State
@@ -21,14 +21,14 @@ progress:
 See: .planning/PROJECT.md (updated 2026-07-24)
 
 **Core value:** 把成片解构成可导航、多轨道、带语义的分镜资产（分镜 + 分离音轨 + 对白 + 镜头语言 prompt + 跨镜可复用角色/道具注册表），且形态可移植——能作为下游 `@kais/infinite-canvas` 的「最终资产集合形态」被直接消费。
-**Current focus:** Phase 9 — canvas consumer integration (cross repo)
+**Current focus:** Phase 9 — Canvas Consumer Integration (cross-repo)
 
 ## Current Position
 
-Phase: 9
-Plan: Not started
-Status: Ready to plan
-Last activity: 2026-07-24
+Phase: 9 (Canvas Consumer Integration (cross-repo)) — EXECUTING
+Plan: 2 of 2 (Plan 01 complete; Plan 09-02 pending — PRESENT-06 verify_contract.py bridge)
+Status: Phase 9 Plan 01 complete — consumer PRESENT-04/05 shipped
+Last activity: 2026-07-24 -- Phase 9 Plan 01 complete (consumer @ 90812e9d)
 
 **v1.1 phase sequence (dependency-ordered, research-validated):**
 
@@ -82,6 +82,7 @@ Last activity: 2026-07-24
 | Phase 08 P01 | 2min | 2 tasks | 3 files |
 | Phase 08 P02 | 6min | 3 tasks | 4 files |
 | Phase 08 P03 | 16min | 3 tasks | 3 files |
+| Phase 09 P01 | 15min | 3 tasks | 19 files (consumer repo @ 90812e9d) |
 
 ## Accumulated Context
 
@@ -125,6 +126,9 @@ Carried from v1.0 (still load-bearing):
 - [Phase ?]: Phase 8 Plan 03: attach_refs banner omits [N/M] prefix to keep step-banner count at 24 (Pitfall 5 prevented); CONTEXT Q3 lock still honored (no new numbered step)
 - [Phase ?]: Phase 8 Plan 03: gallery data source priority registry_snapshot > characters.json > None (RESEARCH Open Question 2 resolution)
 - [Phase ?]: Phase 8 Plan 03: HTML XSS defense carried verbatim from Phase 7 CR-04 fix 336d04f — Python _esc + JS _esc + JSON-in-script .replace on all 5 inlined JSON literals
+- [Phase 9]: §7 emission via post-process — buildPhaseTree seeds artData.assetType=def.assetType('delivery' for p13) at :692 and the :724 extra-merge guard silently drops extra.assetType; character/prop nodes MUST be pushed as RawArtifact{canvasType:'asset', output_key:<id>} BEFORE buildPhaseTree then data.assetType overwritten on tree.artifactNodes AFTER (join via output_key). Verified zero delivery leaks. (consumer 90812e9d)
+- [Phase 9]: consumer node id NOT overridden — buildPhaseTree assigns a-p13-artN internally; stable registry id (char_NNN/prop_NNN) survives in node.data.output_key; canvas UI uses node.id for React keying only. Overriding would risk v1.0 buildPhaseTree generic logic.
+- [Phase 9]: Assert E baseline = HEAD~1..HEAD (NOT origin/master..HEAD) — origin/master advanced past feat/canvas-asset-collection branch tip (merge-base===HEAD), so origin/master..HEAD carried ~56 pre-existing files; the AssetNode.tsx-only allowlist requires isolating the Phase 9 commit boundary. Rule 1 deviation documented in 09-01-SUMMARY.
 
 ### Pending Todos
 
@@ -155,12 +159,11 @@ Items acknowledged and carried forward from v1.0 + v1.1 Out-of-Scope:
 
 ## Session Continuity
 
-Last session: 2026-07-24T20:55:26.493Z
-Stopped at: "Phase 6 complete (all 3 plans shipped 2026-07-24) — run_pipeline.py step_semantic wired as slot 5 of 7; [N/7] counter locked (Phase 7 bumps to [N/8]); 4 new flags + --force cache list extension; scripts/verify_phase6_smoke.py 3 scenarios green (route-down / --skip-semantic / cache-hit-offline). Phase 6 now shippable as graceful-degrade producer; live route round-trip still deferred per blocker (feat/shot-analysis-route unmerged). Ready for /gsd:verifier-phase 6 then /gsd:plan-phase 7."
+Last session: 2026-07-24T22:08:40Z
+Stopped at: "Phase 9 Plan 01 complete (consumer PRESENT-04/05 shipped 2026-07-24 in kais-aigc-platform feat/canvas-asset-collection @ 90812e9d) — consumer @kais/infinite-canvas now v1.1-aware: SHOT_TIMELINE_KNOWN_VERSIONS += '1.1'; extractShotTimelineArtifacts emits 2 character + 1 prop child nodes as type:'asset' (assetType character/prop, NOT delivery) via §7 buildPhaseTree post-process; AssetNode typeIcons += 🧑/🔧; verify-canvas-shot-timeline.ts 27/27 green. v1.0 WIP untouched. Ready for /gsd:execute-phase 9 plan 09-02 (PRESENT-06 verify_contract.py 3-mode bridge)."
 Resume file: None
 
 ## Operator Next Steps
 
-- `/gsd:plan-phase 5` — Plan the Contract v1.1 phase (no external dependencies, unblock first)
-- After Phase 5: `/gsd:plan-phase 6` — flag cross-repo branch merge prerequisite in the plan
-- `/gsd:plan-phase 7` — use `--research-phase 7` for DINOv2 τ calibration spike
+- `/gsd:execute-phase 9` (plan 09-02) — PRESENT-06: confirm verify_contract.py 3-mode harness green for v1.1 (producer + consumer modes testable now; e2e deferred)
+- After 09-02: Phase 9 complete → v1.1 milestone audit + tag

@@ -169,7 +169,7 @@ Plans:
 Plans:
 **Wave 1** *(consumer repo — commits in /data/workspace/kst-canvas-consumer on feat/canvas-asset-collection)*
 
-- [ ] 09-01-PLAN.md — consumer v1.1 fixture + import-from-dir.ts gate "1.1" + character/prop node emission via §7 post-process + AssetNode typeIcons + verify-canvas v1.1 assertions + Assert E scoped relaxation [PRESENT-04, PRESENT-05]
+- [x] 09-01-PLAN.md — consumer v1.1 fixture + import-from-dir.ts gate "1.1" + character/prop node emission via §7 post-process + AssetNode typeIcons + verify-canvas v1.1 assertions + Assert E scoped relaxation [PRESENT-04, PRESENT-05] — COMPLETE 2026-07-24 (consumer @ 90812e9d)
 
 **Wave 2** *(blocked on Wave 1; shot-timeline repo — normal commit flow)*
 
@@ -189,4 +189,4 @@ Plans:
 | 6. Cinematography Auto-Fill (`step_semantic`) | v1.1 | 3/3 | Complete    | 2026-07-24 |
 | 7. Cross-Shot Re-ID Registry + HITL Review (`step_reid`) | v1.1 | 4/4 | Complete    | 2026-07-24 |
 | 8. Prompt Reference System + shot-timeline HTML Gallery | v1.1 | 3/3 | Complete    | 2026-07-24 |
-| 9. Canvas Consumer Integration (cross-repo) | v1.1 | 0/? | Planning | - |
+| 9. Canvas Consumer Integration (cross-repo) | v1.1 | 1/2 | Executing | - |
