@@ -340,11 +340,20 @@ def step_timeline(video: str, work_dir: str, shots_json: str,
     # Phase 8: mtime cache 扩展 —— prompts_json 现入输入集（Pitfall 9 prevention,
     # part 2）。原 inputs = shots/audio/transcript；现 + prompts。attach_refs 在
     # cache check 之前跑，新 mtime → cache miss → timeline 重生成（含新 refs/chips）。
-    if os.path.exists(out_html) and os.path.getmtime(out_html) > max(
-            os.path.getmtime(shots_json),
-            os.path.getmtime(audio_json) if audio_json else 0,
-            os.path.getmtime(transcript) if transcript else 0,
-            os.path.getmtime(prompts_json) if prompts_json and os.path.exists(prompts_json) else 0):
+    # Phase 8 REVIEW WR-01 fix：TOCTOU-safe（mirror step_export:442-444）。原实现
+    # 是 `os.path.exists(p)` + `os.path.getmtime(p)` 两步，之间存在 race window
+    # （另一进程删文件 → getmtime raise FileNotFoundError 变 uncaught traceback）。
+    # 统一经 _safe_mtime 单点 stat：缺失视为 +inf → 强制 cache miss（不再 traceback）。
+    inputs = [shots_json]
+    if audio_json:
+        inputs.append(audio_json)
+    if transcript:
+        inputs.append(transcript)
+    if prompts_json and os.path.exists(prompts_json):
+        inputs.append(prompts_json)
+    input_mtimes = [_safe_mtime(p) for p in inputs]
+    max_input_mtime = max(input_mtimes) if input_mtimes else 0
+    if os.path.exists(out_html) and _safe_mtime(out_html) > max_input_mtime:
         print(f"[7/8] cached timeline: {out_html}")
         return out_html
     cmd = [sys.executable, str(HERE / "html" / "gen_timeline_html.py"),
