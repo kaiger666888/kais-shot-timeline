@@ -381,6 +381,14 @@ def apply_edits(draft_path, edits_path, work_dir, video, shots_path):
         new_id = f"{new_type}_{num_part}"
         if new_id == cid:
             continue
+        # CR-03：目标 ID 已存在 → 拒绝静默覆盖（防数据丢失）。
+        # 操作员必须先 rename/merge 解决冲突，再 type_override。
+        if new_id in clusters:
+            sys.exit(
+                f"[apply-edits] FAIL: type_override {cid} → {new_id} collides "
+                f"with an existing cluster (data loss prevented). "
+                f"Resolve the collision first (rename or merge {new_id})."
+            )
         # 移到新 key；cluster_id 内部字段也更新
         cl = clusters.pop(cid)
         cl["cluster_id"] = new_id
