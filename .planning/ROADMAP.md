@@ -58,7 +58,7 @@ Plans:
 
 **Wave 2** *(blocked on Wave 1 completion)*
 
-- [ ] 05-03-PLAN.md — v1.1 fixture set (9 files: 4 reuse + 5 new content) [CONTRACT-01..05 fixtures + CONTRACT-09]
+- [x] 05-03-PLAN.md — v1.1 fixture set (9 files: 4 reuse + 5 new content) [CONTRACT-01..05 fixtures + CONTRACT-09]
 
 **Wave 3** *(blocked on Wave 2 completion)*
 
@@ -132,7 +132,7 @@ Plans:
 | 2. shot-timeline Exporter (Producer) | v1.0 | 2/2 | Complete | 2026-07-20 |
 | 3. Canvas Consumer | v1.0 | 1/1 | Complete | 2026-07-21 |
 | 4. Cross-Repo Contract Verification | v1.0 | 2/2 | Complete | 2026-07-21 |
-| 5. Contract v1.1 | v1.1 | 2/4 | In Progress|  |
+| 5. Contract v1.1 | v1.1 | 3/4 | In Progress|  |
 | 6. Cinematography Auto-Fill (`step_semantic`) | v1.1 | 0/? | Planning | - |
 | 7. Cross-Shot Re-ID Registry + HITL Review (`step_reid`) | v1.1 | 0/? | Planning | - |
 | 8. Prompt Reference System + shot-timeline HTML Gallery | v1.1 | 0/? | Planning | - |
