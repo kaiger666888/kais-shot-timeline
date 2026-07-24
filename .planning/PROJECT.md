@@ -16,7 +16,7 @@
 - 镜头语言/动作/语义自动填充——shot-timeline 作 HTTP 客户端调 kais-aigc-platform 运镜分析路由（geometry/SAM3/Qwen3-VL），自动填 `prompts.json` 的 `camera/action/scene/lighting/style/subject` 结构化字段（替代当前外部手动 `part_*.json`）
 - 跨镜角色/道具注册表（re-id）——从首尾帧 SAM3 切出主体/道具图，跨镜识别同一实体 → 可复用「演员表 + 道具表」，带人工 review 修正（re-id 不可能 100% 准）
 - prompt 引用系统——prompt 结构化引用注册表条目（角色/道具 ID），实现真实叙事连贯
-- ShotTimelineAsset 契约 v2——`schema_version` 1→2：新增 `characters`/`props` 数据文件 + 丰富 `prompts` schema，graceful-degrade 兜底老消费者
+- ShotTimelineAsset 契约 minor bump——`schema_version` 1→`1.1`（纯增量：新增 optional `characters`/`props` 数据文件 + 丰富 `prompts` schema，按项目 SPEC semver-lite 规则）；graceful-degrade 兜底老消费者
 - 展示（双端）——shot-timeline HTML（角色/道具画廊 + 带 reference chip 的 prompt）+ canvas 消费者新增角色/道具节点类型（跨仓库 kais-aigc-platform）
 
 > **v1.0（已归档）** ShotTimelineAsset Contract：定义并落地了仓库无关的 5-JSON 资产集合形态 + 导出器 + 画布最小消费 + 跨仓库验证。详见 `.planning/MILESTONES.md`。本 milestone 在其契约之上做语义深化与契约 minor bump。
@@ -46,7 +46,7 @@
 - [ ] 镜头语言/动作/语义：shot-timeline 调运镜分析路由，自动填 prompts.json 结构化字段
 - [ ] 跨镜角色/道具注册表：首尾帧 SAM3 切图 + re-id 形成可复用演员表/道具表 + 人工 review
 - [ ] prompt 引用系统：prompt 结构化引用角色/道具 ID，实现叙事连贯
-- [ ] ShotTimelineAsset 契约 v2：schema_version 1→2，新增 characters/props + 丰富 prompts schema，graceful-degrade 兜底
+- [ ] ShotTimelineAsset 契约 minor bump：schema_version 1→1.1，新增 characters/props + 丰富 prompts schema（纯增量），graceful-degrade 兜底
 - [ ] 双端展示：shot-timeline HTML 角色道具画廊 + reference chip；canvas 新增角色/道具节点类型（跨仓库）
 
 
@@ -71,7 +71,7 @@
 
 **shot-timeline 当前数据形状（导出契约的来源）。** 5 个 JSON 喂给 HTML 生成器：`shots.json`（`{id, start_sec, end_sec, duration}`，canonical 镜头列表）、`audio_analysis.json`（Demucs 分析 + 每镜能量/谱/`dominant_type`）、`transcript.json`（Whisper segments）、`frames.json`（首尾帧 base64）、`prompts.json`（结构化 prompt）。运行时还需 video mp4 + 3 个 stem wav（`_vocals/_drums/_other`）经 Range-aware server 提供。timeline.html 自包含（内联 CSS/JS、帧内联 base64），唯独这 3 个媒体文件外置。
 
-**v1.1 新增语义层（镜头语言 + 角色/道具注册表）。** 现状关键事实：① `prompts.json` schema 已含 `subject/action/camera/scene/lighting/style/prompt_text` 结构化字段，但 shot-timeline **没有 prompt 生成器**——`prompts/merge_prompts.py` 只合并外部产出的 `prompt_parts/part_*.json`，字段目前靠外部/手动填。② 运镜分析能力**已在 kais-aigc-platform 用 ComfyUI 落地**（geometry 自建节点跑稀疏光流出运镜 + SAM3.1 主体跟踪出主体运动 + Qwen3-VL-8B INT8 出景别/机位/语义；driver `scripts/shot-analysis/shot_analysis_driver.py` 读 `shots.json` 逐镜投喂，路由 `POST /api/v1/production/shot-analysis`），P0-P4 验证完成（2026-07-23），但**两特性分支未 merge**（`feat/shot-geometry-nodes` 节点 + `feat/shot-analysis-route` driver/路由）。该输出几乎一一映射到现有 prompts 字段。③ 角色/道具切图 + 跨镜 re-id 是**全新能力**，尚不存在。v1.1 决定：shot-timeline 作 HTTP 客户端调这些路由（运镜复用、角色道具新建端点），合并 JSON 进资产；re-id 走「embedding/聚类 + 人工 review」半自动路径；契约 minor bump 到 schema_version `"2"`，靠 v1.0 graceful-degrade 规则兜底老消费者。
+**v1.1 新增语义层（镜头语言 + 角色/道具注册表）。** 现状关键事实：① `prompts.json` schema 已含 `subject/action/camera/scene/lighting/style/prompt_text` 结构化字段，但 shot-timeline **没有 prompt 生成器**——`prompts/merge_prompts.py` 只合并外部产出的 `prompt_parts/part_*.json`，字段目前靠外部/手动填。② 运镜分析能力**已在 kais-aigc-platform 用 ComfyUI 落地**（geometry 自建节点跑稀疏光流出运镜 + SAM3.1 主体跟踪出主体运动 + Qwen3-VL-8B INT8 出景别/机位/语义；driver `scripts/shot-analysis/shot_analysis_driver.py` 读 `shots.json` 逐镜投喂，路由 `POST /api/v1/production/shot-analysis`），P0-P4 验证完成（2026-07-23），但**两特性分支未 merge**（`feat/shot-geometry-nodes` 节点 + `feat/shot-analysis-route` driver/路由）。该输出几乎一一映射到现有 prompts 字段。③ 角色/道具切图 + 跨镜 re-id 是**全新能力**，尚不存在。v1.1 决定：shot-timeline 作 HTTP 客户端调这些路由（运镜复用、角色道具新建端点），合并 JSON 进资产；re-id 走「DINOv2 embedding + Agglomerative 聚类 + 三档阈值 + 人工 review」半自动路径；契约 minor bump 到 schema_version `"1.1"`（纯增量，按项目 SPEC semver-lite 规则），靠 v1.0 graceful-degrade 规则兜底老消费者。
 
 ## Constraints
 
@@ -94,7 +94,7 @@
 | 在 `feat/canvas-asset-collection` 分支开发（非 main / 非 worktree） | main 保留可交付、隔离多 phase 工作；worktree 无法跨仓库组合且拆分 .planning/ 状态 | ✓ Validated Phase 3/4（v1.0 已 ship） |
 | **v1.1** 新分析走「shot-timeline 调 kais-aigc-platform 路由」（非本地实现） | 运镜 infra 已在 comfyui 侧建好；延续 v1.0 松耦合；shot-timeline 不增重 ML 依赖；需先 merge 两运镜分支 | — Pending |
 | **v1.1** 角色道具做「跨镜 re-id 注册表」（非单镜提取） | 「真实叙事连贯」的核心 = 同一角色跨镜是同一引用；接受 re-id 不准、用人工 review 兜底 | — Pending |
-| **v1.1** 升级 ShotTimelineAsset 到 schema_version `"2"`（非侧车数据） | 资产自描述、可移植、一等公民；v1.0 graceful-degrade 规则专门为这种 minor bump 设计 | — Pending |
+| **v1.1** 升级 ShotTimelineAsset 到 schema_version `"1.1"`（minor bump，非侧车数据；刻意不用 `"2"`） | 纯增量变更按项目 SPEC semver-lite 规则 = minor；保留 `"2"` 给未来破坏性变更；资产自描述、可移植、一等公民；v1.0 graceful-degrade 规则专为这种 minor bump 设计 | — Pending |
 | **v1.1** 双端展示（shot-timeline HTML + canvas 新节点类型） | 用户要端到端可见；接受跨仓库 ~30% 额外开销（v1.0 实测） | — Pending |
 
 ## Evolution
