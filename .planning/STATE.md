@@ -2,13 +2,14 @@
 gsd_state_version: 1.0
 milestone: v1.1
 milestone_name: 分镜语义深化 — 镜头语言 + 跨镜角色/道具注册表
-status: planning
-last_updated: "2026-07-24T13:30:00.000Z"
-last_activity: 2026-07-24
+status: executing
+stopped_at: ""v1.1 roadmap created — 5 phases (5-9), 34/34 requirements mapped; ready for `/gsd:plan-phase 5`""
+last_updated: "2026-07-24T07:07:21.135Z"
+last_activity: 2026-07-24 -- Phase 5 planning complete
 progress:
   total_phases: 5
   completed_phases: 0
-  total_plans: 0
+  total_plans: 4
   completed_plans: 0
   percent: 0
 ---
@@ -26,10 +27,11 @@ See: .planning/PROJECT.md (updated 2026-07-24)
 
 Phase: Phase 5 (Contract v1.1) — planning not yet started
 Plan: —
-Status: Roadmap drafted (5 phases, 34/34 requirements mapped); ready for `/gsd:plan-phase 5`
-Last activity: 2026-07-24 — v1.1 roadmap created
+Status: Ready to execute
+Last activity: 2026-07-24 -- Phase 5 planning complete
 
 **v1.1 phase sequence (dependency-ordered, research-validated):**
+
 1. Phase 5 — Contract v1.1 (no route dep; mirrors v1.0 contract-first)
 2. Phase 6 — Cinematography Auto-Fill `step_semantic` (blocked on cross-repo branch merges)
 3. Phase 7 — Cross-Shot Re-ID Registry + HITL Review `step_reid` (HIGHEST complexity)
@@ -73,6 +75,7 @@ Recent decisions affecting current v1.1 work (post-milestone-bootstrap):
 - **v1.1 canvas edit scope**: append `"1.1"` to `SHOT_TIMELINE_KNOWN_VERSIONS` + emit character/prop child nodes as `type:"asset"` + `assetType:"character"|"prop"` — NO custom renderer, NO Zod bump (canvas Zod already permissive on `assetType`)
 
 Carried from v1.0 (still load-bearing):
+
 - shot-timeline is authoritative spec owner / external producer (loose coupling)
 - Canvas uses structural parent node (zone/phase pattern) — reuses 5 renderers, no contract bump
 - Canvas work happens on branch `feat/canvas-asset-collection` in `kais-aigc-platform`
