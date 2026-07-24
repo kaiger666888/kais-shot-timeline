@@ -142,7 +142,7 @@ Plans:
 Plans:
 **Wave 1** *(contract-first — unblocks Plan 02)*
 
-- [ ] 08-01-PLAN.md — asset.schema.json#generator.registry_snapshot (additive optional) + spec/fixtures/v1.1/asset.json example + SPEC.md §3 row + Changelog Phase 8 bullet [PROMPT-04]
+- [x] 08-01-PLAN.md — asset.schema.json#generator.registry_snapshot (additive optional) + spec/fixtures/v1.1/asset.json example + SPEC.md §3 row + Changelog Phase 8 bullet [PROMPT-04]
 
 **Wave 2** *(blocked on Wave 1)*
 
@@ -178,5 +178,5 @@ Plans:
 | 5. Contract v1.1 | v1.1 | 4/4 | Complete    | 2026-07-24 |
 | 6. Cinematography Auto-Fill (`step_semantic`) | v1.1 | 3/3 | Complete    | 2026-07-24 |
 | 7. Cross-Shot Re-ID Registry + HITL Review (`step_reid`) | v1.1 | 4/4 | Complete    | 2026-07-24 |
-| 8. Prompt Reference System + shot-timeline HTML Gallery | v1.1 | 0/3 | Planning | - |
+| 8. Prompt Reference System + shot-timeline HTML Gallery | v1.1 | 1/3 | In Progress|  |
 | 9. Canvas Consumer Integration (cross-repo) | v1.1 | 0/? | Planning | - |
