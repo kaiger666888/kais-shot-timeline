@@ -52,6 +52,7 @@ REPO_ROOT = HERE.parent
 CHARACTERS_SCHEMA = REPO_ROOT / "spec" / "schemas" / "characters.schema.json"
 PROPS_SCHEMA = REPO_ROOT / "spec" / "schemas" / "props.schema.json"
 REGISTRY_EDITS_SCHEMA = REPO_ROOT / "spec" / "schemas" / "registry-edits.schema.json"
+REGISTRY_SCHEMA = REPO_ROOT / "spec" / "schemas" / "registry.schema.json"
 
 # Best-member selection ranking for CAST-08 producer-side fallback.
 # Lower rank = higher quality. Default (no signal / unknown value) = 3 (worst).
@@ -300,6 +301,12 @@ def apply_edits(draft_path, edits_path, work_dir, video, shots_path):
 
     # 2. 校验 edits pre-apply (T-07-02 mitigation: 永不信任未校验的操作员输入)
     _validate(REGISTRY_EDITS_SCHEMA, edits)
+
+    # 2b. 校验 draft pre-apply (WR-05: T-07-02 mitigation extends to ALL operator inputs)。
+    # draft 同样 operator-reachable (registry.draft.json 是磁盘 JSON，可手改) 且可从
+    # corrupted cache / compromised route 流入。schema 校验在 cluster 循环之前 → 畸形 draft
+    # (缺 cluster_id / mean_cosine 越界 / members 畸形) fails loud 而非 KeyError crash。
+    _validate(REGISTRY_SCHEMA, draft)
 
     # 3. 构建 clusters dict (copy + stash _members 内部字段)
     # CR-02：畸形 cluster（非 dict / 缺 cluster_id）降级跳过，不 crash（defense-in-depth；
