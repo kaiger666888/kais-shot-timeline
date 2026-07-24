@@ -14,7 +14,15 @@ findings:
   warning: 6
   info: 4
   total: 12
-status: findings
+status: fixed
+fix:
+  applied: 2026-07-25T00:00:00Z
+  scope: critical_warning
+  blocker_fixed: 2
+  warning_fixed: 6
+  info_out_of_scope: 4
+  review_fix_report: 06-REVIEW-FIX.md
+  gate: "verify_phase6_smoke 4/4 + spec/validate + verify_contract producer+self-test all green"
 ---
 
 # Phase 6: Code Review Report
