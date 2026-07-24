@@ -4,8 +4,8 @@ milestone: v1.1
 milestone_name: 分镜语义深化 — 镜头语言 + 跨镜角色/道具注册表
 status: Awaiting next milestone
 stopped_at: ""Phase 9 Plan 01 complete (consumer PRESENT-04/05 shipped 2026-07-24 in kais-aigc-platform feat/canvas-asset-collection @ 90812e9d) — consumer @kais/infinite-canvas now v1.1-aware: SHOT_TIMELINE_KNOWN_VERSIONS += '1.1'; extractShotTimelineArtifacts emits 2 character + 1 prop child nodes as type:'asset' (assetType character/prop, NOT delivery) via §7 buildPhaseTree post-process; AssetNode typeIcons += 🧑/🔧; verify-canvas-shot-timeline.ts 27/27 green. v1.0 WIP untouched. Ready for /gsd:execute-phase 9 plan 09-02 (PRESENT-06 verify_contract.py 3-mode bridge).""
-last_updated: "2026-07-24T23:10:40.158Z"
-last_activity: 2026-07-24 — Milestone v1.1 completed and archived
+last_updated: "2026-07-24T23:46:46.000Z"
+last_activity: 2026-07-25 — Quick task 260725-afz: audio-gen NL prompt spike (approved → v1.2 input)
 progress:
   total_phases: 5
   completed_phases: 5
@@ -28,7 +28,7 @@ See: .planning/PROJECT.md (updated 2026-07-24)
 Phase: Milestone v1.1 complete
 Plan: —
 Status: Awaiting next milestone
-Last activity: 2026-07-24 — Milestone v1.1 completed and archived
+Last activity: 2026-07-25 — Quick task 260725-afz: audio-gen NL prompt spike (concept validated → promote v1.2)
 
 ## Performance Metrics
 
@@ -136,6 +136,12 @@ None yet for v1.1 execution (planning not yet started).
 - **Cross-repo coordination cost (Phase 9):** ~30% overhead measured in v1.0 for consumer-side work in kais-aigc-platform `feat/canvas-asset-collection` worktree at `/data/workspace/kst-canvas-consumer`.
 - **`character-reid` route does not yet exist (Phase 7):** Only `shot-analysis` exists today. Phase 7 includes building the new route + driver in kais-aigc-platform (THIN wrapper mirroring `shot-analysis`).
 - **`prompts.json#scene` field unmapped:** Current `shot-analysis` route output has no scene source. Phase 6 must decide leave-empty vs future Qwen-VL extension. Do NOT fabricate.
+
+### Quick Tasks Completed
+
+| # | Description | Date | Commit | Directory |
+|---|-------------|------|--------|-----------|
+| 260725-afz | 音频 prompt 反推 spike — per-shot audio-gen NL prompt（本地启发式 Demucs+Whisper+onset-tempo, sidecar `audio_prompts.json`, 合约零改动）; concept validated on 3 episodes → 晋升 v1.2 milestone input | 2026-07-25 | 3a85a56 | [260725-afz-prompt-spike-audio-gen-nl-prompt-demucs-](./quick/260725-afz-prompt-spike-audio-gen-nl-prompt-demucs-/) |
 
 ## Deferred Items
 
