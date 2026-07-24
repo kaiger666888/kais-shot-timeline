@@ -66,6 +66,22 @@
       "prompt_text": {
         "type": "string",
         "description": "Ready-to-use prompt text (composed from the above facets)."
+      },
+      "character_refs": {
+        "type": "array",
+        "items": {
+          "type": "string",
+          "pattern": "^char_[0-9]{3}$"
+        },
+        "description": "v1.1 additive (OPTIONAL — never required). IDs of characters (characters.json#id) appearing in this shot. Phase 8 attaches these per characters.json#appearance_shots[] to achieve cross-shot narrative continuity. Older v1 assets have no character_refs and still validate (graceful-degrade)."
+      },
+      "prop_refs": {
+        "type": "array",
+        "items": {
+          "type": "string",
+          "pattern": "^prop_[0-9]{3}$"
+        },
+        "description": "v1.1 additive (OPTIONAL — never required). IDs of props (props.json#id) appearing in this shot. Phase 8 attaches these per props.json#appearance_shots[]. Older v1 assets have no prop_refs and still validate."
       }
     }
   }

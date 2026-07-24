@@ -85,6 +85,16 @@
           "type": "string",
           "pattern": "^(?!.*\\.\\.)[^:*?\"<>|]+\\.json$",
           "description": "Relative path to prompts.json."
+        },
+        "characters": {
+          "type": "string",
+          "pattern": "^(?!.*\\.\\.)[^:*?\"<>|]+\\.json$",
+          "description": "v1.1 additive (OPTIONAL — absent on v1 assets). Relative path to characters.json (the canonical confirmed character registry produced by Phase 7 HITL apply_edits). Emitted only when re-id ran and review confirmed entries; older assets omit it and still validate (graceful-degrade)."
+        },
+        "props": {
+          "type": "string",
+          "pattern": "^(?!.*\\.\\.)[^:*?\"<>|]+\\.json$",
+          "description": "v1.1 additive (OPTIONAL — absent on v1 assets). Relative path to props.json (canonical confirmed prop registry). Same emission rule as characters."
         }
       }
     },
@@ -121,6 +131,22 @@
               "description": "Relative path to other WAV. Canonical: stems/other.wav."
             }
           }
+        },
+        "characters": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "pattern": "^(?!.*\\.\\.)([^/]+/)*characters/[^:*?\"<>|]+\\.png$"
+          },
+          "description": "v1.1 additive (OPTIONAL — absent on v1 assets). External character portrait PNGs as relative paths (NOT base64 — prevents 10-50x asset bloat). Anti-traversal enforced (rejects ../, absolute paths, Windows reserved chars). Canonical naming: characters/<id>.png. Served via Range-aware HTTP (serve.py), same as video/stems."
+        },
+        "props": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "pattern": "^(?!.*\\.\\.)([^/]+/)*props/[^:*?\"<>|]+\\.png$"
+          },
+          "description": "v1.1 additive (OPTIONAL — absent on v1 assets). External prop PNGs as relative paths (NOT base64). Anti-traversal enforced. Canonical: props/<id>.png."
         }
       }
     }
