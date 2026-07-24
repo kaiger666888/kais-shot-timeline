@@ -164,7 +164,17 @@ Plans:
   2. Real v1.1 asset imports cleanly → canvas renders character/prop nodes for a producer asset (existing v1 asset still warns-not-crashes — graceful-degrade verified both ways)
   3. `verify-canvas-shot-timeline.ts` extended with v1.1 character/prop node count assertions; 3-mode `verify_contract.py` harness (producer / consumer / e2e) green on v1.1 fixture
 
-**Plans**: TBD
+**Plans**: 2 plans in 2 waves (Wave 1 = consumer repo PRESENT-04/05 cohesive; Wave 2 = shot-timeline PRESENT-06 contract gate, depends on Wave 1)
+
+Plans:
+**Wave 1** *(consumer repo — commits in /data/workspace/kst-canvas-consumer on feat/canvas-asset-collection)*
+
+- [ ] 09-01-PLAN.md — consumer v1.1 fixture + import-from-dir.ts gate "1.1" + character/prop node emission via §7 post-process + AssetNode typeIcons + verify-canvas v1.1 assertions + Assert E scoped relaxation [PRESENT-04, PRESENT-05]
+
+**Wave 2** *(blocked on Wave 1; shot-timeline repo — normal commit flow)*
+
+- [ ] 09-02-PLAN.md — verify_contract.py 3-mode green for v1.1 (producer + consumer; e2e deferred) [PRESENT-06]
+
 **UI hint**: yes
 
 ## Progress
