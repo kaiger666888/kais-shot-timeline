@@ -146,7 +146,7 @@ Plans:
 
 **Wave 2** *(blocked on Wave 1)*
 
-- [ ] 08-02-PLAN.md — prompts/attach_refs.py (attach refs + deterministic Pattern 2 recompose + idempotent + graceful-degrade) + spec/fixtures/v1.1/prompts.json prompt_text sync + scripts/export_asset.py _build_registry_snapshot conditional emit + scripts/verify_contract.py prompts↔registry integrity (Pitfall 17) [PROMPT-01, PROMPT-02, PROMPT-03, PROMPT-04]
+- [x] 08-02-PLAN.md — prompts/attach_refs.py (attach refs + deterministic Pattern 2 recompose + idempotent + graceful-degrade) + spec/fixtures/v1.1/prompts.json prompt_text sync + scripts/export_asset.py _build_registry_snapshot conditional emit + scripts/verify_contract.py prompts↔registry integrity (Pitfall 17) [PROMPT-01, PROMPT-02, PROMPT-03, PROMPT-04]
 
 **Wave 3** *(blocked on Waves 1 + 2)*
 
@@ -178,5 +178,5 @@ Plans:
 | 5. Contract v1.1 | v1.1 | 4/4 | Complete    | 2026-07-24 |
 | 6. Cinematography Auto-Fill (`step_semantic`) | v1.1 | 3/3 | Complete    | 2026-07-24 |
 | 7. Cross-Shot Re-ID Registry + HITL Review (`step_reid`) | v1.1 | 4/4 | Complete    | 2026-07-24 |
-| 8. Prompt Reference System + shot-timeline HTML Gallery | v1.1 | 1/3 | In Progress|  |
+| 8. Prompt Reference System + shot-timeline HTML Gallery | v1.1 | 2/3 | In Progress|  |
 | 9. Canvas Consumer Integration (cross-repo) | v1.1 | 0/? | Planning | - |

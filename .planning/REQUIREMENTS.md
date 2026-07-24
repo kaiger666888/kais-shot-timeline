@@ -47,9 +47,9 @@ v1.1 milestone 范围。每条映射到一个 phase（见 Traceability）。
 
 ### PROMPT — prompt 引用系统（叙事连贯）
 
-- [ ] **PROMPT-01**: 后处理 `prompts.json`——按 `characters.json#appearance_shots[]` 挂 `character_refs[]`/`prop_refs[]` ID 到对应 shot
-- [ ] **PROMPT-02**: `prompt_text` 重Compose——引用角色/道具时生成叙事连贯、可被 AI 视频管线复用的 prompt 文本
-- [ ] **PROMPT-03**: 跨文件完整性检查（prompt 引用的 ID 必须在 registry 中存在，无 dangling）加入 `verify_contract.py`
+- [x] **PROMPT-01**: 后处理 `prompts.json`——按 `characters.json#appearance_shots[]` 挂 `character_refs[]`/`prop_refs[]` ID 到对应 shot
+- [x] **PROMPT-02**: `prompt_text` 重Compose——引用角色/道具时生成叙事连贯、可被 AI 视频管线复用的 prompt 文本
+- [x] **PROMPT-03**: 跨文件完整性检查（prompt 引用的 ID 必须在 registry 中存在，无 dangling）加入 `verify_contract.py`
 - [x] **PROMPT-04**: `asset.json` 嵌 `generator.registry_snapshot`（冻结 registry 状态，防后续 registry 变动使已导出资产的 prompt 引用失效）
 
 ### PRESENT — 双端展示（shot-timeline HTML + canvas 消费者）
@@ -126,9 +126,9 @@ Phase 编号续接 v1.0（Phase 1-4 SHIPPED）。v1.1 从 Phase 5 起，dependen
 | CAST-07 | Phase 7 | Complete |
 | CAST-08 | Phase 7 | Complete |
 | CAST-09 | Phase 7 | Complete |
-| PROMPT-01 | Phase 8 | Pending |
-| PROMPT-02 | Phase 8 | Pending |
-| PROMPT-03 | Phase 8 | Pending |
+| PROMPT-01 | Phase 8 | Complete |
+| PROMPT-02 | Phase 8 | Complete |
+| PROMPT-03 | Phase 8 | Complete |
 | PROMPT-04 | Phase 8 | Complete |
 | PRESENT-01 | Phase 8 | Pending |
 | PRESENT-02 | Phase 8 | Pending |

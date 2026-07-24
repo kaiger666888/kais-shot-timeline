@@ -3,14 +3,14 @@ gsd_state_version: 1.0
 milestone: v1.1
 milestone_name: 分镜语义深化 — 镜头语言 + 跨镜角色/道具注册表
 status: executing
-stopped_at: "Phase 8 Plan 01 complete (1/3) — registry_snapshot contract layer shipped (schema + fixture + SPEC). Plan 02 (producer wiring: attach_refs + export_asset emission + verify_contract) unblocked."
-last_updated: "2026-07-24T20:25:26.461Z"
+stopped_at: ""Phase 6 complete (all 3 plans shipped 2026-07-24) — run_pipeline.py step_semantic wired as slot 5 of 7; [N/7] counter locked (Phase 7 bumps to [N/8]); 4 new flags + --force cache list extension; scripts/verify_phase6_smoke.py 3 scenarios green (route-down / --skip-semantic / cache-hit-offline). Phase 6 now shippable as graceful-degrade producer; live route round-trip still deferred per blocker (feat/shot-analysis-route unmerged). Ready for /gsd:verifier-phase 6 then /gsd:plan-phase 7.""
+last_updated: "2026-07-24T20:36:53.382Z"
 last_activity: 2026-07-24
 progress:
   total_phases: 5
   completed_phases: 3
   total_plans: 14
-  completed_plans: 12
+  completed_plans: 13
   percent: 60
 ---
 
@@ -26,7 +26,7 @@ See: .planning/PROJECT.md (updated 2026-07-24)
 ## Current Position
 
 Phase: 8 (Prompt Reference System + shot-timeline HTML Gallery) — EXECUTING
-Plan: 2 of 3
+Plan: 3 of 3
 Status: Ready to execute
 Last activity: 2026-07-24
 
@@ -79,6 +79,7 @@ Last activity: 2026-07-24
 | Phase 07 P03 | 18min | 2 tasks | 2 files |
 | Phase 07 P04 | 22min | 3 tasks | 4 files |
 | Phase 08 P01 | 2min | 2 tasks | 3 files |
+| Phase 08 P02 | 6min | 3 tasks | 4 files |
 
 ## Accumulated Context
 
@@ -117,6 +118,8 @@ Carried from v1.0 (still load-bearing):
 - [Phase 7]: CAST-01/02/03/04/08 documented DEFERRED cross-repo in 07-04-SUMMARY.md (kais-aigc-platform feat/character-reid-route, unmerged). Phase 7 ships as graceful-degrade producer; live route round-trip + τ calibration become post-merge smoke checks. Reference: 07-CONTEXT.md <deferred> + 07-RESEARCH.md §DINOv2 Re-ID Methodology.
 - [Phase 08]: registry_snapshot is additive-OPTIONAL within v1.1 (not in generator.required; absent on v1.0/v1.1-no-reid assets still schema-valid) — Mirrors Phase 6 'warnings' precedent; CONTEXT Q1/Q2 LOCK
 - [Phase 08]: NO schema_version bump for Phase 8 — registry_snapshot stays within '1.1' — STATE.md milestone lock; Pitfall 10 prevented at contract layer
+- [Phase 08]: Pattern 2 recompose template locked (08-02): [style] · [scene] · 角色:[names] · 道具:[names] · [subject] · [action] · [camera] · [lighting] — deterministic, idempotent, identity clauses skipped when refs empty
+- [Phase 08]: Pitfall 17 producer integrity additive (08-02): prompts→registry check extended _producer_registry_integrity in place (no fork); reuses confirmed-ID sets from existing loop
 
 ### Pending Todos
 
@@ -147,7 +150,7 @@ Items acknowledged and carried forward from v1.0 + v1.1 Out-of-Scope:
 
 ## Session Continuity
 
-Last session: 2026-07-24T20:22:34.155Z
+Last session: 2026-07-24T20:34:36.661Z
 Stopped at: "Phase 6 complete (all 3 plans shipped 2026-07-24) — run_pipeline.py step_semantic wired as slot 5 of 7; [N/7] counter locked (Phase 7 bumps to [N/8]); 4 new flags + --force cache list extension; scripts/verify_phase6_smoke.py 3 scenarios green (route-down / --skip-semantic / cache-hit-offline). Phase 6 now shippable as graceful-degrade producer; live route round-trip still deferred per blocker (feat/shot-analysis-route unmerged). Ready for /gsd:verifier-phase 6 then /gsd:plan-phase 7."
 Resume file: None
 
