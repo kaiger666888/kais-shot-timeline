@@ -4,14 +4,14 @@ milestone: v1.1
 milestone_name: 分镜语义深化 — 镜头语言 + 跨镜角色/道具注册表
 status: executing
 stopped_at: ""v1.1 roadmap created — 5 phases (5-9), 34/34 requirements mapped; ready for `/gsd:plan-phase 5`""
-last_updated: "2026-07-24T14:42:23.398Z"
-last_activity: 2026-07-24 -- Phase 6 planning complete
+last_updated: "2026-07-24T14:51:08.908Z"
+last_activity: 2026-07-24
 progress:
   total_phases: 5
   completed_phases: 1
   total_plans: 7
-  completed_plans: 4
-  percent: 20
+  completed_plans: 5
+  percent: 71
 ---
 
 # Project State
@@ -21,14 +21,14 @@ progress:
 See: .planning/PROJECT.md (updated 2026-07-24)
 
 **Core value:** 把成片解构成可导航、多轨道、带语义的分镜资产（分镜 + 分离音轨 + 对白 + 镜头语言 prompt + 跨镜可复用角色/道具注册表），且形态可移植——能作为下游 `@kais/infinite-canvas` 的「最终资产集合形态」被直接消费。
-**Current focus:** Phase 6 — cinematography auto fill (`step_semantic`)
+**Current focus:** Phase 6 — Cinematography Auto-Fill (step_semantic)
 
 ## Current Position
 
-Phase: 6
-Plan: Not started
-Status: Ready to execute
-Last activity: 2026-07-24 -- Phase 6 planning complete
+Phase: 6 (Cinematography Auto-Fill (step_semantic)) — EXECUTING
+Plan: 2 of 3
+Status: Plan 06-01 complete (contract-first generator.warnings landed); ready for Plan 06-02 (analysis client)
+Last activity: 2026-07-24 -- Plan 06-01 complete
 
 **v1.1 phase sequence (dependency-ordered, research-validated):**
 
@@ -61,6 +61,13 @@ Last activity: 2026-07-24 -- Phase 6 planning complete
 | Phase 04 P01 | 12min | 2 tasks | 1 files |
 | Phase 04 P02 | 7min | 2 tasks | 2 files |
 
+**v1.1:**
+
+| Phase.Plan | Duration | Tasks | Files |
+|------------|----------|-------|-------|
+| Phase 05 P01-04 | (see Phase 5 SUMMARY) | — | — |
+| Phase 06 P01 | 4min | 2 tasks | 4 files |
+
 *v1.1 metrics populate as plans complete*
 
 ## Accumulated Context
@@ -74,6 +81,7 @@ Recent decisions affecting current v1.1 work (post-milestone-bootstrap):
 - **v1.1 new analysis**: shot-timeline calls kais-aigc-platform HTTP routes (thin httpx client, zero ML deps) — reuses validated cinematography infra; maintains v1.0 loose coupling
 - **v1.1 re-id**: cross-shot registry with mandatory HITL review (accept SOTA 60-80% mAP, treat review as feature not polish)
 - **v1.1 canvas edit scope**: append `"1.1"` to `SHOT_TIMELINE_KNOWN_VERSIONS` + emit character/prop child nodes as `type:"asset"` + `assetType:"character"|"prop"` — NO custom renderer, NO Zod bump (canvas Zod already permissive on `assetType`)
+- **v1.1 Phase 6 generator.warnings**: additive-only `array<string>` under `asset.schema.json#generator.properties` (Phase 6 Plan 01). required[] byte-identical to v1.0; `additionalProperties:false` retained; `schema_version` stays `"1.1"` (entire milestone shares one minor). Producer emits ONLY when non-empty list (clean runs byte-identical to v1.0). Sidecar `route_cache/warnings.json` → `export_asset.py:main` best-effort read → `generator.warnings`.
 
 Carried from v1.0 (still load-bearing):
 
@@ -112,8 +120,8 @@ Items acknowledged and carried forward from v1.0 + v1.1 Out-of-Scope:
 
 ## Session Continuity
 
-Last session: 2026-07-24T13:30:00.000Z
-Stopped at: "v1.1 roadmap created — 5 phases (5-9), 34/34 requirements mapped; ready for `/gsd:plan-phase 5`"
+Last session: 2026-07-24T14:49:43.000Z
+Stopped at: "Phase 6 Plan 06-01 complete — generator.warnings contract channel landed (schema + exporter + SPEC + fixture). Unblocks Plan 06-02 (analysis/call_shot_analysis.py) and Plan 06-03 (run_pipeline integration)."
 Resume file: None
 
 ## Operator Next Steps

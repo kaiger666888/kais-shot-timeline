@@ -84,7 +84,7 @@ Plans:
 Plans:
 **Wave 1** *(contract-first — unblocks Plans 02/03)*
 
-- [ ] 06-01-PLAN.md — asset.schema.json#generator.warnings (optional array<string>) + export_asset.py build_asset_dict(warnings=None) + SPEC §3 row + Changelog Phase 6 bullet + spec/fixtures/v1.1/asset.json warnings example [CINEMA-05]
+- [x] 06-01-PLAN.md — asset.schema.json#generator.warnings (optional array<string>) + export_asset.py build_asset_dict(warnings=None) + SPEC §3 row + Changelog Phase 6 bullet + spec/fixtures/v1.1/asset.json warnings example [CINEMA-05]
 
 **Wave 2** *(blocked on Wave 1)*
 
@@ -148,7 +148,7 @@ Plans:
 | 3. Canvas Consumer | v1.0 | 1/1 | Complete | 2026-07-21 |
 | 4. Cross-Repo Contract Verification | v1.0 | 2/2 | Complete | 2026-07-21 |
 | 5. Contract v1.1 | v1.1 | 4/4 | Complete    | 2026-07-24 |
-| 6. Cinematography Auto-Fill (`step_semantic`) | v1.1 | 0/3 | Planning (3 waves) | - |
+| 6. Cinematography Auto-Fill (`step_semantic`) | v1.1 | 1/3 | Executing (Wave 1 complete) | - |
 | 7. Cross-Shot Re-ID Registry + HITL Review (`step_reid`) | v1.1 | 0/? | Planning | - |
 | 8. Prompt Reference System + shot-timeline HTML Gallery | v1.1 | 0/? | Planning | - |
 | 9. Canvas Consumer Integration (cross-repo) | v1.1 | 0/? | Planning | - |
