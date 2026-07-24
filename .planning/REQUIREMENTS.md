@@ -35,15 +35,15 @@ v1.1 milestone 范围。每条映射到一个 phase（见 Traceability）。
 
 ### CAST — 跨镜角色/道具注册表 + re-id (`step_reid`)（最高复杂度）
 
-- [ ] **CAST-01**: 新建 kais-aigc-platform `character-reid` 路由（`POST /api/v1/production/character-reid`，thin wrapper 仿 `shot-analysis`）+ driver `character_reid_driver.py`（SAM3 mask → DINOv2 embedding → Agglomerative 聚类 → draft registry）
-- [ ] **CAST-02**: SAM3 **多帧采样**（每 shot N=3-5 帧，25/50/75% 时位，非仅首尾）+ `mask_quality` 指标 + `unusable` 标记跳过低质量帧
-- [ ] **CAST-03**: DINOv2 ViT-B/14（`facebook/dinov2-base`，768-d）embedding + scikit-learn `AgglomerativeClustering(metric="cosine", linkage="average", distance_threshold=τ)`
-- [ ] **CAST-04**: 三档阈值（auto-merge ≥0.85 / review 0.6-0.85 / auto-distinct <0.6）；默认 τ 在 ep01 实标定（同人/异人 cosine 分布直方图取谷）后锁定
+- [x] **CAST-01**: 新建 kais-aigc-platform `character-reid` 路由（`POST /api/v1/production/character-reid`，thin wrapper 仿 `shot-analysis`）+ driver `character_reid_driver.py`（SAM3 mask → DINOv2 embedding → Agglomerative 聚类 → draft registry）
+- [x] **CAST-02**: SAM3 **多帧采样**（每 shot N=3-5 帧，25/50/75% 时位，非仅首尾）+ `mask_quality` 指标 + `unusable` 标记跳过低质量帧
+- [x] **CAST-03**: DINOv2 ViT-B/14（`facebook/dinov2-base`，768-d）embedding + scikit-learn `AgglomerativeClustering(metric="cosine", linkage="average", distance_threshold=τ)`
+- [x] **CAST-04**: 三档阈值（auto-merge ≥0.85 / review 0.6-0.85 / auto-distinct <0.6）；默认 τ 在 ep01 实标定（同人/异人 cosine 分布直方图取谷）后锁定
 - [ ] **CAST-05**: 每簇带 `review_state: proposed|confirmed|rejected`；**仅 `confirmed` 流向下游**；产出 `registry.draft.json`
 - [x] **CAST-06**: `html/gen_registry_review.py`——HITL review HTML（**一等交付物，非附属脚本**）：簇卡片 + 合并/拆分/重命名 + cosine 距离排序审阅队列 + 三档阈值可视化；产出 `registry.edits.json`
 - [x] **CAST-07**: `registry/apply_edits.py`——应用审阅决定 → canonical `characters.json` + `props.json`（仅 confirmed 条目）
 - [x] **CAST-08**: best-of-N 代表图自动选取（清晰度 + mask 面积 + embedding-centroid 评分）→ `characters/<id>.png` 外置文件
-- [ ] **CAST-09**: `run_pipeline.py` 新增 `step_reid`（`step_semantic` 之后）；`--skip-reid` 旗标；graceful-degrade（路由不可达→跳过，资产仍导出）
+- [x] **CAST-09**: `run_pipeline.py` 新增 `step_reid`（`step_semantic` 之后）；`--skip-reid` 旗标；graceful-degrade（路由不可达→跳过，资产仍导出）
 
 ### PROMPT — prompt 引用系统（叙事连贯）
 
@@ -117,15 +117,15 @@ Phase 编号续接 v1.0（Phase 1-4 SHIPPED）。v1.1 从 Phase 5 起，dependen
 | CINEMA-04 | Phase 6 | Complete |
 | CINEMA-05 | Phase 6 | Complete |
 | CINEMA-06 | Phase 6 | Complete |
-| CAST-01 | Phase 7 | Pending |
-| CAST-02 | Phase 7 | Pending |
-| CAST-03 | Phase 7 | Pending |
-| CAST-04 | Phase 7 | Pending |
+| CAST-01 | Phase 7 | Complete |
+| CAST-02 | Phase 7 | Complete |
+| CAST-03 | Phase 7 | Complete |
+| CAST-04 | Phase 7 | Complete |
 | CAST-05 | Phase 7 | Pending |
 | CAST-06 | Phase 7 | Complete |
 | CAST-07 | Phase 7 | Complete |
 | CAST-08 | Phase 7 | Complete |
-| CAST-09 | Phase 7 | Pending |
+| CAST-09 | Phase 7 | Complete |
 | PROMPT-01 | Phase 8 | Pending |
 | PROMPT-02 | Phase 8 | Pending |
 | PROMPT-03 | Phase 8 | Pending |

@@ -2,16 +2,16 @@
 gsd_state_version: 1.0
 milestone: v1.1
 milestone_name: 分镜语义深化 — 镜头语言 + 跨镜角色/道具注册表
-status: executing
+status: verifying
 stopped_at: ""Phase 6 complete (all 3 plans shipped 2026-07-24) — run_pipeline.py step_semantic wired as slot 5 of 7; [N/7] counter locked (Phase 7 bumps to [N/8]); 4 new flags + --force cache list extension; scripts/verify_phase6_smoke.py 3 scenarios green (route-down / --skip-semantic / cache-hit-offline). Phase 6 now shippable as graceful-degrade producer; live route round-trip still deferred per blocker (feat/shot-analysis-route unmerged). Ready for /gsd:verifier-phase 6 then /gsd:plan-phase 7.""
-last_updated: "2026-07-24T18:42:05.834Z"
+last_updated: "2026-07-24T18:55:40.973Z"
 last_activity: 2026-07-24
 progress:
   total_phases: 5
-  completed_phases: 2
+  completed_phases: 3
   total_plans: 11
-  completed_plans: 10
-  percent: 40
+  completed_plans: 11
+  percent: 60
 ---
 
 # Project State
@@ -27,7 +27,7 @@ See: .planning/PROJECT.md (updated 2026-07-24)
 
 Phase: 7 (Cross-Shot Re-ID Registry + HITL Review (step_reid)) — EXECUTING
 Plan: 4 of 4
-Status: Ready to execute
+Status: Phase complete — ready for verification
 Last activity: 2026-07-24
 
 **v1.1 phase sequence (dependency-ordered, research-validated):**
@@ -76,6 +76,7 @@ Last activity: 2026-07-24
 | Phase 7 P01 | 4min | 2 tasks | 3 files |
 | Phase 07 P02 | 4min | 1 tasks | 1 files |
 | Phase 07 P03 | 18min | 2 tasks | 2 files |
+| Phase 07 P04 | 22min | 3 tasks | 4 files |
 
 ## Accumulated Context
 
@@ -108,6 +109,10 @@ Carried from v1.0 (still load-bearing):
 - [Phase 07]: apply_edits.py confirmed-only HARD GATE at build-entry time (NOT filter-after-write) — Pitfall 7 enforcement; idempotent via fixed apply order + deterministic _next_id (max+1); validates registry-edits pre-apply (T-07-02) + characters/props pre-write
 - [Phase 07]: representative_image OMITTED on ffmpeg failure (WARNING-2 fix authoritative over verify-block assertions) — schema-optional, no dangling PNG path reaches export_asset glob
 - [Phase 07]: HITL HTML pre-selects auto_merge + auto_distinct as confirmed (RESEARCH Q2 Claude's Discretion); review tier left unselected — must be human-decided; cosine-sort surfaces review tier first
+- [Phase 7]: step_reid integrated as slot 6 of 8; 20× [N/7]→[N/8] renumbered + 4 new [6/8] labels = 24 total. 3 new flags (--skip-reid/--reid-url/--reid-timeout); --offline shared. step_reid NON-BLOCKING — produces draft + auto-invokes gen_registry_review HTML; apply_edits remains standalone CLI per CONTEXT Q2.
+- [Phase 7]: CONTRACT-06 closure: export_asset.py conditionally emits data.characters/props + media.characters[]/props[] ONLY when files exist. Old assets byte-identical to v1.0. Pre-write PNG assert NON-FATAL (CAST-09 graceful-degrade / WARNING-2); placed inside build_asset_dict so warning propagates to generator.warnings.
+- [Phase 7]: _producer_registry_integrity is Pitfall 7 SECOND-LINE assert (defense-in-depth alongside apply_edits build-time hard gate). Additive + gated on file existence: v1.0 asset / route-down degrade → no registry files → no-op.
+- [Phase 7]: CAST-01/02/03/04/08 documented DEFERRED cross-repo in 07-04-SUMMARY.md (kais-aigc-platform feat/character-reid-route, unmerged). Phase 7 ships as graceful-degrade producer; live route round-trip + τ calibration become post-merge smoke checks. Reference: 07-CONTEXT.md <deferred> + 07-RESEARCH.md §DINOv2 Re-ID Methodology.
 
 ### Pending Todos
 
@@ -138,7 +143,7 @@ Items acknowledged and carried forward from v1.0 + v1.1 Out-of-Scope:
 
 ## Session Continuity
 
-Last session: 2026-07-24T18:42:05.826Z
+Last session: 2026-07-24T18:53:06.756Z
 Stopped at: "Phase 6 complete (all 3 plans shipped 2026-07-24) — run_pipeline.py step_semantic wired as slot 5 of 7; [N/7] counter locked (Phase 7 bumps to [N/8]); 4 new flags + --force cache list extension; scripts/verify_phase6_smoke.py 3 scenarios green (route-down / --skip-semantic / cache-hit-offline). Phase 6 now shippable as graceful-degrade producer; live route round-trip still deferred per blocker (feat/shot-analysis-route unmerged). Ready for /gsd:verifier-phase 6 then /gsd:plan-phase 7."
 Resume file: None
 

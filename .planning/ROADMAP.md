@@ -29,7 +29,7 @@ Strict-additive, contract-first minor bump on v1.0. Adds two new pipeline stages
 
 - [x] **Phase 5: Contract v1.1** — schemas + SPEC + fixtures + verify harness (no route dependency) (completed 2026-07-24)
 - [x] **Phase 6: Cinematography Auto-Fill (`step_semantic`)** — httpx client + graceful-degrade + per-shot cache (completed 2026-07-24)
-- [ ] **Phase 7: Cross-Shot Re-ID Registry + HITL Review (`step_reid`)** — HIGHEST complexity; new route + driver + review HTML
+- [x] **Phase 7: Cross-Shot Re-ID Registry + HITL Review (`step_reid`)** — HIGHEST complexity; new route + driver + review HTML (completed 2026-07-24)
 - [ ] **Phase 8: Prompt Reference System + shot-timeline HTML Gallery** — narrative continuity + producer-side display
 - [ ] **Phase 9: Canvas Consumer Integration (cross-repo)** — append `"1.1"` + emit character/prop nodes (no renderer / no Zod bump)
 
@@ -121,7 +121,7 @@ Plans:
 
 **Wave 3** *(blocked on Waves 1 + 2)*
 
-- [ ] 07-04-PLAN.md — run_pipeline.py step_reid (slot 6 of 8) + 20× [N/7]→[N/8] renumber + 3 new flags + --force cache list; scripts/export_asset.py conditional characters/props emission (CONTRACT-06 closure); scripts/verify_contract.py producer registry↔shots integrity + Pitfall 7 assert; scripts/verify_phase7_smoke.py 5-scenario regression; CAST-01/02/03/04/08 deferral documentation [CAST-09, CONTRACT-06, CAST-01/02/03/04/08 deferred]
+- [x] 07-04-PLAN.md — run_pipeline.py step_reid (slot 6 of 8) + 20× [N/7]→[N/8] renumber + 3 new flags + --force cache list; scripts/export_asset.py conditional characters/props emission (CONTRACT-06 closure); scripts/verify_contract.py producer registry↔shots integrity + Pitfall 7 assert; scripts/verify_phase7_smoke.py 5-scenario regression; CAST-01/02/03/04/08 deferral documentation [CAST-09, CONTRACT-06, CAST-01/02/03/04/08 deferred]
 
 **UI hint**: yes
 
@@ -164,6 +164,6 @@ Plans:
 | 4. Cross-Repo Contract Verification | v1.0 | 2/2 | Complete | 2026-07-21 |
 | 5. Contract v1.1 | v1.1 | 4/4 | Complete    | 2026-07-24 |
 | 6. Cinematography Auto-Fill (`step_semantic`) | v1.1 | 3/3 | Complete    | 2026-07-24 |
-| 7. Cross-Shot Re-ID Registry + HITL Review (`step_reid`) | v1.1 | 3/4 | In Progress|  |
+| 7. Cross-Shot Re-ID Registry + HITL Review (`step_reid`) | v1.1 | 4/4 | Complete   | 2026-07-24 |
 | 8. Prompt Reference System + shot-timeline HTML Gallery | v1.1 | 0/? | Planning | - |
 | 9. Canvas Consumer Integration (cross-repo) | v1.1 | 0/? | Planning | - |
