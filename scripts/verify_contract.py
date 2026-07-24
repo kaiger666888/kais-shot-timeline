@@ -488,6 +488,104 @@ def _fixture_consistency_check() -> tuple:
     return (True, "v1.1 fixture set cross-file IDs consistent (0 dangling)")
 
 
+# === producer-side registry integrity (Phase 7) ========================
+def _producer_registry_integrity(asset_dir: Path) -> list:
+    """Phase 7: producer asset dir 内 registry↔shots 跨文件 integrity 检查。
+
+    Gated on file existence: 当 characters.json/props.json/registry.draft.json
+    全部缺席（v1.0 asset / route-down degrade），返 []（clean —— no-op；这是
+    Phase 6 graceful-degrade 的延续）。当任一存在时，执行：
+      (a) appearance_shots[] in characters/props ⊆ shots.json IDs（无 dangling）
+      (b) registry clusters[].members[].shot_id ⊆ shots.json IDs（无 dangling）
+      (c) canonical IDs unique + match ^(char|prop)_[0-9]{3}$
+      (d) NO review_state:"proposed" in canonical files (Pitfall 7 second-line
+          assert —— 与 apply_edits.py 的 build-time hard gate 互为 defense-in-depth)
+
+    这是 producer-gate 的扩展（additive），不改既有 _fixture_consistency_check
+    （fixture 自洽性）+ _cross_version_check（schema 双向兼容）。
+    Pitfall 7 second-line 的存在意义：即便 apply_edits.py 出 bug，producer
+    gate 仍能在 asset 落盘前拦截。
+
+    Args:
+        asset_dir: producer asset 目录（如 output/《小江湖》第01话…/）。
+
+    Returns:
+        list[str] —— 失败描述；空 list = clean（no-op 或 0 failures）。
+    """
+    import re as _re
+    failures: list = []
+    shots_path = asset_dir / "shots.json"
+    if not shots_path.is_file():
+        return []   # 无 shots.json 无法做 cross-file check —— 静默跳过
+    try:
+        shots = json.loads(shots_path.read_text(encoding="utf-8"))
+        shot_ids = {s.get("id") for s in shots} if isinstance(shots, list) else set()
+    except (json.JSONDecodeError, TypeError):
+        return [f"shots.json unreadable in {asset_dir}"]
+
+    # Check each canonical file that exists
+    for name, id_prefix in (("characters.json", "char_"), ("props.json", "prop_")):
+        path = asset_dir / name
+        if not path.is_file():
+            continue   # absent = graceful-degrade (v1.0 asset / route-down)
+        try:
+            entries = json.loads(path.read_text(encoding="utf-8"))
+        except json.JSONDecodeError as e:
+            failures.append(f"{name}: invalid JSON: {e}")
+            continue
+        if not isinstance(entries, list):
+            failures.append(f"{name}: expected array, got {type(entries).__name__}")
+            continue
+        seen_ids: set = set()
+        for entry in entries:
+            if not isinstance(entry, dict):
+                failures.append(f"{name}: non-dict entry: {entry!r}")
+                continue
+            eid = entry.get("id")
+            # (c) ID pattern
+            if not (isinstance(eid, str)
+                    and _re.match(rf"^{id_prefix}[0-9]{{3}}$", eid)):
+                failures.append(
+                    f"{name}: ID {eid!r} does not match {id_prefix}_[0-9]{{3}}")
+            # (c) ID uniqueness
+            if eid in seen_ids:
+                failures.append(f"{name}: duplicate ID {eid!r}")
+            seen_ids.add(eid)
+            # (d) Pitfall 7 —— NO proposed in canonical
+            if entry.get("review_state") == "proposed":
+                failures.append(
+                    f"{name} {eid}: review_state='proposed' leaked into "
+                    f"canonical (Pitfall 7 — apply_edits hard gate bypassed)")
+            # (a) appearance_shots ⊆ shots
+            for sid in entry.get("appearance_shots", []) or []:
+                if sid not in shot_ids:
+                    failures.append(
+                        f"{name} {eid}: appearance_shots references "
+                        f"unknown shot {sid}")
+
+    # (b) registry cluster members ⊆ shots.json
+    reg_path = asset_dir / "registry.draft.json"
+    if reg_path.is_file():
+        try:
+            registry = json.loads(reg_path.read_text(encoding="utf-8"))
+            if isinstance(registry, dict):
+                for cl in registry.get("clusters", []) or []:
+                    if not isinstance(cl, dict):
+                        continue
+                    cid = cl.get("cluster_id", "?")
+                    for m in cl.get("members", []) or []:
+                        if not isinstance(m, dict):
+                            continue
+                        if m.get("shot_id") not in shot_ids:
+                            failures.append(
+                                f"registry.draft.json cluster {cid}: "
+                                f"member shot_id {m.get('shot_id')} unknown")
+        except json.JSONDecodeError as e:
+            failures.append(f"registry.draft.json: invalid JSON: {e}")
+
+    return failures
+
+
 def run_producer_check(args) -> tuple:
     """producer mode：对真实 ep01 asset 跑 6-schema inline 校验。
 
@@ -539,6 +637,14 @@ def run_producer_check(args) -> tuple:
     failures = validate_eight_shapes(asset_dir, manifest)
     if failures:
         return (False, "; ".join(failures))
+
+    # Phase 7: producer asset dir registry↔shots integrity (additive — gated on
+    # file existence: v1.0 asset / route-down degrade → no registry files → no-op).
+    # Pitfall 7 second-line assert: catches "proposed" leak even if apply_edits
+    # has a bug (defense-in-depth alongside its build-time hard gate).
+    registry_failures = _producer_registry_integrity(asset_dir)
+    if registry_failures:
+        return (False, "; ".join(registry_failures))
 
     # v1.1 contract-level checks (Phase 5). 这两个检查跑 spec/fixtures/（确定性
     # contract invariants），不跑 producer asset dir —— producer 产物是否带 v1.1

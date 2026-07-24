@@ -31,6 +31,7 @@ frames / prompts）+ 原始视频 + 3 个 canonical stems（vocals / drums / oth
       [--force]
 """
 import argparse
+import glob
 import json
 import os
 import subprocess
@@ -173,6 +174,68 @@ def build_asset_dict(work_dir: str, video_path: str,
     if not duration:
         duration = _probe_duration(video_path)
 
+    # Phase 7: 把 data + media 块先建成局部 dict，再条件性 append characters/props
+    # （CONTRACT-06 closure）。直接 mutate 字面量会让老资产在 "无 registry" 分支
+    # 仍可能携带空 characters/props 字段（一旦 .get("characters") 之类的中间操作
+    # 误触）；局部 dict + 组装时再决定是否赋值，保证「文件缺席 → 字段缺席」byte-identical。
+    data_block = {
+        "shots": "shots.json",
+        "audio_analysis": "audio_analysis.json",
+        "transcript": "transcript.json",
+        "frames": "frames.json",
+        "prompts": "prompts.json",
+    }
+    media_block = {
+        "video": "video.mp4",
+        "stems": {
+            "vocals": "stems/vocals.wav",
+            "drums": "stems/drums.wav",
+            "other": "stems/other.wav",
+        },
+    }
+
+    # Phase 7: CONDITIONAL characters/props emission (CONTRACT-06 closure).
+    # 仅当 canonical 文件存在才 emit —— 老 assets (无 registry) 保持 byte-identical
+    # 到 v1.0（字段 OMITTED；schema optional）。canonical 文件由 registry/apply_edits.py
+    # 在 HITL 审阅后产出（Plan 03）。Route-down degrade → characters.json/props.json
+    # 缺席 → export 仍合法（graceful-degrade，CAST-09）。
+    chars_path = os.path.join(work_dir, "characters.json")
+    props_path = os.path.join(work_dir, "props.json")
+    if os.path.isfile(chars_path):
+        data_block["characters"] = "characters.json"
+    if os.path.isfile(props_path):
+        data_block["props"] = "props.json"
+
+    # media.characters[]/media.props[] —— 枚举实际存在的 PNG（canonical 命名）。
+    # glob 只返回存在的文件，所以 list 内不会有 dangling path。Pre-write assert
+    # 是 race / 手动删除的 defense-in-depth（apply_edits 写完 PNG 后立刻被外部删
+    # 才会触发，极罕见）。
+    char_pngs = sorted(glob.glob(os.path.join(work_dir, "characters", "*.png")))
+    if char_pngs:
+        media_block["characters"] = [
+            f"characters/{os.path.basename(p)}" for p in char_pngs]
+    prop_pngs = sorted(glob.glob(os.path.join(work_dir, "props", "*.png")))
+    if prop_pngs:
+        media_block["props"] = [
+            f"props/{os.path.basename(p)}" for p in prop_pngs]
+
+    # Pre-write assert: every media.characters[]/media.props[] PNG resolves.
+    # CAST-09 graceful-degrade: NON-FATAL for character/prop PNGs（WARNING-2 fix）。
+    # apply_edits.py 在 ffmpeg 失败时 OMIT representative_image + 不写 PNG，所以
+    # glob-derived list 正常情况不会 dangling。这里是 race 兜底 —— 把缺失记进
+    # warnings（若有 warnings 通道）+ 继续 export，不 sys.exit。stems/video 的
+    # pre-write assert（在 main()）保持 FATAL —— 那些是 required + always present。
+    # NOTE: warnings mutation 在 return 字典冻结前完成，warning 会进 generator.warnings。
+    for rel in (media_block.get("characters", [])
+                + media_block.get("props", [])):
+        p = os.path.join(work_dir, rel)
+        if not os.path.exists(p):
+            _msg = (f"character/prop PNG missing before write: {rel} "
+                    f"(expected at {p})")
+            if warnings is not None:
+                warnings.append(_msg)
+            # 不 sys.exit —— CAST-09 graceful-degrade（asset 仍导出）
+
     return {
         "schema_version": SCHEMA_VERSION,
         "asset_type": "shottimeline",
@@ -188,23 +251,11 @@ def build_asset_dict(work_dir: str, video_path: str,
             # Phase 6: 仅当 warnings 非空 list 时 emit；None / [] → OMITTED
             # （generator.warnings 是 v1.1 optional，schema accepts both ways；
             #   graceful-degrade default = 干净运行缺省，老资产不受影响）。
+            # Phase 7: 上方 character/prop PNG race-detection 也 append 到 warnings。
             **({"warnings": warnings} if warnings else {}),
         },
-        "data": {
-            "shots": "shots.json",
-            "audio_analysis": "audio_analysis.json",
-            "transcript": "transcript.json",
-            "frames": "frames.json",
-            "prompts": "prompts.json",
-        },
-        "media": {
-            "video": "video.mp4",
-            "stems": {
-                "vocals": "stems/vocals.wav",
-                "drums": "stems/drums.wav",
-                "other": "stems/other.wav",
-            },
-        },
+        "data": data_block,
+        "media": media_block,
     }
 
 
