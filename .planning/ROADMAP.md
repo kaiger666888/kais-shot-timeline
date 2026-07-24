@@ -77,7 +77,22 @@ Plans:
   4. `run_pipeline.py` step counter `[N/8]` updated with `step_semantic` slotted between `step_transcribe` and `step_timeline`
   5. Preflight health check runs before the step; per-shot failure is non-fatal (does not abort the rest of the asset export)
 
-**Plans**: TBD
+> **Counter lock (CONTEXT D-XX):** Phase 6 uses `[N/7]` (codec[1]/detect[2]/separate[3]/transcribe[4]/semantic[5]/timeline[6]/export[7]). The `[N/8]` literal in CINEMA-02 / criterion #4 is deferred to Phase 7 (inserts `step_reid` at slot 6) to avoid a phantom missing-step gap now.
+
+**Plans**: 3 plans in 3 waves (mirrors Phase 5 contract-first → implementation → integration sequencing)
+
+Plans:
+**Wave 1** *(contract-first — unblocks Plans 02/03)*
+
+- [ ] 06-01-PLAN.md — asset.schema.json#generator.warnings (optional array<string>) + export_asset.py build_asset_dict(warnings=None) + SPEC §3 row + Changelog Phase 6 bullet + spec/fixtures/v1.1/asset.json warnings example [CINEMA-05]
+
+**Wave 2** *(blocked on Wave 1)*
+
+- [ ] 06-02-PLAN.md — analysis/call_shot_analysis.py (httpx sync client + compose_facets LOCKED mapping + video_content_hash + per-shot cache + preflight + warnings sidecar) + 7 captured fixtures copied to examples/shot_analysis/ + README install line [CINEMA-01, CINEMA-03, CINEMA-04, CINEMA-05]
+
+**Wave 3** *(blocked on Waves 1 + 2)*
+
+- [ ] 06-03-PLAN.md — run_pipeline.py step_semantic (slots between transcribe + timeline) + 17 [N/6]→[N/7] renumber + 4 new flags (--skip-semantic/--offline/--analysis-url/--analysis-timeout) + --force cache list extension + scripts/verify_phase6_smoke.py 3-scenario regression [CINEMA-02, CINEMA-03, CINEMA-06]
 
 ### Phase 7: Cross-Shot Re-ID Registry + HITL Review (`step_reid`)
 
@@ -133,7 +148,7 @@ Plans:
 | 3. Canvas Consumer | v1.0 | 1/1 | Complete | 2026-07-21 |
 | 4. Cross-Repo Contract Verification | v1.0 | 2/2 | Complete | 2026-07-21 |
 | 5. Contract v1.1 | v1.1 | 4/4 | Complete    | 2026-07-24 |
-| 6. Cinematography Auto-Fill (`step_semantic`) | v1.1 | 0/? | Planning | - |
+| 6. Cinematography Auto-Fill (`step_semantic`) | v1.1 | 0/3 | Planning (3 waves) | - |
 | 7. Cross-Shot Re-ID Registry + HITL Review (`step_reid`) | v1.1 | 0/? | Planning | - |
 | 8. Prompt Reference System + shot-timeline HTML Gallery | v1.1 | 0/? | Planning | - |
 | 9. Canvas Consumer Integration (cross-repo) | v1.1 | 0/? | Planning | - |
