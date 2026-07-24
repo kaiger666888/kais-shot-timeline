@@ -83,6 +83,7 @@
 | `generator.version` | string | ✓ | 工具版本(任意字符串 — semver / git SHA / build id 均可) |
 | `generator.generated_at` | string (ISO-8601) | ✓ | 导出时间戳(UTC 推荐,如 `"2026-07-20T00:00:00Z"`) |
 | `generator.warnings` | array\<string\> | — (v1.1) | 非致命警告列表(如运镜路由不可达 → prompts 空字段降级)。仅在非空时 emit;老资产及干净运行缺省仍合法(graceful-degrade)。Producer: Plan 02 `analysis/call_shot_analysis.py` 在路由失败时写 `route_cache/warnings.json` sidecar,由 `scripts/export_asset.py:main` best-effort 读入合并进 `generator.warnings`。Operator-facing failure reasons only(exception class + message, route status codes)— no PII, no auth tokens, no body payloads |
+| `generator.registry_snapshot` | object `{characters[], props[]}` | — (v1.1 Phase 8) | 导出时冻结的 confirmed registry 紧凑视图(characters + props)。每条目嵌 id / name / representative_image / appearance_shots —— 消费端据此解析 `prompts.character_refs[]`/`prop_refs[]` + 渲染画廊,**无需**再读外部 `characters.json`/`props.json`。Producer(`scripts/export_asset.py` Plan 02)仅在 `characters.json` 或 `props.json` 存在时 emit 确认态 registry 的冻结快照;无 registry 时缺省(byte-identical to v1.0/v1.1-no-reid)。仍是 v1.1 纯增量(无 schema_version bump、`required[]` 不变、`additionalProperties:false` 保留)。Pitfall 18 prevented:snapshot 是 export-time truth,后续 registry 变动(re-review / re-cluster / rename)不回写已导出的 `asset.json` |
 | `data.shots` | string (relative path `*.json`) | ✓ | 指向 `shots.json`(相对资产根,不可含 `..`,不可含 Windows 保留字符) |
 | `data.audio_analysis` | string (relative path `*.json`) | ✓ | 指向 `audio_analysis.json` |
 | `data.transcript` | string (relative path `*.json`) | ✓ | 指向 `transcript.json` |
@@ -164,6 +165,7 @@ Reference schema: `spec/schemas/asset.schema.json`
   - **`schema_version` pattern 不变**(`^(0|[1-9]\d*)(\.(0|[1-9]\d*))?$`)— 版本字面量锁在 producer 单一真源 `scripts/export_asset.py:SCHEMA_VERSION = "1.1"`,**非** schema `const`(否则拒绝 v1 minimal fixture `"1"`,破坏 CONTRACT-09)。
   - **向后兼容**:`spec/fixtures/minimal/`(v1)仍 6/6 绿(CONTRACT-09);`spec/fixtures/v1.1/`(9 文件)新增;`scripts/verify_contract.py` `_cross_version_check` 实测双向兼容(forward 0 errors;backward 仅 additionalProperties errors → 0 non-additive errors)。
   - **Phase 6 (cinematography auto-fill)**: `asset.schema.json#generator` 新增 optional `warnings: array<string>`(Plan 01)。Producer(`scripts/export_asset.py`)在 step_semantic 路由失败时从 `route_cache/warnings.json` sidecar 读入失败原因列表,非空时 emit `generator.warnings`;None / 空列表时缺省。仍是 v1.1 纯增量(无 schema_version bump、`required[]` 不变、`additionalProperties:false` 保留)。
+  - **Phase 8 (prompt reference system)**: `asset.schema.json#generator` 新增 optional `registry_snapshot: {characters[], props[]}`(Plan 01)。Producer(`scripts/export_asset.py` Plan 02)在 `characters.json`/`props.json` 存在时 emit 确认态 registry 的冻结快照;无 registry 时缺省(byte-identical to v1.0/v1.1-no-reid)。仍是 v1.1 纯增量(无 schema_version bump、`required[]` 不变、`additionalProperties:false` 保留)。Pitfall 18 prevented:snapshot 是 export-time truth,后续 registry 变动(re-review / re-cluster / rename)不回写已导出的 `asset.json`。
 
 ---
 

@@ -12,7 +12,31 @@
     "warnings": [
       "preflight route unreachable: ConnectError: [Errno 111] Connection refused",
       "shot 3: route code=500: SHOT_ANALYSIS_DRIVER_FAILED"
-    ]
+    ],
+    "registry_snapshot": {
+      "characters": [
+        {
+          "id": "char_001",
+          "name": "少女",
+          "representative_image": "characters/char_001.png",
+          "appearance_shots": [1, 2]
+        },
+        {
+          "id": "char_002",
+          "name": "路人",
+          "representative_image": "characters/char_002.png",
+          "appearance_shots": [1]
+        }
+      ],
+      "props": [
+        {
+          "id": "prop_001",
+          "name": "落叶",
+          "representative_image": "props/prop_001.png",
+          "appearance_shots": [2]
+        }
+      ]
+    }
   },
   "data": {
     "shots": "shots.json",
