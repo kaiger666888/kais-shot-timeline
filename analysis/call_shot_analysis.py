@@ -296,12 +296,17 @@ def main():
                 except (OSError, json.JSONDecodeError):
                     cached = {}
                 ck = cached.get("_cache_key", {})
+                # WR-04：文档化的 4-tuple (video_content_hash, route_name, route_version)
+                # 全部参与比对。旧实现漏了 route_name —— 今天 ROUTE_NAME 是常量无影响，
+                # 但 Phase 7 若在同 route_cache/ 树缓存第二条 route（如 re-id），route_name
+                # 不比对会让 shot_001.json 跨 route 误命中（latent bug + 与文档矛盾）。
                 if (ck.get("video_content_hash") == vch
+                        and ck.get("route_name") == ROUTE_NAME
                         and ck.get("route_version") == ROUTE_VERSION):
                     print(f"[semantic] shot {sid}: cache hit")
                     route_shot = cached
                 else:
-                    # 文件在但 key 不匹配（video 变 / ROUTE_VERSION bump）→ stale miss
+                    # 文件在但 key 不匹配（video 变 / route_name 异 / ROUTE_VERSION bump）→ stale miss
                     cache_stale = True   # fall through：route_shot 保持 None（Pitfall 5）
 
             # (b) cache miss + 非 route_down → 联网 per-shot POST（CONTEXT lock: semantic=True, subject=False）
