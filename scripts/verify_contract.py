@@ -551,11 +551,15 @@ def _producer_registry_integrity(asset_dir: Path) -> list:
             if eid in seen_ids:
                 failures.append(f"{name}: duplicate ID {eid!r}")
             seen_ids.add(eid)
-            # (d) Pitfall 7 —— NO proposed in canonical
-            if entry.get("review_state") == "proposed":
+            # (d) Pitfall 7 —— only 'confirmed' flows to canonical (WR-04: tighten
+            #     from ==proposed to !=confirmed，让 rejected 泄漏也被捕获 ——
+            #     schema enum 接受 proposed/confirmed/rejected，故 rejected 泄漏不会
+            #     被 schema 校验拦住；apply_edits hard gate 是 `!= confirmed: continue`，
+            #     本 second-line assert 与之对齐)。
+            if entry.get("review_state") != "confirmed":
                 failures.append(
-                    f"{name} {eid}: review_state='proposed' leaked into "
-                    f"canonical (Pitfall 7 — apply_edits hard gate bypassed)")
+                    f"{name} {eid}: review_state={entry.get('review_state')!r} "
+                    f"in canonical (must be 'confirmed' — Pitfall 7)")
             # (a) appearance_shots ⊆ shots
             for sid in entry.get("appearance_shots", []) or []:
                 if sid not in shot_ids:
