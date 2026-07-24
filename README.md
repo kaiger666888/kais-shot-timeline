@@ -136,6 +136,8 @@ python prompts/extract_frames.py \
 
 # 2. AI agent 分批读 shot_frames/，按统一 schema 写 output/<stem>/prompt_parts/part_*.json
 #    （字段：subject/action/camera/scene/lighting/style/prompt_text）
+#    ⚠ action 必须是「完整物理动作链」(谁→做什么→一步步→物理合理,如"抬头→接住浆果→送嘴→吃"),
+#       不能只写一句话——下游视频模型靠这条链路演动作,写简了会瞎演/违反物理。详见 prompts.schema.json#action。
 
 # 3. 合并分片 + 补时间元数据
 python prompts/merge_prompts.py \

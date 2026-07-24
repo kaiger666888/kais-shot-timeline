@@ -45,7 +45,7 @@
       },
       "action": {
         "type": "string",
-        "description": "What is happening (motion, events)."
+        "description": "FULL physical action chain of the shot — who does what, step by step, in temporal order, physically grounded (e.g., 'looks up → reaches out and catches the berry → brings it to mouth → takes a bite → chews, expression softening'). Write the COMPLETE motion sequence the video must animate, never a one-line summary like 'looks up' (that leaves gaps the video model fills with broken/unphysical motion). Camera framing & movement go in the `camera` field, not here."
       },
       "camera": {
         "type": "string",
