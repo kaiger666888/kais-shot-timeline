@@ -169,6 +169,12 @@ def build_html(shots_js, stems_js, duration, video_src, title,
     # 复用本文件既有的 _esc() (Phase 7 CR-04 carry) 在两个 sink 处统转义。
     # 同 root cause 的 WR-03 (video_src attribute 插值) 在下方 <source> 单独 _esc。
     safe_title = _esc(title)
+    # Phase 8 REVIEW WR-03 fix：video_src 同为 operator-influenced（--video-src 或
+    # 默认 os.path.basename(args.video)）。插值进 <source src="..."> 双引号属性；
+    # payload 含 " 即可破出属性 quoting 注入新属性（onerror=...）。复用 _esc()
+    # 把 " → &quot; 中和属性 sink（同 root cause as CR-01，HTML5 parser 见 &quot;
+    # 在 attribute 内还原为字面 "，但不再作为 delimiter）。
+    safe_video_src = _esc(video_src)
 
     # Phase 8 (PRESENT-01): gallery section —— server-rendered cards。
     # 每张 card: thumbnail (external PNG via serve.py Range) + _esc(name) + ID +
@@ -328,7 +334,7 @@ video {{ width:100%; max-height:35vh; border-radius:8px; object-fit:contain; }}
   </div>
   <div class="player-section">
     <video id="player" controls preload="auto">
-      <source src="{video_src}" type="video/mp4">
+      <source src="{safe_video_src}" type="video/mp4">
     </video>
     <div id="liveCaption" class="live-caption empty">（待播放）</div>
     <div class="player-size-btns">
