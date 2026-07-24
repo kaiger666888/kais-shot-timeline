@@ -32,10 +32,20 @@
       seed characters.json with 1 confirmed + 1 proposed → _build_registry_snapshot
       → snapshot 仅含 confirmed 条目（char_002 proposed 被过滤）。
 
-  html_xss_inert (PRESENT-01/02 + CR-04 carry)
-      seed characters.json with name="</script><script>alert(1)</script>" →
-      run gen_timeline_html.py → read HTML → 原始 payload "</script><script>"
-      不出现在 HTML 中（必须被 _esc 或 JSON-in-script 转义中和）。
+  html_xss_inert (PRESENT-01/02 + CR-04 carry + Phase 8 REVIEW CR-01/WR-03)
+      Multi-sink × multi-payload XSS matrix —— gen_timeline_html.py 必须把每个
+      operator-influenced sink 都中和（_esc 或 JSON-in-script .replace("</", "<\\/"))。
+      Sinks & payloads 覆盖：
+        (a) gallery name (body context)     payload "</script><script>..."
+        (b) gallery name (body context)     payload "<img src=x onerror=alert(1)>"
+        (c) page <title> (head context)     payload "</title><script>alert(1)</script>"
+        (d) page <h1> (body context)        payload "</h1><script>alert(document.cookie)</script>"
+        (e) <source src> (attribute ctx)    payload 'x" onerror="alert(1)'
+      断言：原始可执行 payload 模式不出现在生成 HTML 任何位置
+      （无 raw <script>alert、无 raw onerror=、无 raw </title><script>、
+        无 raw </h1><script>、无 raw src="x" onerror）。
+      Phase 8 REVIEW WR-04 fix：原 scenario 6 只测 ONE sink × ONE payload，无法
+      检测 CR-01 (title) 或 WR-03 (video_src) 回归 —— 本 broaden 把 XSS posture 锁住。
 
 退出码：
     0 = 6 个 scenario 全绿（"[phase8-smoke] OK: 6/6 scenarios green"）
@@ -477,15 +487,33 @@ def scenario_snapshot_confirmed_only(verbose: bool = False) -> tuple:
         shutil.rmtree(work_dir, ignore_errors=True)
 
 
-# === scenario 6: html_xss_inert (PRESENT-01/02 + CR-04 carry) ==========
+# === scenario 6: html_xss_inert (PRESENT-01/02 + CR-04 carry + CR-01/WR-03) ==
 def scenario_html_xss_inert(verbose: bool = False) -> tuple:
-    """seed name="</script><script>alert(1)</script>" → gen_timeline_html → payload inert。
+    """Multi-sink × multi-payload XSS matrix → 所有 operator-influenced sink inert。
 
-    证明 CR-04 fix carry (commit 336d04f) 在 gen_timeline_html.py 生效：
-      * Python-side _esc: body context → "&lt;/script&gt;..."
-      * JSON-in-script .replace("</", "<\\/"): inlined JSON → "<\\/script>..."
-    两种 escape 任一即可使 payload 不可执行。本 scenario 断言原始 payload 字符串
-    "</script><script>" 不出现在生成 HTML 中。
+    Phase 8 REVIEW WR-04 fix：原 scenario 6 只测 ONE sink (gallery name) × ONE
+    payload (`</script><script>`)，无法检测 CR-01 (title in <title>/<h1>) 或
+    WR-03 (video_src attribute breakout) 回归 —— 这些恰好是 Phase 8 review
+    发现的真实漏洞。本 broaden 改为 5-sink × 5-payload matrix：
+
+      Sinks (gen_timeline_html 的 operator-influenced HTML 插值点):
+        (a) gallery name — body context (CR-04 carry, _esc 已有)
+        (b) gallery name — <img onerror> 变体（CR-04 _esc 应中和）
+        (c) page <title> — head context (CR-01 fix: _esc(title))
+        (d) page <h1>    — body context (CR-01 fix: _esc(title))
+        (e) <source src> — attribute context (WR-03 fix: _esc(video_src))
+
+    断言：以下原始「可执行模式」均不出现在生成 HTML：
+      "</script><script>"        (a/b)
+      "<script>alert"            (a/b/c/d)
+      "onerror=alert"            (b/e，raw onerror=)
+      "</title><script>"         (c)
+      "src=\"x\" onerror"        (e，attribute breakout)
+      "</h1><script>"            (d)
+    若任一存活，HTML 解析器会把 payload 当新元素/属性执行 —— XSS posture 失守。
+
+    Defence-in-depth：本 matrix 不只验证当前 fix，还把「未来新插值点漏 _esc」
+    的回归锁住（任何一个 payload 存活都会 fail）。
     """
     work_dir = _tmp_work_dir()
     try:
@@ -494,19 +522,35 @@ def scenario_html_xss_inert(verbose: bool = False) -> tuple:
         html_path = os.path.join(work_dir, "timeline.html")
 
         _write_synthetic_shots(shots_json, count=1)
-        # character with XSS payload as name (registry-reviewer-editable field)
+        # Gallery name payload：JSON-in-script + body context 两道防线（CR-04 carry）。
+        # 用 char_001 携带 (a) `</script><script>` 和 char_002 携带 (b) `<img onerror>`，
+        # 同时验证 _esc 的 5-char escape (& < > " ') 都生效。
         Path(chars_path).write_text(
-            json.dumps([{"id": "char_001",
-                         "name": "</script><script>alert(1)</script>",
-                         "appearance_shots": [1],
-                         "review_state": "confirmed"}],
-                       ensure_ascii=False, indent=2),
+            json.dumps([
+                {"id": "char_001",
+                 "name": "</script><script>alert(1)</script>",
+                 "appearance_shots": [1],
+                 "review_state": "confirmed"},
+                {"id": "char_002",
+                 "name": "<img src=x onerror=alert(1)>",
+                 "appearance_shots": [1],
+                 "review_state": "confirmed"},
+            ], ensure_ascii=False, indent=2),
             encoding="utf-8")
+
+        # Title payload (CR-01)：单 payload 同时打 (c) <title> head sink 和 (d) <h1>
+        # body sink —— gen_timeline_html 把同一 title 字符串插值进两处，两处都必须
+        # 用 safe_title (_esc 后)。payload 含 </title><script> 试图破出 head。
+        title_payload = "</title><script>alert('title')</script><h1>"
+        # video_src payload (WR-03)：含 " 试图破出 src="..." 双引号属性，注入 onerror。
+        video_src_payload = 'x" onerror="alert(1)'
 
         cmd = [
             sys.executable, str(REPO / "html" / "gen_timeline_html.py"),
             "--shots", shots_json,
             "--characters", chars_path,
+            "--title", title_payload,
+            "--video-src", video_src_payload,
             "--output", html_path,
         ]
         r = _run(cmd, timeout=30)
@@ -520,27 +564,71 @@ def scenario_html_xss_inert(verbose: bool = False) -> tuple:
             return (False, f"gen_timeline_html.py failed (rc={r.returncode}); "
                            f"stderr: {(r.stderr or '').strip()[:300]}")
 
-        # (b) 原始 payload "</script><script>" 不出现在 HTML 中
-        # （必须被 _esc 转义为 &lt;/script&gt; 或被 JSON-in-script .replace 中和）
         html = Path(html_path).read_text(encoding="utf-8")
-        payload = "</script><script>"
-        if payload in html:
-            # 找到 payload 出现位置以辅助 debug
-            idx = html.find(payload)
-            ctx = html[max(0, idx - 40):idx + len(payload) + 40]
-            return (False, f"XSS payload {payload!r} SURVIVED in HTML at offset "
-                           f"{idx}; context: {ctx!r}")
+
+        # (b) Multi-sink XSS matrix assertions —— 任一存活 = XSS posture 失守。
+        # 每个 (pattern, reason) 都对应一个 review-fix 的 sink。
+        #
+        # 注意：不能简单 grep 全文 raw `<script>` —— inline JSON 块内（CHARACTERS const）
+        # 经 JSON-in-script 防御 (.replace("</", "<\\/")) 后，`<script>` 单开标签作为 JS
+        # string 文本保留，HTML parser 在 <script> element 内不解析子标签，只看
+        # `</script>` 序列结束 block。所以「真正可执行」的 raw pattern 是 breakout
+        # sequences（能从当前 context 破出，开新 element/attribute）—— 这些才是断言目标。
+        forbidden_patterns = [
+            # CR-04 carry (JSON-in-script defense)：raw `</script><script>` 出现 →
+            # HTML parser 在 inline JSON 见 `</script>` 即结束 script block，后续
+            # `<script>` 真成新 element。Defense: .replace("</", "<\\/") 把首 `</`
+            # 转成 JS escape `<\/`，HTML parser 视作文本。
+            ("</script><script>",        "raw </script><script> survived (JSON-in-script defense failed, CR-04 carry)"),
+            # CR-01 fix (title head sink)：`</title><script>` 会从 <title> 破出注入
+            # 可执行 head <script>。Defense: _esc(title) → &lt;/title&gt;&lt;script&gt;。
+            ("</title><script>",         "raw </title><script> survived (title head sink, CR-01)"),
+            # CR-01 fix (h1 body sink)：`</h1><script>` 同理破出注入可执行 body script。
+            ("</h1><script>",            "raw </h1><script> survived (h1 body sink, CR-01)"),
+            # WR-03 fix (source attribute)：`src="x" onerror` 中 payload 的 `"` 破出
+            # 双引号属性，onerror 成新 attribute。Defense: _esc → `&quot;`。
+            ('src="x" onerror',          'raw src="x" onerror survived (source attribute sink, WR-03)'),
+            ('onerror="alert(1)',        'raw onerror attribute breakout survived (source sink, WR-03)'),
+        ]
+        for pat, reason in forbidden_patterns:
+            if pat in html:
+                idx = html.find(pat)
+                ctx = html[max(0, idx - 40):idx + len(pat) + 40]
+                return (False, f"XSS pattern {pat!r} SURVIVED in HTML ({reason}) "
+                               f"at offset {idx}; context: {ctx!r}")
 
         # (c) HTML 仍含 gallery-card（payload 在 name 中，但 card 应渲染 —— 只是 escaped）
         if "gallery-card" not in html:
             return (False, "gallery-card missing — card not rendered at all")
 
-        # (d) HTML 仍含 char_001 ID（name 被 escape 但 ID 应仍在 anchor）
+        # (d) HTML 仍含 char_001 / char_002 ID（name 被 escape 但 ID 应仍在 anchor）
         if "gallery-char_001" not in html:
             return (False, "gallery-char_001 anchor missing")
+        if "gallery-char_002" not in html:
+            return (False, "gallery-char_002 anchor missing")
 
-        return (True, f"html_xss_inert OK: payload '</script><script>' "
-                      f"neutralized (CR-04 carry), gallery-card + anchor still render")
+        # (e) 反向 sanity：escaped 形式应在 HTML 中（确认 _esc 真的跑了，不只是
+        # payload 被某处其他机制剥掉了）。每个 sink 检查对应 escaped 形式：
+        #   - gallery name (CR-04 carry, body sink):  `&lt;script&gt;` 由 _esc 产
+        #   - gallery name (img onerror, body sink):  `&lt;img src=x onerror=alert(1)&gt;`
+        #   - page <title> (CR-01 head sink):         `&lt;/title&gt;&lt;script&gt;`
+        #   - <source src> (WR-03 attribute sink):    `x&quot; onerror=&quot;alert(1)`
+        if "&lt;script&gt;" not in html:
+            return (False, "expected '&lt;script&gt;' escaped form missing — "
+                           "_esc may not have run on gallery name (CR-04 carry)")
+        if "&lt;img src=x onerror=alert(1)&gt;" not in html:
+            return (False, "expected '&lt;img src=x onerror=alert(1)&gt;' escaped form "
+                           "missing — _esc may not have run on char_002 gallery name")
+        if "&lt;/title&gt;&lt;script&gt;" not in html:
+            return (False, "expected '&lt;/title&gt;&lt;script&gt;' escaped form missing — "
+                           "_esc may not have run on title (CR-01 regressed?)")
+        if 'x&quot; onerror=&quot;alert(1)' not in html:
+            return (False, "expected 'x&quot; onerror=&quot;...' escaped form missing — "
+                           "_esc may not have run on video_src (WR-03 regressed?)")
+
+        return (True, f"html_xss_inert OK: 5-sink × multi-payload matrix "
+                      f"all neutralized (CR-04 carry + CR-01 title + WR-03 video_src), "
+                      f"gallery-cards + anchors still render, _esc escaped forms present")
     finally:
         shutil.rmtree(work_dir, ignore_errors=True)
 
