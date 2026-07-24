@@ -436,8 +436,15 @@ def main():
         json.dump(registry_draft, f, ensure_ascii=False, indent=2)
     os.replace(tmp, args.output)
 
-    # 13. warnings sidecar —— READ-merge-write（非破坏性：APPEND 到 step_semantic 现有）
-    all_warnings = existing_warnings + reid_warnings
+    # 13. warnings sidecar —— READ-merge-write（非破坏性 cross-step；self-dedup cross-run）
+    # WR-01：strip prior [reid]-tagged warnings（本 step 上一轮写的）再 append fresh，
+    # 防 self-accumulate（同 route-down 重跑导致 2N 增长 → asset.json#generator.warnings 噪声）。
+    # step_semantic 等他 step 的 warnings 保留（cross-step merge 仍非破坏性）。
+    STEP_TAG = "[reid]"
+    prior = [w for w in existing_warnings if not w.startswith(STEP_TAG)]
+    tagged_reid = [f"{STEP_TAG} {w}" if not w.startswith(STEP_TAG) else w
+                   for w in reid_warnings]
+    all_warnings = prior + tagged_reid
     with open(warnings_sidecar, "w", encoding="utf-8") as f:
         json.dump({"warnings": all_warnings}, f, ensure_ascii=False, indent=2)
 
