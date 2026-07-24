@@ -137,7 +137,20 @@ Plans:
   3. `gen_timeline_html.py` extended with: (a) character/prop gallery section rendering external png via `serve.py`; (b) clickable reference chips inside prompt rendering linking back to gallery entries; (c) per-shot "运镜分析填充" chip indicator (green = route filled / gray = offline degraded)
   4. `asset.json` embeds `generator.registry_snapshot` freezing the registry state at export time — later registry mutations cannot invalidate already-exported prompt references (Pitfall 18 prevented)
 
-**Plans**: TBD
+**Plans**: 3 plans in 3 waves (mirrors Phase 5/6/7 contract-first → producer → integration)
+
+Plans:
+**Wave 1** *(contract-first — unblocks Plan 02)*
+
+- [ ] 08-01-PLAN.md — asset.schema.json#generator.registry_snapshot (additive optional) + spec/fixtures/v1.1/asset.json example + SPEC.md §3 row + Changelog Phase 8 bullet [PROMPT-04]
+
+**Wave 2** *(blocked on Wave 1)*
+
+- [ ] 08-02-PLAN.md — prompts/attach_refs.py (attach refs + deterministic Pattern 2 recompose + idempotent + graceful-degrade) + spec/fixtures/v1.1/prompts.json prompt_text sync + scripts/export_asset.py _build_registry_snapshot conditional emit + scripts/verify_contract.py prompts↔registry integrity (Pitfall 17) [PROMPT-01, PROMPT-02, PROMPT-03, PROMPT-04]
+
+**Wave 3** *(blocked on Waves 1 + 2)*
+
+- [ ] 08-03-PLAN.md — html/gen_timeline_html.py gallery + ref-chips + semantic-fill indicator + _esc() + JSON-in-script defense (CR-04 carry) + run_pipeline.py step_timeline attach_refs pre-step + mtime cache prompts_json (Pitfall 9, NO [N/9] bump) + scripts/verify_phase8_smoke.py 6-scenario regression [PRESENT-01, PRESENT-02, PRESENT-03]
 **UI hint**: yes
 
 ### Phase 9: Canvas Consumer Integration (cross-repo)
@@ -165,5 +178,5 @@ Plans:
 | 5. Contract v1.1 | v1.1 | 4/4 | Complete    | 2026-07-24 |
 | 6. Cinematography Auto-Fill (`step_semantic`) | v1.1 | 3/3 | Complete    | 2026-07-24 |
 | 7. Cross-Shot Re-ID Registry + HITL Review (`step_reid`) | v1.1 | 4/4 | Complete    | 2026-07-24 |
-| 8. Prompt Reference System + shot-timeline HTML Gallery | v1.1 | 0/? | Planning | - |
+| 8. Prompt Reference System + shot-timeline HTML Gallery | v1.1 | 0/3 | Planning | - |
 | 9. Canvas Consumer Integration (cross-repo) | v1.1 | 0/? | Planning | - |
