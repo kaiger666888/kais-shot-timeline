@@ -1,0 +1,77 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://kais.shot-timeline/spec/schemas/characters.schema.json",
+  "draft": "2020-12",
+  "title": "角色注册表（跨镜角色身份 + 造型变体）",
+  "description": "Canonical cross-shot character registry. Producer (Phase 7/8 apply_edits.py) writes characters.json after HITL review confirms each entry; consumer (canvas in Phase 9) reads it to render character child nodes + attach character_refs to prompts. 严格遵守 v1.0 的 strict-schema × lenient-consumer 原则:schema 校验时 additionalProperties:false 全程生效(runnable consumer 必须在 runtime 容忍未知字段,仅警告不崩溃)。",
+  "$comment": "Pitfall 5 (identity drift scope): 角色 ID 是 asset-local 的——单资产内有效,不保证跨资产连续性。Pitfall 17 (prompt dangling): ID 不可变性是硬约束——一旦 confirmed,reviewer 可以 merge/split 但 ID 永不重用或重排版(保证 prompts.json#character_refs[] 引用永不悬空)。Pitfall 7 (review_state gating): 只有 review_state='confirmed' 的条目才流向下游 prompt 引用;'proposed' = re-id 草稿,'rejected' = 软删除(ID 保留以维护引用完整性)。Pitfall 3 (costume change): looks[] 让同一角色携带多个造型变体,每个造型独立 appearance_shots[],这样 Phase 8 才能挂 per-look prompt refs。",
+  "type": "array",
+  "items": {
+    "type": "object",
+    "additionalProperties": false,
+    "required": ["id", "name", "review_state"],
+    "properties": {
+      "id": {
+        "type": "string",
+        "pattern": "^char_[0-9]{3}$",
+        "description": "不可变角色 ID(零填充 3 位)。Pattern 在 Phase 5 锁定;一旦 confirmed,永不重用或重排版(Pitfall 17)。"
+      },
+      "name": {
+        "type": "string",
+        "minLength": 1,
+        "description": "展示名(中文或英文均可)。reviewer 可编辑;ID 不可编辑。"
+      },
+      "representative_image": {
+        "type": "string",
+        "pattern": "^(?!.*\\.\\.)([^/]+/)*characters/[^:*?\"<>|]+\\.png$",
+        "description": "External png 相对路径(NOT base64——asset 体积膨胀防护)。Anti-traversal negative-lookahead: 拒绝 ../、绝对路径、Windows 保留字符。Canonical 命名: characters/<id>.png。"
+      },
+      "appearance_shots": {
+        "type": "array",
+        "items": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "description": "该角色出现的 shot ID 列表(交叉引用 shots.json#id)。Phase 8 据此把 character_refs[] 挂到对应 prompts.json 条目。"
+      },
+      "review_state": {
+        "enum": ["proposed", "confirmed", "rejected"],
+        "description": "HITL 审阅门控。只有 'confirmed' 的条目流向下游 prompt 引用(Pitfall 7)。'proposed' = re-id 聚类草稿;'rejected' = 软删除(ID 保留以维护引用完整性,不允许物理删除)。"
+      },
+      "looks": {
+        "type": "array",
+        "items": {
+          "$ref": "#/$defs/look"
+        },
+        "description": "可选造型/服装变体。每个 look 自带 appearance_shots[],这样 Phase 8 能挂 per-look prompt refs,而不是只能 per-character。"
+      }
+    }
+  },
+  "$defs": {
+    "look": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["label", "image_ref"],
+      "properties": {
+        "label": {
+          "type": "string",
+          "minLength": 1,
+          "description": "造型名(如 '默认造型'、'回忆杀'、'雨夜')。"
+        },
+        "image_ref": {
+          "type": "string",
+          "pattern": "^(?!.*\\.\\.)([^/]+/)*characters/[^:*?\"<>|]+\\.png$",
+          "description": "该 look 对应的 external png。与 representative_image 共用同一 anti-traversal pattern。"
+        },
+        "appearance_shots": {
+          "type": "array",
+          "items": {
+            "type": "integer",
+            "minimum": 1
+          },
+          "description": "该 look 出现的 shot ID 列表(父角色 appearance_shots[] 的子集)。"
+        }
+      }
+    }
+  }
+}

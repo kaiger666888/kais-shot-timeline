@@ -1,0 +1,78 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://kais.shot-timeline/spec/schemas/registry.schema.json",
+  "draft": "2020-12",
+  "title": "Registry 草稿(pre-review re-id 聚类输出)",
+  "description": "Draft clustering output from DINOv2 + AgglomerativeClustering. Consumed by html/gen_registry_review.py (HITL Stage C 审阅界面); Phase 7 apply_edits.py (Stage D) 把 confirmed 条目流向 canonical characters.json / props.json。registry.draft.json 是 pipeline-internal 工作产物,不在 asset.json#data 中列出——只有审阅后的 characters.json + props.json 才是 canonical asset data files。 严格遵守 v1.0 的 strict-schema × lenient-consumer 原则。",
+  "$comment": "Three-tier threshold convention (CONTEXT-locked D-XX; Phase 7 ep01 spike calibrates default τ): tier='auto_merge' 当 mean_cosine >= 0.85; tier='review' 当 0.6 <= mean_cosine < 0.85; tier='auto_distinct' 当 mean_cosine < 0.6。这些阈值仅作为 DOCUMENTED GUIDANCE 存在于本 $comment,NOT encoded as numeric schema fields(minimum/maximum)——tier 字段是 authoritative label,mean_cosine 是 advisory 数值,Phase 7 的 ep01 spike 通过 cosine-distribution valley pick 校准实际 τ 后再决定是否硬编码。Pitfall 6 (mask_quality 类型松弛): mask_quality 刻意不锁 enum,允许 Phase 7 driver emit 数值分数或不同分级。Pitfall 7 (review_state gating): 草稿默认 'proposed'。Pitfall 17 (ID immutability): cluster_id 是 PROPOSED ID,reviewer 在 HITL 期间可改 type(char_/prop_ 前缀),但一旦 confirmed 后不可变。",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["clusters"],
+  "properties": {
+    "generated_at": {
+      "type": "string",
+      "description": "ISO-8601 UTC 时间戳(聚类运行时刻)。"
+    },
+    "model": {
+      "type": "string",
+      "description": "Embedding 模型 ID(如 'facebook/dinov2-base'、'facebook/dinov2-large')。advisory——可追溯性。"
+    },
+    "tau": {
+      "type": "number",
+      "description": "本次运行使用的 cosine DISTANCE 阈值 τ(advisory——Phase 7 spike 校准)。注意:这是 cosine distance(1 - similarity),所以 τ=0.30 ≈ similarity 0.70。与 cluster.mean_cosine(SIMILARITY)区分。"
+    },
+    "clusters": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["cluster_id", "review_state", "tier", "mean_cosine", "members"],
+        "properties": {
+          "cluster_id": {
+            "type": "string",
+            "pattern": "^(char|prop)_[0-9]{3}$",
+            "description": "Proposed ID——必须匹配 character 或 prop ID pattern(reviewer 在 HITL 期间决定最终 type)。一旦 confirmed,不可重用或重排版(Pitfall 17)。"
+          },
+          "review_state": {
+            "enum": ["proposed", "confirmed", "rejected"],
+            "description": "HITL 门控。草稿 emit 时为 'proposed';审阅后转为 'confirmed' 或 'rejected'。只有 'confirmed' 流向 canonical characters.json/props.json(Pitfall 7)。"
+          },
+          "tier": {
+            "enum": ["auto_merge", "review", "auto_distinct"],
+            "description": "三档分类(来自 mean_cosine vs τ)。见 $comment 的阈值约定。这是 authoritative label——不依赖 numeric schema 字段强制。"
+          },
+          "mean_cosine": {
+            "type": "number",
+            "minimum": -1,
+            "maximum": 1,
+            "description": "簇成员间的 mean cosine SIMILARITY(1.0 = 完全相同;0.0 = 正交;-1.0 = 相反)。注意:与 tau(cosine DISTANCE)语义不同。"
+          },
+          "members": {
+            "type": "array",
+            "minItems": 1,
+            "items": {
+              "type": "object",
+              "additionalProperties": false,
+              "required": ["shot_id", "frame_pos"],
+              "properties": {
+                "shot_id": {
+                  "type": "integer",
+                  "minimum": 1,
+                  "description": "Shot ID(交叉引用 shots.json#id)。"
+                },
+                "frame_pos": {
+                  "type": ["string", "number"],
+                  "description": "Frame 位置——可以是 label('first'/'last'/'25%'/'50%'/'75%')或时间秒数(number)。Producer 决定具体格式;schema 两种都接受以保留灵活性。刻意不锁 enum。"
+                },
+                "mask_quality": {
+                  "type": "string",
+                  "description": "SAM3 mask 质量指标。Recommended values: 'high'/'medium'/'low'/'unusable'(后者跳过聚类)。刻意 NOT enum-constrained——Phase 7 driver 可能 emit 数值分数或不同分级,锁死会强制 schema 修订。"
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+}
