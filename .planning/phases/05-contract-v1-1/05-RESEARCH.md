@@ -808,22 +808,22 @@ def validate_eight_shapes(asset_dir: Path, manifest: dict) -> list:
 
 **Note:** All other claims in this research are either `[VERIFIED]` (empirically tested with `jsonschema 4.26.0` or `pip index versions`), `[CITED]` (directly quoted from CONTEXT.md / SPEC.md / source code), or direct codebase observations.
 
-## Open Questions
+## Open Questions (RESOLVED — all addressed in plans 05-02 / 05-04)
 
 1. **Exact v1.0 git tag name for v1 schema recovery**
    - What we know: User memory says "tag v1.0"; SUMMARY says "v1.0 SHIPPED 2026-07-20".
    - What's unclear: Whether the tag is literally `v1.0` or `v1` or includes a date suffix.
-   - Recommendation: Planner runs `git tag -l "v1*"` in Wave 0; if absent, `_cross_version_check` falls back to programmatic property stripping (walk v1.1 schema, remove known-added keys, revalidate).
+   - RESOLVED: Plan 05-04 Task 1 runs `git tag -l "v1*"` (tag `v1.0` confirmed to exist) for git-based recovery, with programmatic property-stripping fallback (walk v1.1 schema, remove known-added keys, revalidate).
 
 2. **Whether `_cross_version_check` should also test prompts/asset with the registry fixture**
    - What we know: The registry is NOT in asset.json#data, so asset↔registry cross-version is N/A.
    - What's unclear: Whether the planner wants a separate "fixture self-consistency" check (prompt IDs ⊆ character IDs ⊆ shots IDs).
-   - Recommendation: Add a lightweight `_fixture_consistency_check` that greps IDs across the v1.1 fixture set. This is distinct from CONTRACT-07 (cross-version) but prevents Pitfall C (dangling IDs). Phase 8's PROMPT-03 is the full integrity check; Phase 5's is just "fixtures don't ship broken".
+   - RESOLVED: Plan 05-04 Task 1 adds `_fixture_consistency_check` (prompt IDs ⊆ character/prop IDs ⊆ shots IDs across the v1.1 fixture set). Distinct from CONTRACT-07 (cross-version) and Phase 8 PROMPT-03 (full integrity check); Phase 5's is just "fixtures don't ship broken".
 
 3. **PROGRAMMATIC schema reconstruction vs git-based**
    - What we know: Git-based is most authentic; programmatic is most portable.
    - What's unclear: Whether the planner prefers minimal subprocess calls (programmatic) or maximal authenticity (git).
-   - Recommendation: Git-based primary, programmatic fallback. The fallback can be a simple function that takes the v1.1 schema + a list of known-added property paths and returns a stripped copy.
+   - RESOLVED: Git-based primary, programmatic fallback (Plan 05-04 Task 1). The fallback takes the v1.1 schema + a list of known-added property paths and returns a stripped copy for revalidation.
 
 ## Environment Availability
 
@@ -976,10 +976,10 @@ def validate_eight_shapes(asset_dir: Path, manifest: dict) -> list:
 | Pitfalls | HIGH | Directly anchored in repo PITFALLS.md + CONTEXT.md locked decisions; no ML/route uncertainty in Phase 5 scope. |
 | Validation | HIGH | Extends proven v1.0 `sys.exit(0/1)` standalone-script pattern; no framework gap. |
 
-### Open Questions
-1. Exact v1.0 git tag name for `_cross_version_check` schema recovery (low-risk fallback: programmatic strip).
-2. Whether to add a fixture self-consistency check (prompt IDs ⊆ character IDs) alongside the cross-version check — recommended but not strictly required by CONTRACT-07.
-3. `.planning/PROJECT.md:83` doc drift (`"2"` vs `"1.1"`) — almost certainly stale; planner should fix as a consistency item.
+### Open Questions (RESOLVED — all addressed in plans)
+1. RESOLVED: Exact v1.0 git tag name for `_cross_version_check` schema recovery — `git tag -l "v1*"` confirms `v1.0` exists (Plan 05-04 Task 1); programmatic strip is the fallback.
+2. RESOLVED: Fixture self-consistency check (prompt IDs ⊆ character IDs) added as `_fixture_consistency_check` in Plan 05-04 Task 1 (distinct from CONTRACT-07 and Phase 8 PROMPT-03).
+3. RESOLVED: `.planning/PROJECT.md:83` doc drift (`"2"` → `"1.1"`) fixed in Plan 05-02 Task 2.
 
 ### Ready for Planning
 Research complete. Planner can now create PLAN.md files. The phase is low-risk, zero-new-deps, and follows the proven v1.0 contract-first pattern. The only design subtlety is the schema_version lock location (producer constant, not schema const) — already resolved in CONTEXT.md.
