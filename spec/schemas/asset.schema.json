@@ -52,6 +52,11 @@
         "generated_at": {
           "type": "string",
           "description": "ISO-8601 datetime (UTC recommended, e.g. \"2026-07-20T00:00:00Z\")."
+        },
+        "warnings": {
+          "type": "array",
+          "items": { "type": "string" },
+          "description": "v1.1 additive (OPTIONAL — Phase 6). Non-fatal warnings encountered during asset generation (e.g. cinematography route unreachable → empty prompts facets). Older assets omit it and still validate (graceful-degrade). Producer emits the field only when the list is non-empty; absent on clean runs. Operator-facing failure reasons only (exception class + message, route status codes) — no PII, no auth tokens, no body payloads."
         }
       }
     },

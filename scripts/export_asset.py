@@ -132,7 +132,8 @@ def validate_asset_json(asset_dict: dict) -> None:
             + "\n".join(lines))
 
 
-def build_asset_dict(work_dir: str, video_path: str) -> dict:
+def build_asset_dict(work_dir: str, video_path: str,
+                     warnings: list[str] | None = None) -> dict:
     """从现有 pipeline 产物组装 asset.json dict。
 
     字段 sourcing（全部对照 output/《小江湖》第03话…/ 实际产物验证过）：
@@ -144,9 +145,19 @@ def build_asset_dict(work_dir: str, video_path: str) -> dict:
       * generator.tool: 字面量 "kais-shot-timeline"
       * generator.version: _git_sha() 短 SHA（失败 "dev"）
       * generator.generated_at: UTC ISO-8601（带 Z 后缀）
+      * generator.warnings: 仅当 warnings 非空 list 时 emit（Phase 6 增量，v1.1 optional）。
+        None / [] → 字段缺省（schema 合法；老资产 + 干净运行保持缺省）。
+        来源：main() 读 route_cache/warnings.json sidecar（best-effort，由
+        analysis/call_shot_analysis.py 写入 step_semantic 路由失败原因）。
       * data.*: 5 个数据 JSON 的字面量相对路径
       * media.video: 字面量 "video.mp4"
       * media.stems.*: 字面量 "stems/<name>.wav"（bass 不在内）
+
+    Args:
+      work_dir: 资产根目录（含 5 个数据 JSON + route_cache/ sidecar）。
+      video_path: 原始视频绝对路径（含 audio 流）。
+      warnings: 可选非致命警告字符串列表；非空时 emit 为 generator.warnings，
+        None 或空列表时该字段 OMITTED（schema optional，graceful-degrade default）。
     """
     with open(os.path.join(work_dir, "transcript.json"), encoding="utf-8") as f:
         transcript = json.load(f)
@@ -174,6 +185,10 @@ def build_asset_dict(work_dir: str, video_path: str) -> dict:
             "version": _git_sha(),
             "generated_at": datetime.now(timezone.utc).strftime(
                 "%Y-%m-%dT%H:%M:%SZ"),
+            # Phase 6: 仅当 warnings 非空 list 时 emit；None / [] → OMITTED
+            # （generator.warnings 是 v1.1 optional，schema accepts both ways；
+            #   graceful-degrade default = 干净运行缺省，老资产不受影响）。
+            **({"warnings": warnings} if warnings else {}),
         },
         "data": {
             "shots": "shots.json",
@@ -282,8 +297,28 @@ def main():
     if args.force and os.path.exists(output):
         os.unlink(output)
 
-    # (g) 构建 manifest dict
-    asset = build_asset_dict(work_dir, video)
+    # (f.5) Phase 6: best-effort 读取 step_semantic 写的 warnings sidecar
+    # （route_cache/warnings.json — 由 analysis/call_shot_analysis.py 在路由
+    #   不可达 / per-shot 失败时写入；live route round-trip 未达时也可能缺省）。
+    # ANY OSError / JSONDecodeError / 缺失文件 → warnings=None（silent fallback）：
+    # exporter 不能因 sidecar 损坏而中断资产导出（graceful-degrade）。
+    warnings_sidecar = os.path.join(work_dir, "route_cache", "warnings.json")
+    warnings = None
+    if os.path.exists(warnings_sidecar):
+        try:
+            with open(warnings_sidecar, encoding="utf-8") as f:
+                loaded = json.load(f)
+            if isinstance(loaded, dict):
+                candidate = loaded.get("warnings")
+                # 仅接受 list[str]；其它形状（dict / None / 非 str 元素）回退 None。
+                if (isinstance(candidate, list)
+                        and all(isinstance(w, str) for w in candidate)):
+                    warnings = candidate or None  # [] → None（缺省，不 emit）
+        except (OSError, json.JSONDecodeError) as e:
+            print(f"[warn] route_cache/warnings.json malformed → ignoring: {e}")
+
+    # (g) 构建 manifest dict（warnings 非空时 emit generator.warnings）
+    asset = build_asset_dict(work_dir, video, warnings=warnings)
 
     # (g0) duration_sec > 0 hard check —— asset.schema.json 仅约束 minimum:0，
     # schema 校验放过 0；但下游消费者拿到 duration_sec=0 会渲染失败。
