@@ -2,10 +2,10 @@
 gsd_state_version: 1.0
 milestone: v1.1
 milestone_name: 分镜语义深化 — 镜头语言 + 跨镜角色/道具注册表
-status: milestone_complete
-stopped_at: Milestone complete (Phase 9 was final phase)
-last_updated: 2026-07-24T23:02:56.517Z
-last_activity: 2026-07-24
+status: Awaiting next milestone
+stopped_at: ""Phase 9 Plan 01 complete (consumer PRESENT-04/05 shipped 2026-07-24 in kais-aigc-platform feat/canvas-asset-collection @ 90812e9d) — consumer @kais/infinite-canvas now v1.1-aware: SHOT_TIMELINE_KNOWN_VERSIONS += '1.1'; extractShotTimelineArtifacts emits 2 character + 1 prop child nodes as type:'asset' (assetType character/prop, NOT delivery) via §7 buildPhaseTree post-process; AssetNode typeIcons += 🧑/🔧; verify-canvas-shot-timeline.ts 27/27 green. v1.0 WIP untouched. Ready for /gsd:execute-phase 9 plan 09-02 (PRESENT-06 verify_contract.py 3-mode bridge).""
+last_updated: "2026-07-24T23:10:40.158Z"
+last_activity: 2026-07-24 — Milestone v1.1 completed and archived
 progress:
   total_phases: 5
   completed_phases: 5
@@ -25,18 +25,10 @@ See: .planning/PROJECT.md (updated 2026-07-24)
 
 ## Current Position
 
-Phase: 9
-Plan: Not started
-Status: Milestone complete
-Last activity: 2026-07-24
-
-**v1.1 phase sequence (dependency-ordered, research-validated):**
-
-1. Phase 5 — Contract v1.1 (no route dep; mirrors v1.0 contract-first)
-2. Phase 6 — Cinematography Auto-Fill `step_semantic` (blocked on cross-repo branch merges)
-3. Phase 7 — Cross-Shot Re-ID Registry + HITL Review `step_reid` (HIGHEST complexity)
-4. Phase 8 — Prompt Reference System + shot-timeline HTML Gallery
-5. Phase 9 — Canvas Consumer Integration (cross-repo, highest coordination cost)
+Phase: Milestone v1.1 complete
+Plan: —
+Status: Awaiting next milestone
+Last activity: 2026-07-24 — Milestone v1.1 completed and archived
 
 ## Performance Metrics
 
@@ -168,5 +160,4 @@ Resume file: None
 
 ## Operator Next Steps
 
-- `/gsd:execute-phase 9` (plan 09-02) — PRESENT-06: confirm verify_contract.py 3-mode harness green for v1.1 (producer + consumer modes testable now; e2e deferred)
-- After 09-02: Phase 9 complete → v1.1 milestone audit + tag
+- Start the next milestone with /gsd-new-milestone

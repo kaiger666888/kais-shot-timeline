@@ -8,9 +8,13 @@
 
 把成片解构成可导航、多轨道的分镜资产（分镜 + 分离音轨 + 对白 + prompt），且这套形态可移植——能作为无限画布等下游消费者的「最终资产集合形态」被直接消费。
 
-## Current Milestone: v1.1 分镜语义深化 —— 镜头语言 + 跨镜角色/道具注册表
+## Last Shipped Milestone: v1.1 分镜语义深化 —— 镜头语言 + 跨镜角色/道具注册表 (SHIPPED 2026-07-25)
 
-**Goal:** 把成片从「边界 + 音轨 + 对白 + prompt 文本」升级为带镜头语言、动作、可复用跨镜角色/道具注册表的叙事资产——prompt 引用注册表实现真实叙事连贯，并把 ShotTimelineAsset 契约升到 v2。
+**Goal:** 把成片从「边界 + 音轨 + 对白 + prompt 文本」升级为带镜头语言、动作、可复用跨镜角色/道具注册表的叙事资产——prompt 引用注册表实现真实叙事连贯，并把 ShotTimelineAsset 契约 minor-bump 到 v1.1。**DELIVERED** — 5 phases, 16 plans, 34/34 requirements satisfied; producer/contract side complete, 3 cross-repo route dependencies pre-authorized deferred (see Validated + Known Deferred below).
+
+## Next Milestone
+
+**Status:** Planning (not started). Run `/gsd:new-milestone` to define. Candidate directions from v1.1 deferred items: live cross-repo route integration (shot-analysis + character-reid merge + empirical τ calibration), or v2 display/continuity work (cross-video character continuity, speaker attribution, canvas native timeline).
 
 **Target features:**
 - 镜头语言/动作/语义自动填充——shot-timeline 作 HTTP 客户端调 kais-aigc-platform 运镜分析路由（geometry/SAM3/Qwen3-VL），自动填 `prompts.json` 的 `camera/action/scene/lighting/style/subject` 结构化字段（替代当前外部手动 `part_*.json`）
@@ -38,16 +42,25 @@
 - ✓ shot-timeline 导出 ShotTimelineAsset 产物（export_asset.py 写 asset.json + canonical symlinks；run_pipeline.py step_export 第 6 步 always-on；serve.py FD-leak 修复 + check_range.py Range-206 自检；additive-only）— Validated in Phase 2: shot-timeline Exporter (Producer)
 - ✓ 画布侧（@kais/infinite-canvas）消费 ShotTimelineAsset，表示为 collection（import-from-dir.ts 新增 ShotTimelineAsset 分支：asset.json 识别 → extractShotTimelineArtifacts → 复用 buildPhaseTree；1 zone 父节点 + storyboard/audio/video 子节点 + sequence edges；合成字段满足 per-type Zod，不改 renderer / 不 bump contract；跨仓库 kais-aigc-platform feat/canvas-asset-collection）— Validated in Phase 3: Canvas Consumer
 - ✓ 跨仓库契约一致性验证（scripts/verify_contract.py 三模式 harness：producer inline schema 校验 + consumer shells Phase 3 verify + e2e 真 producer→backend→SQL read-back 断言 1 zone+93 storyboard+3 audio+video+92 sequence edges；self-test 证 fail-loud；WR-01/04 正式接受）— Validated in Phase 4: Cross-Repo Contract Verification
+- ✓ v1.1 契约（3 新 schema：characters/props/registry + 2 additive 扩展：prompts character_refs/prop_refs + asset data.characters/props/media.characters[]/props[]/generator.warnings/registry_snapshot；schema_version `1`→`1.1` producer-locked via SCHEMA_VERSION constant；v1↔v1.1 bidirectional cross-version self-test）— Validated in Phase 5: Contract v1.1
+- ✓ 镜头语言自动填充（analysis/call_shot_analysis.py httpx 客户端 + LOCKED route→prompts 映射 + per-shot cache + preflight + graceful-degrade；run_pipeline step_semantic slot 5 of 8 + 4 flags + generator.warnings sidecar）— Validated in Phase 6: Cinematography Auto-Fill (route deferred; mapping proven against 7 fixtures)
+- ✓ 跨镜角色/道具注册表 + HITL（analysis/call_reid.py 客户端 + registry/apply_edits.py confirmed-only 硬门 + idempotent + ffmpeg 代表图 + html/gen_registry_review.py 一等 HITL review HTML + registry-edits schema；step_reid slot 6 of 8 + [N/7]→[N/8]）— Validated in Phase 7: Cross-Shot Re-ID + HITL (route + τ deferred; producer/contract complete)
+- ✓ Prompt 引用系统 + HTML 画廊（prompts/attach_refs.py 确定性 Pattern 2 recompose + idempotent + generator.registry_snapshot 冻结 + Pitfall 17 integrity + gen_timeline_html 画廊/reference chip/运镜填充指示器 + _esc XSS 防御）— Validated in Phase 8: Prompt Reference System + HTML Gallery
+- ✓ Canvas 消费者 v1.1（import-from-dir.ts SHOT_TIMELINE_KNOWN_VERSIONS += "1.1" + character/prop asset 子节点经 §7 post-process + AssetNode typeIcons 🧑/🔧 + verify-canvas 29/29；无 custom renderer / 无 Zod bump）— Validated in Phase 9: Canvas Consumer Integration (e2e deferred)
 
 ### Active
 
-<!-- 当前 milestone 范围。v1.1 分镜语义深化。REQ-IDs 见 REQUIREMENTS.md。 -->
+<!-- v1.1 shipped 2026-07-25 — all v1.1 requirements moved to Validated below. Next milestone not yet defined. -->
 
-- [ ] 镜头语言/动作/语义：shot-timeline 调运镜分析路由，自动填 prompts.json 结构化字段
-- [ ] 跨镜角色/道具注册表：首尾帧 SAM3 切图 + re-id 形成可复用演员表/道具表 + 人工 review
-- [ ] prompt 引用系统：prompt 结构化引用角色/道具 ID，实现叙事连贯
-- [ ] ShotTimelineAsset 契约 minor bump：schema_version 1→1.1，新增 characters/props + 丰富 prompts schema（纯增量），graceful-degrade 兜底
-- [ ] 双端展示：shot-timeline HTML 角色道具画廊 + reference chip；canvas 新增角色/道具节点类型（跨仓库）
+_None — v1.1 milestone complete. Next milestone requirements TBD via `/gsd:new-milestone`._
+
+### Known Deferred (v1.1 → post-merge / v2)
+
+Cross-repo dependencies out of this repo's control; producer/contract side complete + graceful-degrade proven for each:
+
+- [ ] Phase 6 live `shot-analysis` route round-trip (kais-aigc-platform `feat/shot-analysis-route` unmerged)
+- [ ] Phase 7 `character-reid` route + SAM3 multi-frame driver + DINOv2 embedding/clustering + empirical τ calibration on ep01 crops (route not yet built)
+- [ ] Phase 9 e2e backend mode of `verify_contract.py` (heavy) + canvas visual pilot
 
 
 
@@ -92,10 +105,10 @@
 | 画布用结构化父节点表示 collection（非新 node type / custom renderer） | receiver schema 已透传 structural types，复用现有 5 渲染器，零 contract bump | — Pending |
 | GSD 工程建在 shot-timeline（非 aigc-platform） | 格式权威定义方 = 生产者；aigc-platform 已有独立 GSD（v2.0） | — Pending |
 | 在 `feat/canvas-asset-collection` 分支开发（非 main / 非 worktree） | main 保留可交付、隔离多 phase 工作；worktree 无法跨仓库组合且拆分 .planning/ 状态 | ✓ Validated Phase 3/4（v1.0 已 ship） |
-| **v1.1** 新分析走「shot-timeline 调 kais-aigc-platform 路由」（非本地实现） | 运镜 infra 已在 comfyui 侧建好；延续 v1.0 松耦合；shot-timeline 不增重 ML 依赖；需先 merge 两运镜分支 | — Pending |
-| **v1.1** 角色道具做「跨镜 re-id 注册表」（非单镜提取） | 「真实叙事连贯」的核心 = 同一角色跨镜是同一引用；接受 re-id 不准、用人工 review 兜底 | — Pending |
-| **v1.1** 升级 ShotTimelineAsset 到 schema_version `"1.1"`（minor bump，非侧车数据；刻意不用 `"2"`） | 纯增量变更按项目 SPEC semver-lite 规则 = minor；保留 `"2"` 给未来破坏性变更；资产自描述、可移植、一等公民；v1.0 graceful-degrade 规则专为这种 minor bump 设计 | — Pending |
-| **v1.1** 双端展示（shot-timeline HTML + canvas 新节点类型） | 用户要端到端可见；接受跨仓库 ~30% 额外开销（v1.0 实测） | — Pending |
+| **v1.1** 新分析走「shot-timeline 调 kais-aigc-platform 路由」（非本地实现） | 运镜 infra 已在 comfyui 侧建好；延续 v1.0 松耦合；shot-timeline 不增重 ML 依赖；需先 merge 两运镜分支 | ✓ Validated Phase 6/7（thin httpx 客户端 + graceful-degrade；零 ML 依赖进 producer；route round-trip deferred 待分支 merge） |
+| **v1.1** 角色道具做「跨镜 re-id 注册表」（非单镜提取） | 「真实叙事连贯」的核心 = 同一角色跨镜是同一引用；接受 re-id 不准、用人工 review 兜底 | ✓ Validated Phase 7（producer 客户端 + 一等 HITL review HTML + apply_edits confirmed-only；route/driver/τ deferred） |
+| **v1.1** 升级 ShotTimelineAsset 到 schema_version `"1.1"`（minor bump，非侧车数据；刻意不用 `"2"`） | 纯增量变更按项目 SPEC semver-lite 规则 = minor；保留 `"2"` 给未来破坏性变更；资产自描述、可移植、一等公民；v1.0 graceful-degrade 规则专为这种 minor bump 设计 | ✓ Validated Phase 5/8（schema_version `"1.1"` producer-locked；v1↔v1.1 bidirectional cross-version self-test 0 errors；全 milestone 共享一个 minor） |
+| **v1.1** 双端展示（shot-timeline HTML + canvas 新节点类型） | 用户要端到端可见；接受跨仓库 ~30% 额外开销（v1.0 实测） | ✓ Validated Phase 8/9（HTML 画廊/chip/指示器 + canvas character/prop asset 节点经 §7 post-process；无 custom renderer / 无 Zod bump） |
 
 ## Evolution
 
@@ -115,4 +128,4 @@ This document evolves at phase transitions and milestone boundaries.
 4. Update Context with current state
 
 ---
-*Last updated: 2026-07-24 after /gsd-new-milestone — v1.1 分镜语义深化 milestone started (镜头语言 + 跨镜角色/道具注册表 + 契约 v2 + 双端展示)*
+*Last updated: 2026-07-25 after v1.1 milestone completion — v1.1 分镜语义深化 SHIPPED (5 phases, 16 plans, 34/34 reqs; producer/contract complete, 3 cross-repo route dependencies deferred). Next milestone TBD.*
