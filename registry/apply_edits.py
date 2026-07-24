@@ -311,6 +311,11 @@ def apply_edits(draft_path, edits_path, work_dir, video, shots_path):
     # ========================================================================
 
     # --- 4a. merge_groups ---
+    # CR-05：merge_map 记录 {被合并掉的 cid: canonical_id}，供后续 confirm_ids/
+    # reject_ids 把被 merge 走的 ID 的审阅意图转发到 canonical 目标（不静默丢弃）。
+    # 语义：operator 同时 merge_groups=[[A,B]] + confirm_ids=[A,B] 表示
+    # "A 与 B 是同一实体并确认"——canonical A 继承 B 的 confirmed 状态。
+    merge_map: dict[str, str] = {}
     for group in edits.get("merge_groups", []) or []:
         if len(group) < 2:
             continue
@@ -328,7 +333,9 @@ def apply_edits(draft_path, edits_path, work_dir, video, shots_path):
                 sum_cos += float(mc)
                 n_cos += 1
             if cid != canonical_id:
-                # 软退役 —— 从 clusters 移除 (draft 文件不动 —— 引用完整性)
+                # 软退役 —— 从 clusters 移除 (draft 文件不动 —— 引用完整性)。
+                # 记录 forwarding map（confirm/reject 时转发到 canonical_id）。
+                merge_map[cid] = canonical_id
                 clusters.pop(cid, None)
         canonical = clusters.get(canonical_id)
         if canonical is None:
@@ -398,14 +405,24 @@ def apply_edits(draft_path, edits_path, work_dir, video, shots_path):
             renames[new_id] = renames.pop(cid)
 
     # --- 4e. confirm_ids ---
+    # CR-05：被 merge 走的 ID（不在 clusters）的 confirm 意图转发到 canonical 目标，
+    # 而非静默丢弃（维护"ID 保留以维护引用完整性"+ operator 意图）。
     for cid in edits.get("confirm_ids", []) or []:
-        if cid in clusters:
-            clusters[cid]["review_state"] = "confirmed"
+        target = clusters.get(cid)
+        if target is None and cid in merge_map:
+            # 被合并掉的 ID → 转发到 canonical merge 目标
+            target = clusters.get(merge_map[cid])
+        if target is not None:
+            target["review_state"] = "confirmed"
 
     # --- 4f. reject_ids ---
+    # 同款 forwarding（CR-05）：被 merge 走的 ID 的 reject 转发到 canonical 目标。
     for cid in edits.get("reject_ids", []) or []:
-        if cid in clusters:
-            clusters[cid]["review_state"] = "rejected"
+        target = clusters.get(cid)
+        if target is None and cid in merge_map:
+            target = clusters.get(merge_map[cid])
+        if target is not None:
+            target["review_state"] = "rejected"
 
     # ========================================================================
     # 5. HARD GATE (Pitfall 7) —— confirmed-only canonical build
