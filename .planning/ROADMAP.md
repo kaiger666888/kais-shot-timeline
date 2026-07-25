@@ -48,8 +48,8 @@ Route-based audio semantic deepening: a third sibling of the v1.1 route-pattern 
 - [ ] **Phase 12: Producer Route Client** — `call_audio_analysis.py` thin httpx + per-shot cache + poisoned-cache + read-merge-write [audio] warnings + graceful-degrade
 - [ ] **Phase 13: SPEAKER-01 Linkage HITL** — `link_speakers.py` confirmed-only + `gen_speaker_review.py` → `speakers.json` (closes v1.1 SPEAKER-01 deferral)
 - [ ] **Phase 14: Pipeline Integration** — `step_audio_semantic` slot 7 of 9 + `[N/8]→[N/9]` renumber + 4 CLI flags + 5-scenario smoke harness
-- [ ] **Phase 15: Layered Reproduction Prompts** — promote `gen_audio_prompts.py` spike → in-place `reproduction.{tts,music_gen,foley}` + `--offline` fallback + table-stakes & differentiator modality enrichment + CONDITIONAL fields gated on Phase 10
-- [ ] **Phase 16: HTML Gallery** — dialogue/music/sfx chips + speaker→character chip + reproduction panel ("estimated" labels) + XSS hardening
+- [x] **Phase 15: Layered Reproduction Prompts** — promote `gen_audio_prompts.py` spike → in-place `reproduction.{tts,music_gen,foley}` + `--offline` fallback + table-stakes & differentiator modality enrichment + CONDITIONAL fields gated on Phase 10
+- [ ] **Phase 16: HTML Gallery** — dialogue/music/sfx chips + speaker→character chip + reproduction panel ("estimated" labels) + XSS hardening (completed 2026-07-25)
 - [ ] **Phase 17: Canvas Consumer (deferrable)** — `import-from-dir.ts` v1.2 + audio asset nodes via §7 post-process (no renderer / no Zod bump)
 
 ## Phase Details
@@ -174,7 +174,7 @@ v1.2 phases execute in numeric order: 10 → 11 → 12 → 13 → 14 → 15 → 
 | 7. Cross-Shot Re-ID Registry + HITL Review (`step_reid`) | v1.1 | 4/4 | Complete | 2026-07-25 |
 | 8. Prompt Reference System + shot-timeline HTML Gallery | v1.1 | 3/3 | Complete | 2026-07-25 |
 | 9. Canvas Consumer Integration (cross-repo) | v1.1 | 2/2 | Complete | 2026-07-25 |
-| 10. Risk-Validation Spike + Route Stub | v1.2 | 6/6 | Complete   | 2026-07-25 |
+| 10. Risk-Validation Spike + Route Stub | v1.2 | 6/6 | Complete    | 2026-07-25 |
 | 11. Contract v1.2 | v1.2 | 0/? | Not started | - |
 | 12. Producer Route Client | v1.2 | 0/? | Not started | - |
 | 13. SPEAKER-01 Linkage HITL | v1.2 | 0/? | Not started | - |

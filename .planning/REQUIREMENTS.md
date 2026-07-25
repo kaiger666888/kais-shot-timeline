@@ -34,8 +34,8 @@
 - [ ] **DIA-01**: 段级对白（shot 对齐，enrich 现有 transcript 语义层）— *table-stakes*
 - [ ] **DIA-02**: 说话人分离（pyannote via WhisperX integrated diarize）→ 每段 `spk_NNN` — *table-stakes*
 - [ ] **DIA-03**: `speaker_id → character_id` HITL 映射（见 SPEAKER）— *table-stakes*
-- [ ] **DIA-04**: 对白情绪（SenseVoice 7 emotions + VA）— *CONDITIONAL：Phase 1 SER macro-F1 ≥50% ship / <40% defer v1.3 / 40-50% ship nullable+confidence* — **Phase 10 resolved → ship-nullable+confidence** (PROJECT.md Key Decisions Row 3; implementation pending Phase 15)
-- [ ] **DIA-05**: 词级时间戳（WhisperX wav2vec2 align）— *CONDITIONAL：Phase 1 <200ms drift on ≥80% segments ship experimental / 否则段级 only（用户已选 WhisperX 路线）* — **Phase 10 resolved → ship-experimental** (PROJECT.md Key Decisions Row 5; implementation pending Phase 15)
+- [x] **DIA-04**: 对白情绪（SenseVoice 7 emotions + VA）— *CONDITIONAL：Phase 1 SER macro-F1 ≥50% ship / <40% defer v1.3 / 40-50% ship nullable+confidence* — **Phase 10 resolved → ship-nullable+confidence** (PROJECT.md Key Decisions Row 3; implementation pending Phase 15)
+- [x] **DIA-05**: 词级时间戳（WhisperX wav2vec2 align）— *CONDITIONAL：Phase 1 <200ms drift on ≥80% segments ship experimental / 否则段级 only（用户已选 WhisperX 路线）* — **Phase 10 resolved → ship-experimental** (PROJECT.md Key Decisions Row 5; implementation pending Phase 15)
 
 ### SPEAKER — 说话人↔角色（关闭 v1.1 SPEAKER-01 deferral）
 - [ ] **SPEAKER-01**: 新 `^spk_[0-9]{3}$` 声学 ID 空间（**不**复用 `^char_[0-9]{3}$`，避免身份信号混淆）；`speakers.json` canonical sidecar；`char_id` nullable（旁白/群杂）
@@ -46,7 +46,7 @@
 - [ ] **MUS-01**: BGM 出现/消失分段（in/out/fade）— *table-stakes*
 - [ ] **MUS-02**: BGM tempo (BPM) — *table-stakes*
 - [ ] **MUS-03**: BGM 离散 mood 标签 — *table-stakes*
-- [ ] **MUS-04**: 多标签乐器识别（含民族：erhu/pipa/guzheng/dizi）— *CONDITIONAL：Phase 1 mAP ≥0.30 ship / <0.20 defer / 0.20-0.30 ship nullable+confidence；MERT vs PANNs 对决 defer 到 Phase 1* — **Phase 10 resolved → DEFER to v1.3** (PROJECT.md Key Decisions Row 4; instruments field omitted from v1.2 schema)
+- [x] **MUS-04**: 多标签乐器识别（含民族：erhu/pipa/guzheng/dizi）— *CONDITIONAL：Phase 1 mAP ≥0.30 ship / <0.20 defer / 0.20-0.30 ship nullable+confidence；MERT vs PANNs 对决 defer 到 Phase 1* — **Phase 10 resolved → DEFER to v1.3** (PROJECT.md Key Decisions Row 4; instruments field omitted from v1.2 schema)
 - [ ] **MUS-05**: BGM 调性 (key) — *differentiator*
 - [ ] **MUS-06**: VA 情绪回归（arousal ship，valence experimental）— *differentiator*
 
