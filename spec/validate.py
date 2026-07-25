@@ -70,6 +70,33 @@ V11_ORDER = [
     "characters", "props", "registry", "registry-edits",
 ]
 
+# v1.2 fixture set (Phase 11 additive) —— 12 shapes. minimal + v1.1 + v1.2 三阶 gate。
+# 复用 v1.1 的 10 个 substrate 文件名（asset/shots/audio_analysis/transcript/frames/
+# prompts/characters/props/registry/registry-edits）+ 新增 audio_semantic/speakers。
+# speaker-edits 推迟到 Phase 13（HITL 流程落地才有 fixture）。
+V12_FIXTURE_DIR = SPEC_DIR / "fixtures" / "v1.2"
+V12_FIXTURE_MAP = {
+    # 10 v1.1 entries verbatim (v1.2 fixture reuses the same substrate filenames):
+    "asset": "asset.json",
+    "shots": "shots.json",
+    "audio_analysis": "audio_analysis.json",
+    "transcript": "transcript.json",
+    "frames": "frames.json",
+    "prompts": "prompts.json",
+    "characters": "characters.json",
+    "props": "props.json",
+    "registry": "registry.draft.json",
+    "registry-edits": "registry.edits.json",
+    # 2 NEW v1.2 shapes:
+    "audio_semantic": "audio_semantic.json",
+    "speakers": "speakers.json",
+}
+V12_ORDER = [
+    "asset", "shots", "audio_analysis", "transcript", "frames", "prompts",
+    "characters", "props", "registry", "registry-edits",
+    "audio_semantic", "speakers",
+]
+
 
 def load_validator(shape: str) -> Draft202012Validator:
     """根据形状名加载对应的 Draft202012Validator。"""
@@ -151,6 +178,42 @@ def validate_v11() -> int:
     return failures
 
 
+def validate_v12() -> int:
+    """对 spec/fixtures/v1.2/ 下的 12 个 v1.2 fixture 跑 schema 校验,返回失败数。
+
+    v1.2 fixture set(Phase 11)= v1.1 的 10 形状(byte-copied substrate)
+    + audio_semantic/speakers 两个 Phase 11 新形状。asset.json 在 v1.2 中
+    被编辑过(schema_version=1.2 + data.audio_semantic + data.speakers);
+    其余 9 个 v1.1 substrate 文件 byte-identical。registry fixture 文件名
+    仍是 registry.draft.json(pipeline canonical 名);registry-edits 仍是
+    registry.edits.json。复用 load_validator + _format_errors,不复制。
+    """
+    failures = 0
+    for shape in V12_ORDER:
+        fixture_path = V12_FIXTURE_DIR / V12_FIXTURE_MAP[shape]
+        try:
+            with open(fixture_path, encoding="utf-8") as f:
+                instance = json.load(f)
+        except FileNotFoundError:
+            print(f"[FAIL-v12] {shape}: fixture missing at {fixture_path}")
+            failures += 1
+            continue
+        except json.JSONDecodeError as e:
+            print(f"[FAIL-v12] {shape}: invalid JSON in fixture: {e}")
+            failures += 1
+            continue
+
+        validator = load_validator(shape)
+        errors = sorted(validator.iter_errors(instance), key=lambda e: list(e.absolute_path))
+        if errors:
+            print(f"[FAIL-v12] {shape}: {len(errors)} error(s)")
+            print(_format_errors(errors))
+            failures += 1
+        else:
+            print(f"[valid-v12] {shape}")
+    return failures
+
+
 def discover_producer_fixture() -> Optional[Path]:
     """扫描 REPO_ROOT/output/,返回第一个含 shots.json 的子目录;没有则返回 None。"""
     output_root = REPO_ROOT / "output"
@@ -213,6 +276,9 @@ def main() -> None:
     print(f"[validate] v1.1 fixture = {V11_FIXTURE_DIR}")
     v11_failures = validate_v11()
 
+    print(f"[validate] v1.2 fixture = {V12_FIXTURE_DIR}")
+    v12_failures = validate_v12()
+
     producer_dir = discover_producer_fixture()
     smoke_failures = 0
     if producer_dir is None:
@@ -221,9 +287,10 @@ def main() -> None:
         print(f"[validate] producer fixture (smoke) = {producer_dir}")
         smoke_failures = validate_smoke(producer_dir)
 
-    # 决定退出码:minimal 仍 gate(CONTRACT-09 回归),v1.1 失败也计入(Plan 01 schemas
-    # 必须接受 Plan 03 fixtures —— 否则 contract 本身破裂)。
-    total_strict_failures = minimal_failures + v11_failures
+    # 决定退出码:minimal 仍 gate(CONTRACT-09 回归),v1.1 + v1.2 失败也计入
+    # (Plan 01 schemas 必须接受 Plan 03 fixtures —— 否则 contract 本身破裂;
+    # Phase 11 v1.2 fixture 必须由 Plan 11-01 schemas 接受 —— 否则 v1.2 contract 破裂)。
+    total_strict_failures = minimal_failures + v11_failures + v12_failures
     if args.strict_smoke:
         total_strict_failures += smoke_failures
 
@@ -231,6 +298,7 @@ def main() -> None:
     print(
         f"[validate] minimal failures={minimal_failures}, "
         f"v1.1 failures={v11_failures}, "
+        f"v1.2 failures={v12_failures}, "
         f"smoke failures={smoke_failures} "
         f"(strict-smoke={'on' if args.strict_smoke else 'off'})"
     )
