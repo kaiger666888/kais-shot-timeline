@@ -96,7 +96,9 @@ Route-based audio semantic deepening: a third sibling of the v1.1 route-pattern 
   2. Per-shot cache (4-tuple key: `video_content_hash`/`route_name`/`route_version`/implicit `shot_id`) hits on re-run; poisoned cache (schema-validate fail) auto-invalidates and re-fetches (mirror `call_reid.py:418-427`)
   3. Graceful-degrade: route unreachable / preflight fail / `--offline` → `audio_semantic.json` not written (byte-identical to v1.1 asset) AND `[audio]` warning appended to sidecar WITHOUT clobbering existing `[semantic]`/`[reid]` tags (read-merge-write per `call_reid.py:443-449`)
   4. Stub-only round-trip (Phase 10 stub, models not loaded) confirms envelope parsing + cache write + warnings merge work BEFORE route ML is live
-**Plans**: TBD
+**Plans**:
+- [ ] 12-01-PLAN.md — the producer client `analysis/call_audio_analysis.py` (httpx POST + envelope normalize + schema-validate gate + per-shot 4-tuple cache + poisoned-cache invalidation + graceful-degrade + [audio] warnings read-merge-write + CLI)
+- [ ] 12-02-PLAN.md — SC#4 stub-only round-trip proof (local stub server + frozen fixtures + 5-scenario smoke harness + best-effort live cross-repo stub cross-check)
 
 ### Phase 13: SPEAKER-01 Linkage HITL
 **Goal**: Close the v1.1 SPEAKER-01 deferral via a NEW `^spk_[0-9]{3}$` acoustic ID space (NOT reusing `^char_[0-9]{3}$` — avoids identity-signal conflation) + HITL review HTML + confirmed-only apply gate (mirror v1.1 Phase 7 `apply_edits.py`).
@@ -179,7 +181,7 @@ v1.2 phases execute in numeric order: 10 → 11 → 12 → 13 → 14 → 15 → 
 | 9. Canvas Consumer Integration (cross-repo) | v1.1 | 2/2 | Complete | 2026-07-25 |
 | 10. Risk-Validation Spike + Route Stub | v1.2 | 6/6 | Complete    | 2026-07-25 |
 | 11. Contract v1.2 | v1.2 | 3/3 | Complete    | 2026-07-25 |
-| 12. Producer Route Client | v1.2 | 0/? | Not started | - |
+| 12. Producer Route Client | v1.2 | 0/2 | Not started | - |
 | 13. SPEAKER-01 Linkage HITL | v1.2 | 0/? | Not started | - |
 | 14. Pipeline Integration | v1.2 | 0/? | Not started | - |
 | 15. Layered Reproduction Prompts | v1.2 | 0/? | Not started | - |
