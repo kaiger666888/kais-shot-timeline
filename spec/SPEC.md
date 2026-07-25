@@ -15,12 +15,12 @@
 
 | 层级 | 角色 | 文件 |
 |------|------|------|
-| **机器可校验的权威源** | JSON Schema (draft 2020-12) — 生产端导出时被 `spec/validate.py` 校验,消费端可据此生成 TS 类型 | `spec/schemas/*.schema.json` (9 份) |
+| **机器可校验的权威源** | JSON Schema (draft 2020-12) — 生产端导出时被 `spec/validate.py` 校验,消费端可据此生成 TS 类型 | `spec/schemas/*.schema.json` (13 份) |
 | **人读概览(本文档)** | prose spec — 给新贡献者一份 15 分钟可读完的导览,串起 5 数据形状 + 版本规则 + 媒体约定 + 自描述 manifest | `spec/SPEC.md` (本文档) |
 
 两层必须保持一致(schema drift = silent interop bug,见 §5 graceful-degrade 规则不放松 schema 本身)。当文档与 schema 冲突时,**以 schema 为准**;同时本文档的任何与 schema 不一致都视为 Phase 1 缺陷,必须修复。
 
-### 9 个 schema 文件(按 filename 索引)
+### 13 个 schema 文件(按 filename 索引)
 
 | 文件 | 一句话概述 |
 |------|-----------|
@@ -29,12 +29,15 @@
 | `spec/schemas/transcript.schema.json` | 顶层对象 — Whisper 时间戳对白段 `{start, end, text}` + backend 元信息 |
 | `spec/schemas/frames.schema.json` | 顶层 JSON 数组 — 每镜首尾帧的 base64 JPEG data URI(内联,非外部文件) |
 | `spec/schemas/prompts.schema.json` | 顶层 JSON 数组 — 每镜结构化 prompt(7 个 facet + `prompt_text`;v1.1 新增 optional `character_refs[]`/`prop_refs[]`) |
-| `spec/schemas/asset.schema.json` | 顶层对象 — 自描述 manifest(`schema_version` + 来源 + 生成器 + 数据清单 + 媒体清单;v1.1 新增 optional `data.characters`/`data.props` + `media.characters[]`/`media.props[]`) |
+| `spec/schemas/asset.schema.json` | 顶层对象 — 自描述 manifest(`schema_version` + 来源 + 生成器 + 数据清单 + 媒体清单;v1.1 新增 optional `data.characters`/`data.props` + `media.characters[]`/`media.props[]`;v1.2 新增 optional `data.audio_semantic`/`data.speakers`) |
 | `spec/schemas/characters.schema.json` | 顶层 JSON 数组 — 跨镜角色注册表(`^char_[0-9]{3}$` ID + name + 代表图 + `appearance_shots[]` + `review_state` + `looks[]`)。**v1.1** |
 | `spec/schemas/props.schema.json` | 顶层 JSON 数组 — 跨镜道具注册表(`^prop_[0-9]{3}$` ID,`states[]` 非 `looks[]` — 道具按状态变体,非造型)。**v1.1** |
 | `spec/schemas/registry.schema.json` | 顶层对象 — re-id 聚类草稿(`clusters[]` refs-only members + `tier` enum + `mean_cosine`)。pipeline-internal 工作产物,**不在** `asset.json#data`。**v1.1** |
+| `spec/schemas/audio_semantic.schema.json` | 顶层对象 — per-shot 三模态音频语义(dialogue/sfx)+ 分层复现 prompt(TTS/music-gen/foley);`word_level_experimental` 顶层 flag gate word-level timestamps;`emotion` nullable string + `emotion_confidence`(见 §10 fidelity_disclaimer)。**`1.2`** |
+| `spec/schemas/speakers.schema.json` | 顶层对象 — 声学说话人注册表(NEW `^spk_[0-9]{3}$` acoustic ID space,与 `^char_[0-9]{3}$` 视觉 ID 刻意 disjoint);nullable `char_id` link;`review_state` 门控下游流向。**`1.2`** |
+| `spec/schemas/speaker-edits.schema.json` | 顶层对象 — speaker HITL 审阅 edits round-trip shape(mirrors `registry-edits.schema.json` + 新 `link_mappings` 作 spk→char N:M 映射;Phase 13 `link_speakers.py` 消费)。pipeline-internal 工作产物,**不在** `asset.json#data`。**`1.2`** |
 
-**下游 TS 类型生成:** Phase 3 消费端可从这 9 个 schema 生成 TS 类型(`json-schema-to-typescript` 或等价工具);本 phase 不产生 TS 代码。
+**下游 TS 类型生成:** Phase 3 消费端可从这 13 个 schema 生成 TS 类型(`json-schema-to-typescript` 或等价工具);本 phase 不产生 TS 代码。
 
 ---
 
@@ -167,6 +170,18 @@ Reference schema: `spec/schemas/asset.schema.json`
   - **Phase 6 (cinematography auto-fill)**: `asset.schema.json#generator` 新增 optional `warnings: array<string>`(Plan 01)。Producer(`scripts/export_asset.py`)在 step_semantic 路由失败时从 `route_cache/warnings.json` sidecar 读入失败原因列表,非空时 emit `generator.warnings`;None / 空列表时缺省。仍是 v1.1 纯增量(无 schema_version bump、`required[]` 不变、`additionalProperties:false` 保留)。
   - **Phase 8 (prompt reference system)**: `asset.schema.json#generator` 新增 optional `registry_snapshot: {characters[], props[]}`(Plan 01)。Producer(`scripts/export_asset.py` Plan 02)在 `characters.json`/`props.json` 存在时 emit 确认态 registry 的冻结快照;无 registry 时缺省(byte-identical to v1.0/v1.1-no-reid)。仍是 v1.1 纯增量(无 schema_version bump、`required[]` 不变、`additionalProperties:false` 保留)。Pitfall 18 prevented:snapshot 是 export-time truth,后续 registry 变动(re-review / re-cluster / rename)不回写已导出的 `asset.json`。
 
+- **2026-07-25 — `1.2`(v1.2 additive extension,Phases 10-17)** — 第二个 minor bump,纯增量(无 rename / 语义漂移 / 新增 required 字段 — Pitfall 11 prevented)。v1.2 milestone 引入 route-based 三模态音频语义(dialogue/music/sfx)+ 分层复现 prompt(TTS/music-gen/foley)+ 关闭 v1.1 SPEAKER-01 deferral。整个 v1.2 milestone(phases 10-17)共享此版本号。**Phase 10 spike outcomes reshape three field shapes**(见下方 deviations,empirical basis)。变更:
+  - **3 个新 schema**:`audio_semantic.schema.json`(per-shot dialogue/sfx + reproduction prompts;`word_level_experimental` flag)、`speakers.schema.json`(`^spk_[0-9]{3}$` NEW acoustic ID space,nullable `char_id` link)、`speaker-edits.schema.json`(HITL round-trip,mirror `registry-edits` + 新 `link_mappings`)。
+  - **`asset.schema.json` additive**:新增 optional `data.audio_semantic` / `data.speakers`(JSON 路径)。`required[]` 与 v1.0/v1.1 byte-identical(仍 5 keys)。
+  - **`schema_version` pattern 不变**(`^(0|[1-9]\d*)(\.(0|[1-9]\d*))?$`)— 版本字面量锁在 producer 单一真源 `scripts/export_asset.py:SCHEMA_VERSION = "1.2"`(line 55),非 schema `const`(否则拒绝 v1 minimal fixture `"1"`,破坏 CONTRACT-09)。
+  - **Phase-10-informed deviations**(NON-NEGOTIABLE,empirical basis):
+    - **instruments field OMITTED** — MUS-04 deferred v1.3。MERT-v1-95M 无 instrument classifier head(spike 仅产出 duration-correlated K-means clusters + 768-d embedding L2 norms);PANNs Cnn14 zenodo-blocked at spike time。Phase 12+ route host 需要真实 MIR classifier 才能解锁。schema 全文不含英文 `instruments` key(只在 SPEC prose 中文「乐器」指代)。
+    - **`dialogue.emotion` = `type:["string","null"]`**(NOT enum)+ `emotion_confidence: ["number","null"]`(0..1)。SenseVoice `self_consistency_pct=100%` 是 label-stability proxy,NOT calibrated accuracy(DIA-04 ship-nullable+confidence)。Closed 7-class enum 会 over-claim 我们没有的 calibration。详见 §10。
+    - **`dialogue.words[]` EXPERIMENTAL optional sub-field** — gated behind top-level `word_level_experimental: boolean` flag(DIA-05 ship-experimental)。WhisperX boundary drift median 101.5ms(<200ms ship threshold)但 aggregate per-word drift 是 metric-definition artifact(`word_start − segment_start` inflates for interior words;Phase 12 refines)。Segment-level remains SLA path;consumers SHOULD graceful-degrade 到 segment-only 当 `word_level_experimental:false`。
+  - **`speakers.speakers[].spk_id` 使用 NEW `^spk_[0-9]{3}$` acoustic ID space**(NOT `^char_[0-9]{3}$` — deliberate disjoint to avoid identity-signal conflation;closes v1.1 SPEAKER-01 deferral via Phase 13 HITL linking)。
+  - **向后兼容**:`spec/fixtures/minimal/`(v1)仍 6/6 绿;`spec/fixtures/v1.1/`仍 10/10 绿;`spec/fixtures/v1.2/`(12 文件)新增;`scripts/verify_contract.py` `_cross_version_check` 实测三向兼容(v1.0↔v1.1↔v1.2 forward 0 errors;backward 仅 additionalProperties errors → 0 non-additive errors);`speakers.char_id ⊆ characters.id` consistency GREEN。
+  - **`fidelity_disclaimer`**:见 §10 — 复现 prompt 是 regeneration 友好的 NL 描述(非源音频精确逆向),per-modality 估算 TTS~70%/music-gen~60-75%/foley~80%(AF-01 缓解)。prose 层(two-tier authority),非 schema field。
+
 ---
 
 ## 5. The 5 Canonical Data Shapes (SPEC-01)
@@ -174,6 +189,8 @@ Reference schema: `spec/schemas/asset.schema.json`
 每种形状都列出:生产端脚本、字段级类型表(名称 / 类型严格对齐 schema)、enum 值(如有)、最小 JSON 片段、参考 schema 文件。
 
 > **v1.1 (Phase 5):** §5.1–§5.5 是 v1.0 的 5 个 required 数据形状;新增 §5.6 **Characters** + §5.7 **Props** 两个 optional 跨镜注册表形状(仅 re-id 跑过且 HITL 审阅后 emit)。registry 是 pipeline-internal 草稿,非 canonical asset 数据形状,故不在此列(见 §1 schema 索引)。
+
+> **v1.2 (Phase 11):** 新增 §5.8 **Audio Semantic** + §5.9 **Speakers** 两个 optional 音频支路形状(仅 route-host round-trip 跑过且条件字段达标后 emit)。`speaker-edits` 是 HITL round-trip 工作产物,非 canonical asset 数据形状,故不在此列(见 §1 schema 索引)。这两个形状的字段保真度受 Phase-10 spike outcomes 限制(见 §10 **Fidelity Disclaimer**)— emotion=calibrated estimate、word-level=experimental、instruments=absent。
 
 ### Shots
 
@@ -419,6 +436,106 @@ Reference schema: `spec/schemas/characters.schema.json`
 
 Reference schema: `spec/schemas/props.schema.json`
 
+### Audio Semantic (`1.2`)
+
+**Producer:** `audio/call_audio_analysis.py`(Phase 12 + Phase 15 pipeline producer,route-host 往返成功后写 `audio_semantic.json` per-shot 三模态 + reproduction prompts)
+**Consumers:** `html/gen_*_html.py`(Phase 16 HTML gallery — modality 标签 + 复现面板)、画布集合节点(Phase 17 — 同上)
+**顶层形状:** JSON 对象 — `schema_version` + `word_level_experimental` 顶层 flag + `shots[]` 数组(per-shot 三模态 dialogue/sfx + reproduction 分层 prompt)。v1.2 全新数据文件;v1.0/v1.1 资产缺省(`asset.json#data.audio_semantic` absent),仍合法(graceful-degrade)。字段保真度受 Phase-10 spike outcomes 限制(见 §10 **Fidelity Disclaimer**)。
+
+| Field | Type | Required | Notes |
+|-------|------|----------|-------|
+| `schema_version` | string (`^(0\|[1-9]\d*)(\.(0\|[1-9]\d*))?$`) | ✓ | 与 `asset.json#schema_version` 同源;producer emit `"1.2"`,pattern 保持宽松以兼容 `"1"`/`"1.1"` |
+| `word_level_experimental` | boolean | — | 顶层 flag:true 当且仅当任一 `shots[].dialogue.words[]` 非空。Consumers(画布/HTML)先读此字段,false 时 graceful-degrade 到 segment-level。DIA-05 ship-experimental 锁定 |
+| `shots[]` | array\<object\> | ✓ | Per-shot 音频语义条目,`shot_id` 交叉引用 `shots.json#id` |
+| `shots[].shot_id` | integer (≥1) | ✓ | 仅此字段 required —— 其余全部 optional 以支持 route-down graceful-degrade |
+| `shots[].start_sec` / `end_sec` / `duration` | number (≥0) | — | 与 `shots.json` 对应条目一致(advisory;consumer 可重读 `shots.json`) |
+| `shots[].dialogue` | object | — | Per-shot 对话模态(可缺席 — 非语音 shot 不 emit)。所有字段 optional。**`music` 子对象在 v1.2 schema 中 OMITTED**(instruments 字段缺席 → 无音乐内容可契约;future slot 仅在本文档记录,schema `additionalProperties:false` 拒绝) |
+| `shots[].dialogue.text` | string | — | Segment-level 转录文本(来自 `transcript.json` 的 segment.text,此处重复以供 consumers 单文件渲染) |
+| `shots[].dialogue.spk_id` | string (`^spk_[0-9]{3}$`) \| null | — | 说话人 ID(交叉引用 `speakers.json#speakers[].spk_id`)。NULLABLE — 未做 diarize 或旁白/群杂未聚类时为 null |
+| `shots[].dialogue.emotion` | string \| null | — | Free-string emotion label(SenseVoice 实测:HAPPY/ANGRY/NEUTRAL/SAD/emo_unk)。**NOT enum** — Phase 10 spike 证实 SenseVoice self_consistency=100% 是 label-stability 代理,NOT calibrated accuracy(DIA-04 ship-nullable+confidence;闭枚举会 over-claim)。详见 §10 |
+| `shots[].dialogue.emotion_confidence` | number (0..1) \| null | — | Emotion 置信度(`self_consistency_pct / 100`)。emotion 非 null 时通常填;emotion 为 null 时此字段也 null |
+| `shots[].dialogue.events` | array\<string\> | — | SenseVoice 8-event 标签:`Speech`/`BGM`/`Applause`/`Laughter`/`Cry`/`Sneeze`/`Breath`/`Cough`。Free-string(not enum)保留 forward-compat |
+| `shots[].dialogue.words[]` | array\<object\> | — | **EXPERIMENTAL** Word-level timestamps(WhisperX wav2vec2 align)。顶层 `word_level_experimental=true` 时才允许非空。Per-word drift metric 是 definition artifact(Phase 12 精化)。详见 §10 |
+| `shots[].dialogue.words[].start` / `.end` | number (≥0) | ✓ (in `words[]`) | Word 起止时间(秒,相对音频起点) |
+| `shots[].dialogue.words[].text` | string (≥1 char) | ✓ (in `words[]`) | Word 文本 |
+| `shots[].dialogue.words[].score` | number (0..1) | — | WhisperX alignment score(缺席 = 未提供) |
+| `shots[].sfx` | object | — | Per-shot 非语音音效模态。v1.2 仅携带 SenseVoice non-speech events;PANNs 527-class 折入未来 schema 扩展 |
+| `shots[].sfx.events` | array\<string\> | — | Non-speech SenseVoice events(`Speech` 不在此 — 它在 `dialogue.events`)。Subset of `[BGM/Applause/Laughter/Cry/Sneeze/Breath/Cough]` |
+| `shots[].sfx.description` | string | — | Free-text NL 描述(foley reproduction prompt 的素材) |
+| `shots[].reproduction` | object | — | 分层复现 prompt(model-agnostic NL — 不嵌 NC 权重)。每层可缺席(null 或 omitted),各自携带 confidence + 可选 `fidelity_disclaimer` |
+| `shots[].reproduction.tts` / `.music_gen` / `.foley` | `repro_prompt` \| null | — | 各模态复现 prompt(`{text, confidence, fidelity_disclaimer}`)。`text` 必填非空;模态未启用时 emit null 或 omitted |
+
+**`repro_prompt` 子形状(defs):**
+
+| Field | Type | Required | Notes |
+|-------|------|----------|-------|
+| `text` | string (≥1 char) | ✓ | NL prompt for the named generator family(TTS: 「成年女性说话者,语气开心愉悦,中文普通话」;foley: 「关门声 + 脚步声」) |
+| `confidence` | number (0..1) | — | Prompt 生成的置信度(producer 估算) |
+| `fidelity_disclaimer` | string | — | Per-prompt 保真度声明(如 `"TTS ~70% similarity to source voice"`;AF-01 mitigation)。UI 渲染给用户以管理期望 |
+
+**最小片段**(摘自 `spec/fixtures/v1.2/audio_semantic.json`,2-shot 简化样例):
+
+```json
+{
+  "schema_version": "1.2",
+  "word_level_experimental": true,
+  "shots": [
+    {"shot_id": 1, "start_sec": 0.0, "end_sec": 1.5, "duration": 1.5,
+     "dialogue": {"text": "你好世界", "spk_id": "spk_001",
+                  "emotion": "HAPPY", "emotion_confidence": 1.0,
+                  "events": ["Speech"],
+                  "words": [{"start": 0.0, "end": 0.5, "text": "你", "score": 0.99}]},
+     "sfx": {"events": [], "description": ""},
+     "reproduction": {"tts": {"text": "成年女性说话者,语气开心愉悦,中文普通话,节奏自然",
+                              "confidence": 0.7,
+                              "fidelity_disclaimer": "TTS ~70% similarity to source voice (AF-01 mitigation)"},
+                      "music_gen": null, "foley": null}},
+    {"shot_id": 2, "start_sec": 1.5, "end_sec": 3.0, "duration": 1.5,
+     "dialogue": {"text": "测试一句", "spk_id": "spk_002",
+                  "emotion": "emo_unk", "emotion_confidence": 1.0, "events": [], "words": []},
+     "reproduction": {"tts": null, "music_gen": null, "foley": null}}
+  ]
+}
+```
+
+Reference schema: `spec/schemas/audio_semantic.schema.json`
+
+### Speakers (`1.2`)
+
+**Producer:** `registry/link_speakers.py`(Phase 13 HITL apply,镜像 v1.1 `apply_edits.py`,把 confirmed `speakers.json` 流向 canonical)
+**Consumers:** `html/gen_*_html.py`(Phase 16 — speaker→character chip 渲染)、画布集合节点(Phase 17 — 同上)
+**顶层形状:** JSON 对象 — `speakers[]` 数组,每条目含 acoustic `^spk_[0-9]{3}$` ID + 可选 `^char_[0-9]{3}$` link + `review_state` + `turns[]`。v1.2 全新数据文件;v1.0/v1.1 资产缺省(`asset.json#data.speakers` absent),仍合法。
+
+| Field | Type | Required | Notes |
+|-------|------|----------|-------|
+| `speakers[]` | array\<object\> | ✓ | Per-speaker 条目。即使在最简 route-down degrade 场景也至少 emit 空 array(与 `asset.json#data.speakers` 的 file-existence gating 解耦) |
+| `speakers[].spk_id` | string (`^spk_[0-9]{3}$`) | ✓ | Immutable 说话人声学 ID(零填充 3 位)。Pattern 在 Phase 11 锁定;一旦 confirmed 永不重用或重排版(Pitfall 17 — 保证 `audio_semantic.json#dialogue.spk_id` 引用永不悬空)。**刻意 disjoint from `^char_[0-9]{3}$`** — 声学身份(pyannote/WhisperX diarize embedding)≠ 视觉身份(DINOv2 char_ embedding);SPEAKER-01 Phase 13 核心目标 |
+| `speakers[].char_id` | string (`^char_[0-9]{3}$`) \| null | — | Linked character ID(NULLABLE for 旁白/群杂 speakers,DIA-03)。非 null 时 MUST 解析到 `characters.json#id` 中 `review_state='confirmed'` 的条目(`verify_contract.py` `_fixture_consistency_check` 强制)。SPEAKER-01 HITL `link_speakers.py` 写入此字段 |
+| `speakers[].total_speech_sec` | number (≥0) | — | 该说话人的累计发言时长(秒)。由 producer 聚合 `turns[]` 计算(advisory;下游可重算) |
+| `speakers[].review_state` | enum | ✓ | 同 characters:`proposed` / `confirmed` / `rejected`。**仅 `confirmed` 流向下游渲染**(Pitfall 7);`rejected` = 软删除(ID 保留维护引用完整性) |
+| `speakers[].turns[]` | array\<object\> | — | 该说话人的发言区间列表(shot-level 定位)。可缺席 — diarize 失败但 spk_id 已分配时仍 emit spk_id(advisory speaker inventory)。空 array 合法 |
+| `speakers[].turns[].shot_id` | integer (≥1) | ✓ (in `turns[]`) | Shot ID(交叉引用 `shots.json#id`) |
+| `speakers[].turns[].start_sec` / `.end_sec` | number (≥0) | ✓ (in `turns[]`) | Turn 起止时间(秒,相对音频起点) |
+
+**`review_state` enum:** 同 characters §5.6 — `proposed`(diarize 草稿默认值)/ `confirmed`(HITL 审阅确认,唯一流向下游)/ `rejected`(审阅否决,软删除 ID 永不重用)。
+
+**最小片段**(摘自 `spec/fixtures/v1.2/speakers.json`,2 speakers — spk_001 链到 char_001,spk_002 旁白 char_id=null):
+
+```json
+{
+  "speakers": [
+    {"spk_id": "spk_001", "char_id": "char_001",
+     "total_speech_sec": 1.5, "review_state": "confirmed",
+     "turns": [{"shot_id": 1, "start_sec": 0.0, "end_sec": 1.5}]},
+    {"spk_id": "spk_002", "char_id": null,
+     "total_speech_sec": 1.5, "review_state": "confirmed",
+     "turns": [{"shot_id": 2, "start_sec": 1.5, "end_sec": 3.0}]}
+  ]
+}
+```
+
+Reference schema: `spec/schemas/speakers.schema.json`
+
 ---
 
 ## 6. Media References & Range-aware Serving (SPEC-03, D-03)
@@ -544,5 +661,68 @@ python3 spec/validate.py --strict-smoke
 
 ---
 
+## 10. Fidelity Disclaimer (`1.2` — AF-01/AF-02/AF-03 mitigation)
+
+> 本节是 v1.2 milestone 引入的 prose-layer 保真度声明。**它不是 schema field** — `fidelity_disclaimer` 在 schema 中只作为 `reproduction.{tts,music_gen,foley}.fidelity_disclaimer` 的 per-prompt machine-checkable string 字段出现(下游 UI 渲染给用户管理期望);本节是 producer/operator/consumer 必读的人读概览,属于 two-tier authority 的人读半边(schema 是机器真源,prose 与 schema 冲突时 schema 为准)。
+>
+> 消费端(Phase 17 画布 / Phase 16 HTML gallery)**MUST 在信任任何 v1.2 audio field 前读完本节**。emotion/word-level/instruments 三个字段的保真度边界由 Phase 10 spike outcomes 锁定(见 `.planning/research/audio-spike-report.md`),non-obvious to a reader who only reads the schemas。
+
+### 10.1 AF-01 — 复现 prompt 是 regeneration 友好的 NL 描述(explicit out-of-scope)
+
+**v1.2 复现 prompt(`audio_semantic.shots[].reproduction.{tts,music_gen,foley}`)是 regeneration 友好的 NL 描述,不是源音频的精确逆向。**
+
+任何承诺「绝对复现 / 完美重建 / 精确还原 / perfect clone / exact source match」之类绝对化语义的短语(中文或英文)— 在 `README.md` / `SPEC.md` / `html/*.html` 中 **FORBIDDEN**(AF-01 invariant)。这些短语对内容创作者构成虚假承诺 — TTS 复现的是「相似音色 + 相同情绪文本」的 regeneration 而非 source-voice 克隆;music-gen 复现的是「相似节奏 + 调性」的 regeneration 而非 source-audio 拷贝;foley 复现的是「同类音效描述」的 regeneration 而非 source-foley 还原。
+
+> 本节用「绝对化复现措辞」作统称;具体禁用短语以 AF-01 invariant grep 守门(SPEC + README 中绝对化措辞必须 0 匹配)。
+
+所有复现 prompt 字段在 schema 层都带 `confidence` (0..1) + 可选 `fidelity_disclaimer` (per-prompt string,UI 渲染给用户);HTML/SPEC 的展示标签 MUST 显式「estimated」前缀(Phase 16 PRESENT-01)。
+
+### 10.2 Per-modality 估算(TTS ~70% / music-gen ~60-75% / foley ~80%)
+
+基于 Phase 10 spike 经验 + 模型卡声明 + 业界经验,我们对 v1.2 三层复现 prompt 给出以下 calibrated 估算(producer 把这些写进 `reproduction.{layer}.fidelity_disclaimer`):
+
+| 模态 | 相似度估算 | 含义 | 限制 |
+|------|-----------|------|------|
+| **TTS** | ~70% similarity to source voice | 音色相似度 + 情绪标签复现 | model-agnostic prompt 不保证具体 speaker identity;同一角色不同声优的 TTS 模型可能产出显著差异 |
+| **music-gen** | ~60-75%(harmonic / rhythmic 相似) | 节奏 / 调性 / 乐器大体相似 | 音色因 model-agnostic prompt 不保证;v1.2 不带 instruments 字段 → 描述层仅靠 free-text NL |
+| **foley** | ~80%(音效描述相对 well-defined) | 同类音效 + 类似时序 | 复杂环境音(混合多源)相似度下降;描述层的歧义大于 TTS/music-gen |
+
+这些数字是 **calibrated estimate**(校准估计),不是 rigorous mAP / F1。任何把它们伪装成 rigorous 精度指标的说法都违反 AF-02/AF-03 anti-fabrication 红线。
+
+### 10.3 Phase-10-informed 字段保真度
+
+#### `dialogue.emotion` = calibrated estimate(NOT rigorous accuracy)
+
+SenseVoice `self_consistency_pct=100.0`(Phase 10 SER spike, N=30 ep01 stratified)是 **label-stability proxy**(3 次 VAD-分桶运行得到相同 emotion 标签),**NOT rigorous macro-F1** against developer-annotated ground truth。Phase 10 methodology_ab 走 calibrated estimate + 对 30 段做定性 sanity review(情绪标签 vs 对白文本 coherent);rigorous macro-F1 需要 developer-annotated 30-segment ground truth(Phase 12+,~1hr 人工,deferred)。
+
+> **Calibrated estimate statement(逐字镜像 `audio-spike-report.md` §1):** The `self_consistency_pct=100.0` is a calibrated estimate of SenseVoice's label stability across VAD-segmentation variants on these 30 Chinese animation clips. It is NOT a true macro-F1 against human ground truth. A model that deterministically predicts `NEUTRAL` on every clip would score 100% self-consistency yet unknown real accuracy. Cross-domain accuracy on other Chinese animation episodes may differ.
+
+**Schema 形态后果:** `emotion` 是 `type:["string","null"]`(NOT 7-class enum),配对 `emotion_confidence: ["number","null"]` (0..1)。Closed enum 会 over-claim 我们没有的 calibration。
+
+#### `dialogue.words[]` = EXPERIMENTAL(word-level timestamps)
+
+WhisperX wav2vec2 forced alignment 在 faster-whisper/openai-whisper 既有 segments 上对齐。**Boundary drift median = 101.5ms(<200ms ship threshold ✓)**;但 **aggregate per-word drift 是 metric-definition artifact**(`word_start − segment_start` inflates for interior words — interior words 的 segment_start 是 segment 边界,与 word_start 的距离天然大于 boundary words)。Segment-level remains SLA path;Phase 12+ 会用 boundary drift(而非 per-word drift)精化 metric。
+
+**Schema 形态后果:** `words[]` 是 optional sub-field,gated behind 顶层 `word_level_experimental: boolean` flag。Consumers SHOULD graceful-degrade 到 segment-only 当 `word_level_experimental:false` 或消费者对 word-level 边界精度敏感。
+
+#### instruments field OMITTED(v1.2 schema 不含此字段)
+
+**MUS-04 deferred v1.3。** Phase 10 MIR spike 证实:(1) `m-a-p/MERT-v1-95M` 是音频 encoder,**没有乐器 classifier head** — spike 仅产出 5-cluster K-means 聚类 + 768-d embedding L2 范数,这些 clusters 与 shot DURATION 强相关(模型 artifact 而非音乐内容信号);(2) `Cnn14_mAP=0.431.pth` (PANNs) 在 spike 期 zenodo-blocked(`mir_panns_ep01.json status=blocked`)。
+
+**Schema 形态后果:** v1.2 全套 schema 不含 `instruments` 字段(也不含 `instrument_labels` / `instruments_detected` 等同义变体)。schema 全文用中文「乐器」/「MIR label」指代以避开英文 grep —— 任何在 schema JSON 中找到的英文 `instrument*` key 都是 bug。Phase 12+ route host 需要真实 MIR classifier(可达的 PANNs、fine-tuned MERT head、或专门的中文民族乐器模型)才能在 v1.3 解锁此字段。
+
+### 10.4 Two-tier authority 重申
+
+`fidelity_disclaimer` 是 **SPEC prose**(人读概览),**NOT** schema field。机器可校验的 nullable+confidence+per-prompt disclaimer 在 schema:
+
+- `audio_semantic.schema.json#shots[].dialogue.emotion{,_confidence}`(nullable + confidence)
+- `audio_semantic.schema.json#shots[].reproduction.{tts,music_gen,foley}.{confidence,fidelity_disclaimer}`(per-prompt machine-checkable string)
+- `speakers.schema.json#speakers[].{char_id,review_state}`(nullable link + state gating)
+
+Schema 与 SPEC 冲突时 **schema 为准**(本节 §1 Authority 已锁定)。本文档的任何与 schema 不一致都视为缺陷,必须修复。本节的存在 **不放松** schema 严格性(`additionalProperties:false` 全程开启),也不放松消费端的 graceful-degrade 运行时义务(§4)。
+
+---
+
 *Created: 2026-07-20 (Phase 01 Plan 02 — initial publication of the human-readable ShotTimelineAsset contract).*
 * schema_version "1" — initial contract. See §4 Changelog for evolution rules.*
+* 2026-07-25 (Phase 11 Plan 03 — v1.2 additive extension: §4 Changelog `1.2` + §5.8 Audio Semantic + §5.9 Speakers + §10 Fidelity Disclaimer). schema_version "1.2".*
