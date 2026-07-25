@@ -726,6 +726,15 @@ def main():
         if client is not None:
             client.close()
 
+    # WR-01：poisoned_cache_files 累积了"命中时 schema-validate fail → unlink"的
+    # cache 文件。route_down 路径已在 per-shot 循环里发 offline/stale-cache warning
+    # （:702-704），此处仅补 route-up 路径：refetch 成功后操作员仍需看见 cache 曾
+    # 被 schema 收紧而失效（smoke Scenario 3 用 --offline 触不到此分支）。
+    if poisoned_cache_files and not route_down:
+        audio_warnings.append(
+            f"invalidated {len(poisoned_cache_files)} poisoned cache file(s) "
+            f"on schema-validate fail on hit (route-up → refetched)")
+
     # ─── (10) 决策：写 audio_semantic.json OR byte-identical-absent ────
     # CONTRACT-05：route 不可达 / preflight fail / --offline AND 零 shot 有数据 →
     # audio_semantic.json NOT 写（asset.json#data.audio_semantic OPTIONAL → 缺席）。
