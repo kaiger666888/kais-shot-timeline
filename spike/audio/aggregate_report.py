@@ -3,14 +3,17 @@
 ⚠️ THROWAWAY Phase 10 spike 代码 —— 不是 pipeline 代码。
 本脚本只读 spike/audio/results/*.json；不写任何 pipeline 文件。
 
-当前 scope（Plan 10-01）：
+两个 flag（Plan 10-01 Task 3 scope）：
   --check-staleness (staleness gate, Pitfall 10):
       对每个 results/*.json，比较其顶层 ``git_sha`` 与当前 HEAD（common.git_sha()）。
       任一文件 sha 不匹配当前 HEAD → 打印 WARNING + exit 1。
       results/ 空 → exit 0（Wave 0 baseline）。
       HEAD 不可获取（``unknown``）→ 全部视为匹配，exit 0（spike 容错）。
 
-Plan 10-01 Task 3 在此基础上加 ``--aggregate`` 占位 flag（Plan 06 实现）。
+  --aggregate (Plan 06 实现；此处仅占位):
+      读 results/*.json 数量 N；打印一行占位信息；exit 0。
+
+默认行为（无 flag）：等同 --aggregate（占位）。
 """
 import argparse
 import json
@@ -55,12 +58,28 @@ def check_staleness(results_dir: Path) -> int:
     return 0
 
 
+def aggregate(results_dir: Path) -> int:
+    """Plan 06 实现；此处仅占位。"""
+    if not results_dir.exists():
+        n = 0
+    else:
+        n = len(list(results_dir.glob("*.json")))
+    print(f"[aggregate] skeleton — Plan 06 fleshes this out; got {n} result file(s)")
+    return 0
+
+
 def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__.splitlines()[0])
-    parser.add_argument(
+    g = parser.add_mutually_exclusive_group()
+    g.add_argument(
         "--check-staleness",
         action="store_true",
         help="比较 results/*.json 的 git_sha 与当前 HEAD（Pitfall 10 staleness gate）",
+    )
+    g.add_argument(
+        "--aggregate",
+        action="store_true",
+        help="聚合 results/*.json 到报告（Plan 06 实现；此处占位）",
     )
     args = parser.parse_args()
 
@@ -68,9 +87,8 @@ def main() -> int:
 
     if args.check_staleness:
         return check_staleness(results_dir)
-    # 默认行为：占位（Plan 10-01 Task 3 加 --aggregate flag）
-    print("[aggregate] default behavior — pass --check-staleness for Wave 0 staleness gate")
-    return 0
+    # --aggregate 或无 flag 默认 → 占位
+    return aggregate(results_dir)
 
 
 if __name__ == "__main__":
