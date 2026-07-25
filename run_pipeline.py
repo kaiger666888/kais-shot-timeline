@@ -17,17 +17,26 @@
      HITL 审阅 HTML；graceful-degrade 写空 clusters + warnings sidecar。
      非阻塞：产 draft + HTML 后退出，不等待人审；registry/apply_edits.py 是
      独立 standalone CLI，由操作员在审阅完 HTML 后手动运行）
-  7. 生成时间轴双面板 HTML（html/gen_timeline_html.py）
-  8. ShotTimelineAsset 导出（scripts/export_asset.py —— asset.json + canonical symlinks）
+  7. 音频语义深化路由调用（analysis/call_audio_analysis.py —— 第三个网络依赖
+     步骤；调用 kais-aigc-platform POST /api/production/audio-analysis 路由，
+     把逐镜三模态音频语义填进 audio_semantic.json 的 dialogue/sfx/reproduction；
+     graceful-degrade 写 [audio] warnings sidecar 但不写 audio_semantic.json。
+     非阻塞：link_speakers.py 是独立 standalone CLI，由操作员在审阅完
+     speaker-review.html 后手动运行，mirror v1.1 apply_edits.py 模式；
+     --skip-speaker-link 仅控制提示输出，本步永远不 subprocess 调用 link_speakers）
+  8. 生成时间轴双面板 HTML（html/gen_timeline_html.py）
+  9. ShotTimelineAsset 导出（scripts/export_asset.py —— asset.json + canonical symlinks）
 
 用法：
   python run_pipeline.py --video input.mp4
                          [--output-dir ./output]
                          [--skip-detect] [--skip-separate] [--skip-transcribe]
                          [--skip-semantic] [--skip-reid] [--skip-export]
-                         [--offline]   # 全局：仅读 route_cache 不联网
+                         [--skip-audio-semantic] [--skip-speaker-link]
+                         [--offline]   # 全局：仅读 route_cache 不联网（5/6/7 共用）
                          [--analysis-url URL] [--analysis-timeout 960]
                          [--reid-url URL] [--reid-timeout 960]
+                         [--audio-url URL] [--audio-timeout 900]
                          [--whisper-model large-v3] [--whisper-language zh]
                          [--demucs-model htdemucs]
                          [--device cuda]
@@ -45,11 +54,13 @@
     ├── prompts.json           （step 5 产出 —— 路由 facets 填充；空 facets 也 schema 合法）
     ├── registry.draft.json    （step 6 产出 —— re-id 聚类草稿；空 clusters 也 schema 合法）
     ├── registry_review.html   （step 6 产出 —— HITL 审阅 HTML；offline 可审）
+    ├── audio_semantic.json    （step 7 产出 —— 路由三模态填充；route-down 缺省 CONTRACT-05）
     ├── route_cache/shot_analysis/shot_XXX.json （每镜路由响应缓存，含 _cache_key）
     ├── route_cache/character_reid/video_<vch>.json （跨镜 re-id per-video 缓存，含 _cache_key）
+    ├── route_cache/audio_analysis/shot_XXX.json （每镜 audio-analysis 路由响应缓存，含 4-tuple _cache_key）
     ├── route_cache/warnings.json （graceful-degrade 失败原因 sidecar，export_asset 读）
     ├── video.mp4              （canonical symlink → 原始视频含 audio 流）
-    ├── asset.json             （ShotTimelineAsset manifest, schema_version="1"）
+    ├── asset.json             （ShotTimelineAsset manifest, schema_version="1.2"）
     └── timeline.html          （最终 HTML）
 """
 import argparse
@@ -84,13 +95,13 @@ def ensure_h264(video_path: str, work_dir: str) -> str:
     """若视频是 AV1，转码到 H264（PySceneDetect 在 AV1 上不稳定）。"""
     codec = probe_codec(video_path)
     if codec != "av1":
-        print(f"[1/8] codec={codec}, no transcode needed")
+        print(f"[1/9] codec={codec}, no transcode needed")
         return video_path
     out = os.path.join(work_dir, "h264.mp4")
     if os.path.exists(out) and os.path.getsize(out) > 1_000_000:
-        print(f"[1/8] cached H264: {out}")
+        print(f"[1/9] cached H264: {out}")
         return out
-    print(f"[1/8] transcoding AV1 → H264: {video_path} → {out}")
+    print(f"[1/9] transcoding AV1 → H264: {video_path} → {out}")
     subprocess.run(
         ["ffmpeg", "-y", "-i", video_path,
          "-c:v", "libx264", "-preset", "fast", "-crf", "20", "-an", out],
@@ -108,17 +119,17 @@ def run_step(cmd: list, label: str):
 def step_detect(video: str, work_dir: str, frames_dir: str,
                 shots_json: str, skip: bool, sample_fps: float) -> str:
     if skip:
-        print("[2/8] --skip-detect: skipping scene detection")
+        print("[2/9] --skip-detect: skipping scene detection")
         return shots_json if os.path.exists(shots_json) else None
     if os.path.exists(shots_json):
-        print(f"[2/8] cached shots: {shots_json}")
+        print(f"[2/9] cached shots: {shots_json}")
         return shots_json
     run_step(
         [sys.executable, str(HERE / "detectors" / "detect_v3b.py"),
          "--video", video, "--frames-dir", frames_dir,
          "--sample-fps", str(sample_fps),
          "--output", shots_json],
-        "[2/8] V3b scene detection")
+        "[2/9] V3b scene detection")
     return shots_json
 
 
@@ -126,10 +137,10 @@ def step_separate(video: str, stems_root: str, shots_json: str,
                   audio_json: str, skip: bool, demucs_model: str,
                   device: str) -> str:
     if skip:
-        print("[3/8] --skip-separate: skipping Demucs + audio analysis")
+        print("[3/9] --skip-separate: skipping Demucs + audio analysis")
         return audio_json if os.path.exists(audio_json) else None
     if os.path.exists(audio_json):
-        print(f"[3/8] cached audio analysis: {audio_json}")
+        print(f"[3/9] cached audio analysis: {audio_json}")
         return audio_json
     cmd = [sys.executable, str(HERE / "audio" / "separate_stems.py"),
            "--input", video, "--shots", shots_json,
@@ -137,7 +148,7 @@ def step_separate(video: str, stems_root: str, shots_json: str,
            "--model", demucs_model]
     if device:
         cmd += ["--device", device]
-    run_step(cmd, "[3/8] Demucs stem separation + per-shot analysis")
+    run_step(cmd, "[3/9] Demucs stem separation + per-shot analysis")
     return audio_json
 
 
@@ -145,10 +156,10 @@ def step_transcribe(video: str, transcript: str, skip: bool,
                     model: str, language: str, device: str,
                     backend: str) -> str:
     if skip:
-        print("[4/8] --skip-transcribe: skipping Whisper")
+        print("[4/9] --skip-transcribe: skipping Whisper")
         return transcript if os.path.exists(transcript) else None
     if os.path.exists(transcript):
-        print(f"[4/8] cached transcript: {transcript}")
+        print(f"[4/9] cached transcript: {transcript}")
         return transcript
     cmd = [sys.executable, str(HERE / "audio" / "transcribe.py"),
            "--input", video, "--output", transcript,
@@ -156,7 +167,7 @@ def step_transcribe(video: str, transcript: str, skip: bool,
            "--backend", backend]
     if device:
         cmd += ["--device", device]
-    run_step(cmd, "[4/8] Whisper transcription")
+    run_step(cmd, "[4/9] Whisper transcription")
     return transcript
 
 
@@ -189,7 +200,7 @@ def step_semantic(video: str, work_dir: str, shots_json: str,
         值不被显式使用 —— 子进程失败（schema validation）→ CalledProcessError → fail loud。
     """
     if skip:
-        print("[5/8] --skip-semantic: skipping cinematography analysis")
+        print("[5/9] --skip-semantic: skipping cinematography analysis")
         return prompts_json if os.path.exists(prompts_json) else None
     # TOCTOU-safe mtime cache（mirror step_export 02-REVIEW WR-07）；offline 模式不
     # 跳过（仍需跑子进程读 cache + 写 prompts.json），只在 skip 时短路。
@@ -211,7 +222,7 @@ def step_semantic(video: str, work_dir: str, shots_json: str,
             and _safe_mtime(prompts_json) > _safe_mtime(shots_json)
             and cached_video_id is not None
             and cached_video_id == current_video_id):
-        print(f"[5/8] cached prompts: {prompts_json}")
+        print(f"[5/9] cached prompts: {prompts_json}")
         return prompts_json
     cmd = [sys.executable, str(HERE / "analysis" / "call_shot_analysis.py"),
            "--video", video, "--shots", shots_json,
@@ -220,7 +231,7 @@ def step_semantic(video: str, work_dir: str, shots_json: str,
            "--analysis-timeout", str(analysis_timeout)]
     if offline:
         cmd += ["--offline"]
-    run_step(cmd, "[5/8] cinematography analysis (shot-analysis route)")
+    run_step(cmd, "[5/9] cinematography analysis (shot-analysis route)")
     # 写 video 身份 sidecar —— best-effort（WR-01）；失败仅意味着下次 cache check
     # 多一次重跑（cached_video_id=None → 强制 miss）。
     if current_video_id is not None:
@@ -264,7 +275,7 @@ def step_reid(video: str, work_dir: str, shots_json: str,
         registry_draft 路径（若产出 / 已存在）；None 若 skip 且文件不存在。
     """
     if skip:
-        print("[6/8] --skip-reid: skipping cross-shot re-id")
+        print("[6/9] --skip-reid: skipping cross-shot re-id")
         return registry_draft if os.path.exists(registry_draft) else None
     # TOCTOU-safe mtime cache（mirror step_semantic）；offline 模式不跳过，
     # 只在 skip 时短路。WR-01：mtime 单比不够 —— video 换会让外层 mtime cache
@@ -282,7 +293,7 @@ def step_reid(video: str, work_dir: str, shots_json: str,
             and _safe_mtime(registry_draft) > _safe_mtime(shots_json)
             and cached_video_id is not None
             and cached_video_id == current_video_id):
-        print(f"[6/8] cached registry draft: {registry_draft}")
+        print(f"[6/9] cached registry draft: {registry_draft}")
         return registry_draft
     # 子进程 1：call_reid.py（POST character-reid route → registry.draft.json）
     cmd = [sys.executable, str(HERE / "analysis" / "call_reid.py"),
@@ -292,7 +303,7 @@ def step_reid(video: str, work_dir: str, shots_json: str,
            "--reid-timeout", str(reid_timeout)]
     if offline:
         cmd += ["--offline"]
-    run_step(cmd, "[6/8] cross-shot re-id (character-reid route)")
+    run_step(cmd, "[6/9] cross-shot re-id (character-reid route)")
     # 写 video 身份 sidecar —— best-effort（WR-01）。
     if current_video_id is not None:
         try:
@@ -309,15 +320,98 @@ def step_reid(video: str, work_dir: str, shots_json: str,
                 "--video", video,
                 "--shots", shots_json,
                 "--output", review_html]
-        run_step(cmd2, "[6/8] HITL review HTML generation")
+        run_step(cmd2, "[6/9] HITL review HTML generation")
     return registry_draft if os.path.exists(registry_draft) else None
+
+
+def step_audio_semantic(video: str, work_dir: str, shots_json: str,
+                        stems_dir: str, audio_semantic_json: str,
+                        skip: bool, offline: bool,
+                        audio_url: str, audio_timeout: float) -> str:
+    """音频语义深化（step 7 of 9）—— 第三个网络依赖步骤。
+
+    子进程调 analysis/call_audio_analysis.py（httpx POST → audio_semantic.json），
+    把每镜三模态（dialogue/sfx/reproduction）填进 audio_semantic.json。
+    Pipeline 第三个网络依赖步骤。Graceful-degrade：路由不可达 / --offline +
+    cache miss / preflight 失败 / stub_mode:true 时 call_audio_analysis.py
+    写 [audio] warning sidecar 但 NOT 写 audio_semantic.json（byte-identical
+    v1.1 asset，CONTRACT-05）。link_speakers.py 是独立 standalone CLI，由操作员
+    在审阅完 html/gen_speaker_review.py 产出的 HITL HTML 后手动运行（mirror
+    v1.1 apply_edits.py 模式）—— 本步 NEVER subprocess 调用 link_speakers；
+    --skip-speaker-link 仅控制 main() 里的提示输出（T-14-03 mitigation）。
+
+    Args:
+        video: 原始视频绝对路径（含 audio 流）。
+        work_dir: 资产根目录；route_cache/audio_analysis/ 写在其下。
+        shots_json: shots.json 路径（call_audio_analysis 读它定 per-shot 循环）。
+        stems_dir: Demucs stems 目录（htdemucs/<video-stem>/，传给路由做 SER/MIR 输入）。
+        audio_semantic_json: audio_semantic.json 输出路径（call_audio_analysis 产物；
+            step_export + step_timeline 读；route-down 时不写）。
+        skip: --skip-audio-semantic → True，整步跳过。
+        offline: --offline → True（全局），仅读 route_cache 不联网。
+        audio_url: audio-analysis 路由 URL（含 /api/production/audio-analysis path；
+            NO /v1/ —— 10-02-SUMMARY mount-path flag）。
+        audio_timeout: 单次路由调用 read 超时秒（默认 900，= 路由侧 execFileSync
+            硬超时；mirror Phase 6 Pitfall 1）。
+
+    Returns:
+        audio_semantic_json 路径（若产出 / 已存在）；None 若 skip 且文件不存在。
+        注意：step_export + step_timeline 都各自 os.path.exists 检查，因此返回值
+        不被显式使用 —— 子进程失败（schema validation）→ CalledProcessError →
+        fail loud。call_audio_analysis 自身 graceful-degrade 时 exit 0 + 不写文件
+        → 下游 step_export 条件性 emit audio_semantic 缺席（CONTRACT-05）。
+    """
+    if skip:
+        print("[7/9] --skip-audio-semantic: skipping audio semantic analysis")
+        return audio_semantic_json if os.path.exists(audio_semantic_json) else None
+    # TOCTOU-safe mtime cache（mirror step_reid:269-286）；offline 模式不跳过
+    # （仍需跑子进程读 cache + 写 warnings sidecar），只在 skip 时短路。
+    # WR-01：mtime 单比不够 —— video 换会让外层 mtime cache 命中但内层 per-shot
+    # cache 全 stale。镜像 step_reid 的 video 身份 sidecar。
+    video_stamp = audio_semantic_json + ".video-stamp"
+    cached_video_id = None
+    if os.path.exists(video_stamp):
+        try:
+            with open(video_stamp, encoding="utf-8") as f:
+                cached_video_id = f.read().strip()
+        except OSError:
+            cached_video_id = None
+    current_video_id = _video_identity(video)
+    if (os.path.exists(audio_semantic_json)
+            and _safe_mtime(audio_semantic_json) > _safe_mtime(shots_json)
+            and cached_video_id is not None
+            and cached_video_id == current_video_id):
+        print(f"[7/9] cached audio_semantic: {audio_semantic_json}")
+        return audio_semantic_json
+    # 子进程：call_audio_analysis.py（POST audio-analysis route → audio_semantic.json
+    # + route_cache/audio_analysis/shot_XXX.json + route_cache/warnings.json）。
+    # list-form subprocess.run —— argv 不经 shell 解析（T-14-02 injection mitigation）。
+    cmd = [sys.executable, str(HERE / "analysis" / "call_audio_analysis.py"),
+           "--video", video, "--shots", shots_json,
+           "--work-dir", work_dir, "--output", audio_semantic_json,
+           "--stems-dir", stems_dir,
+           "--route-url", audio_url,
+           "--route-timeout", str(audio_timeout)]
+    if offline:
+        cmd += ["--offline"]
+    run_step(cmd, "[7/9] audio semantic analysis (audio-analysis route)")
+    # 写 video 身份 sidecar —— best-effort（WR-01）。
+    if current_video_id is not None:
+        try:
+            with open(video_stamp, "w", encoding="utf-8") as f:
+                f.write(current_video_id)
+        except OSError:
+            pass
+    return audio_semantic_json if os.path.exists(audio_semantic_json) else None
 
 
 def step_timeline(video: str, work_dir: str, shots_json: str,
                   audio_json: str, transcript: str, frames_json: str,
                   stems_dir: str, out_html: str, video_src: str,
                   stem_basename: str,
-                  prompts_json: str = None) -> str:
+                  prompts_json: str = None,
+                  audio_semantic_json: str = None,
+                  speakers_json: str = None) -> str:
     r"""Phase 8 wiring: step_timeline 现含 attach_refs 预处理 + 扩展 mtime cache。
 
     NO new numbered step / NO counter bump (CONTEXT Q3 lock —— ROADMAP Phase 8
@@ -351,10 +445,18 @@ def step_timeline(video: str, work_dir: str, shots_json: str,
         inputs.append(transcript)
     if prompts_json and os.path.exists(prompts_json):
         inputs.append(prompts_json)
+    # Phase 14：audio_semantic_json + speakers_json 现入 cache inputs —— Pitfall 9
+    # prevention（mirror Phase 8 prompts_json addition）。link_speakers.py 重写
+    # speakers.json 后新 mtime → cache miss → timeline 重生成（Phase 16 HTML gallery
+    # 会读这俩文件渲染对白/音乐/音效 chips + speaker→character chip）。
+    if audio_semantic_json and os.path.exists(audio_semantic_json):
+        inputs.append(audio_semantic_json)
+    if speakers_json and os.path.exists(speakers_json):
+        inputs.append(speakers_json)
     input_mtimes = [_safe_mtime(p) for p in inputs]
     max_input_mtime = max(input_mtimes) if input_mtimes else 0
     if os.path.exists(out_html) and _safe_mtime(out_html) > max_input_mtime:
-        print(f"[7/8] cached timeline: {out_html}")
+        print(f"[8/9] cached timeline: {out_html}")
         return out_html
     cmd = [sys.executable, str(HERE / "html" / "gen_timeline_html.py"),
            "--shots", shots_json, "--output", out_html]
@@ -389,7 +491,7 @@ def step_timeline(video: str, work_dir: str, shots_json: str,
     # registry_snapshot，回退到 --characters/--props。
     if os.path.exists(asset_json_path):
         cmd += ["--asset-json", asset_json_path]
-    run_step(cmd, "[7/8] timeline HTML generation")
+    run_step(cmd, "[8/9] timeline HTML generation")
     return out_html
 
 
@@ -436,7 +538,7 @@ def step_export(work_dir: str, video: str, stems_source_dir: str,
         防止不同 --video（同 mtime/size）误命中陈旧 manifest
     """
     if skip:
-        print("[8/8] --skip-export: skipping asset export")
+        print("[9/9] --skip-export: skipping asset export")
         return asset_json if os.path.exists(asset_json) else None
     # mtime cache: mirror step_timeline；inputs = 5 数据 JSON + 原始 video
     inputs = [
@@ -468,7 +570,7 @@ def step_export(work_dir: str, video: str, stems_source_dir: str,
             and _safe_mtime(asset_json) > max_input_mtime
             and cached_video_id is not None
             and cached_video_id == current_video_id):
-        print(f"[8/8] cached asset: {asset_json}")
+        print(f"[9/9] cached asset: {asset_json}")
         return asset_json
     cmd = [sys.executable, str(HERE / "scripts" / "export_asset.py"),
            "--work-dir", work_dir,
@@ -477,7 +579,7 @@ def step_export(work_dir: str, video: str, stems_source_dir: str,
            "--output", asset_json]
     if force:
         cmd += ["--force"]
-    run_step(cmd, "[8/8] ShotTimelineAsset export")
+    run_step(cmd, "[9/9] ShotTimelineAsset export")
 
     # 写 video 身份 sidecar —— best-effort；失败仅意味着下次 cache check 多一次重跑
     if current_video_id is not None:
@@ -523,6 +625,20 @@ def main():
                          "默认端口 8000 —— 路由 DEFERRED 未上线，首跑需 verify 实际端口）")
     ap.add_argument("--reid-timeout", type=float, default=960.0,
                     help="单次 re-id 路由调用 read 超时秒（默认 960，> 路由侧 900s execFileSync）")
+    # Phase 14：audio-analysis 路由（step 7 of 9 —— 第三个网络依赖步骤）。
+    ap.add_argument("--skip-audio-semantic", action="store_true",
+                    help="跳过音频语义分析（audio-analysis 路由调用）")
+    ap.add_argument("--audio-url",
+                    default="http://127.0.0.1:8000/api/production/audio-analysis",
+                    help="audio-analysis 路由 URL（含 /api/production/audio-analysis path；"
+                         "NO /v1/ —— 10-02-SUMMARY mount-path flag；默认端口 8000 —— "
+                         "路由 DEFERRED 未上线，首跑需 verify 实际端口）")
+    ap.add_argument("--audio-timeout", type=float, default=900.0,
+                    help="单次 audio-analysis 路由调用 read 超时秒（默认 900，"
+                         "= 路由侧 execFileSync 硬超时；mirror Phase 6 Pitfall 1）")
+    ap.add_argument("--skip-speaker-link", action="store_true",
+                    help="跳过 link_speakers HITL 提示（link_speakers.py 本身是独立 CLI —— "
+                         "操作员手动运行；本 flag 仅控制提示输出，不影响 step_audio_semantic）")
     ap.add_argument("--sample-fps", type=float, default=5.0,
                     help="V3b Pass2 HistCorr 抽帧频率（默认 5）")
     ap.add_argument("--demucs-model", default="htdemucs",
@@ -563,6 +679,10 @@ def main():
     # Phase 7：registry.draft.json（call_reid 产物）+ registry_review.html（gen_registry_review 产物）
     registry_draft = os.path.join(work_dir, "registry.draft.json")
     review_html = os.path.join(work_dir, "registry_review.html")
+    # Phase 14：audio_semantic.json（call_audio_analysis 产物）+ speakers.json
+    # （link_speakers.py 产物 —— 独立 standalone CLI，不在 pipeline 内产）。
+    audio_semantic_json = os.path.join(work_dir, "audio_semantic.json")
+    speakers_json = os.path.join(work_dir, "speakers.json")
 
     os.makedirs(work_dir, exist_ok=True)
 
@@ -573,10 +693,15 @@ def main():
         # Phase 7：registry.draft.json（step_reid 产物）+ registry_review.html +
         # registry_draft.video-stamp（WR-01 sidecar）一并清；route_cache rmtree
         # 已含 route_cache/character_reid/ 子目录。
+        # Phase 14：audio_semantic.json + speakers.json + audio_semantic 的
+        # video-stamp sidecar + route_cache/audio_analysis/ 子目录（NOT 父级
+        # route_cache —— 那会 nuke sibling shot_analysis/character_reid 缓存）。
+        # T-14-01 mitigation：EXPLICIT LIST，NEVER glob/rmtree 父级 route_cache。
         # route_cache 是目录 → shutil.rmtree(ignore_errors=True)（partial corrupt
-        # cache 不应阻塞 forced rerun）。
+        # cache 不应阻塞 forced rerun）；audio_analysis 子目录同理 rmtree。
         import shutil
         route_cache_dir = os.path.join(work_dir, "route_cache")
+        audio_analysis_cache_dir = os.path.join(route_cache_dir, "audio_analysis")
         for p in (shots_json, frames_json, audio_json, transcript, out_html,
                   asset_json, asset_json + ".video-stamp",
                   prompts_json,                                      # Phase 6
@@ -584,7 +709,11 @@ def main():
                   registry_draft,                                    # Phase 7
                   registry_draft + ".video-stamp",                   # Phase 7 WR-01
                   review_html,                                       # Phase 7
-                  route_cache_dir):                                  # Phase 6+7
+                  audio_semantic_json,                               # Phase 14
+                  audio_semantic_json + ".video-stamp",              # Phase 14 WR-01
+                  speakers_json,                                     # Phase 14
+                  route_cache_dir,                                   # Phase 6+7
+                  audio_analysis_cache_dir):                         # Phase 14
             if os.path.isdir(p):
                 shutil.rmtree(p, ignore_errors=True)
             elif os.path.exists(p):
@@ -624,12 +753,38 @@ def main():
               args.skip_reid, args.offline,
               args.reid_url, args.reid_timeout)
 
-    # 7. 时间轴 HTML
+    # 7. 音频语义深化（audio-analysis 路由 —— 第三个网络依赖步骤）
+    # 非阻塞：产 audio_semantic.json（路由 round-trip 成功）OR 不写（route-down
+    # graceful-degrade，CONTRACT-05 byte-identical-absent）。link_speakers.py 是
+    # 独立 standalone CLI，由操作员在审阅 html/gen_speaker_review.py 产出后手动
+    # 运行（mirror v1.1 apply_edits.py 模式；T-14-03 mitigation: 本步永远不
+    # subprocess 调用 link_speakers —— 全自动映射是 AF-05 violation）。
+    step_audio_semantic(video, work_dir, shots, stems_dir, audio_semantic_json,
+                        args.skip_audio_semantic, args.offline,
+                        args.audio_url, args.audio_timeout)
+    # --skip-speaker-link 仅控制 HITL 提示输出（不阻塞 step_audio_semantic）。
+    # 提示串拼出 operator 手动运行的完整 CLI 命令 —— mirror v1.1 apply_edits 提示。
+    if (not args.skip_speaker_link
+            and os.path.exists(audio_semantic_json)
+            and os.path.exists(os.path.join(work_dir, "characters.json"))):
+        edits_hint = os.path.join(work_dir, "speaker-edits.json")
+        print(f"[hint] SPEAKER-01 HITL: after reviewing speaker-review.html + "
+              f"exporting speaker-edits.json, run link_speakers:")
+        print(f"         python registry/link_speakers.py \\")
+        print(f"           --audio-semantic {audio_semantic_json} \\")
+        print(f"           --characters     {os.path.join(work_dir, 'characters.json')} \\")
+        print(f"           --edits          {edits_hint} \\")
+        print(f"           --work-dir       {work_dir} \\")
+        print(f"           --output         {speakers_json}")
+
+    # 8. 时间轴 HTML
     stem_basename = args.stem_basename or stem
     video_src = args.video_src or os.path.basename(video)
     html = step_timeline(video, work_dir, shots, audio, tr, frames_json,
                          stems_dir, out_html, video_src, stem_basename,
-                         prompts_json=prompts_json)
+                         prompts_json=prompts_json,
+                         audio_semantic_json=audio_semantic_json,
+                         speakers_json=speakers_json)
 
     # 8. ShotTimelineAsset 导出（asset.json + canonical symlinks）
     stems_source_dir = stems_dir  # stems/htdemucs/<stem>/
