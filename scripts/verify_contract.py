@@ -651,6 +651,11 @@ def _producer_registry_integrity(asset_dir: Path) -> list:
       (c) canonical IDs unique + match ^(char|prop)_[0-9]{3}$
       (d) NO review_state:"proposed" in canonical files (Pitfall 7 second-line
           assert —— 与 apply_edits.py 的 build-time hard gate 互为 defense-in-depth)
+      (f) Phase 13 (SPEAKER-03) speakers.json checks (gated on existence; mirror
+          (a)-(d) shape with spk_[0-9]{3} substitution): spk_id pattern + uniqueness
+          + confirmed-only + non-null char_id resolves to confirmed characters.json
+          + turn.shot_id ⊆ shots.json. Absent speakers.json → no-op (mirror
+          v1.0/v1.1/route-down graceful-degrade; Pitfall 11 byte-identical-absent).
 
     这是 producer-gate 的扩展（additive），不改既有 _fixture_consistency_check
     （fixture 自洽性）+ _cross_version_check（schema 双向兼容）。
@@ -732,6 +737,74 @@ def _producer_registry_integrity(asset_dir: Path) -> list:
                     failures.append(
                         f"{name} {eid}: appearance_shots references "
                         f"unknown shot {sid}")
+
+    # Phase 13 (SPEAKER-03) additive: when speakers.json exists, check spk_id
+    # pattern + uniqueness + confirmed-only + char_id dangling + turn.shot_id ⊆
+    # shots. Absent speakers.json → no-op (mirror v1.0/v1.1/route-down graceful-
+    # degrade; Pitfall 11 byte-identical-absent invariant for older assets).
+    # Pitfall 7 second-line: even if link_speakers.py has a bug, producer gate
+    # catches 'proposed'/'rejected' leak. Pitfall 17 second-line: catches
+    # speaker→character dangling hand-edited drift at producer time.
+    speakers_path = asset_dir / "speakers.json"
+    if speakers_path.is_file():
+        try:
+            speakers_data = json.loads(speakers_path.read_text(encoding="utf-8"))
+        except json.JSONDecodeError as e:
+            failures.append(f"speakers.json: invalid JSON: {e}")
+            speakers_data = None
+        if isinstance(speakers_data, dict):
+            seen_spk_ids: set = set()
+            for spk in speakers_data.get("speakers", []) or []:
+                if not isinstance(spk, dict):
+                    failures.append(f"speakers.json: non-dict entry: {spk!r}")
+                    continue
+                sid = spk.get("spk_id")
+                # (a) spk_id pattern (T-07-01 mirror)
+                if not (isinstance(sid, str)
+                        and _re.match(r"^spk_[0-9]{3}$", sid)):
+                    failures.append(
+                        f"speakers.json: spk_id {sid!r} does not match "
+                        f"spk_[0-9]{{3}}")
+                    continue   # cannot run further checks w/o valid sid key
+                # (b) spk_id uniqueness
+                if sid in seen_spk_ids:
+                    failures.append(f"speakers.json: duplicate spk_id {sid!r}")
+                seen_spk_ids.add(sid)
+                # (c) Pitfall 7 second-line: review_state MUST be 'confirmed' in
+                # canonical speakers.json (mirror :717-720 assert for characters/
+                # props). Even if link_speakers.py hard gate has a bug, this
+                # catches 'proposed'/'rejected' leak at producer time.
+                if spk.get("review_state") != "confirmed":
+                    failures.append(
+                        f"speakers.json {sid}: review_state="
+                        f"{spk.get('review_state')!r} in canonical "
+                        f"(must be 'confirmed' — Pitfall 7)")
+                # (d) Pitfall 17 second-line: char_id dangling (speaker→character).
+                # Reuses char_confirmed_ids set built by characters.json loop above
+                # (Phase 8 pattern extended for Phase 13).
+                cid = spk.get("char_id")
+                if cid is not None:
+                    if not (isinstance(cid, str)
+                            and _re.match(r"^char_[0-9]{3}$", cid)):
+                        failures.append(
+                            f"speakers.json {sid}: char_id {cid!r} malformed "
+                            f"(must match char_[0-9]{{3}})")
+                    elif cid not in char_confirmed_ids:
+                        failures.append(
+                            f"speakers.json {sid}: char_id {cid!r} not in "
+                            f"confirmed characters.json IDs "
+                            f"(Pitfall 17 — speaker→character dangling)")
+                # (e) turn.shot_id ⊆ shots.json (mirror registry member check
+                # at :778-784)
+                for turn in spk.get("turns", []) or []:
+                    if isinstance(turn, dict) and turn.get("shot_id") not in shot_ids:
+                        failures.append(
+                            f"speakers.json {sid}: turn shot_id "
+                            f"{turn.get('shot_id')} unknown")
+        elif speakers_data is not None:
+            failures.append(
+                f"speakers.json: expected object, got "
+                f"{type(speakers_data).__name__}")
 
     # (e) Phase 8 (PROMPT-03, Pitfall 17): prompts.character_refs[]/prop_refs[]
     #     MUST ⊆ confirmed characters.json/props.json IDs. Additive —— gated on
