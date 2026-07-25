@@ -1,17 +1,16 @@
 ---
 gsd_state_version: 1.0
-milestone: v1.1
-milestone_name: 分镜语义深化 — 镜头语言 + 跨镜角色/道具注册表
-status: Awaiting next milestone
-stopped_at: ""Phase 9 Plan 01 complete (consumer PRESENT-04/05 shipped 2026-07-24 in kais-aigc-platform feat/canvas-asset-collection @ 90812e9d) — consumer @kais/infinite-canvas now v1.1-aware: SHOT_TIMELINE_KNOWN_VERSIONS += '1.1'; extractShotTimelineArtifacts emits 2 character + 1 prop child nodes as type:'asset' (assetType character/prop, NOT delivery) via §7 buildPhaseTree post-process; AssetNode typeIcons += 🧑/🔧; verify-canvas-shot-timeline.ts 27/27 green. v1.0 WIP untouched. Ready for /gsd:execute-phase 9 plan 09-02 (PRESENT-06 verify_contract.py 3-mode bridge).""
-last_updated: "2026-07-24T23:46:46.000Z"
-last_activity: 2026-07-25 — Quick task 260725-afz: audio-gen NL prompt spike (approved → v1.2 input)
+milestone: v1.2
+milestone_name: 音频语义深化 — Audio Semantic Deepening
+status: planning
+last_updated: "2026-07-25T00:55:36.499Z"
+last_activity: 2026-07-25
 progress:
-  total_phases: 5
-  completed_phases: 5
-  total_plans: 16
-  completed_plans: 16
-  percent: 100
+  total_phases: 0
+  completed_phases: 0
+  total_plans: 0
+  completed_plans: 0
+  percent: 0
 ---
 
 # Project State
@@ -21,14 +20,14 @@ progress:
 See: .planning/PROJECT.md (updated 2026-07-24)
 
 **Core value:** 把成片解构成可导航、多轨道、带语义的分镜资产（分镜 + 分离音轨 + 对白 + 镜头语言 prompt + 跨镜可复用角色/道具注册表），且形态可移植——能作为下游 `@kais/infinite-canvas` 的「最终资产集合形态」被直接消费。
-**Current focus:** Milestone complete
+**Current focus:** v1.2 音频语义深化 — defining requirements (route-based dialogue/music/sfx → layered reproduction prompts)
 
 ## Current Position
 
-Phase: Milestone v1.1 complete
+Phase: Not started (defining requirements)
 Plan: —
-Status: Awaiting next milestone
-Last activity: 2026-07-25 — Quick task 260725-afz: audio-gen NL prompt spike (concept validated → promote v1.2)
+Status: Defining requirements
+Last activity: 2026-07-25 — Milestone v1.2 started
 
 ## Performance Metrics
 

@@ -12,18 +12,24 @@
 
 **Goal:** 把成片从「边界 + 音轨 + 对白 + prompt 文本」升级为带镜头语言、动作、可复用跨镜角色/道具注册表的叙事资产——prompt 引用注册表实现真实叙事连贯，并把 ShotTimelineAsset 契约 minor-bump 到 v1.1。**DELIVERED** — 5 phases, 16 plans, 34/34 requirements satisfied; producer/contract side complete, 3 cross-repo route dependencies pre-authorized deferred (see Validated + Known Deferred below).
 
-## Next Milestone
+## Current Milestone: v1.2 音频语义深化 — Audio Semantic Deepening
 
-**Status:** Planning (not started). Run `/gsd:new-milestone` to define. Candidate directions from v1.1 deferred items: live cross-repo route integration (shot-analysis + character-reid merge + empirical τ calibration), or v2 display/continuity work (cross-video character continuity, speaker attribution, canvas native timeline).
+**Status:** Planning (requirements/roadmap being defined).
+
+**Goal:** 把音频从「能量/频谱启发式」升级为带对白情绪+说话人、BGM 乐器/调性/氛围/出现时间、音效描述的**三模态语义资产**，并产出**分层复现 prompt**（TTS / music-gen / foley）——镜像 v1.1 `step_semantic` 的「thin 客户端 → kais-aigc-platform 路由」模式。
 
 **Target features:**
-- 镜头语言/动作/语义自动填充——shot-timeline 作 HTTP 客户端调 kais-aigc-platform 运镜分析路由（geometry/SAM3/Qwen3-VL），自动填 `prompts.json` 的 `camera/action/scene/lighting/style/subject` 结构化字段（替代当前外部手动 `part_*.json`）
-- 跨镜角色/道具注册表（re-id）——从首尾帧 SAM3 切出主体/道具图，跨镜识别同一实体 → 可复用「演员表 + 道具表」，带人工 review 修正（re-id 不可能 100% 准）
-- prompt 引用系统——prompt 结构化引用注册表条目（角色/道具 ID），实现真实叙事连贯
-- ShotTimelineAsset 契约 minor bump——`schema_version` 1→`1.1`（纯增量：新增 optional `characters`/`props` 数据文件 + 丰富 `prompts` schema，按项目 SPEC semver-lite 规则）；graceful-degrade 兜底老消费者
-- 展示（双端）——shot-timeline HTML（角色/道具画廊 + 带 reference chip 的 prompt）+ canvas 消费者新增角色/道具节点类型（跨仓库 kais-aigc-platform）
+- **路由式引擎**——kais-aigc-platform 新 `audio-analysis` 路由托管重模型（WhisperX 词级 + pyannote 说话人 + 中文适配 SER + MIRFLEX/MERT 乐器/tempo/key/VA）；shot-timeline 当 thin httpx 客户端 `analysis/call_audio_analysis.py` + per-shot cache + graceful-degrade
+- **三模态分析**——对白（词级时间戳 + 说话人 + 情绪）/ 音乐（乐器 + tempo + key + VA 情绪 + 出现时间）/ 音效（foley 描述）
+- **分层复现 prompt**——每镜产 TTS / music-gen / foley 三套（替代单一 NL prompt）
+- **ShotTimelineAsset 契约 minor bump**——新增 optional sidecar `audio_semantic.json`；schema_version `1.1`→`1.2`（纯增量，与 v1.0/v1.1 缺省 byte-identical）
+- **SPEAKER-01 进 scope**——说话人归属，speaker_id 挂 v1.1 character registry（v1.1 曾因「大 lift」列为 Out of Scope）
+- **消费者**——infinite-canvas 音频语义节点（跨仓库 kais-aigc-platform）
+- **Spike 退役**——`audio/gen_audio_prompts.py`（quick task 260725-afz）降级为 `--offline` fallback
 
-> **v1.0（已归档）** ShotTimelineAsset Contract：定义并落地了仓库无关的 5-JSON 资产集合形态 + 导出器 + 画布最小消费 + 跨仓库验证。详见 `.planning/MILESTONES.md`。本 milestone 在其契约之上做语义深化与契约 minor bump。
+**Key context:** Phase 1 必须是「路由搭建 + 模型 risk-validation on 1 集」（取证中文 SER + 乐器识别精度/延迟/显存），再锁 `audio_semantic.json` 契约——镜像 v1.1 Phase 7 DINOv2 τ spike（先证模型、再立契约）。**最高风险**：中文 SER 跨域（RAVDESS 英文表演式→中文动画对白）+ 多音轨乐器识别未验证。参考 Kimi 4 层管线（Demucs→WhisperX+pyannote+emotion→MIR→分层 prompt），采其「分模态模型 + 分层 prompt」形状，弃其「全本地单脚本、无契约/消费端」实现。
+
+> **v1.1（已归档）** 分镜语义深化：镜头语言 + 跨镜角色/道具注册表 + prompt 引用 + 契约 1→1.1 + 双端展示。详见 `.planning/MILESTONES.md`。本 milestone 在其契约之上做音频语义深化与契约 minor bump 1.1→1.2。
 
 ## Requirements
 
@@ -50,9 +56,9 @@
 
 ### Active
 
-<!-- v1.1 shipped 2026-07-25 — all v1.1 requirements moved to Validated below. Next milestone not yet defined. -->
+<!-- v1.2 音频语义深化 — requirements scoped via /gsd:new-milestone; full REQ-IDs live in .planning/REQUIREMENTS.md. -->
 
-_None — v1.1 milestone complete. Next milestone requirements TBD via `/gsd:new-milestone`._
+_v1.2 requirements defined in `.planning/REQUIREMENTS.md` (categories: ROUTE / DIALOGUE / MUSIC / SFX / CONTRACT / CONSUMER)._
 
 ### Known Deferred (v1.1 → post-merge / v2)
 
@@ -69,7 +75,7 @@ Cross-repo dependencies out of this repo's control; producer/contract side compl
 <!-- 明确边界，含理由，防止回头再加。v1.1 在 v1.0 基础上更新。 -->
 
 - 完全自动 re-id（无人 review）— re-id 不可能 100% 准，v1.1 必须 human-in-the-loop；全自动留待 re-id 精度成熟后再评估
-- 对白→角色归属（谁说了哪句台词）— 强力叙事能力但是大 lift（需说话人识别/唇形对齐），v1.1 不做
+- ~~对白→角色归属（谁说了哪句台词）~~ — **v1.2 进 scope**（SPEAKER-01：说话人分离 speaker_id 挂 character registry）；v1.1 曾因「大 lift（需说话人识别/唇形对齐）」列为 Out of Scope，v1.2 借 pyannote 路由化降 lift
 - 跨成片角色连续性（同一角色跨不同视频识别为同一实体）— v1.1 只在单支成片内 re-id；跨片留后续
 - 画布内原生时间轴渲染器（stem 播放引擎、波形 canvas、Range 媒体服务）— 完整原生交互是后续 milestone
 - 新增画布 custom renderer — v1.1 用「新节点类型 + 复用现有渲染器」路径，仍不引入 custom renderer（契约 bump 仅是 schema_version + 新数据文件，渲染复用）
@@ -109,6 +115,10 @@ Cross-repo dependencies out of this repo's control; producer/contract side compl
 | **v1.1** 角色道具做「跨镜 re-id 注册表」（非单镜提取） | 「真实叙事连贯」的核心 = 同一角色跨镜是同一引用；接受 re-id 不准、用人工 review 兜底 | ✓ Validated Phase 7（producer 客户端 + 一等 HITL review HTML + apply_edits confirmed-only；route/driver/τ deferred） |
 | **v1.1** 升级 ShotTimelineAsset 到 schema_version `"1.1"`（minor bump，非侧车数据；刻意不用 `"2"`） | 纯增量变更按项目 SPEC semver-lite 规则 = minor；保留 `"2"` 给未来破坏性变更；资产自描述、可移植、一等公民；v1.0 graceful-degrade 规则专为这种 minor bump 设计 | ✓ Validated Phase 5/8（schema_version `"1.1"` producer-locked；v1↔v1.1 bidirectional cross-version self-test 0 errors；全 milestone 共享一个 minor） |
 | **v1.1** 双端展示（shot-timeline HTML + canvas 新节点类型） | 用户要端到端可见；接受跨仓库 ~30% 额外开销（v1.0 实测） | ✓ Validated Phase 8/9（HTML 画廊/chip/指示器 + canvas character/prop asset 节点经 §7 post-process；无 custom renderer / 无 Zod bump） |
+| **v1.2** 引擎放 kais-aigc-platform（路由式，非全本地） | 延续 v1.0/v1.1 松耦合；shot-timeline 不增重 ML 依赖；复用 v1.1 `step_semantic` 的 httpx+graceful-degrade 模式；用户硬件虽可本地，但项目约束偏好路由 | — Pending（Phase 1 risk-validation 起验证） |
+| **v1.2** 三模态一起（对白/音乐/音效） | 用户目标需三模态才能支撑「复现音频」；分模态做但同一 milestone | — Pending |
+| **v1.2** 分层复现 prompt（TTS / music-gen / foley） | 复现对白/音乐/音效面向不同生成器，单一 NL prompt 服务不了任一；分层才能真复现 | — Pending |
+| **v1.2** Phase 1 先做模型 risk-validation 再锁契约 | 中文 SER 跨域 + 乐器识别未验证是最高风险；镜像 v1.1 Phase 7 DINOv2 τ spike（先证模型、再立契约） | — Pending |
 
 ## Evolution
 
@@ -128,4 +138,4 @@ This document evolves at phase transitions and milestone boundaries.
 4. Update Context with current state
 
 ---
-*Last updated: 2026-07-25 after v1.1 milestone completion — v1.1 分镜语义深化 SHIPPED (5 phases, 16 plans, 34/34 reqs; producer/contract complete, 3 cross-repo route dependencies deferred). Next milestone TBD.*
+*Last updated: 2026-07-25 — started milestone **v1.2 音频语义深化** (route-based audio semantic deepening: dialogue/music/sfx → layered TTS/music-gen/foley reproduction prompts; schema 1.1→1.2; SPEAKER-01 in scope). v1.1 分镜语义深化 SHIPPED (5 phases, 16 plans, 34/34 reqs).*
