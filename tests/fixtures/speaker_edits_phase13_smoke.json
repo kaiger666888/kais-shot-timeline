@@ -1,0 +1,8 @@
+{
+  "confirm_ids": ["spk_001", "spk_002"],
+  "reject_ids": [],
+  "link_mappings": {"spk_001": "char_001"},
+  "merge_groups": [],
+  "splits": {},
+  "review_notes": "Phase 13 SC#5 smoke fixture: operator confirms both speakers; links spk_001 (少女 vocals, shot 1) to char_001; leaves spk_002 unlinked (旁白/群杂). Representative of a clean HITL pass on the v1.2 diarization output. Frozen so the smoke replays the apply deterministically — the human review happened once (Scenario 1 happy-path), this fixture is the operator-decision surrogate. Schema-validates against spec/schemas/speaker-edits.schema.json (Draft202012Validator). Scenario 3 augments audio_semantic with a synthetic spk_003 + writes an inline reject_ids fixture to exercise the confirmed-only gate without touching this canonical file."
+}
