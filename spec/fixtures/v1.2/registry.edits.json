@@ -1,0 +1,16 @@
+{
+  "splits": {
+    "char_001": [
+      {"label": "day", "member_indexes": [0, 1]},
+      {"label": "night", "member_indexes": [2]}
+    ]
+  },
+  "confirm_ids": ["char_002", "char_003", "char_004", "prop_001"],
+  "renames": {
+    "char_002": "路人",
+    "char_003": "少女(日)",
+    "char_004": "少女(夜)",
+    "prop_001": "落叶"
+  },
+  "review_notes": "ep01 fixture: demonstrates CR-01 split PARTITION. char_001 (3 members: shot1-first, shot1-last, shot2-first) is split into char_003=day [indexes 0,1] -> shot 1, char_004=night [index 2] -> shot 2. char_001 retired (split source). char_002 confirmed distinct. prop_001 confirmed. Deterministic ID binding: labels sorted (day<night) -> char_003=day, char_004=night (max existing char N=2, +1 each)."
+}

@@ -1,0 +1,57 @@
+{
+  "schema_version": "1.2",
+  "word_level_experimental": true,
+  "shots": [
+    {
+      "shot_id": 1,
+      "start_sec": 0.0,
+      "end_sec": 1.5,
+      "duration": 1.5,
+      "dialogue": {
+        "text": "你好世界",
+        "spk_id": "spk_001",
+        "emotion": "HAPPY",
+        "emotion_confidence": 1.0,
+        "events": ["Speech"],
+        "words": [
+          {"start": 0.0, "end": 0.5, "text": "你", "score": 0.99},
+          {"start": 0.5, "end": 0.9, "text": "好", "score": 0.97},
+          {"start": 0.9, "end": 1.2, "text": "世", "score": 0.96},
+          {"start": 1.2, "end": 1.5, "text": "界", "score": 0.95}
+        ]
+      },
+      "sfx": {
+        "events": [],
+        "description": ""
+      },
+      "reproduction": {
+        "tts": {
+          "text": "成年女性说话者，语气开心愉悦，中文普通话，节奏自然",
+          "confidence": 0.7,
+          "fidelity_disclaimer": "TTS ~70% similarity to source voice (AF-01 mitigation)"
+        },
+        "music_gen": null,
+        "foley": null
+      }
+    },
+    {
+      "shot_id": 2,
+      "start_sec": 1.5,
+      "end_sec": 3.0,
+      "duration": 1.5,
+      "dialogue": {
+        "text": "测试一句",
+        "spk_id": "spk_002",
+        "emotion": "emo_unk",
+        "emotion_confidence": 1.0,
+        "events": [],
+        "words": []
+      },
+      "reproduction": {
+        "tts": null,
+        "music_gen": null,
+        "foley": null
+      }
+    }
+  ]
+}

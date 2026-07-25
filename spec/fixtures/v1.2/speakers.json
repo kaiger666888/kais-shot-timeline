@@ -1,0 +1,22 @@
+{
+  "speakers": [
+    {
+      "spk_id": "spk_001",
+      "char_id": "char_001",
+      "total_speech_sec": 1.5,
+      "review_state": "confirmed",
+      "turns": [
+        {"shot_id": 1, "start_sec": 0.0, "end_sec": 1.5}
+      ]
+    },
+    {
+      "spk_id": "spk_002",
+      "char_id": null,
+      "total_speech_sec": 1.5,
+      "review_state": "confirmed",
+      "turns": [
+        {"shot_id": 2, "start_sec": 1.5, "end_sec": 3.0}
+      ]
+    }
+  ]
+}

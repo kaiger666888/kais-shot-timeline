@@ -1,0 +1,67 @@
+{
+  "schema_version": "1.2",
+  "asset_type": "shottimeline",
+  "source": {
+    "video_filename": "sample.mp4",
+    "duration_sec": 3.0
+  },
+  "generator": {
+    "tool": "kais-shot-timeline",
+    "version": "0.3.0-spec-fixture-v1.2",
+    "generated_at": "2026-07-24T00:00:00Z",
+    "warnings": [
+      "preflight route unreachable: ConnectError: [Errno 111] Connection refused",
+      "shot 3: route code=500: SHOT_ANALYSIS_DRIVER_FAILED"
+    ],
+    "registry_snapshot": {
+      "characters": [
+        {
+          "id": "char_001",
+          "name": "少女",
+          "representative_image": "characters/char_001.png",
+          "appearance_shots": [1, 2]
+        },
+        {
+          "id": "char_002",
+          "name": "路人",
+          "representative_image": "characters/char_002.png",
+          "appearance_shots": [1]
+        }
+      ],
+      "props": [
+        {
+          "id": "prop_001",
+          "name": "落叶",
+          "representative_image": "props/prop_001.png",
+          "appearance_shots": [2]
+        }
+      ]
+    }
+  },
+  "data": {
+    "shots": "shots.json",
+    "audio_analysis": "audio_analysis.json",
+    "transcript": "transcript.json",
+    "frames": "frames.json",
+    "prompts": "prompts.json",
+    "characters": "characters.json",
+    "props": "props.json",
+    "audio_semantic": "audio_semantic.json",
+    "speakers": "speakers.json"
+  },
+  "media": {
+    "video": "video.mp4",
+    "stems": {
+      "vocals": "stems/vocals.wav",
+      "drums": "stems/drums.wav",
+      "other": "stems/other.wav"
+    },
+    "characters": [
+      "characters/char_001.png",
+      "characters/char_002.png"
+    ],
+    "props": [
+      "props/prop_001.png"
+    ]
+  }
+}
