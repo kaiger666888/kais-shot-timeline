@@ -479,11 +479,16 @@ def link_speakers(audio_semantic_path, characters_path, edits_path,
         if cl.get("review_state") != "confirmed":
             # HARD GATE —— proposed/rejected 永不流向下游 (NOT filter-after-write)
             continue
-        # turns 排序：(shot_id, start_sec) 字典序；保证 idempotent byte output
+        # turns 排序：(shot_id, start_sec) 字典序；保证 idempotent byte output。
+        # WR-01 fix (mirror gen_speaker_review.py:175-178 _aggregate_speakers)：
+        # shot_id 若 missing/null/non-int，用大 sentinel (1<<30) 兜底，避免
+        # `1 < None` 触发 TypeError 在 schema validation gate 之前崩溃（route
+        # 退化或 hand-edit 可能产生 null shot_id；schema validation 仍是干净
+        # 的 fail-loud 边界，仅在排序时降级而非崩溃）。
         sorted_turns = sorted(
             cl.get("turns", []) or [],
             key=lambda t: (
-                t.get("shot_id") if isinstance(t, dict) else 0,
+                t.get("shot_id") if isinstance(t, dict) and isinstance(t.get("shot_id"), int) else (1 << 30),
                 float(t.get("start_sec", 0.0)) if isinstance(t, dict) else 0.0,
             ),
         )
