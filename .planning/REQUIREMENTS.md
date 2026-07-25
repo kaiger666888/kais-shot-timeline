@@ -19,11 +19,11 @@
 ## v1.2 Requirements
 
 ### CONTRACT — 契约层（schema 1.1→1.2，纯增量）
-- [ ] **CONTRACT-01**: `audio_semantic.json` sidecar schema — per-shot 三模态 (dialogue/music/sfx) + reproduction prompts；additive optional；`audio_analysis.json`/`transcript.json`/`prompts.json` **一字节不动**（byte-identical-absent 红线）
-- [ ] **CONTRACT-02**: `speakers.json` sidecar schema (`spk_NNN → char_NNN|null`, `review_state`) + `speaker-edits.schema.json` (HITL round-trip, mirror registry-edits)
-- [ ] **CONTRACT-03**: `SCHEMA_VERSION = "1.2"` producer-locked 单源；`validate.py` 三阶 shape gate (MINIMAL/V11/V12)；`verify_contract.py` v1.1↔v1.2 bidirectional cross-version + fixture-consistency
-- [ ] **CONTRACT-04**: SPEC §4 (changelog 1.1→1.2) + §5 新增 audio_semantic / speakers 形状 + `fidelity_disclaimer` 文档
-- [ ] **CONTRACT-05**: graceful-degrade —— 路由不可达/条件字段模型不达标 → sidecar 缺省（与 v1.0/v1.1 byte-identical）/ 字段 nullable；资产仍导出；`generator.warnings` 记原因
+- [x] **CONTRACT-01**: `audio_semantic.json` sidecar schema — per-shot 三模态 (dialogue/music/sfx) + reproduction prompts；additive optional；`audio_analysis.json`/`transcript.json`/`prompts.json` **一字节不动**（byte-identical-absent 红线）
+- [x] **CONTRACT-02**: `speakers.json` sidecar schema (`spk_NNN → char_NNN|null`, `review_state`) + `speaker-edits.schema.json` (HITL round-trip, mirror registry-edits)
+- [x] **CONTRACT-03**: `SCHEMA_VERSION = "1.2"` producer-locked 单源；`validate.py` 三阶 shape gate (MINIMAL/V11/V12)；`verify_contract.py` v1.1↔v1.2 bidirectional cross-version + fixture-consistency
+- [x] **CONTRACT-04**: SPEC §4 (changelog 1.1→1.2) + §5 新增 audio_semantic / speakers 形状 + `fidelity_disclaimer` 文档
+- [x] **CONTRACT-05**: graceful-degrade —— 路由不可达/条件字段模型不达标 → sidecar 缺省（与 v1.0/v1.1 byte-identical）/ 字段 nullable；资产仍导出；`generator.warnings` 记原因
 
 ### ROUTE — kais-aigc-platform 引擎（跨仓库）
 - [x] **ROUTE-01**: `audio-analysis` 路由 stub（envelope 镜像 shot-analysis `{"code":200,"data":{...}}`）—— 让 producer 客户端有 target URL + envelope，即使模型未加载也能集成测试
@@ -98,11 +98,11 @@ Each v1.2 REQ-ID maps to exactly one phase. Coverage: 33/33 (100%).
 
 | REQ-ID | Phase | Status |
 |--------|-------|--------|
-| CONTRACT-01 | Phase 11 (Contract v1.2) | Pending |
-| CONTRACT-02 | Phase 11 (Contract v1.2) | Pending |
-| CONTRACT-03 | Phase 11 (Contract v1.2) | Pending |
-| CONTRACT-04 | Phase 11 (Contract v1.2) | Pending |
-| CONTRACT-05 | Phase 11 (Contract v1.2) | Pending |
+| CONTRACT-01 | Phase 11 (Contract v1.2) | Complete |
+| CONTRACT-02 | Phase 11 (Contract v1.2) | Complete |
+| CONTRACT-03 | Phase 11 (Contract v1.2) | Complete |
+| CONTRACT-04 | Phase 11 (Contract v1.2) | Complete |
+| CONTRACT-05 | Phase 11 (Contract v1.2) | Complete |
 | ROUTE-01 | Phase 10 (Risk-Validation Spike + Route Stub) | Complete |
 | ROUTE-02 | Phase 12 (Producer Route Client) | Pending |
 | ROUTE-03 | Phase 12 (Producer Route Client) | Pending |
