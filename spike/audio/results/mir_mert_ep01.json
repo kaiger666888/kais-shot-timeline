@@ -1,0 +1,292 @@
+{
+  "model_id": "m-a-p/MERT-v1-95M",
+  "checkpoint": "hf:m-a-p/MERT-v1-95M (transformers AutoModel, CPU)",
+  "sample_size": 30,
+  "per_sample": [
+    {
+      "shot_id": 43,
+      "predicted_instruments": [
+        "mert_cluster_1"
+      ],
+      "metric_per_sample": 3.2316,
+      "mert_embedding_l2": 3.2316,
+      "mert_cluster_id": 1
+    },
+    {
+      "shot_id": 29,
+      "predicted_instruments": [
+        "mert_cluster_4"
+      ],
+      "metric_per_sample": 3.6205,
+      "mert_embedding_l2": 3.6205,
+      "mert_cluster_id": 4
+    },
+    {
+      "shot_id": 77,
+      "predicted_instruments": [
+        "mert_cluster_4"
+      ],
+      "metric_per_sample": 4.0582,
+      "mert_embedding_l2": 4.0582,
+      "mert_cluster_id": 4
+    },
+    {
+      "shot_id": 21,
+      "predicted_instruments": [
+        "mert_cluster_3"
+      ],
+      "metric_per_sample": 3.3007,
+      "mert_embedding_l2": 3.3007,
+      "mert_cluster_id": 3
+    },
+    {
+      "shot_id": 44,
+      "predicted_instruments": [
+        "mert_cluster_1"
+      ],
+      "metric_per_sample": 3.1027,
+      "mert_embedding_l2": 3.1027,
+      "mert_cluster_id": 1
+    },
+    {
+      "shot_id": 73,
+      "predicted_instruments": [
+        "mert_cluster_0"
+      ],
+      "metric_per_sample": 3.246,
+      "mert_embedding_l2": 3.246,
+      "mert_cluster_id": 0
+    },
+    {
+      "shot_id": 79,
+      "predicted_instruments": [
+        "mert_cluster_1"
+      ],
+      "metric_per_sample": 3.7647,
+      "mert_embedding_l2": 3.7647,
+      "mert_cluster_id": 1
+    },
+    {
+      "shot_id": 52,
+      "predicted_instruments": [
+        "mert_cluster_1"
+      ],
+      "metric_per_sample": 3.0047,
+      "mert_embedding_l2": 3.0047,
+      "mert_cluster_id": 1
+    },
+    {
+      "shot_id": 56,
+      "predicted_instruments": [
+        "mert_cluster_3"
+      ],
+      "metric_per_sample": 3.5411,
+      "mert_embedding_l2": 3.5411,
+      "mert_cluster_id": 3
+    },
+    {
+      "shot_id": 74,
+      "predicted_instruments": [
+        "mert_cluster_0"
+      ],
+      "metric_per_sample": 3.0888,
+      "mert_embedding_l2": 3.0888,
+      "mert_cluster_id": 0
+    },
+    {
+      "shot_id": 72,
+      "predicted_instruments": [
+        "mert_cluster_0"
+      ],
+      "metric_per_sample": 3.1521,
+      "mert_embedding_l2": 3.1521,
+      "mert_cluster_id": 0
+    },
+    {
+      "shot_id": 53,
+      "predicted_instruments": [
+        "mert_cluster_1"
+      ],
+      "metric_per_sample": 2.9125,
+      "mert_embedding_l2": 2.9125,
+      "mert_cluster_id": 1
+    },
+    {
+      "shot_id": 16,
+      "predicted_instruments": [
+        "mert_cluster_3"
+      ],
+      "metric_per_sample": 3.1607,
+      "mert_embedding_l2": 3.1607,
+      "mert_cluster_id": 3
+    },
+    {
+      "shot_id": 55,
+      "predicted_instruments": [
+        "mert_cluster_3"
+      ],
+      "metric_per_sample": 3.2668,
+      "mert_embedding_l2": 3.2668,
+      "mert_cluster_id": 3
+    },
+    {
+      "shot_id": 84,
+      "predicted_instruments": [
+        "mert_cluster_2"
+      ],
+      "metric_per_sample": 3.7581,
+      "mert_embedding_l2": 3.7581,
+      "mert_cluster_id": 2
+    },
+    {
+      "shot_id": 86,
+      "predicted_instruments": [
+        "mert_cluster_2"
+      ],
+      "metric_per_sample": 3.7666,
+      "mert_embedding_l2": 3.7666,
+      "mert_cluster_id": 2
+    },
+    {
+      "shot_id": 17,
+      "predicted_instruments": [
+        "mert_cluster_3"
+      ],
+      "metric_per_sample": 3.5116,
+      "mert_embedding_l2": 3.5116,
+      "mert_cluster_id": 3
+    },
+    {
+      "shot_id": 58,
+      "predicted_instruments": [
+        "mert_cluster_3"
+      ],
+      "metric_per_sample": 3.468,
+      "mert_embedding_l2": 3.468,
+      "mert_cluster_id": 3
+    },
+    {
+      "shot_id": 1,
+      "predicted_instruments": [
+        "mert_cluster_3"
+      ],
+      "metric_per_sample": 3.0419,
+      "mert_embedding_l2": 3.0419,
+      "mert_cluster_id": 3
+    },
+    {
+      "shot_id": 70,
+      "predicted_instruments": [
+        "mert_cluster_3"
+      ],
+      "metric_per_sample": 3.2646,
+      "mert_embedding_l2": 3.2646,
+      "mert_cluster_id": 3
+    },
+    {
+      "shot_id": 88,
+      "predicted_instruments": [
+        "mert_cluster_2"
+      ],
+      "metric_per_sample": 3.6003,
+      "mert_embedding_l2": 3.6003,
+      "mert_cluster_id": 2
+    },
+    {
+      "shot_id": 78,
+      "predicted_instruments": [
+        "mert_cluster_2"
+      ],
+      "metric_per_sample": 3.6509,
+      "mert_embedding_l2": 3.6509,
+      "mert_cluster_id": 2
+    },
+    {
+      "shot_id": 66,
+      "predicted_instruments": [
+        "mert_cluster_3"
+      ],
+      "metric_per_sample": 3.2834,
+      "mert_embedding_l2": 3.2834,
+      "mert_cluster_id": 3
+    },
+    {
+      "shot_id": 37,
+      "predicted_instruments": [
+        "mert_cluster_1"
+      ],
+      "metric_per_sample": 3.1275,
+      "mert_embedding_l2": 3.1275,
+      "mert_cluster_id": 1
+    },
+    {
+      "shot_id": 50,
+      "predicted_instruments": [
+        "mert_cluster_4"
+      ],
+      "metric_per_sample": 3.4293,
+      "mert_embedding_l2": 3.4293,
+      "mert_cluster_id": 4
+    },
+    {
+      "shot_id": 64,
+      "predicted_instruments": [
+        "mert_cluster_1"
+      ],
+      "metric_per_sample": 3.1369,
+      "mert_embedding_l2": 3.1369,
+      "mert_cluster_id": 1
+    },
+    {
+      "shot_id": 34,
+      "predicted_instruments": [
+        "mert_cluster_1"
+      ],
+      "metric_per_sample": 3.4018,
+      "mert_embedding_l2": 3.4018,
+      "mert_cluster_id": 1
+    },
+    {
+      "shot_id": 51,
+      "predicted_instruments": [
+        "mert_cluster_2"
+      ],
+      "metric_per_sample": 3.6249,
+      "mert_embedding_l2": 3.6249,
+      "mert_cluster_id": 2
+    },
+    {
+      "shot_id": 60,
+      "predicted_instruments": [
+        "mert_cluster_3"
+      ],
+      "metric_per_sample": 3.2728,
+      "mert_embedding_l2": 3.2728,
+      "mert_cluster_id": 3
+    },
+    {
+      "shot_id": 36,
+      "predicted_instruments": [
+        "mert_cluster_1"
+      ],
+      "metric_per_sample": 3.563,
+      "mert_embedding_l2": 3.563,
+      "mert_cluster_id": 1
+    }
+  ],
+  "methodology": "mir_c",
+  "metric_name": "qualitative_top5",
+  "metric_value": null,
+  "top_k": 5,
+  "sample_rate_hz": 24000,
+  "n_mert_clusters": 5,
+  "embedding_dim": 768,
+  "mix_strategy": "drums+bass+other stems summed (vocals excluded — SER owns vocals)",
+  "caveat": "MERT-v1-95M is an audio encoder with NO instrument classifier head —— predicted_instruments here are k-means cluster IDs over the 30-segment embedding set, not literal instrument labels. metric_per_sample is the L2 norm of the 768-d layer-averaged embedding (a signal-strength indicator, NOT an accuracy score). This is a calibrated estimate of MERT's discriminative power on Chinese folk instrumentation, NOT a publishable mAP. No canonical Chinese-folk-instrument (erhu/pipa/guzheng/dizi) ground truth exists for these 30 segments; mir-c deliberately skipped rigorous mAP —— the MUS-04 >=0.30 mAP threshold CANNOT be applied literally. Developer sensible-rating is deferred to Plan 06 user checkpoint (this spike does NOT pre-rate). Plan 06 must compose the final MUS-04 ship/defer judgment and pick MERT vs PANNs as the route-host MIR model; this spike provides raw predictions only.",
+  "sensible_rating_deferred_to": "Plan 06 user checkpoint",
+  "model": "mir_mert",
+  "fixture": "ep01",
+  "git_sha": "7738046",
+  "timestamp_utc": "2026-07-25T11:52:14.924303+00:00",
+  "device": "cpu"
+}

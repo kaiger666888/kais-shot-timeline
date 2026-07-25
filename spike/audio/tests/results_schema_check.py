@@ -78,15 +78,32 @@ def _check_ser_sensevoice(d: dict, fname: str) -> bool:
 
 
 def _check_mir(d: dict, fname: str) -> bool:
-    """mir_mert_*.json + mir_panns_*.json — UNIFORM per_sample entry shape."""
+    """mir_mert_*.json + mir_panns_*.json — UNIFORM per_sample entry shape.
+
+    Blocked-model fallback (Plan 10-04): when a model's checkpoint download
+    fails at spike time (e.g. PANNs zenodo CDN stall), the result JSON is
+    written with ``status=="blocked"``, ``sample_size==0``, ``per_sample==[]``.
+    The schema accepts this only when status=="blocked" + per_sample==[] +
+    caveat is non-empty (the block_reason MUST be documented). Any non-blocked
+    mir_*_*.json must still have sample_size>=1 and a non-empty per_sample.
+    """
     ok = _check_common(d, fname, [
         ("model", str), ("fixture", str), ("sample_size", int),
         ("per_sample", list), ("checkpoint", str), ("methodology", str),
         ("caveat", str),
     ])
-    if ok and d["sample_size"] < 1:
+    # Blocked-model fallback: status==blocked + per_sample==[] + caveat non-empty
+    is_blocked = (
+        d.get("status") == "blocked"
+        and d.get("per_sample") == []
+        and bool(str(d.get("caveat", "")).strip())
+    )
+    if ok and not is_blocked and d["sample_size"] < 1:
         _err(f"{fname}: sample_size must be >=1, got {d['sample_size']}")
         ok = False
+    if ok and is_blocked:
+        print(f"[smoke:schema] {fname}: OK (status=blocked, per_sample=[])")
+        return True
     if ok:
         for i, entry in enumerate(d["per_sample"]):
             if not isinstance(entry, dict):
@@ -157,6 +174,13 @@ def main() -> int:
     failures = 0
     for fp in files:
         fname = fp.name
+        # Plan 10-04: sample_<model>_<fixture>.json is the pre-committed shared
+        # shot_id audit trail (Pitfall 9 integrity artifact), NOT a model result.
+        # Skip it (and any other non-result JSON) so schema_check stays scoped
+        # to actual per-model result files.
+        if fname.startswith("sample_"):
+            print(f"[smoke:schema] {fname}: SKIP (audit artifact, not a result)")
+            continue
         try:
             d = json.loads(fp.read_text(encoding="utf-8"))
         except Exception as e:  # noqa: BLE001  spike 容错

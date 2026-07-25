@@ -1,0 +1,23 @@
+{
+  "model_id": "panns_inference.AudioTagging(Cnn14_mAP=0.431.pth) — BLOCKED",
+  "checkpoint": "Cnn14_mAP=0.431.pth (panns_inference default CDN, zenodo.org/record/3987831) — download stalled at spike time",
+  "sample_size": 0,
+  "per_sample": [],
+  "methodology": "mir_c",
+  "metric_name": "qualitative_top5",
+  "metric_value": null,
+  "status": "blocked",
+  "block_reason": "PANNs Cnn14_mAP=0.431.pth download from zenodo.org stalled at spike time (~327MB file; zenodo killed the connection after ~20MB on every retry; aria2c multi-connection reached full size but produced a corrupted file — torch.load raised \"storage has wrong byte size: expected 1018874368 got 0\" on the partial write; wget/curl single-connection attempts died after <20MB each over 10+ min). hf-mirror.com hosts nicofarr/panns_Cnn14 as model.safetensors (~312MB) but converting that to the .pth format panns_inference expects is non-trivial (state_dict key remap) and is deferred to Phase 12 route-host selection. Route-host MIR defaults to MERT pending PANNs re-evaluation in Phase 12.",
+  "top_k": 5,
+  "sample_rate_hz": 32000,
+  "audioset_classes_total": 527,
+  "mix_strategy": "drums+bass+other stems summed (vocals excluded — SER owns vocals)",
+  "caveat": "PANNs half blocked at spike time (zenodo CDN network failure — see block_reason). Head-to-head MERT-vs-PANNs comparison is INCOMPLETE: only MERT produced predictions; PANNs predictions are absent. MERT is therefore the PROVISIONAL route-host MIR pick by default (not by evidence — PANNs may yet win on Chinese folk instrument coverage if its checkpoint becomes available in Phase 12). MUS-04 mAP threshold cannot be applied under mir-c regardless of PANNs status (no canonical Chinese-folk ground truth exists). This is a calibrated estimate of spike coverage, not a publishable mAP. Developer sensible-rating is deferred to the Plan 06 user checkpoint.",
+  "sensible_rating_deferred_to": "Plan 06 user checkpoint",
+  "head_to_head_status": "INCOMPLETE — PANNs leg absent; MERT is provisional route-host pick",
+  "model": "mir_panns",
+  "fixture": "ep01",
+  "git_sha": "7738046",
+  "timestamp_utc": "2026-07-25T12:23:30.591063+00:00",
+  "device": "cpu"
+}

@@ -219,8 +219,12 @@ def mert_embed(model, processor, audio_24k: np.ndarray) -> np.ndarray:
             outputs = model(**inputs, output_hidden_states=True)
     except Exception as e:  # noqa: BLE001  spike 容错
         raise RuntimeError(_safe_error(f"MERT forward failed: {e}")) from None
-    # hidden_states: tuple of (num_layers+1) tensors, each (batch, T, 768)
-    all_layers = torch.stack(outputs.hidden_states).squeeze(0)  # (L+1, T, 768)
+    # hidden_states: tuple of (num_layers+1) tensors, each (batch=1, T, 768).
+    # ⚠️ 必须用 .squeeze()（无参）—— 移除所有 size-1 维（batch=1）。
+    #    .squeeze(0) 不会动 dim 0（=L+1=13，非 1）→ batch 维残留 → mean 维度
+    #    错位 → embedding 变成 (T, 768) 而非 (768,) → np.array 报 inhomogeneous
+    #    shape（smoke run Task 3 bug fix）。
+    all_layers = torch.stack(outputs.hidden_states).squeeze()   # (L+1, T, 768)
     time_reduced = all_layers.mean(dim=1)                       # (L+1, 768)
     embedding = time_reduced.mean(dim=0).cpu().float().numpy()  # (768,)
     return embedding
