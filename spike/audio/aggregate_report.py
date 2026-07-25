@@ -342,7 +342,7 @@ def _build_section_ser(ser) -> list[str]:
         "",
         f"> {caveat}",
         "",
-        "**Calibrated estimate statement:** The `self_consistency_pct=100.0` is a "
+        f"**Calibrated estimate statement:** The `self_consistency_pct={metric_val}` is a "
         "**calibrated estimate** of SenseVoice's label stability across VAD-segmentation "
         "variants on these 30 Chinese animation clips. It is NOT a true macro-F1 against "
         "human ground truth. A model that deterministically predicts NEUTRAL on every clip "
@@ -443,6 +443,33 @@ def _build_section_whisperx(wx) -> list[str]:
     drift = wx.get("drift_stats", {})
     per_bucket = drift.get("per_bucket", {})
     a1 = wx.get("a1_a2_smoke", {})
+    # WR-02: derive every verdict from the loaded JSON so prose can never
+    # silently contradict the data (AF-02/AF-03). Threshold literals (0.80,
+    # 200ms) are the DIA-05 gate definition from REQUIREMENTS.md and stay as
+    # display references; measured values + BELOW/ABOVE/✓/✗ derive from `drift`.
+    _PCT_THRESHOLD = 0.80
+    _DRIFT_MS_THRESHOLD = 200.0
+
+    def _ge(v, t):
+        return isinstance(v, (int, float)) and not isinstance(v, bool) and v >= t
+
+    def _lt(v, t):
+        return isinstance(v, (int, float)) and not isinstance(v, bool) and v < t
+
+    pct_u200 = drift.get("pct_under_200_ms")
+    pct_boundary_u200 = drift.get("pct_boundary_under_200_ms")
+    median_boundary = drift.get("median_boundary_drift_ms")
+    dense_pct_u200 = per_bucket.get("dense", {}).get("pct_under_200_ms")
+    pct_u200_verdict = "BELOW" if _lt(pct_u200, _PCT_THRESHOLD) else "AT/ABOVE"
+    pct_boundary_verdict = "BELOW" if _lt(pct_boundary_u200, _PCT_THRESHOLD) else "AT/ABOVE"
+    median_boundary_note = (
+        f"under {_DRIFT_MS_THRESHOLD:g}ms ✓" if _lt(median_boundary, _DRIFT_MS_THRESHOLD)
+        else f"at/above {_DRIFT_MS_THRESHOLD:g}ms ✗"
+    )
+    dense_pct_note = (
+        f"≥ {_PCT_THRESHOLD:g} ✓" if _ge(dense_pct_u200, _PCT_THRESHOLD)
+        else f"< {_PCT_THRESHOLD:g} ✗"
+    )
     return [
         "## Section 3: WhisperX drift — DIA-05 evidence + CUDA path",
         "",
@@ -456,13 +483,13 @@ def _build_section_whisperx(wx) -> list[str]:
         "",
         "### Drift stats",
         "",
-        f"- **pct_under_200_ms** (per-word, plan-body literal metric): **{drift.get('pct_under_200_ms', '?')}** — BELOW 0.80 threshold (defer candidate per literal threshold)",
+        f"- **pct_under_200_ms** (per-word, plan-body literal metric): **{pct_u200}** — {pct_u200_verdict} the 0.80 threshold (defer candidate per literal threshold)",
         f"- **mean_drift_ms** (per-word): {drift.get('mean_drift_ms', '?')}",
         f"- **median_drift_ms** (per-word): {drift.get('median_drift_ms', '?')}",
         f"- **total_words**: {drift.get('total_words', '?')}",
         "",
-        f"- **pct_boundary_under_200_ms** (research §Pattern 4 口径): **{drift.get('pct_boundary_under_200_ms', '?')}** — also BELOW 0.80",
-        f"- **median_boundary_drift_ms**: **{drift.get('median_boundary_drift_ms', '?')}** — UNDER 200ms (dense-speech boundary drift is small)",
+        f"- **pct_boundary_under_200_ms** (research §Pattern 4 口径): **{pct_boundary_u200}** — also {pct_boundary_verdict} 0.80",
+        f"- **median_boundary_drift_ms**: **{median_boundary}** — {median_boundary_note} (dense-speech boundary drift is small)",
         f"- **mean_boundary_drift_ms**: {drift.get('mean_boundary_drift_ms', '?')}",
         "",
         "### Per-bucket breakdown (drift is bucket-dependent)",
@@ -483,14 +510,14 @@ def _build_section_whisperx(wx) -> list[str]:
         "",
         "### Metric-definition artifact caveat (CRITICAL interpretation)",
         "",
-        "The aggregate per-word `pct_under_200_ms=0.1898` is **BELOW** the 0.80 threshold "
-        "shipped in REQUIREMENTS.md. However this is a **METRIC-DEFINITION ARTIFACT**, not a "
-        "real precision failure: drift is defined as `word_start − segment_start`, which "
-        "inflates linearly for interior words in long segments (mean_drift_ms=2393 dominated "
-        "by this). The meaningful boundary-drift measures are strong:",
+        f"The aggregate per-word `pct_under_200_ms={pct_u200}` is **{pct_u200_verdict}** the 0.80 threshold "
+        f"shipped in REQUIREMENTS.md. However this is a **METRIC-DEFINITION ARTIFACT**, not a "
+        f"real precision failure: drift is defined as `word_start − segment_start`, which "
+        f"inflates linearly for interior words in long segments (mean_drift_ms={drift.get('mean_drift_ms', '?')} dominated "
+        f"by this). The meaningful boundary-drift measures are strong:",
         "",
-        f"- `median_boundary_drift_ms = {drift.get('median_boundary_drift_ms', '?')}` — well under 200ms ✓",
-        f"- `dense`-speech bucket `pct_under_200_ms = {per_bucket.get('dense', {}).get('pct_under_200_ms', '?')}` — ≥ 0.80 ✓",
+        f"- `median_boundary_drift_ms = {median_boundary}` — {median_boundary_note}",
+        f"- `dense`-speech bucket `pct_under_200_ms = {dense_pct_u200}` — {dense_pct_note}",
         "",
         "**Phase 12 follow-up:** refine the drift metric (use boundary drift, not "
         "per-word-from-segment-start) and validate on more episodes. For v1.2, ship "
@@ -524,7 +551,31 @@ def _build_section_whisperx(wx) -> list[str]:
     ]
 
 
-def _build_section_recommendations() -> list[str]:
+def _build_section_recommendations(ser, wx) -> list[str]:
+    # WR-02: every metric literal + verdict below derives from the loaded JSON
+    # (ser / wx), never hardcoded — so a re-run with different numbers cannot
+    # leave stale prose conclusions (AF-02/AF-03).
+    _PCT_THRESHOLD = 0.80
+    _DRIFT_MS_THRESHOLD = 200.0
+
+    def _ge(v, t):
+        return isinstance(v, (int, float)) and not isinstance(v, bool) and v >= t
+
+    def _lt(v, t):
+        return isinstance(v, (int, float)) and not isinstance(v, bool) and v < t
+
+    ser_pct = ser.get("metric_value")
+    drift = wx.get("drift_stats", {})
+    per_bucket = drift.get("per_bucket", {})
+    rec_pct_u200 = drift.get("pct_under_200_ms")
+    rec_median_boundary = drift.get("median_boundary_drift_ms")
+    rec_dense_pct = per_bucket.get("dense", {}).get("pct_under_200_ms")
+    rec_align_load_sec = wx.get("align_model_load_sec", "?")
+    rec_median_mark = "✓" if _lt(rec_median_boundary, _DRIFT_MS_THRESHOLD) else "✗"
+    rec_median_cmp = "<200" if _lt(rec_median_boundary, _DRIFT_MS_THRESHOLD) else "≥200"
+    rec_dense_mark = "✓" if _ge(rec_dense_pct, _PCT_THRESHOLD) else "✗"
+    rec_dense_cmp = "≥0.80" if _ge(rec_dense_pct, _PCT_THRESHOLD) else "<0.80"
+    rec_pct_verdict = "BELOW" if _lt(rec_pct_u200, _PCT_THRESHOLD) else "AT/ABOVE"
     return [
         "## Section 4: Recommendations (4 locked outcomes)",
         "",
@@ -534,9 +585,9 @@ def _build_section_recommendations() -> list[str]:
         "",
         "| Req | Recommendation | Key evidence | Schema/route implication |",
         "|-----|----------------|---------------|--------------------------|",
-        "| **DIA-04** (Chinese SER) | **SHIP-NULLABLE+CONFIDENCE** | SenseVoice self_consistency_pct=100.0 (label-stability proxy, NOT accuracy); qualitative sanity coherent; no rigorous macro-F1 (methodology_b annotation deferred) | `emotion` field NULLABLE + confidence field populated + fidelity_disclaimer applies |",
+        f"| **DIA-04** (Chinese SER) | **SHIP-NULLABLE+CONFIDENCE** | SenseVoice self_consistency_pct={ser_pct} (label-stability proxy, NOT accuracy); qualitative sanity coherent; no rigorous macro-F1 (methodology_b annotation deferred) | `emotion` field NULLABLE + confidence field populated + fidelity_disclaimer applies |",
         "| **MUS-04** (polyphonic MIR) | **DEFER to v1.3** | MERT-v1-95M has NO instrument classifier head — only K-means embedding clusters (5 clusters) which correlate with shot DURATION (mean-pooling artifact), NOT instruments. PANNs Cnn14 BLOCKED (zenodo.org download stalled; hf-mirror has nicofarr/panns_Cnn14 as safetensors but .pth conversion deferred). NO instrument predictions produced. | `instruments` field omitted/deferred in v1.2 schema; route host needs a REAL MIR classifier (PANNs once reachable, or fine-tuned MERT head) in Phase 12+ / v1.3 |",
-        "| **DIA-05** (WhisperX word-align) | **SHIP-EXPERIMENTAL** | A1 (CPU load_align_model) OK in 7.9s; A2 (arbitrary-segment align) OK. Boundary drift median=101.5ms (<200 ✓); dense-speech bucket pct_under_200ms=0.933 (≥0.80 ✓). Aggregate per-word pct_under_200ms=0.189 is BELOW 0.80 — BUT this is a METRIC-DEFINITION ARTIFACT (drift=word_start−segment_start inflates for interior words in long segments) | Word-level timestamps ship as EXPERIMENTAL with metric-definition caveat; refine drift metric in Phase 12 (use boundary drift, not per-word-from-segment-start) + validate on more episodes |",
+        f"| **DIA-05** (WhisperX word-align) | **SHIP-EXPERIMENTAL** | A1 (CPU load_align_model) OK in {rec_align_load_sec}s; A2 (arbitrary-segment align) OK. Boundary drift median={rec_median_boundary}ms ({rec_median_cmp} {rec_median_mark}); dense-speech bucket pct_under_200ms={rec_dense_pct} ({rec_dense_cmp} {rec_dense_mark}). Aggregate per-word pct_under_200ms={rec_pct_u200} is {rec_pct_verdict} 0.80 — BUT this is a METRIC-DEFINITION ARTIFACT (drift=word_start−segment_start inflates for interior words in long segments) | Word-level timestamps ship as EXPERIMENTAL with metric-definition caveat; refine drift metric in Phase 12 (use boundary drift, not per-word-from-segment-start) + validate on more episodes |",
         "| **CUDA path** (BLOCKER 1) | **STAY-ON-12.4 (cu124)** | WhisperX 3.8.6 metadata declares torch~=2.8.0 but RUNS CLEANLY on force-pinned cu124 stack (torch 2.6.0+cu124) in an isolated venv. A1 (CPU mode) works. WhisperX is NOT a forcing function for CUDA 12.8 upgrade. System torch uncontaminated (3-point canary) | Route host stays at cu124; WhisperX runs in isolated venv with cu124 force-pin (the Plan 10-05 pattern becomes production); DIA-05 ships experimental at best |",
         "",
         "### models_used per modality (PROJECT.md Row 1)",
@@ -638,7 +689,7 @@ def aggregate(results_dir: Path) -> int:
     sections += _build_section_ser(ser)
     sections += _build_section_mir(mert, panns, ht_msg)
     sections += _build_section_whisperx(wx)
-    sections += _build_section_recommendations()
+    sections += _build_section_recommendations(ser, wx)
     sections += _build_reproducibility(results_dir)
 
     # 4. T-10-02 secrets scrub (defense-in-depth before write)
