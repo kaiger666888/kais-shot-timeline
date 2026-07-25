@@ -32,15 +32,15 @@
 
 ### DIALOGUE — 对白支路
 - [ ] **DIA-01**: 段级对白（shot 对齐，enrich 现有 transcript 语义层）— *table-stakes*
-- [ ] **DIA-02**: 说话人分离（pyannote via WhisperX integrated diarize）→ 每段 `spk_NNN` — *table-stakes*
-- [ ] **DIA-03**: `speaker_id → character_id` HITL 映射（见 SPEAKER）— *table-stakes*
+- [x] **DIA-02**: 说话人分离（pyannote via WhisperX integrated diarize）→ 每段 `spk_NNN` — *table-stakes*
+- [x] **DIA-03**: `speaker_id → character_id` HITL 映射（见 SPEAKER）— *table-stakes*
 - [x] **DIA-04**: 对白情绪（SenseVoice 7 emotions + VA）— *CONDITIONAL：Phase 1 SER macro-F1 ≥50% ship / <40% defer v1.3 / 40-50% ship nullable+confidence* — **Phase 10 resolved → ship-nullable+confidence** (PROJECT.md Key Decisions Row 3; implementation pending Phase 15)
 - [x] **DIA-05**: 词级时间戳（WhisperX wav2vec2 align）— *CONDITIONAL：Phase 1 <200ms drift on ≥80% segments ship experimental / 否则段级 only（用户已选 WhisperX 路线）* — **Phase 10 resolved → ship-experimental** (PROJECT.md Key Decisions Row 5; implementation pending Phase 15)
 
 ### SPEAKER — 说话人↔角色（关闭 v1.1 SPEAKER-01 deferral）
-- [ ] **SPEAKER-01**: 新 `^spk_[0-9]{3}$` 声学 ID 空间（**不**复用 `^char_[0-9]{3}$`，避免身份信号混淆）；`speakers.json` canonical sidecar；`char_id` nullable（旁白/群杂）
-- [ ] **SPEAKER-02**: HITL review HTML (`html/gen_speaker_review.py`) + confirmed-only 硬门 apply (`registry/link_speakers.py`，镜像 `apply_edits.py`，idempotent)；拒绝全自动映射（AF-05）
-- [ ] **SPEAKER-03**: producer registry integrity assert 扩展 speakers（镜像 v1.1 `_producer_registry_integrity`，additive + gated on file existence）
+- [x] **SPEAKER-01**: 新 `^spk_[0-9]{3}$` 声学 ID 空间（**不**复用 `^char_[0-9]{3}$`，避免身份信号混淆）；`speakers.json` canonical sidecar；`char_id` nullable（旁白/群杂）
+- [x] **SPEAKER-02**: HITL review HTML (`html/gen_speaker_review.py`) + confirmed-only 硬门 apply (`registry/link_speakers.py`，镜像 `apply_edits.py`，idempotent)；拒绝全自动映射（AF-05）
+- [x] **SPEAKER-03**: producer registry integrity assert 扩展 speakers（镜像 v1.1 `_producer_registry_integrity`，additive + gated on file existence）
 
 ### MUSIC — 音乐/BGM 支路
 - [ ] **MUS-01**: BGM 出现/消失分段（in/out/fade）— *table-stakes*
@@ -107,13 +107,13 @@ Each v1.2 REQ-ID maps to exactly one phase. Coverage: 33/33 (100%).
 | ROUTE-02 | Phase 12 (Producer Route Client) | Complete |
 | ROUTE-03 | Phase 12 (Producer Route Client) | Complete |
 | DIA-01 | Phase 15 (Layered Reproduction Prompts) | Pending |
-| DIA-02 | Phase 13 (SPEAKER-01 Linkage HITL) | Pending |
-| DIA-03 | Phase 13 (SPEAKER-01 Linkage HITL) | Pending |
+| DIA-02 | Phase 13 (SPEAKER-01 Linkage HITL) | Complete |
+| DIA-03 | Phase 13 (SPEAKER-01 Linkage HITL) | Complete |
 | DIA-04 | Phase 15 (Layered Reproduction Prompts) — *CONDITIONAL on Phase 10 SER macro-F1* | Phase 10 resolved (ship-nullable+confidence); Phase 15 implementation pending |
 | DIA-05 | Phase 15 (Layered Reproduction Prompts) — *CONDITIONAL on Phase 10 WhisperX drift* | Phase 10 resolved (ship-experimental); Phase 15 implementation pending |
-| SPEAKER-01 | Phase 13 (SPEAKER-01 Linkage HITL) | Pending |
-| SPEAKER-02 | Phase 13 (SPEAKER-01 Linkage HITL) | Pending |
-| SPEAKER-03 | Phase 13 (SPEAKER-01 Linkage HITL) | Pending |
+| SPEAKER-01 | Phase 13 (SPEAKER-01 Linkage HITL) | Complete |
+| SPEAKER-02 | Phase 13 (SPEAKER-01 Linkage HITL) | Complete |
+| SPEAKER-03 | Phase 13 (SPEAKER-01 Linkage HITL) | Complete |
 | MUS-01 | Phase 15 (Layered Reproduction Prompts) | Pending |
 | MUS-02 | Phase 15 (Layered Reproduction Prompts) | Pending |
 | MUS-03 | Phase 15 (Layered Reproduction Prompts) | Pending |
