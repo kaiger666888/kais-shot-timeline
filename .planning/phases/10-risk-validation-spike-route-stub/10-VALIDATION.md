@@ -41,17 +41,19 @@ created: 2026-07-25
 
 | Task ID | Plan | Wave | Requirement | Threat Ref | Secure Behavior | Test Type | Automated Command | File Exists | Status |
 |---------|------|------|-------------|------------|-----------------|-----------|-------------------|-------------|--------|
-| 10-01-01 | 01 | 0 | ROUTE-01 | T-10-04 | Stub does NOT read `video`/`shots` files in Phase 10 (path traversal deferred to Phase 12 sandboxing) | smoke | `bash spike/audio/tests/route_stub_smoke.sh` | ❌ W0 | ⬜ pending |
-| 10-01-02 | 01 | 0 | ROUTE-01 | — | Stub returns `{"code":200,"data":{"shots":[],"count":0,"stub_mode":true},...}` ML-unloaded | smoke (curl) | `curl -sS -X POST …/audio-analysis -d '{"video":"/x","shots":"/y"}' \| jq '.code,.data.stub_mode'` | ❌ W0 | ⬜ pending |
-| 10-01-03 | 01 | 0 | ROUTE-01 | — | Stub returns 400 on missing required field | smoke (curl) | `curl … -d '{}' \| jq '.code'` (expect 400) | ❌ W0 | ⬜ pending |
-| 10-02-01 | 02 | 1 | DIA-04 | T-10-01 | SER results JSON non-empty `per_sample[]` of 30 | smoke (python) | `python3 -c "import json;d=json.load(open('spike/audio/results/ser_sensevoice_ep01.json'));assert len(d['per_sample'])==30"` | ❌ W0 | ⬜ pending |
-| 10-02-02 | 02 | 1 | DIA-04 | — | Report cites "calibrated estimate" methodology caveat (AF-02/AF-03) | grep | `grep -c "calibrated estimate" .planning/research/audio-spike-report.md` (≥1) | ❌ W0 | ⬜ pending |
-| 10-03-01 | 03 | 1 | DIA-05 | T-10-05 | WhisperX drift stat based on ≥30 segments | smoke (python) | `python3 -c "import json;d=json.load(open('spike/audio/results/whisperx_align_ep01.json'));assert d['sample_size']>=30"` | ❌ W0 | ⬜ pending |
-| 10-03-02 | 03 | 1 | DIA-05 | T-10-05 | Isolated venv did NOT poison system torch (`+cu124` intact) | smoke (python) | `python3 -c "import torch;assert '+cu124' in torch.__version__"` | ❌ W0 | ⬜ pending |
-| 10-04-01 | 04 | 1 | MUS-04 | — | MERT + PANNs both produce JSON on SAME 30 segments (head-to-head integrity, Pitfall 9) | smoke (python) | compare `shot_id` lists in `mir_mert_ep01.json` vs `mir_panns_ep01.json` | ❌ W0 | ⬜ pending |
-| 10-04-02 | 04 | 1 | MUS-04 | — | Head-to-head mAP comparison present in report | grep | `grep -c "MERT.*PANNs\|PANNs.*MERT" .planning/research/audio-spike-report.md` (≥1) | ❌ W0 | ⬜ pending |
-| 10-05-01 | 05 | 2 | (gate) | T-10-02 | No `hf_` token patterns leaked into committed results/report | grep | `grep -rlE "hf_[a-zA-Z0-9]{20,}" spike/audio/results/ .planning/research/audio-spike-report.md` (expect none) | ❌ W0 | ⬜ pending |
-| 10-06-01 | 06 | 2 | DIA-04/05/MUS-04 | — | PROJECT.md Key Decisions logs 4 locked outcomes | grep | `grep -cE "CUDA 12\.[48]|DIA-04|MUS-04|DIA-05" .planning/PROJECT.md` (≥4) | ❌ W0 | ⬜ pending |
+| 10-ROUTE-01-a | 02 | 1 | ROUTE-01 | T-10-04 | Stub does NOT read `video`/`shots` files in Phase 10 (path traversal deferred to Phase 12 sandboxing) | smoke | `bash spike/audio/tests/route_stub_smoke.sh` | ❌ W0 | ⬜ pending |
+| 10-ROUTE-01-b | 02 | 1 | ROUTE-01 | — | Stub returns `{"code":200,"data":{"shots":[],"count":0,"stub_mode":true},...}` ML-unloaded | smoke (curl) | `curl -sS -X POST …/audio-analysis -d '{"video":"/x","shots":"/y"}' \| jq '.code,.data.stub_mode'` | ❌ W0 | ⬜ pending |
+| 10-ROUTE-01-c | 02 | 1 | ROUTE-01 | — | Stub returns 400 on missing required field | smoke (curl) | `curl … -d '{}' \| jq '.code'` (expect 400) | ❌ W0 | ⬜ pending |
+| 10-DIA-04-a | 03 | 1 | DIA-04 | T-10-01 | SER results JSON non-empty `per_sample[]` of 30 | smoke (python) | `python3 -c "import json;d=json.load(open('spike/audio/results/ser_sensevoice_ep01.json'));assert len(d['per_sample'])==30"` | ❌ W0 | ⬜ pending |
+| 10-DIA-04-b | 06 | 2 | DIA-04 | — | Report cites "calibrated estimate" methodology caveat (AF-02/AF-03) | grep | `grep -c "calibrated estimate" .planning/research/audio-spike-report.md` (≥1) | ❌ W0 | ⬜ pending |
+| 10-DIA-05-a | 05 | 1 | DIA-05 | T-10-05 | WhisperX drift stat based on ≥30 segments | smoke (python) | `python3 -c "import json;d=json.load(open('spike/audio/results/whisperx_align_ep01.json'));assert d['sample_size']>=30"` | ❌ W0 | ⬜ pending |
+| 10-DIA-05-b | 05 | 1 | DIA-05 | T-10-05 | Isolated venv did NOT poison system torch (`+cu124` intact) | smoke (python) | `python3 -c "import torch;assert '+cu124' in torch.__version__"` | ❌ W0 | ⬜ pending |
+| 10-MUS-04-a | 04 | 1 | MUS-04 | — | MERT + PANNs both produce JSON on SAME 30 segments (head-to-head integrity, Pitfall 9) | smoke (python) | compare `shot_id` lists in `mir_mert_ep01.json` vs `mir_panns_ep01.json` | ❌ W0 | ⬜ pending |
+| 10-MUS-04-b | 06 | 2 | MUS-04 | — | Head-to-head mAP comparison present in report | grep | `grep -c "MERT.*PANNs\|PANNs.*MERT" .planning/research/audio-spike-report.md` (≥1) | ❌ W0 | ⬜ pending |
+| 10-SEC-gate | 06 | 2 | (gate) | T-10-02 | No `hf_` token patterns leaked into committed results/report | grep | `grep -rlE "hf_[a-zA-Z0-9]{20,}" spike/audio/results/ .planning/research/audio-spike-report.md` (expect none) | ❌ W0 | ⬜ pending |
+| 10-LOCK | 06 | 2 | DIA-04/05/MUS-04 | — | PROJECT.md Key Decisions logs 4 locked outcomes | grep | `grep -cE "CUDA 12\.[48]\|DIA-04\|MUS-04\|DIA-05" .planning/PROJECT.md` (≥4) | ❌ W0 | ⬜ pending |
+
+*Task IDs are requirement-keyed (not plan-positional) to stay stable if plans are renumbered. `Plan` = the plan that builds the artifact under test; `Wave` = the wave in which the test can first pass; `File Exists ❌ W0` = the test script itself is created in Plan 01 (Wave 0 foundation).*
 
 *Status: ⬜ pending · ✅ green · ❌ red · ⚠️ flaky*
 

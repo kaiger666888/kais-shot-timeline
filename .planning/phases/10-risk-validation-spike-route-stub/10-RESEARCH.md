@@ -724,26 +724,32 @@ def parse_sensevoice_tags(raw_text: str) -> dict:
 
 ---
 
-## Open Questions
+## Open Questions (RESOLVED)
+
+> All 4 questions resolved during planning. Each is operationalized by a concrete plan task (cited inline). No question remains open entering execution.
 
 1. **WhisperX CPU smoke check**
    - What we know: README says `whisperx --device cpu --compute_type int8` is the CPU escape hatch.
    - What's unclear: Whether CPU mode still requires CUDA toolkit install for some operations.
    - Recommendation: Planner adds a Wave 0 task to run `whisperx --help` from the isolated venv before committing to the full spike architecture.
+   - **RESOLVED: Plan 10-05 Task 1 isolates the venv FIRST and smoke-checks A1/A2 (`whisperx --help` + 1-segment `align()`) before the full 30-segment run; CPU mode confirmed by the 3-point torch canary.**
 
 2. **macro-F1 methodology user confirmation (A3)**
    - What we know: No ground-truth emotion labels exist for ep01. AF-02/AF-03 forbid fabricated signal.
    - What's unclear: Whether the user accepts self-consistency + qualitative review as the methodology, OR wants the developer to annotate 30 segments manually, OR wants a benchmark-only F1 (RAVDESS-test, etc.).
    - Recommendation: Plan-checker flags this as a `checkpoint:human-confirm` before the SER spike runs.
+   - **RESOLVED: Plan 10-03 Task 1 `checkpoint:decision` surfaces methodology options (a/b/c/ab) to the user before the SER spike runs; the chosen methodology is recorded in the report.**
 
 3. **WhisperX drift sample size (CONTEXT.md discretion)**
    - What we know: CONTEXT.md says "Claude picks a representative sample (target ≥20 segments)".
    - Recommendation: Research recommends N=30 stratified (short/med/long/dense buckets) for ~19% coverage of the 155-segment population. Statistically robust while CPU-friendly.
+   - **RESOLVED: N=30 stratified, seed=10, fixed in `common.py:stratified_sample` (Plan 10-01); shared across SER/MIR/WhisperX for head-to-head integrity (Pitfall 9).**
 
 4. **Cross-repo branching strategy**
    - What we know: STATE.md lists `feat/shot-analysis-route` as unmerged from v1.1, but `develop` already has the route file (verified this session).
    - What's unclear: Whether `feat/audio-analysis-route` should branch from `develop` or from `feat/shot-analysis-route`.
    - Recommendation: Branch from `develop` — verified `develop` has `src/routes/production/shot-analysis/index.ts` committed.
+   - **RESOLVED: Branch `feat/audio-analysis-route` from `develop` (Plan 10-02 Task 1 Step 1); `develop` verified to contain the merged shot-analysis route (A5).**
 
 ---
 

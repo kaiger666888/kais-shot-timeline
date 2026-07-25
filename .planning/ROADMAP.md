@@ -59,7 +59,7 @@ Route-based audio semantic deepening: a third sibling of the v1.1 route-pattern 
 **Depends on**: Nothing (first phase of milestone)
 **Requirements**: ROUTE-01 (route stub envelope); spike outputs de-risk DIA-04, DIA-05, MUS-04 (conditional reqs whose ship/defer hinges on Phase 10 thresholds)
 **Success Criteria** (what must be TRUE):
-  1. Developer can POST to `/api/v1/production/audio-analysis` and receive a `{"code":200,"data":{...}}` envelope even with ML models unloaded (stub mode) — proving producer client has an integration target before route ML lands
+  1. Developer can POST to `/api/production/audio-analysis` and receive a `{"code":200,"data":{...}}` envelope even with ML models unloaded (stub mode) — proving producer client has an integration target before route ML lands (mount path `/api/production/audio-analysis` — NO `/v1/`, verified against kais-aigc-platform/src/router.ts sibling shot-analysis mount)
   2. Spike report documents Chinese SER macro-F1 on 1 episode vocals stem (cross-domain RAVDESS→中文动画 gap), enabling an evidence-based DIA-04 ship (≥50%) / defer (<40%) / ship-nullable (40-50%) decision
   3. Spike report documents polyphonic instrument recognition mAP on 1 episode `drums+bass+other` mix (esp. erhu/pipa/guzheng/dizi folk instruments), enabling the MUS-04 ship/defer decision and the MERT-vs-PANNs head-to-head pick
   4. Spike report documents WhisperX word-level alignment drift on ≥N Chinese segments (PyPI hard-requires CUDA 12.8), enabling the DIA-05 ship-experimental / defer decision AND the CUDA 12.8 upgrade vs stay-on-12.4 (drop WhisperX) decision

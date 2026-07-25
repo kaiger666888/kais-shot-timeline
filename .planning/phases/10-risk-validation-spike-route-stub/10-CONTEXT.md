@@ -14,7 +14,9 @@ Empirically de-risk the 4 highest unknowns of v1.2 on **1 episode of 《小江�
 3. **WhisperX word-level drift** — wav2vec2 align drift on ≥N Chinese segments. Drives DIA-05 ship-experimental (<200ms drift on ≥80%) / defer AND the CUDA 12.8-upgrade vs stay-on-12.4 decision.
 4. **CUDA 12.8 upgrade compatibility** — resolved as a byproduct of (3): WhisperX PyPI hard-requires 12.8; stay-on-12.4 (cu124 runtime) means WhisperX runs in an isolated venv on CPU.
 
-PLUS the **ROUTE-01 route stub**: developer can POST to `/api/v1/production/audio-analysis` and receive a `{"code":200,"data":{...}}` envelope even with ML models unloaded — giving the Phase 12 producer client an integration target before route ML lands (mirror v1.1 Phase 7 CAST deferred pattern).
+PLUS the **ROUTE-01 route stub**: developer can POST to `/api/production/audio-analysis` and receive a `{"code":200,"data":{...}}` envelope even with ML models unloaded — giving the Phase 12 producer client an integration target before route ML lands (mirror v1.1 Phase 7 CAST deferred pattern).
+
+**Mount path note:** `/api/production/audio-analysis` (NO `/v1/`) — verified against `kais-aigc-platform/src/router.ts`, which mounts the sibling `shot-analysis` route at `/api/production/shot-analysis`. An earlier draft of this context said `/api/v1/production/...`; the `/v1/` was a doc oversight corrected during Phase 10 planning (see 10-RESEARCH.md §"Note on mounting path discrepancy"). The Phase 12 client contract must match this actual mount.
 
 This phase produces NO contract changes, NO producer pipeline code, NO schema edits. It produces: (a) a spike report at `.planning/research/audio-spike-report.md`, (b) the ROUTE-01 stub in kais-aigc-platform, (c) 4 locked outcomes in PROJECT.md Key Decisions.
 
