@@ -324,6 +324,30 @@ def link_speakers(audio_semantic_path, characters_path, edits_path,
     # --- 4a. merge_groups (mirror apply_edits.py:332-361) ---
     # merge_map 记录 {被合并的 spk_id: canonical_id}，供后续 confirm/reject 转发
     # 意图 (CR-05 mirror；operator 同时 merge + confirm 表示合并后整体确认)。
+
+    # WR-02 fix (pre-apply overlap detection, fail-loud)：hand-edited JSON 可
+    # 能把同一 spk_id 放进多个 merge_group (例如 [[A,B],[B,C]])。原 apply 循环
+    # 独立处理每个 group，会让 placeholder canonical 复活成两个独立实体，破坏
+    # operator 的传递合并意图（A,B,C 应坍缩为一个 canonical）。HTML UI 的
+    # mergeWith() (gen_speaker_review.py:595-604) 已自动 union，所以 HTML 导出
+    # 永不产生重叠 group；但 schema (speaker-edits.schema.json:11-19) 无跨 group
+    # 唯一性约束，hand-edit 可绕过。Fail-loud 与 splits partition-overlap
+    # 处理一致 (out-of-range / overlap / incomplete 都 fail-loud)。
+    seen_in_merge = {}
+    for group in edits.get("merge_groups", []) or []:
+        for sid in group:
+            if not isinstance(sid, str):
+                continue
+            prev = seen_in_merge.get(sid)
+            if prev is not None:
+                sys.exit(
+                    f"[link-speakers] FAIL: spk_id {sid} appears in multiple "
+                    f"merge_groups ({prev!r} and {group!r}) — use ONE group per "
+                    f"equivalence class (e.g. transitive [[A,B],[B,C]] → single "
+                    f"[A,B,C]; the HTML UI does this automatically via mergeWith())"
+                )
+            seen_in_merge[sid] = group
+
     merge_map = {}
     for group in edits.get("merge_groups", []) or []:
         if len(group) < 2:
