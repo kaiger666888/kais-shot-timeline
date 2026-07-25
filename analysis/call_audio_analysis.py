@@ -424,3 +424,404 @@ def preflight(base_url: str, timeout: float = 5.0) -> tuple[bool, str | None]:
         # 防凭据流进 warnings sidecar → asset.json#generator.warnings。
         return False, _safe_error(
             f"preflight route unreachable: {type(e).__name__}: {e}")
+
+
+# ─── 4-tuple cache key 命中校验（mirror call_shot_analysis.py:327-334 + WR-04） ───
+def _cache_key_matches(cached: dict, vch: str) -> bool:
+    """3-tuple _cache_key 校验（video_content_hash + route_name + route_version）。
+
+    PIPE-02 lock：shot_id 隐含在文件名 shot_{sid:03d}.json 中，因此 _cache_key
+    本身只校验三元组。完整 4-tuple = (vch, route_name, route_version, shot_id-from-filename)。
+
+    Args:
+        cached: cache 文件 JSON（dict 或损坏后的 {}）。
+        vch: 当前视频的 video_content_hash。
+
+    Returns:
+        True 当三元组全部匹配 —— cache 命中。False 当任一不匹配（video 变 /
+        route_name 异 / ROUTE_VERSION bump）—— stale miss。
+    """
+    if not isinstance(cached, dict):
+        return False
+    ck = cached.get("_cache_key", {})
+    if not isinstance(ck, dict):
+        return False
+    return (ck.get("video_content_hash") == vch
+            and ck.get("route_name") == ROUTE_NAME
+            and ck.get("route_version") == ROUTE_VERSION)
+
+
+def _cache_key_payload(vch: str) -> dict:
+    """写 cache 时附加的 _cache_key 三元组（mirror call_shot_analysis.py:355-359）。"""
+    return {
+        "video_content_hash": vch,
+        "route_name": ROUTE_NAME,
+        "route_version": ROUTE_VERSION,
+    }
+
+
+def main():
+    """CLI 入口 —— 被 run_pipeline.py:step_audio_semantic 以 subprocess 调用（Phase 14 wires）。
+
+    流程：
+      1. 解析 CLI（11 flags，Chinese help per CLAUDE.md）。
+      2. 载入 shots_meta + 计算 video_content_hash。
+      3. SCHEMA_VERSION lazy-import（CONTRACT-03 单一真源 in scripts/export_asset.py:56）。
+      4. 准备 cache_dir / warnings_sidecar / audio_warnings。
+      5. --force 处理（显式列表 unlink，NOT glob —— 项目惯例）。
+      6. warnings sidecar 读取（READ-merge-write 第 1 阶段：保 [semantic]/[reid]）。
+      7. Preflight（非 offline）—— 失败即 route_down 短路。
+      8. 长驻 httpx.Client（WR-02：offline 不建）。
+      9. per-shot 循环：cache lookup → poisoned-cache invalidation → miss+POST →
+         normalize → 收集 shots_out（仅含数据的镜）。
+      10. 决策：写 audio_semantic.json（≥1 shot 有数据）OR byte-identical-absent（CONTRACT-05）。
+      11. 写前 schema-validate（Draft202012Validator）—— 失败 unlink poisoned cache + sys.exit。
+      12. warnings sidecar 写回（STEP_TAG="[audio]" self-dedup + cross-step 保）。
+      13. 打印 summary 行。
+
+    Exit codes：0 正常（含 byte-identical-absent graceful-degrade）；非 0 schema 校验失败。
+    """
+    # ─── (1) argparse CLI（11 flags，mirror call_shot_analysis.py + Phase 12 加项） ───
+    ap = argparse.ArgumentParser(
+        description="逐镜头音频语义深化路由调用 → audio_semantic.json（第三个网络依赖步骤）")
+    ap.add_argument("--video", required=True,
+                    help="原始视频绝对路径（含 audio 流）")
+    ap.add_argument("--shots", required=True,
+                    help="shots.json 路径（含 id/start/end/duration）")
+    ap.add_argument("--work-dir", required=True,
+                    help="资产根目录 output/<video-stem>/ —— route_cache 写在其下")
+    ap.add_argument("--output", required=True,
+                    help="audio_semantic.json 输出路径")
+    ap.add_argument("--stems-dir", required=True,
+                    help="Demucs stems 目录（htdemucs/<video-stem>/，传给路由做 SER/MIR 输入）")
+    ap.add_argument("--route-url",
+                    default="http://127.0.0.1:8000/api/production/audio-analysis",
+                    help="audio-analysis 路由 URL（含 /api/production/audio-analysis path；"
+                         "NO /v1/ —— 10-02-SUMMARY mount-path flag）")
+    ap.add_argument("--route-timeout", type=float, default=960.0,
+                    help="单次路由调用 read 超时秒（默认 960，> 路由侧 900s execFileSync；"
+                         "mirror Phase 6 Pitfall 1）")
+    ap.add_argument("--models",
+                    default='{"ser":"iic/SenseVoiceSmall","asr":"large-v3","mir":"m-a-p/MERT-v1-95M"}',
+                    help="路由侧模型 ID JSON 串（ROUTE-02 producer-side contract slice；"
+                         "SenseVoice SER / WhisperX ASR / MERT MIR —— MUS-04 乐器识别 deferred）")
+    ap.add_argument("--language", default="zh",
+                    help="对白语言代码（传给路由 WhisperX/SenseVoice）")
+    ap.add_argument("--offline", action="store_true",
+                    help="仅读 route_cache 不联网（cache 命中即用，miss 则降级 —— byte-identical v1.1 asset）")
+    ap.add_argument("--force", action="store_true",
+                    help="忽略 cache 强制重跑（清 route_cache/audio_analysis/shot_*.json + audio_semantic.json；"
+                         "显式列表 NOT glob —— 项目惯例）")
+    args = ap.parse_args()
+
+    # 解析 --models JSON（早失败：坏 JSON 直接 sys.exit，不浪费 cache lookup）
+    try:
+        models_dict = json.loads(args.models)
+        if not isinstance(models_dict, dict):
+            raise ValueError(f"--models must decode to object, got {type(models_dict).__name__}")
+    except (json.JSONDecodeError, ValueError) as e:
+        sys.exit(f"--models JSON parse failed: {e}")
+
+    # ─── (2) 载入 shots 元数据 + 计算 video_content_hash ─────────────────
+    with open(args.shots, encoding="utf-8") as f:
+        shots_meta = json.load(f)
+    if not isinstance(shots_meta, list):
+        sys.exit(f"--shots must point to a JSON array, got {type(shots_meta).__name__}")
+    vch = video_content_hash(args.video)
+
+    # ─── (3) SCHEMA_VERSION 单一真源（CONTRACT-03） ─────────────────────
+    # scripts/export_asset.py:56 是 SCHEMA_VERSION = "1.2" 的单一真源 —— 本步骤
+    # 绝不硬编码字面量 "1.2"。lazy-import 避免 module-load 副作用 + stage-decoupling
+    # 违例（scripts/ 不应被 analysis/ 在 import-time 依赖）。fallback 字面量仅当
+    # export_asset.py 在运行时不可用（极罕见 —— 仓库损坏 / 部分检出）。
+    try:
+        # sys.path 补 repo root 让 `from scripts.export_asset import SCHEMA_VERSION` 可达
+        repo_root = Path(__file__).resolve().parent.parent
+        if str(repo_root) not in sys.path:
+            sys.path.insert(0, str(repo_root))
+        # scripts/ 不是 package（无 __init__.py）—— 用 importlib 按 filesystem 路径加载。
+        import importlib.util
+        spec = importlib.util.spec_from_file_location(
+            "_export_asset_for_version", repo_root / "scripts" / "export_asset.py")
+        if spec is not None and spec.loader is not None:
+            mod = importlib.util.module_from_spec(spec)
+            spec.loader.exec_module(mod)   # type: ignore[arg-type]
+            SCHEMA_VERSION = mod.SCHEMA_VERSION
+        else:
+            raise ImportError("spec_from_file_location returned None")
+    except (ImportError, AttributeError, FileNotFoundError, OSError) as e:
+        SCHEMA_VERSION = "1.2"   # CONTRACT-03 fallback —— 仅 export_asset.py 不可用时
+        print(f"[audio] warning: SCHEMA_VERSION lazy-import failed ({e}); "
+              f"using fallback literal '{SCHEMA_VERSION}'")
+
+    # ─── (4) cache_dir + warnings_sidecar + 本步 warnings ─────────────
+    # cache dir: route_cache/audio_analysis/ —— v1.1 convention（NOT .cache/）。
+    # 保一致性：warnings sidecar 在 route_cache/warnings.json 与 call_shot_analysis /
+    # call_reid 共用，--force cache-clearing 逻辑也按 route_cache/<ROUTE_NAME>/ 走。
+    cache_dir = os.path.join(args.work_dir, "route_cache", ROUTE_NAME)
+    os.makedirs(cache_dir, exist_ok=True)
+    warnings_sidecar = os.path.join(args.work_dir, "route_cache", "warnings.json")
+
+    # ─── (5) --force 处理（显式列表，NOT glob —— 项目惯例） ────────────
+    # 不触 route_cache/warnings.json（其他 step 的 warnings 在那）。
+    if args.force:
+        for s in shots_meta:
+            sid = s.get("id")
+            if isinstance(sid, int):
+                cf = os.path.join(cache_dir, f"shot_{sid:03d}.json")
+                if os.path.exists(cf):
+                    try:
+                        os.unlink(cf)
+                    except OSError:
+                        pass
+        if os.path.exists(args.output):
+            try:
+                os.unlink(args.output)
+            except OSError:
+                pass
+
+    # ─── (6) warnings sidecar 读取（READ 阶段，保 [semantic]/[reid]/etc） ─
+    existing_warnings: list[str] = []
+    if os.path.exists(warnings_sidecar):
+        try:
+            with open(warnings_sidecar, encoding="utf-8") as f:
+                sidecar = json.load(f)
+            if isinstance(sidecar, dict) and isinstance(sidecar.get("warnings"), list):
+                existing_warnings = [w for w in sidecar["warnings"] if isinstance(w, str)]
+        except (OSError, json.JSONDecodeError):
+            existing_warnings = []   # 损坏 sidecar 不阻塞本步
+
+    # 本步新增 warnings（写阶段会 prepend STEP_TAG="[audio]" 并 strip 旧 [audio] tags）
+    audio_warnings: list[str] = []
+
+    # ─── (7) Preflight（非 offline）—— 失败即 route_down 短路 ──────────
+    route_down = args.offline
+    if not args.offline:
+        ok, msg = preflight(args.route_url)
+        if not ok:
+            route_down = True
+            audio_warnings.append(f"preflight failed: {msg}")
+            print(f"[audio] preflight failed → route_down mode: {msg}")
+
+    # ─── (8) 长驻 httpx.Client（WR-02：offline 不建） ─────────────────
+    client = None
+    if not args.offline:
+        import httpx
+        # WR-03 analog：base 只取 host root（rsplit 掉 /api/production 之后部分），
+        # post 用 ROUTE_PATH。audio-analysis mount 在 /api/production/audio-analysis
+        # （NO /v1/）—— rsplit 锚点必须与 preflight 一致（/api/production）。
+        base = args.route_url.rsplit("/api/production", 1)[0]
+        client = httpx.Client(
+            base_url=base,
+            timeout=httpx.Timeout(connect=5.0, read=args.route_timeout,
+                                  write=5.0, pool=5.0))
+
+    # ─── schema validator（poisoned-cache + 写前双重用） ──────────────
+    from jsonschema import Draft202012Validator
+    with open(AUDIO_SEMANTIC_SCHEMA, encoding="utf-8") as f:
+        audio_schema = json.load(f)
+    validator = Draft202012Validator(audio_schema)
+
+    # ─── (9) per-shot 循环 ────────────────────────────────────────────
+    shots_out: list[dict] = []
+    words_present = False
+    poisoned_cache_files: list[str] = []   # 命中时校验失败 → 累积，结束时统一警告
+
+    try:
+        for s in shots_meta:
+            sid = s["id"]
+            cache_file = os.path.join(cache_dir, f"shot_{sid:03d}.json")
+
+            # (a) cache lookup
+            # cache_stale: cache_file 存在但 _cache_key 不匹配（CR-01：必须与"文件
+            # 缺失"区分开 —— offline + stale-cache 也要显式记 warning，防 Pitfall 4
+            # 静默降级）。
+            route_shot = None
+            cache_stale = False
+            if os.path.exists(cache_file):
+                try:
+                    with open(cache_file, encoding="utf-8") as f:
+                        cached = json.load(f)
+                except (OSError, json.JSONDecodeError):
+                    cached = {}
+                if _cache_key_matches(cached, vch):
+                    # (b) POISONED-CACHE INVALIDATION —— 写前 schema 自校验 mirror
+                    # call_reid.py:418-427，但这里是 per-shot + on-hit：把 cached 当
+                    # 作合法 audio_semantic payload 的一部分校验。如果 schema 收紧
+                    # （Phase 11 之后）导致 stale 形态 fail，自动 unlink + miss。
+                    normalized_probe = normalize_audio_semantic(cached, s)
+                    probe_payload = {
+                        "schema_version": SCHEMA_VERSION,
+                        "shots": [normalized_probe],
+                    }
+                    probe_errors = list(validator.iter_errors(probe_payload))
+                    if probe_errors:
+                        try:
+                            os.unlink(cache_file)
+                            print(f"[audio] shot {sid}: invalidated poisoned cache "
+                                  f"(schema-validate fail on hit: "
+                                  f"{probe_errors[0].message[:80]})")
+                            poisoned_cache_files.append(cache_file)
+                            cache_stale = True   # 视同 stale，触发显式 warning
+                        except OSError:
+                            pass   # best-effort；不阻塞主流程
+                    else:
+                        print(f"[audio] shot {sid}: cache hit")
+                        route_shot = cached
+                else:
+                    cache_stale = True
+
+            # (c) cache miss + 非 route_down → 联网 per-shot POST
+            if route_shot is None and not route_down:
+                body = {
+                    "video": os.path.abspath(args.video),
+                    "shots": os.path.abspath(args.shots),
+                    "shot_id_range": [sid, sid],   # per-shot 隔离（Pitfall 6）
+                    "stems_dir": os.path.abspath(args.stems_dir),
+                    "models": models_dict,
+                    "language": args.language,
+                }
+                route_shot, err = call_route(client, body)
+                if err:
+                    audio_warnings.append(f"shot {sid}: {err}")
+                    print(f"[audio] shot {sid}: FAIL {err}")
+                    route_shot = None   # degrade → skeleton-only（仍加入 shots_out）
+                else:
+                    # 写 cache（带 _cache_key 三元组；shot_id 在文件名 = 4-tuple per PIPE-02）
+                    cache_payload = {**route_shot,
+                                     "_cache_key": _cache_key_payload(vch)}
+                    try:
+                        with open(cache_file, "w", encoding="utf-8") as f:
+                            json.dump(cache_payload, f, ensure_ascii=False, indent=2)
+                    except OSError as e:
+                        audio_warnings.append(f"shot {sid}: cache write failed: {e}")
+
+            # (d) cache miss + route_down —— Pitfall 4：不静默，显式记 warning
+            if route_shot is None and route_down:
+                if cache_stale:
+                    audio_warnings.append(
+                        f"shot {sid}: offline/stale-cache (poisoned or _cache_key mismatch) "
+                        f"→ absent from audio_semantic")
+                else:
+                    audio_warnings.append(
+                        f"shot {sid}: offline/cache-miss → absent from audio_semantic")
+
+            # (e) normalize → shots_out
+            # 关键决策：route_shot=None 时 normalize 返回 skeleton（shot_id + timing），
+            # 仍 schema-valid 但 producer 决定：是否把 skeleton 计入 shots_out？
+            # CONTRACT-05：byte-identical-absent 仅在零 shot 有数据；如果有 ≥1 shot
+            # 有真数据，skeleton 镜也写入（保持 shots[] 覆盖全片 —— mirror spec fixture
+            # v1.2/audio_semantic.json:38-55 第二镜只有稀疏 dialogue）。
+            # 但 skeleton-only 镜（route_shot=None）若计入会让 word_level_experimental
+            # 等标志语义稳定 —— 这里采用：始终写入 normalize 的 shot（含或不含 modality）。
+            normalized = normalize_audio_semantic(route_shot, s)
+            # 仅当 route_shot 非 None（实际有数据）才计入 words_present 判定。
+            if route_shot is not None:
+                dlg = normalized.get("dialogue")
+                if isinstance(dlg, dict) and isinstance(dlg.get("words"), list) and dlg["words"]:
+                    words_present = True
+            shots_out.append(normalized)
+    finally:
+        # WR-02：client 仅在非 offline 时建 → 条件 close（None 时跳过）。
+        if client is not None:
+            client.close()
+
+    # ─── (10) 决策：写 audio_semantic.json OR byte-identical-absent ────
+    # CONTRACT-05：route 不可达 / preflight fail / --offline AND 零 shot 有数据 →
+    # audio_semantic.json NOT 写（asset.json#data.audio_semantic OPTIONAL → 缺席）。
+    # 关键判定："有数据" = route_shot 非 None 的镜 ≥1（不是"shots_out 非空"——
+    # shots_out 在我们采用 always-append 后恒等于 shots_meta 长度）。
+    has_any_data = any(
+        # shot 含 dialogue / sfx / reproduction 任一子对象即视为"有数据"
+        bool(shot.get("dialogue") or shot.get("sfx") or shot.get("reproduction"))
+        for shot in shots_out
+    )
+
+    if not has_any_data:
+        # byte-identical-absent：不写 args.output（操作员可能保留了上一轮的有效产物，
+        # 不主动 unlink）。print + warning 让操作员看见降级。
+        msg = (f"zero shots with data → audio_semantic.json absent "
+               f"(byte-identical v1.1 asset, CONTRACT-05)")
+        audio_warnings.append(msg)
+        print(f"[audio] {msg}")
+        write_payload = None
+    else:
+        # 构建 payload（word_level_experimental 由 words_present 决定；schema_version
+        # 来自 CONTRACT-03 lazy-import）。
+        write_payload = {
+            "schema_version": SCHEMA_VERSION,
+            "word_level_experimental": words_present,
+            "shots": shots_out,
+        }
+
+    # ─── (11) 写前 schema-validate（fails loud —— 项目惯例） ──────────
+    # 仅在 write_payload 非 None 时校验 + 写入。poisoned-cache 失败再次触发 unlink。
+    if write_payload is not None:
+        errors = list(validator.iter_errors(write_payload))
+        if errors:
+            # poisoned-cache invalidation pass：找到哪些 shot 触发的错误，unlink 它们
+            # 的 cache 文件，让下一轮重新拉路由 / degrade（mirror call_reid.py:418-431）。
+            bad_shots = set()
+            for e in errors:
+                # absolute_path 形如 ['shots', N, 'dialogue', ...] —— 提取 shot index
+                if e.absolute_path and e.absolute_path[0] == "shots":
+                    idx = e.absolute_path[1]
+                    if isinstance(idx, int) and 0 <= idx < len(shots_out):
+                        bad_shots.add(shots_out[idx].get("shot_id"))
+            for bad_sid in bad_shots:
+                if isinstance(bad_sid, int):
+                    cf = os.path.join(cache_dir, f"shot_{bad_sid:03d}.json")
+                    if os.path.exists(cf):
+                        try:
+                            os.unlink(cf)
+                            print(f"[audio] shot {bad_sid}: invalidated poisoned cache "
+                                  f"(pre-write schema-validate fail)")
+                        except OSError:
+                            pass
+            sys.exit(
+                f"audio_semantic.json schema validation failed ({len(errors)} errors): "
+                + "; ".join(f"{'/'.join(map(str, e.absolute_path))}: {e.message}"
+                            for e in errors[:3]))
+
+        # 原子写（temp + os.replace —— 防 partial-write 被下游读到）
+        tmp = args.output + ".tmp"
+        try:
+            with open(tmp, "w", encoding="utf-8") as f:
+                json.dump(write_payload, f, ensure_ascii=False, indent=2)
+            os.replace(tmp, args.output)
+        except OSError as e:
+            sys.exit(f"audio_semantic.json write failed: {e}")
+
+    # ─── (12) warnings sidecar READ-merge-write（mirror call_reid.py:443-449） ─
+    # WR-01 self-dedup：strip prior [audio]-tagged warnings（本 step 上一轮写的）
+    # 再 append fresh，防 self-accumulate（同 route-down 重跑导致 2N 增长）。
+    # cross-step [semantic]/[reid]/etc tags 保留（非破坏性合并）。
+    STEP_TAG = "[audio]"
+    prior = [w for w in existing_warnings if not w.startswith(STEP_TAG)]
+    tagged_audio = [f"{STEP_TAG} {w}" if not w.startswith(STEP_TAG) else w
+                    for w in audio_warnings]
+    all_warnings = prior + tagged_audio
+    try:
+        # sidecar 目录可能与 cache_dir 共享 route_cache/ —— 已在 step 4 cache_dir
+        # makedirs 时创建；但保 defensive。
+        sidecar_dir = os.path.dirname(warnings_sidecar)
+        if sidecar_dir:
+            os.makedirs(sidecar_dir, exist_ok=True)
+        with open(warnings_sidecar, "w", encoding="utf-8") as f:
+            json.dump({"warnings": all_warnings}, f, ensure_ascii=False, indent=2)
+    except OSError as e:
+        # sidecar 写失败不阻塞主输出（export_asset.py best-effort 读 sidecar）。
+        print(f"[audio] warning: sidecar write failed: {e}")
+
+    # ─── (13) summary 行 ─────────────────────────────────────────────
+    if write_payload is not None:
+        print(f"[audio] wrote {args.output} "
+              f"({len(shots_out)} shots, word_level_experimental={words_present}, "
+              f"{len(audio_warnings)} new warnings)")
+    else:
+        print(f"[audio] audio_semantic.json absent ({len(audio_warnings)} new warnings)")
+    return 0
+
+
+if __name__ == "__main__":
+    sys.exit(main())
