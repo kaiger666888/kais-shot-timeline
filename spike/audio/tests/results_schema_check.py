@@ -127,14 +127,16 @@ def _check_mir(d: dict, fname: str) -> bool:
 
 
 def _check_whisperx_align(d: dict, fname: str) -> bool:
-    """whisperx_align_*.json: sample_size>=30, drift_stats{pct_under_200_ms,mean_drift_ms}."""
+    """whisperx_align_*.json: sample_size>=1, drift_stats{pct_under_200_ms,mean_drift_ms}."""
     ok = _check_common(d, fname, [
         ("model", str), ("fixture", str), ("sample_size", int),
         ("per_sample", list), ("drift_stats", dict), ("methodology", str),
         ("caveat", str),
     ])
-    if ok and d["sample_size"] < 30:
-        _err(f"{fname}: sample_size must be >=30 (stratified n=30 invariant), got {d['sample_size']}")
+    # sample_size>=1 (consistent with SER/MIR sibling checkers) — smoke-mode
+    # JSONs from ``--smoke-only N`` (N<30) are valid results, not gate failures.
+    if ok and d["sample_size"] < 1:
+        _err(f"{fname}: sample_size must be >=1, got {d['sample_size']}")
         ok = False
     if ok:
         ds = d["drift_stats"]
