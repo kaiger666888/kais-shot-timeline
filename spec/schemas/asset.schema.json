@@ -150,6 +150,16 @@
           "type": "string",
           "pattern": "^(?!.*\\.\\.)[^:*?\"<>|]+\\.json$",
           "description": "v1.1 additive (OPTIONAL — absent on v1 assets). Relative path to props.json (canonical confirmed prop registry). Same emission rule as characters."
+        },
+        "audio_semantic": {
+          "type": "string",
+          "pattern": "^(?!.*\\.\\.)[^:*?\"<>|]+\\.json$",
+          "description": "v1.2 additive (OPTIONAL — 缺席 on v1.0/v1.1 assets). Relative path to audio_semantic.json (per-shot 三模态 dialogue/sfx + reproduction prompts produced by Phase 15). Emitted only when route-host round-trip succeeded AND the file exists on disk; older assets omit it and still validate (graceful-degrade, CONTRACT-05)."
+        },
+        "speakers": {
+          "type": "string",
+          "pattern": "^(?!.*\\.\\.)[^:*?\"<>|]+\\.json$",
+          "description": "v1.2 additive (OPTIONAL — 缺席 on v1.0/v1.1 assets). Relative path to speakers.json (canonical confirmed speaker registry produced by Phase 13 HITL link_speakers). Same emission rule as characters/props — file exists on disk → emit; absent → OMIT (byte-identical to v1.0/v1.1 producer output)."
         }
       }
     },
