@@ -1,0 +1,190 @@
+{
+  "shot_ids": [
+    43,
+    29,
+    77,
+    21,
+    44,
+    73,
+    79,
+    52,
+    56,
+    74,
+    72,
+    53,
+    16,
+    55,
+    84,
+    86,
+    17,
+    58,
+    1,
+    70,
+    88,
+    78,
+    66,
+    37,
+    50,
+    64,
+    34,
+    51,
+    60,
+    36
+  ],
+  "segments": [
+    {
+      "shot_id": 43,
+      "start_sec": 118.97,
+      "end_sec": 120.8
+    },
+    {
+      "shot_id": 29,
+      "start_sec": 91.47,
+      "end_sec": 92.63
+    },
+    {
+      "shot_id": 77,
+      "start_sec": 224.8,
+      "end_sec": 226.43
+    },
+    {
+      "shot_id": 21,
+      "start_sec": 74.4,
+      "end_sec": 75.8
+    },
+    {
+      "shot_id": 44,
+      "start_sec": 120.8,
+      "end_sec": 122.37
+    },
+    {
+      "shot_id": 73,
+      "start_sec": 213.63,
+      "end_sec": 214.93
+    },
+    {
+      "shot_id": 79,
+      "start_sec": 233.3,
+      "end_sec": 234.8
+    },
+    {
+      "shot_id": 52,
+      "start_sec": 138.93,
+      "end_sec": 140.2
+    },
+    {
+      "shot_id": 56,
+      "start_sec": 149.9,
+      "end_sec": 153.47
+    },
+    {
+      "shot_id": 74,
+      "start_sec": 214.93,
+      "end_sec": 218.3
+    },
+    {
+      "shot_id": 72,
+      "start_sec": 210.37,
+      "end_sec": 213.63
+    },
+    {
+      "shot_id": 53,
+      "start_sec": 140.2,
+      "end_sec": 144.2
+    },
+    {
+      "shot_id": 16,
+      "start_sec": 58.1,
+      "end_sec": 60.13
+    },
+    {
+      "shot_id": 55,
+      "start_sec": 147.63,
+      "end_sec": 149.9
+    },
+    {
+      "shot_id": 84,
+      "start_sec": 245.07,
+      "end_sec": 249.63
+    },
+    {
+      "shot_id": 86,
+      "start_sec": 251.97,
+      "end_sec": 256.0
+    },
+    {
+      "shot_id": 17,
+      "start_sec": 60.13,
+      "end_sec": 67.33
+    },
+    {
+      "shot_id": 58,
+      "start_sec": 157.73,
+      "end_sec": 164.1
+    },
+    {
+      "shot_id": 1,
+      "start_sec": 0.0,
+      "end_sec": 6.73
+    },
+    {
+      "shot_id": 70,
+      "start_sec": 186.6,
+      "end_sec": 206.33
+    },
+    {
+      "shot_id": 88,
+      "start_sec": 260.2,
+      "end_sec": 273.2
+    },
+    {
+      "shot_id": 78,
+      "start_sec": 226.43,
+      "end_sec": 233.3
+    },
+    {
+      "shot_id": 66,
+      "start_sec": 175.23,
+      "end_sec": 182.17
+    },
+    {
+      "shot_id": 37,
+      "start_sec": 102.03,
+      "end_sec": 107.63
+    },
+    {
+      "shot_id": 50,
+      "start_sec": 136.27,
+      "end_sec": 137.67
+    },
+    {
+      "shot_id": 64,
+      "start_sec": 173.6,
+      "end_sec": 174.47
+    },
+    {
+      "shot_id": 34,
+      "start_sec": 100.1,
+      "end_sec": 100.87
+    },
+    {
+      "shot_id": 51,
+      "start_sec": 137.67,
+      "end_sec": 138.93
+    },
+    {
+      "shot_id": 60,
+      "start_sec": 166.83,
+      "end_sec": 168.73
+    },
+    {
+      "shot_id": 36,
+      "start_sec": 101.4,
+      "end_sec": 102.03
+    }
+  ],
+  "seed": 10,
+  "n": 30,
+  "fixture": "ep01",
+  "note": "Shared shot_id list for MERT-vs-PANNs head-to-head integrity (Pitfall 9). Computed BEFORE either model runs."
+}
