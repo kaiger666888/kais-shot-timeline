@@ -2,16 +2,16 @@
 gsd_state_version: 1.0
 milestone: v1.2
 milestone_name: 音频语义深化 — Audio Semantic Deepening
-status: executing
-stopped_at: ""Phase 10 spike complete — 4 outcomes locked in PROJECT.md Key Decisions (lines 122-126); spike report at .planning/research/audio-spike-report.md (254 lines, 4 sections + methodology + recommendations + reproducibility); BLOCKER 1 (CUDA) RESOLVED stay-on-12.4; Chinese SER + polyphonic MIR risks RESOLVED. Ready for /gsd:verify-work then /gsd:plan-phase 11.""
-last_updated: "2026-07-25T13:35:00.000Z"
+status: verifying
+stopped_at: ""Phase 10 spike complete — 4 locked outcomes in PROJECT.md Key Decisions (lines 122-126: models_used per modality / CUDA stay-on-12.4 / DIA-04 ship-nullable+confidence / MUS-04 defer-v1.3 / DIA-05 ship-experimental). Spike report at `.planning/research/audio-spike-report.md` (254 lines). BLOCKER 1 RESOLVED stay-on-12.4. Phase 10 plans 01-06 all done. Ready for /gsd:verify-work then /gsd:plan-phase 11 (Contract v1.2 lock).""
+last_updated: "2026-07-25T13:40:54.362Z"
 last_activity: 2026-07-25
 progress:
   total_phases: 8
-  completed_phases: 0
+  completed_phases: 1
   total_plans: 6
-  completed_plans: 3
-  percent: 0
+  completed_plans: 6
+  percent: 13
 ---
 
 # Project State
@@ -27,10 +27,10 @@ See: .planning/PROJECT.md (updated 2026-07-25)
 
 Phase: 10 (Risk-Validation Spike + Route Stub) — PLAN 06 COMPLETE (Phase 10 spike closed)
 Plan: 6 of 6 (Phase 10 plans 01-06 all done)
-Status: Phase 10 spike complete; ready for `/gsd:verify-work` then `/gsd:plan-phase 11`
+Status: Phase complete — ready for verification
 Last activity: 2026-07-25
 
-Progress: [█████░░░░░] 50%
+Progress: [██████████] 100%
 
 ## Performance Metrics
 
@@ -56,6 +56,7 @@ Progress: [█████░░░░░] 50%
 | Phase 10 P01 | 7m20s | 3 tasks | 7 files |
 | Phase 10 P02 | 38 | 2 tasks | 3 files |
 | Phase 10 P06 | ~25min | 3 tasks (1 checkpoint pre-resolved) | 4 files |
+| Phase 10 P06 | 25min | 3 tasks | 4 files |
 
 ## Accumulated Context
 
@@ -85,6 +86,10 @@ Carried from v1.0/v1.1 (still load-bearing):
 - Conditional fields use `nullable + confidence` pattern; never fabricate signal when model degrades
 - [Phase 10]: Plan 10-01 Wave 0 foundation complete: 7 files under spike/audio/ (common.py + 4 smoke files + aggregate_report.py scaffold + README). stratified_sample uses ceil(n/4) per bucket + dedupe (Rule 1 fix vs. plan body's n//4 which capped at 28 < 30). — Plans 03/04/05/06 can now import common.py; route_stub_smoke.sh is Plan 02's verify target.
 - [Phase ?]: Plan 10-02 ROUTE-01: audio-analysis stub branched from feat/shot-analysis-route (NOT develop); mount at /api/production/audio-analysis (NO /v1/); envelope byte-identical to shot-analysis; full curl round-trip proven.
+- [Phase 10]: Phase 10 spike: DIA-04 ship-nullable+confidence (SenseVoice self_consistency=100% proxy, no rigorous macro-F1) — Calibrated estimate + qualitative sanity coherent; rigorous macro-F1 deferred Phase 12+
+- [Phase 10]: Phase 10 spike: MUS-04 defer to v1.3 (MERT no classifier head, PANNs zenodo-blocked) — MERT K-means clusters correlate with shot duration, NOT instruments; route host needs REAL MIR classifier
+- [Phase 10]: Phase 10 spike: DIA-05 ship-experimental (boundary drift median=101.5ms<200ms; per-word aggregate low but metric-definition artifact) — Drift=word_start-segment_start inflates for interior words; refine metric Phase 12
+- [Phase 10]: Phase 10 spike: CUDA path STAY-ON-12.4 (WhisperX runs cleanly on cu124 force-pin; BLOCKER 1 RESOLVED) — WhisperX 3.8.6 metadata declares torch~=2.8.0 but works on 2.6.0+cu124; not a forcing function for CUDA 12.8
 
 ### Pending Todos
 
@@ -133,7 +138,7 @@ Items acknowledged and carried forward from v1.0 + v1.1 Out-of-Scope + v1.2 plan
 
 ## Session Continuity
 
-Last session: 2026-07-25T13:35:00.000Z
+Last session: 2026-07-25T13:38:23.121Z
 Stopped at: "Phase 10 spike complete — 4 locked outcomes in PROJECT.md Key Decisions (lines 122-126: models_used per modality / CUDA stay-on-12.4 / DIA-04 ship-nullable+confidence / MUS-04 defer-v1.3 / DIA-05 ship-experimental). Spike report at `.planning/research/audio-spike-report.md` (254 lines). BLOCKER 1 RESOLVED stay-on-12.4. Phase 10 plans 01-06 all done. Ready for /gsd:verify-work then /gsd:plan-phase 11 (Contract v1.2 lock)."
 Resume file: None
 
