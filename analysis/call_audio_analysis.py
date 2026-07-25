@@ -189,12 +189,15 @@ def normalize_audio_semantic(route_shot: dict | None, shot_meta: dict) -> dict:
     """
     # 生产方骨架：timing + shot_id 来自 shot_meta（权威源）。即使 route_shot=None 也
     # 能返回 schema-valid skeleton（graceful-degrade 不破坏 schema）。
-    skeleton = {
-        "shot_id": shot_meta["id"],
-        "start_sec": shot_meta["start_sec"],
-        "end_sec": shot_meta["end_sec"],
-        "duration": shot_meta["duration"],
-    }
+    # WR-03：schema 只 required shot_id；start_sec/end_sec/duration 全 optional
+    # （audio_semantic.schema.json:27-48）。手改 / 部分 shots.json（如 {"id":1}）
+    # 缺 timing 字段时不应让 KeyError 崩 pipeline —— 用 .get() + isinstance 守卫，
+    # 缺席或非 number 一律 OMIT（schema-valid skeleton 允许只含 shot_id）。
+    skeleton: dict = {"shot_id": shot_meta["id"]}
+    for _k in ("start_sec", "end_sec", "duration"):
+        _v = shot_meta.get(_k)
+        if isinstance(_v, (int, float)):
+            skeleton[_k] = _v
     # CR-02：route_shot 非 dict（路由 bug 回 list/string，或 None graceful-degrade）
     # → 直接返回 skeleton。isinstance 守卫统一 None 与 truthy 非 dict。
     if not isinstance(route_shot, dict):
