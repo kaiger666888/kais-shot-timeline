@@ -82,7 +82,10 @@ Route-based audio semantic deepening: a third sibling of the v1.1 route-pattern 
   3. v1.2 12-file fixture set validates 12/12 green under new V12_ORDER; v1.1 fixture still 10/10 green under extended schemas (additive-only proof)
   4. verify_contract.py bidirectional cross-version self-test GREEN: forward (v1.1 fixture × v1.2 schema = 0 errors) + backward (v1.2 fixture × recovered-v1.1 schema = only additionalProperties errors) + fixture-consistency (`speakers.char_id ⊆ characters.id` where present)
   5. SPEC.md §4 Changelog `1.2` entry + §5 audio_semantic/speakers shapes + `fidelity_disclaimer` documented (AF-01 "perfect restoration" explicitly out-of-scope)
-**Plans**: TBD
+**Plans**:
+- [ ] 11-01-PLAN.md — 3 new schemas (audio_semantic + speakers + speaker-edits) + asset.schema additive + SCHEMA_VERSION="1.2" bump + conditional producer emission
+- [ ] 11-02-PLAN.md — 12-file v1.2 fixture + validate.py 3-tier gate (V12_ORDER) + verify_contract.py bidirectional v1.0↔v1.1↔v1.2 proof + speakers⊆characters consistency
+- [ ] 11-03-PLAN.md — SPEC.md §4 Changelog 1.2 + §5.8/§5.9 shapes + fidelity_disclaimer + README.md v1.2 footer
 
 ### Phase 12: Producer Route Client (`call_audio_analysis.py`)
 **Goal**: Producer-side thin httpx client hits the audio-analysis route per-shot (mirror `call_shot_analysis.py` pattern) + per-shot 4-tuple cache + poisoned-cache invalidation (mirror `call_reid.py`) + read-merge-write `[audio]` warnings sidecar + graceful-degrade to schema-valid empty state.
@@ -175,7 +178,7 @@ v1.2 phases execute in numeric order: 10 → 11 → 12 → 13 → 14 → 15 → 
 | 8. Prompt Reference System + shot-timeline HTML Gallery | v1.1 | 3/3 | Complete | 2026-07-25 |
 | 9. Canvas Consumer Integration (cross-repo) | v1.1 | 2/2 | Complete | 2026-07-25 |
 | 10. Risk-Validation Spike + Route Stub | v1.2 | 6/6 | Complete    | 2026-07-25 |
-| 11. Contract v1.2 | v1.2 | 0/? | Not started | - |
+| 11. Contract v1.2 | v1.2 | 0/3 | Not started | - |
 | 12. Producer Route Client | v1.2 | 0/? | Not started | - |
 | 13. SPEAKER-01 Linkage HITL | v1.2 | 0/? | Not started | - |
 | 14. Pipeline Integration | v1.2 | 0/? | Not started | - |
