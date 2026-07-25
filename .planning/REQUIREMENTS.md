@@ -26,7 +26,7 @@
 - [ ] **CONTRACT-05**: graceful-degrade —— 路由不可达/条件字段模型不达标 → sidecar 缺省（与 v1.0/v1.1 byte-identical）/ 字段 nullable；资产仍导出；`generator.warnings` 记原因
 
 ### ROUTE — kais-aigc-platform 引擎（跨仓库）
-- [ ] **ROUTE-01**: `audio-analysis` 路由 stub（envelope 镜像 shot-analysis `{"code":200,"data":{...}}`）—— 让 producer 客户端有 target URL + envelope，即使模型未加载也能集成测试
+- [x] **ROUTE-01**: `audio-analysis` 路由 stub（envelope 镜像 shot-analysis `{"code":200,"data":{...}}`）—— 让 producer 客户端有 target URL + envelope，即使模型未加载也能集成测试
 - [ ] **ROUTE-02**: 路由托管 SenseVoice (SER+events) + WhisperX (transcribe+align+diarize) + MERT/librosa/PANNs (MIR)；**CUDA 12.8 升级是 Phase 1 前置**（WhisperX 硬需）
 - [ ] **ROUTE-03**: 路由 request/response 契约文档化（per-shot 输入：vocals→SER/diarize，drums+bass+other→MIR；输出：dialogue/music/sfx 子对象）
 
@@ -103,7 +103,7 @@ Each v1.2 REQ-ID maps to exactly one phase. Coverage: 33/33 (100%).
 | CONTRACT-03 | Phase 11 (Contract v1.2) | Pending |
 | CONTRACT-04 | Phase 11 (Contract v1.2) | Pending |
 | CONTRACT-05 | Phase 11 (Contract v1.2) | Pending |
-| ROUTE-01 | Phase 10 (Risk-Validation Spike + Route Stub) | Pending |
+| ROUTE-01 | Phase 10 (Risk-Validation Spike + Route Stub) | Complete |
 | ROUTE-02 | Phase 12 (Producer Route Client) | Pending |
 | ROUTE-03 | Phase 12 (Producer Route Client) | Pending |
 | DIA-01 | Phase 15 (Layered Reproduction Prompts) | Pending |
