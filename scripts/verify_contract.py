@@ -71,13 +71,20 @@ DEFAULT_E01_ASSET_DIR = (
     / "虫虫武侠小故事《小江湖》第01话：爸爸去哪儿？（ 画面只是工具，情绪才是目的。"
 )
 
-# 9 个 schema 形状（v1.0 的 6 个 + v1.1 Phase 5 新增 characters/props/registry）。
+# v1.2 producer-mode recognized schema shapes (12 = v1.0 的 6 个 + v1.1 Phase 5 新增
+# characters/props/registry + Phase 7 registry-edits 隐式走 registry-edits.schema.json
+# 路径（不在 EIGHT_SHAPES 因 producer asset_dir 不 emit registry.edits.json —— 那是
+# HITL 审阅 round-trip 中间产物）+ Phase 11 v1.2 新增 audio_semantic/speakers)。
 # 名字保留 EIGHT_SHAPES（v1.0 历史叫法）以兼容既有 fail-loud self-test 文档引用；
-# 实际是 9 个元素。SIX_SHAPES 别名 = 前 6 个（v1.0 producer-only asset 始终是这 6 个
-# required 形状；characters/props/registry 全是 optional）。
+# 实际是 11 个元素。SIX_SHAPES 别名 = 前 6 个（v1.0 producer-only asset 始终是这 6 个
+# required 形状；characters/props/registry/audio_semantic/speakers 全是 optional ——
+# absent 不算失败，mirror graceful-degrade）。
 EIGHT_SHAPES = [
     "asset", "shots", "audio_analysis", "transcript", "frames", "prompts",
     "characters", "props", "registry",
+    # Phase 11 additive: audio_semantic + speakers (gated on data.<shape> existence,
+    # mirror v1.1 characters/props pattern in validate_eight_shapes).
+    "audio_semantic", "speakers",
 ]
 SIX_SHAPES = EIGHT_SHAPES[:6]  # v1.0 backward-compat alias
 
@@ -316,6 +323,48 @@ def _recover_v1_schema(shape: str):
     return stripped
 
 
+def _recover_v11_schema(shape: str):
+    """恢复 v1.1 schema 用于 backward cross-version check v1.2→v1.1 (Phase 11 CONTRACT-03)。
+
+    Primary: ``git show v1.1:spec/schemas/<shape>.schema.json`` —— v1.1 git tag
+    的 immutable truth。Fallback（tag 缺失 / git 不可用，e.g. CI shallow clone）:
+    程序化剥离 v1.2 additive keys —— deep-copy 当前（v1.2-extended）schema，
+    删除 Phase 11 已知的 additive keys，得到等价的 v1.1 schema。两路径任一
+    成功即返回 dict；都失败返回 None（caller 记 failure）。
+
+    已知 v1.2 additive keys（CONTRACT-04/05，全 optional，绝不在 required[]）:
+      asset:    data.properties.audio_semantic, data.properties.speakers
+                （v1.2 没有 media.* additions；只有 data.*）
+
+    与 _recover_v1_schema 的关系：v1 recover 剥离 v1.1 additions
+    （characters/props），v1.1 recover 剥离 v1.2 additions（audio_semantic/speakers）。
+    一致用 fallback 模式：deep-copy current → pop additive keys。
+    """
+    # Primary: git show v1.1 tag
+    try:
+        r = subprocess.run(
+            ["git", "-C", str(REPO), "show", f"v1.1:spec/schemas/{shape}.schema.json"],
+            capture_output=True, text=True, timeout=5,
+        )
+        if r.returncode == 0 and r.stdout.strip():
+            return json.loads(r.stdout)
+    except (subprocess.SubprocessError, json.JSONDecodeError, OSError):
+        pass
+    # Fallback: programmatic strip of v1.2-additive keys from current schema
+    import copy
+    try:
+        stripped = copy.deepcopy(
+            json.loads((SCHEMAS_DIR / f"{shape}.schema.json").read_text(encoding="utf-8"))
+        )
+    except (FileNotFoundError, json.JSONDecodeError):
+        return None
+    if shape == "asset":
+        data_props = stripped.get("properties", {}).get("data", {}).get("properties", {})
+        for k in ("audio_semantic", "speakers"):
+            data_props.pop(k, None)
+    return stripped
+
+
 def _cross_version_check() -> tuple:
     """schema-layer 双向 v1↔v1.1 兼容证明（CONTRACT-07；CONTEXT D-XX lock）。
 
@@ -376,11 +425,57 @@ def _cross_version_check() -> tuple:
                 f"error(s) (shared fields drifted); first: {non_addprop[0].message}"
             )
 
+    # (c) Phase 11 FORWARD v1.1→v1.2: v1.1 fixture × current (v1.2-extended) schemas → 0 errors
+    # Only asset — speakers/audio_semantic are NEW shapes with no v1.1 instance to test.
+    # The 6 v1.0 shapes + characters/props/registry are byte-identical to v1.1 schemas
+    # (Phase 11 doesn't touch them); already covered by pass (a) for minimal→current.
+    # Only asset.schema.json got additive extension in Phase 11.
+    for shape in ("asset",):
+        try:
+            schema = json.loads((SCHEMAS_DIR / f"{shape}.schema.json").read_text(encoding="utf-8"))
+            instance = json.loads((v11_dir / f"{shape}.json").read_text(encoding="utf-8"))
+        except (FileNotFoundError, json.JSONDecodeError) as e:
+            failures.append(f"forward v1.1→v1.2 {shape}: load failed: {e}")
+            continue
+        errs = list(Draft202012Validator(schema).iter_errors(instance))
+        if errs:
+            failures.append(
+                f"forward v1.1→v1.2 {shape}: v1.1 fixture rejected by v1.2 schema "
+                f"with {len(errs)} error(s); first: {errs[0].message}"
+            )
+
+    # (d) Phase 11 BACKWARD v1.2→v1.1: v1.2 fixture × recovered-v1.1 schema → ONLY additionalProperties errors
+    # Proves no breaking change to shared fields. The v1.2 fixture's only deltas vs a
+    # hypothetical v1.1 fixture should be the 2 new additive keys in asset.data
+    # (audio_semantic + speakers) — which v1.1's additionalProperties:false correctly
+    # rejects. Any OTHER error type = shared-field drift (breaking change).
+    v12_dir = REPO / "spec" / "fixtures" / "v1.2"
+    for shape in ("asset",):
+        v11_schema = _recover_v11_schema(shape)
+        if v11_schema is None:
+            failures.append(
+                f"backward v1.2→v1.1 {shape}: could not recover v1.1 schema "
+                f"(git show v1.1 + programmatic strip both failed)"
+            )
+            continue
+        try:
+            instance = json.loads((v12_dir / f"{shape}.json").read_text(encoding="utf-8"))
+        except (FileNotFoundError, json.JSONDecodeError) as e:
+            failures.append(f"backward v1.2→v1.1 {shape}: load failed: {e}")
+            continue
+        errs = list(Draft202012Validator(v11_schema).iter_errors(instance))
+        non_addprop = [e for e in errs if e.validator != "additionalProperties"]
+        if non_addprop:
+            failures.append(
+                f"backward v1.2→v1.1 {shape}: {len(non_addprop)} non-additionalProperties "
+                f"error(s) (shared fields drifted); first: {non_addprop[0].message}"
+            )
+
     if failures:
-        return (False, "v1↔v1.1 cross-version drift: " + "; ".join(failures))
+        return (False, "v1.0↔v1.1↔v1.2 cross-version drift: " + "; ".join(failures))
     return (
         True,
-        "v1↔v1.1 cross-version bidirectional compat proven "
+        "v1.0↔v1.1↔v1.2 cross-version bidirectional compat proven "
         "(forward 0 errors; backward 0 non-additive errors)",
     )
 
@@ -480,12 +575,55 @@ def _fixture_consistency_check() -> tuple:
                     if m.get("shot_id") not in shot_ids:
                         failures.append(f"registry cluster {cid} member shot_id {m.get('shot_id')} unknown")
 
+    # Phase 11 v1.2 fixture consistency: speakers.char_id ⊆ characters.id (Pitfall 17)
+    # Gated on v1.2 fixture dir existence. speakers.json + characters.json
+    # (byte-copied from v1.1) MUST exist; char_id non-null values MUST resolve
+    # to a confirmed characters.json#id. Also enforces spk_id ^spk_[0-9]{3}$
+    # pattern (T-07-01 mitigation) + turn.shot_id ⊆ shots.json#id.
+    v12_fix_dir = REPO / "spec" / "fixtures" / "v1.2"
+    if v12_fix_dir.is_dir():
+        spk_path = v12_fix_dir / "speakers.json"
+        if spk_path.is_file():
+            try:
+                speakers_data = json.loads(spk_path.read_text(encoding="utf-8"))
+            except json.JSONDecodeError as e:
+                failures.append(f"v1.2 speakers.json: invalid JSON: {e}")
+                speakers_data = None
+            if isinstance(speakers_data, dict):
+                # Reuse characters.json from v1.2 fixture (byte-copied from v1.1)
+                chars_v12_path = v12_fix_dir / "characters.json"
+                chars_v12_ids = set()
+                if chars_v12_path.is_file():
+                    try:
+                        for c in json.loads(chars_v12_path.read_text(encoding="utf-8")):
+                            if isinstance(c, dict):
+                                chars_v12_ids.add(c.get("id"))
+                    except (json.JSONDecodeError, TypeError):
+                        pass
+                for spk in speakers_data.get("speakers", []):
+                    sid = spk.get("spk_id")
+                    if not (isinstance(sid, str) and re.match(r"^spk_[0-9]{3}$", sid)):
+                        failures.append(f"v1.2 speakers.json: spk_id malformed: {sid!r}")
+                    cid = spk.get("char_id")
+                    if cid is not None and cid not in chars_v12_ids:
+                        failures.append(
+                            f"v1.2 speakers.json {sid}: char_id {cid!r} not in "
+                            f"v1.2 characters.json IDs (Pitfall 17 — speaker→character dangling)"
+                        )
+                    # turn.shot_id ⊆ shots.json#id (mirror registry member check)
+                    for turn in spk.get("turns", []) or []:
+                        if turn.get("shot_id") not in shot_ids:
+                            failures.append(
+                                f"v1.2 speakers.json {sid}: turn shot_id "
+                                f"{turn.get('shot_id')} unknown"
+                            )
+
     if failures:
         return (
             False,
             f"{len(failures)} fixture-consistency issue(s); first: {failures[0]}",
         )
-    return (True, "v1.1 fixture set cross-file IDs consistent (0 dangling)")
+    return (True, "v1.1 + v1.2 fixture set cross-file IDs consistent (0 dangling)")
 
 
 # === producer-side registry integrity (Phase 7) ========================
