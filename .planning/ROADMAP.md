@@ -110,7 +110,10 @@ Route-based audio semantic deepening: a third sibling of the v1.1 route-pattern 
   3. `speakers.json` validates against speakers.schema.json; `char_id` nullable (旁白/群杂 supported); non-null `char_id` MUST resolve to a confirmed `characters.json#id`
   4. Producer registry integrity assert extended additively from v1.1 `_producer_registry_integrity` (gated on file existence — no-op on v1.0/v1.1/route-down assets): catches speakers→characters dangling refs at producer time (Pitfall 17 second-line defense)
   5. End-to-end HITL round-trip proven on fixture: `audio_semantic.json` + `characters.json` → review HTML → `speaker-edits.json` → `speakers.json` (confirmed-only); DIA-02 diarization + DIA-03 speaker↔character HITL both exercised
-**Plans**: TBD
+**Plans**: 3 plans
+- [ ] 13-01-PLAN.md — registry/link_speakers.py confirmed-only apply gate (mirror apply_edits.py) + producer registry integrity additive extension (SPEAKER-03)
+- [ ] 13-02-PLAN.md — html/gen_speaker_review.py HITL review HTML (speaker cards sorted by shot_count + character dropdown filtered to confirmed + Export-edits + XSS hardening)
+- [ ] 13-03-PLAN.md — End-to-end HITL round-trip proof on v1.2 fixtures (SC#5) + idempotency + confirmed-only gate + XSS regression + producer integrity acceptance
 **UI hint**: yes
 
 ### Phase 14: Pipeline Integration
@@ -182,7 +185,7 @@ v1.2 phases execute in numeric order: 10 → 11 → 12 → 13 → 14 → 15 → 
 | 10. Risk-Validation Spike + Route Stub | v1.2 | 6/6 | Complete    | 2026-07-25 |
 | 11. Contract v1.2 | v1.2 | 3/3 | Complete    | 2026-07-25 |
 | 12. Producer Route Client | v1.2 | 2/2 | Complete    | 2026-07-25 |
-| 13. SPEAKER-01 Linkage HITL | v1.2 | 0/? | Not started | - |
+| 13. SPEAKER-01 Linkage HITL | v1.2 | 0/3 | Not started | - |
 | 14. Pipeline Integration | v1.2 | 0/? | Not started | - |
 | 15. Layered Reproduction Prompts | v1.2 | 0/? | Not started | - |
 | 16. HTML Gallery | v1.2 | 0/? | Not started | - |
