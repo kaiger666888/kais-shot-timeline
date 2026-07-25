@@ -1,0 +1,69 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://kais.shot-timeline/spec/schemas/speakers.schema.json",
+  "draft": "2020-12",
+  "title": "说话人注册表（声学 spk_NNN + 可选 char_NNN 映射）",
+  "description": "Canonical v1.2 speaker registry —— per-shot 声学说话人 turns 使用 ^spk_[0-9]{3}$ ID 空间（NEW，不复用 ^char_[0-9]{3}$ 以避免 identity-signal conflation）。Producer (Phase 13 registry/link_speakers.py after HITL apply) writes speakers.json；consumer (Phase 16 HTML gallery + Phase 17 canvas) reads it to render speaker→character chips。严格遵守 v1.0 的 strict-schema × lenient-consumer 原则：schema 校验时 additionalProperties:false 全程生效。v1.2 additive：缺席 on v1.0/v1.1 assets（byte-identical；asset.schema.json#data.speakers 是 OPTIONAL）。",
+  "$comment": "Pitfall 17 (prompt dangling) extension：spk_id 一旦 confirmed 即不可变（mirror char_/prop_ 约定；reviewer 可在 HITL 期间 merge/split 但 confirmed 后 ID 永不重用或重排版，保证 audio_semantic.json#dialogue.spk_id 引用永不悬空）。Pitfall 7 (review_state gating)：只有 'confirmed' 条目流向下游；'proposed' = diarize 草稿，'rejected' = 软删除（ID 保留以维护引用完整性）。char_id NULLABLE —— 旁白/群杂 speakers 无角色映射（DIA-03）；char_id 非 null 时 MUST 解析到 characters.json#id 中 review_state='confirmed' 的条目（verify_contract.py 的 _fixture_consistency_check 强制此不变量）。Phase 11 仅 DEFINES 契约；Phase 13 实现 HITL 流程产出 confirmed 条目。说话人身份是 ACOUSTIC（pyannote/WhisperX diarize embedding），区别于 visual 身份（DINOv2 char_ embedding）—— 两个 ID 空间刻意 disjoint（SPEAKER-01 Phase 13 核心目标）。",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["speakers"],
+  "properties": {
+    "speakers": {
+      "type": "array",
+      "description": "Per-speaker 条目。即使在最简 'route-down degrade' 场景也至少 emit 空 array（与 asset.schema.json#data.speakers 的 file-existence gating 解耦 —— 文件缺席则 asset.json 中 data.speakers 字段缺席；文件存在则 speakers[] 可为空 array 表示 diarize 跑过但零说话人）。",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["spk_id", "review_state"],
+        "properties": {
+          "spk_id": {
+            "type": "string",
+            "pattern": "^spk_[0-9]{3}$",
+            "description": "Immutable 说话人声学 ID（零填充 3 位）。Pattern 在 Phase 11 锁定；一旦 confirmed，永不重用或重排版（Pitfall 17）。刻意 disjoint from ^char_[0-9]{3}$（声学身份 ≠ 视觉身份）。"
+          },
+          "char_id": {
+            "type": ["string", "null"],
+            "pattern": "^char_[0-9]{3}$",
+            "description": "Linked character ID（NULLABLE for 旁白/群杂）。非 null 时 MUST 解析到 confirmed characters.json 条目（_fixture_consistency_check 强制）。SPEAKER-01 HITL link_speakers.py 写入此字段。"
+          },
+          "total_speech_sec": {
+            "type": "number",
+            "minimum": 0,
+            "description": "该说话人的累计发言时长（秒）。由 producer 聚合 turns[] 计算（advisory；下游可重算）。"
+          },
+          "review_state": {
+            "enum": ["proposed", "confirmed", "rejected"],
+            "description": "HITL 门控。只有 'confirmed' 流向下游渲染（Pitfall 7）。'proposed' = diarize 草稿；'rejected' = 软删除（ID 保留维护引用完整性）。"
+          },
+          "turns": {
+            "type": "array",
+            "description": "该说话人的发言区间列表（shot-level 定位）。可缺席 —— diarize 失败但 spk_id 已分配时仍 emit spk_id（advisory speaker inventory）。空 array 合法（确认存在但本资产无该 speaker 的 turn）。",
+            "items": {
+              "type": "object",
+              "additionalProperties": false,
+              "required": ["shot_id", "start_sec", "end_sec"],
+              "properties": {
+                "shot_id": {
+                  "type": "integer",
+                  "minimum": 1,
+                  "description": "Shot ID（交叉引用 shots.json#id）。"
+                },
+                "start_sec": {
+                  "type": "number",
+                  "minimum": 0,
+                  "description": "Turn 起始时间（秒，相对于音频起点）。"
+                },
+                "end_sec": {
+                  "type": "number",
+                  "minimum": 0,
+                  "description": "Turn 结束时间（秒）。"
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+}

@@ -1,0 +1,73 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://kais.shot-timeline/spec/schemas/speaker-edits.schema.json",
+  "draft": "2020-12",
+  "title": "Speaker HITL 审阅 edits (review HTML 产 → link_speakers.py 消费)",
+  "description": "Structured HITL review edits round-trip shape for speakers (merge_groups/splits/confirm_ids/reject_ids/link_mappings)。Producer by html/gen_speaker_review.py (Phase 13 SPEAKER-01 审阅界面导出按钮)；consumer by registry/link_speakers.py (Phase 13 draft+edits → canonical speakers.json)。严格遵守 v1.0 的 strict-schema × lenient-consumer 原则：schema 校验时 additionalProperties:false 全程生效。Line-for-line mirror of registry-edits.schema.json（substitutions: cluster_id → spk_id, ^(char|prop)_[0-9]{3}$ → ^spk_[0-9]{3}$；OMIT renames 和 type_overrides 因为 speakers 无 display name 也无 char/prop 类型前缀歧义；ADD link_mappings 作为 SPEAKER-01 spk→char 映射的核心字段）。",
+  "$comment": "CONTEXT Phase 11 lock（SPEAKER-01）：structured + deterministic + idempotent；free-form notes 显式 REJECTED。link_speakers.py 按固定顺序应用：merge → split → confirm/reject → link_mapping。同一 speaker-edits.json 重复 apply 产生 byte-identical speakers.json（Pitfall 5 idempotency guard：splits 新 ID 用 max_existing_N + 1 确定性分配，按 label 字典序绑定）。Pitfall 7 (confirmed-only gate downstream)：只有 confirm_ids 中的条目流向 canonical speakers.json；reject_ids 软删除（ID 保留以维护 audio_semantic.json#dialogue.spk_id 引用完整性）。Pitfall 17 (ID immutability)：spk_id 一旦 confirmed 即 forever reserved —— reviewer 后续可 merge 但旧 ID 永不重排版。T-07-01 (Tampering)：spk_id/char_id pattern (^spk_[0-9]{3}$ / ^char_[0-9]{3}$) 拒绝任何 path-traversal 或畸形 ID。T-07-02 (Tampering)：link_speakers.py MUST 在 apply 前 Draft202012Validator 预校验本 schema（Phase 13 强制）。所有字段可选 —— 空 edits {} schema-valid（操作员审阅但无改动的情况）。link_mappings 与 confirm_ids 刻意 distinct：links 是 spk→char 的 N:M 映射（一个 speaker 可链到一个 character；多个 speakers 可链到同一 character 如多声优同一角色），confirm_ids 是 speaker 自身的审阅状态切换（proposed → confirmed）；两者正交，不能合并。",
+  "type": "object",
+  "additionalProperties": false,
+  "properties": {
+    "merge_groups": {
+      "type": "array",
+      "description": "说话人合并：每组 spk_id 合并为一个（首个 ID 作 canonical，其余 members 并入）。声学 embedding 相似度跨过 auto_merge 阈值时由 diarize emit，HITL 可调整。link_speakers 应用顺序第 1 步。",
+      "items": {
+        "type": "array",
+        "items": {"type": "string", "pattern": "^spk_[0-9]{3}$"},
+        "minItems": 2
+      }
+    },
+    "splits": {
+      "type": "object",
+      "description": "说话人拆分（turn 分区）：key=源 spk_id，value=子说话人定义数组（label + member_indexes）。当 diarize 把多个真实说话人误聚为一类时使用。link_speakers 校验完整分区：未分配 / 重叠 / 越界 member_index 一律 FAIL（不静默丢弃/复制）。应用顺序第 2 步，按 label 字典序确定性分配新 spk_id（max_existing_N + 1）。",
+      "additionalProperties": false,
+      "patternProperties": {
+        "^spk_[0-9]{3}$": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["label", "member_indexes"],
+            "properties": {
+              "label": {
+                "type": "string",
+                "minLength": 1,
+                "description": "子说话人展示 label（如 '说话人A-男' / '说话人A-女'，也作 name_hint 供操作员审计）。"
+              },
+              "member_indexes": {
+                "type": "array",
+                "items": {"type": "integer", "minimum": 0},
+                "minItems": 1,
+                "uniqueItems": true,
+                "description": "源 speaker.turns[] 的 0-based 索引列表（分区，非克隆）。所有 child 的 member_indexes 并集必须 == {0..len(turns)-1}（完整分区）。"
+              }
+            }
+          },
+          "minItems": 2
+        }
+      }
+    },
+    "confirm_ids": {
+      "type": "array",
+      "description": "确认条目（→ review_state='confirmed'，流向 canonical speakers.json）。应用顺序第 3a 步。",
+      "items": {"type": "string", "pattern": "^spk_[0-9]{3}$"}
+    },
+    "reject_ids": {
+      "type": "array",
+      "description": "拒绝条目（→ review_state='rejected'，软删除，不流向 canonical 但 spk_id 保留以维护 audio_semantic.json#dialogue.spk_id 引用完整性）。应用顺序第 3b 步。",
+      "items": {"type": "string", "pattern": "^spk_[0-9]{3}$"}
+    },
+    "link_mappings": {
+      "type": "object",
+      "description": "SPEAKER-01 核心字段：spk_id → char_id 映射。每条 entry 表示 '此说话人声学身份对应此 character 视觉身份'。与 confirm_ids 正交：一个 speaker 可被 confirm 同时 link_mapping 到一个 character；多个 speakers 可 link_mapping 到同一 character（如多声优饰同一角色）。link_speakers 在 confirm/reject 之后应用 link_mappings：把每个 spk_id 的 char_id 字段写入 speakers.json。key 必须匹配 ^spk_[0-9]{3}$（spk_id），value 必须匹配 ^char_[0-9]{3}$（char_id）—— 两个 ID 空间 disjoint，pattern 各自锁定。link_mappings 中出现的 spk_id 应已在 confirm_ids 中（否则 link_speakers 校验失败 —— 不能给 rejected speaker 链接 character）。",
+      "additionalProperties": false,
+      "patternProperties": {
+        "^spk_[0-9]{3}$": {"type": "string", "pattern": "^char_[0-9]{3}$"}
+      }
+    },
+    "review_notes": {
+      "type": "string",
+      "description": "可选自由文本审阅备注（link_speakers 忽略；审计用）。T-07-03 (Repudiation) 镜像：提供审计 trail；无加密签名（YAGNI —— 单操作员本地工具）。"
+    }
+  }
+}

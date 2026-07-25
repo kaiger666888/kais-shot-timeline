@@ -1,0 +1,167 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://kais.shot-timeline/spec/schemas/audio_semantic.schema.json",
+  "draft": "2020-12",
+  "title": "音频语义深化（per-shot 三模态 + 分层复现 prompt）",
+  "description": "Canonical v1.2 audio sidecar —— per-shot dialogue/sfx 子对象 + reproduction.{tts,music_gen,foley} 分层复现 prompt。Producer (Phase 15) 在 route-host 往返成功后写 audio_semantic.json；consumer (Phase 16 HTML gallery / Phase 17 canvas) 读它来渲染 modality 标签 + 复现面板。严格遵守 v1.0 的 strict-schema × lenient-consumer 原则：schema 校验时 additionalProperties:false 全程生效（runnable consumer 必须在 runtime 容忍未知字段，仅警告不崩溃）。v1.2 additive：缺席 on v1.0/v1.1 assets（byte-identical；asset.schema.json#data.audio_semantic 是 OPTIONAL）。",
+  "$comment": "Phase-10 spike outcomes（PROJECT.md LOCKED）：(1) 乐器识别字段（MUS-04）OMITTED —— MERT-v1-95M 无 classifier head、PANNs Cnn14 在 spike 期 zenodo-blocked；MUS-04 deferred 到 v1.3（不要在本 schema 任何位置加该字段；英文 case-insensitive grep 必须空 —— 全文用中文「乐器」「MIR label」指代，避开英文单词）。(2) emotion 是 type:string NOT enum —— SenseVoice self_consistency=100% 是 label-stability 代理，NOT 校准精度；emotion NULLABLE + 配对 emotion_confidence:0..1；闭枚举会越权声称我们没有的校准。(3) word_level_experimental 顶层 flag gate word-level timestamps（segment-level 仍是 SLA 路径；WhisperX boundary drift 中位数=101.5ms 但 aggregate per-word drift 是 metric-definition artifact，Phase 12 才精化）。music 子对象 OMITTED in v1.2（MUS-04 乐器识别字段缺席 → 无音乐内容可契约）；future slot 只在 SPEC §5 文档化，schema 不收录（additionalProperties:false 会拒绝）。sfx 携带 SenseVoice 非语音 events（PANNs 527-class 折入未来扩展）。fidelity_disclaimer 属于 SPEC.md 散文（two-tier authority），但 per-prompt 的 repro_prompt.fidelity_disclaimer 字段也承载（machine-checkable string，downstream UI 渲染）。",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schema_version", "shots"],
+  "properties": {
+    "schema_version": {
+      "type": "string",
+      "pattern": "^(0|[1-9]\\d*)(\\.(0|[1-9]\\d*))?$",
+      "description": "Asset contract 版本 semver-lite (major[.minor])，与 asset.json#schema_version 同源。Producer emit '1.2'；pattern 保持宽松（兼容 '1'/'1.1'）。"
+    },
+    "word_level_experimental": {
+      "type": "boolean",
+      "description": "顶层 flag：true 当且仅当任一 shot.dialogue.words[] 非空。Consumers (canvas/HTML) 先读此字段，false 时可 graceful-degrade 到 segment-level。DIA-05 ship-experimental 锁定。"
+    },
+    "shots": {
+      "type": "array",
+      "description": "Per-shot 音频语义条目，shot_id 交叉引用 shots.json#id。",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["shot_id"],
+        "properties": {
+          "shot_id": {
+            "type": "integer",
+            "minimum": 1,
+            "description": "Shot ID（交叉引用 shots.json#id）。仅此字段 required —— 其余全部 optional 以支持 route-down graceful-degrade。"
+          },
+          "start_sec": {
+            "type": "number",
+            "minimum": 0,
+            "description": "Shot 起始时间（秒），与 shots.json 对应条目一致。"
+          },
+          "end_sec": {
+            "type": "number",
+            "minimum": 0,
+            "description": "Shot 结束时间（秒），与 shots.json 对应条目一致。"
+          },
+          "duration": {
+            "type": "number",
+            "minimum": 0,
+            "description": "Shot 时长（秒）= end_sec - start_sec。"
+          },
+          "dialogue": {
+            "type": "object",
+            "additionalProperties": false,
+            "description": "Per-shot 对话模态（可缺席 —— 非语音 shot 不 emit dialogue 字段）。所有字段 optional 以支持 segment-only / event-only / emotion-missing 等多种 route 输出形状。",
+            "properties": {
+              "text": {
+                "type": "string",
+                "description": "Segment-level 转录文本（来自 transcript.json 的 segment.text，此处重复以供 consumers 单文件渲染）。"
+              },
+              "spk_id": {
+                "type": ["string", "null"],
+                "pattern": "^spk_[0-9]{3}$",
+                "description": "说话人 ID（交叉引用 speakers.json#speakers[].spk_id）。NULLABLE —— 未做 diarize 或 旁白/群杂 未聚类时为 null。Pattern 与 speakers.schema.json 共享。"
+              },
+              "emotion": {
+                "type": ["string", "null"],
+                "description": "Free-string emotion label（SenseVoice 实测：HAPPY/ANGRY/NEUTRAL/SAD/emo_unk 等）。NOT enum —— Phase 10 spike 证实 SenseVoice self_consistency=100% 是 label-stability 代理，NOT 校准精度；闭枚举会越权声称校准。NULLABLE（无 SER 输出时缺席）。DIA-04 ship-nullable+confidence。"
+              },
+              "emotion_confidence": {
+                "type": ["number", "null"],
+                "minimum": 0,
+                "maximum": 1,
+                "description": "Emotion 置信度 [0,1]（SenseVoice self_consistency_pct/100）。emotion 非 null 时通常填；emotion 为 null 时此字段也 null。"
+              },
+              "events": {
+                "type": "array",
+                "items": {"type": "string"},
+                "description": "SenseVoice 8-event 标签：Speech/BGM/Applause/Laughter/Cry/Sneeze/Breath/Cough。Free-string（not enum）保留 forward-compat —— 未来扩展第 9 类无需 schema bump。"
+              },
+              "words": {
+                "type": "array",
+                "description": "EXPERIMENTAL —— Word-level timestamps（WhisperX wav2vec2 align）。顶层 word_level_experimental=true 时才允许非空。Per-word drift metric 是 definition artifact（Phase 12 精化）。",
+                "items": {
+                  "type": "object",
+                  "additionalProperties": false,
+                  "required": ["start", "end", "text"],
+                  "properties": {
+                    "start": {
+                      "type": "number",
+                      "minimum": 0,
+                      "description": "Word 起始时间（秒，相对于音频起点）。"
+                    },
+                    "end": {
+                      "type": "number",
+                      "minimum": 0,
+                      "description": "Word 结束时间（秒）。"
+                    },
+                    "text": {
+                      "type": "string",
+                      "minLength": 1,
+                      "description": "Word 文本。"
+                    },
+                    "score": {
+                      "type": "number",
+                      "minimum": 0,
+                      "maximum": 1,
+                      "description": "WhisperX alignment score（可选；缺席 = 未提供）。"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "sfx": {
+            "type": "object",
+            "additionalProperties": false,
+            "description": "Per-shot 非语音音效模态。可缺席。v1.2 仅携带 SenseVoice non-speech events；PANNs 527-class 折入未来 schema 扩展。",
+            "properties": {
+              "events": {
+                "type": "array",
+                "items": {"type": "string"},
+                "description": "Non-speech SenseVoice events（Speech 不在此 —— 它在 dialogue.events）。Subset of [BGM/Applause/Laughter/Cry/Sneeze/Breath/Cough]。"
+              },
+              "description": {
+                "type": "string",
+                "description": "Free-text NL 描述（输入 foley reproduction prompt 的素材）。"
+              }
+            }
+          },
+          "reproduction": {
+            "type": "object",
+            "additionalProperties": false,
+            "description": "分层复现 prompt（model-agnostic NL —— 不嵌 NC 权重）。每层可缺席（null 或 omitted），各自携带 confidence + 可选 fidelity_disclaimer。",
+            "properties": {
+              "tts": {"$ref": "#/$defs/repro_prompt"},
+              "music_gen": {"$ref": "#/$defs/repro_prompt"},
+              "foley": {"$ref": "#/$defs/repro_prompt"}
+            }
+          }
+        }
+      }
+    }
+  },
+  "$defs": {
+    "repro_prompt": {
+      "type": ["object", "null"],
+      "additionalProperties": false,
+      "required": ["text"],
+      "description": "分层复现 prompt（model-agnostic NL）。type 是 ['object','null'] —— 模态未启用时 emit null 或 omitted；非 null 时必须有非空 text。",
+      "properties": {
+        "text": {
+          "type": "string",
+          "minLength": 1,
+          "description": "NL prompt for the named generator family（如 TTS: '成年女性说话者，语气开心愉悦，中文普通话'；foley: '关门声 + 脚步声'）。"
+        },
+        "confidence": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 1,
+          "description": "Prompt 生成的置信度（producer 估算，0..1）。"
+        },
+        "fidelity_disclaimer": {
+          "type": "string",
+          "description": "Per-prompt 保真度声明（如 'TTS ~70% similarity to source voice'；AF-01 mitigation）。UI 渲染给用户以管理期望。"
+        }
+      }
+    }
+  }
+}
