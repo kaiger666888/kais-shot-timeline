@@ -50,9 +50,10 @@ PROPS_SCHEMA = REPO / "spec" / "schemas" / "props.schema.json"
 
 # ShotTimelineAsset 契约版本（单一真源）。schema_version pattern 在 spec/schemas/
 # asset.schema.json 里保持宽松（接受 "1"/"1.1"/"2.0"），但实际 emit 的字面量在这里锁死。
-# v1.1 = 纯增量（新增 optional characters/props 数据文件 + 丰富 prompts schema）。改这里
-# 即改全资产 emit；Pitfall 12（schema 变更后忘 bump 版本号）因此结构上不可能。
-SCHEMA_VERSION = "1.1"
+# v1.2 = 纯增量（新增 optional audio_semantic/speakers 数据文件；emotion/word-level/events
+# 字段在 audio_semantic.schema.json）。改这里即改全资产 emit；Pitfall 12（schema 变更后
+# 忘 bump 版本号）因此结构上不可能。
+SCHEMA_VERSION = "1.2"
 
 
 def _probe_duration(path: str) -> float:
@@ -315,6 +316,17 @@ def build_asset_dict(work_dir: str, video_path: str,
         data_block["characters"] = "characters.json"
     if os.path.isfile(props_path):
         data_block["props"] = "props.json"
+
+    # Phase 11: CONDITIONAL audio_semantic/speakers emission (CONTRACT-05 graceful-degrade).
+    # 仅当 canonical 文件存在才 emit —— route-down degrade / v1.0/v1.1 assets 保持
+    # byte-identical（字段 OMITTED；schema optional）。audio_semantic.json 由 Phase 15
+    # 路由往返后产出；speakers.json 由 Phase 13 HITL link_speakers 产出。
+    audio_semantic_path = os.path.join(work_dir, "audio_semantic.json")
+    speakers_path = os.path.join(work_dir, "speakers.json")
+    if os.path.isfile(audio_semantic_path):
+        data_block["audio_semantic"] = "audio_semantic.json"
+    if os.path.isfile(speakers_path):
+        data_block["speakers"] = "speakers.json"
 
     # media.characters[]/media.props[] —— 枚举实际存在的 PNG（canonical 命名）。
     # glob 只返回存在的文件，所以 list 内不会有 dangling path。Pre-write assert
