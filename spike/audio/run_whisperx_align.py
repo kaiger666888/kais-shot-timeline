@@ -136,14 +136,25 @@ _ERROR_MARKER = "[whisperx_align]"
 # 系统 torch 探针（audit trail）
 # ============================================================================
 def probe_system_torch() -> str:
-    """通过系统 python3 探测系统 torch 版本（不应被 venv 安装污染）。
+    """通过**绝对路径** ``/usr/bin/python3`` 探测系统 torch 版本。
 
-    Pitfall 1 canary：venv 安装不应改写系统 torch。本函数在脚本运行（venv python）
-    时，通过 subprocess 调用系统 ``python3``，验证系统 torch 仍是 2.6.0+cu124。
+    Pitfall 1 canary：venv 安装不应改写系统 torch。本脚本自身在 venv python
+    下运行（见 module docstring），因此 **必须用绝对路径** ``/usr/bin/python3``
+    而非 bare ``python3``——后者在 venv 激活时会被 PATH 影子化、解析回 venv
+    自己的 python，导致 system_torch 与 venv_torch 测到的是同一个解释器，
+    canary（``system_torch == venv_torch``）变成 trivially true，无法检出
+    系统栈被污染的失败模式（WR-01）。
+
+    Contrast: ``probe_venv_torch`` 走 ``import torch`` 即 ``sys.executable``
+    （venv 内），那是 venv 自身 torch；本函数故意走系统解释器以做**独立**对照。
     """
     try:
+        # /usr/bin/python3 (absolute) — defeats venv PATH shadowing (WR-01).
+        # Do NOT change to bare "python3": this script runs under
+        # /tmp/whisperx-spike-venv/bin/python, so bare python3 would resolve
+        # back to the venv and the canary would measure the same interpreter twice.
         out = subprocess.check_output(
-            ["python3", "-c", "import torch; print(torch.__version__)"],
+            ["/usr/bin/python3", "-c", "import torch; print(torch.__version__)"],
             stderr=subprocess.DEVNULL,
             timeout=15,
         ).decode().strip()
