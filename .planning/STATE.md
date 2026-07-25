@@ -3,14 +3,14 @@ gsd_state_version: 1.0
 milestone: v1.2
 milestone_name: 音频语义深化 — Audio Semantic Deepening
 status: executing
-stopped_at: ""v1.2 roadmap created — 8 phases (10-17), 33/33 requirements mapped, risk-validation-first sequencing locked. Phase 10 = model spike + route stub (no contract changes); Phase 11 = contract v1.2 lock; Phases 12-16 = producer/pipeline/prompts/HTML; Phase 17 = canvas consumer (deferrable). BLOCKER 1 (CUDA 12.8) + Chinese SER + folk-instrument recognition all parked as Phase 10 spike questions. Ready for /gsd:plan-phase 10.""
-last_updated: "2026-07-25T10:57:31.909Z"
+stopped_at: ""Phase 10 spike complete — 4 outcomes locked in PROJECT.md Key Decisions (lines 122-126); spike report at .planning/research/audio-spike-report.md (254 lines, 4 sections + methodology + recommendations + reproducibility); BLOCKER 1 (CUDA) RESOLVED stay-on-12.4; Chinese SER + polyphonic MIR risks RESOLVED. Ready for /gsd:verify-work then /gsd:plan-phase 11.""
+last_updated: "2026-07-25T13:35:00.000Z"
 last_activity: 2026-07-25
 progress:
   total_phases: 8
   completed_phases: 0
   total_plans: 6
-  completed_plans: 2
+  completed_plans: 3
   percent: 0
 ---
 
@@ -25,12 +25,12 @@ See: .planning/PROJECT.md (updated 2026-07-25)
 
 ## Current Position
 
-Phase: 10 (Risk-Validation Spike + Route Stub) — EXECUTING
-Plan: 3 of 6
-Status: Ready to execute
+Phase: 10 (Risk-Validation Spike + Route Stub) — PLAN 06 COMPLETE (Phase 10 spike closed)
+Plan: 6 of 6 (Phase 10 plans 01-06 all done)
+Status: Phase 10 spike complete; ready for `/gsd:verify-work` then `/gsd:plan-phase 11`
 Last activity: 2026-07-25
 
-Progress: [███░░░░░░░] 33%
+Progress: [█████░░░░░] 50%
 
 ## Performance Metrics
 
@@ -55,6 +55,7 @@ Progress: [███░░░░░░░] 33%
 *v1.2 metrics populate as plans complete*
 | Phase 10 P01 | 7m20s | 3 tasks | 7 files |
 | Phase 10 P02 | 38 | 2 tasks | 3 files |
+| Phase 10 P06 | ~25min | 3 tasks (1 checkpoint pre-resolved) | 4 files |
 
 ## Accumulated Context
 
@@ -87,18 +88,18 @@ Carried from v1.0/v1.1 (still load-bearing):
 
 ### Pending Todos
 
-- Phase 10 must produce a spike report (`.planning/research/audio-spike-report.md` or similar) covering: Chinese SER macro-F1, instrument recognition mAP (incl. folk), WhisperX word drift, CUDA 12.8 compatibility. Outcomes locked in PROJECT.md Key Decisions.
+- ✅ **Phase 10 spike report DONE** — `.planning/research/audio-spike-report.md` (254 lines, 4 sections + methodology + recommendations + reproducibility) covers Chinese SER (DIA-04), MIR head-to-head (MUS-04), WhisperX drift (DIA-05), CUDA path. 4 outcomes locked in PROJECT.md Key Decisions (lines 122-126).
 - CONTRACT-03 `SCHEMA_VERSION="1.2"` single-source must remain producer-locked (export_asset.py:55) — do not duplicate literal.
 
 ### Blockers/Concerns
 
-- **BLOCKER 1 — CUDA 12.8 upgrade (route host)**: WhisperX PyPI hard-requires 12.8; project runtime is `torch 2.6.0+cu124`. Dissolvable in Phase 10: drop WhisperX → stay 12.4 → use faster-whisper (existing) + standalone pyannote + SenseVoice + MERT/librosa. Cost: lose word-level alignment (DIA-05), already flagged experimental/unreliable-on-Chinese. Phase 10 resolves.
+- ✅ **BLOCKER 1 — CUDA 12.8 upgrade (route host): RESOLVED stay-on-12.4** (Phase 10 Plan 06). WhisperX 3.8.6 metadata declares `torch~=2.8.0` but runs cleanly on force-pinned cu124 stack (torch 2.6.0+cu124) in an isolated venv; A1 CPU mode + full cuda:0 run both OK; system torch uncontaminated (3-point canary). Route host stays at cu124; WhisperX runs in isolated venv with cu124 force-pin (Plan 10-05 pattern becomes production); CUDA 12.8 upgrade deferred indefinitely. Evidence: `.planning/research/audio-spike-report.md#section-3-whisperx-drift--dia-05-evidence--cuda-path`.
 - **BLOCKER 2 — Commercial-use license (dissolved)**: no open-weights commercial music-gen/sfx model exists mid-2026. Dissolved by locked decision #7 (model-agnostic NL prompts).
-- **Chinese SER cross-domain risk (highest ML unknown)**: RAVDESS English-performance-trained → Chinese animation dialogue. Phase 10 spike validates; DIA-04 conditional ship/defer hinges on macro-F1 ≥50%/<40%.
-- **Polyphonic instrument recognition on Chinese folk**: no MERT-vs-PANNs benchmark on erhu/pipa/guzheng/dizi. Phase 10 produces the benchmark; MUS-04 conditional ship/defer hinges on mAP ≥0.30/<0.20.
+- ✅ **Chinese SER cross-domain risk: RESOLVED → ship-nullable+confidence** (Phase 10 Plan 06). SenseVoice self_consistency_pct=100.0 (label-stability proxy, NOT accuracy); qualitative sanity coherent; no rigorous macro-F1 (annotation deferred). `emotion` field NULLABLE + confidence populated + fidelity_disclaimer. Evidence: `.planning/research/audio-spike-report.md#section-1-ser-sensevoice--dia-04-evidence`.
+- ✅ **Polyphonic instrument recognition on Chinese folk: RESOLVED → defer MUS-04 to v1.3** (Phase 10 Plan 06). MERT-v1-95M has NO instrument classifier head — only K-means embedding clusters (5) correlating with shot DURATION, NOT instruments. PANNs Cnn14 BLOCKED (zenodo.org download stalled; hf-mirror `.pth` conversion deferred). NO instrument predictions produced. `instruments` field omitted in v1.2 schema. Evidence: `.planning/research/audio-spike-report.md#section-2-mir-head-to-head-mert-vs-panns--mus-04-evidence`.
 - **Cross-repo branch merge**: kais-aigc-platform branches `feat/shot-geometry-nodes` + `feat/shot-analysis-route` still unmerged from v1.1; Phase 12 end-to-end and Phase 17 consumer work blocked until v1.1 routes land (graceful-degrade-must-be-proven stays the contract).
 - **Cross-repo coordination cost (Phase 17)**: ~30% overhead measured in v1.0/v1.1 for consumer-side work in kais-aigc-platform `feat/canvas-asset-collection` worktree at `/data/workspace/kst-canvas-consumer`.
-- **`audio-analysis` route does not yet exist**: Only `shot-analysis` exists today. Phase 10 includes the stub; Phase 12 producer-side can proceed against the stub; live ML round-trip becomes post-merge smoke check (mirror v1.1 Phase 7 CAST-01..04/08 deferred pattern).
+- **`audio-analysis` route does not yet exist (as live ML)**: ROUTE-01 stub landed Plan 10-02 (envelope byte-identical to shot-analysis); live ML (SenseVoice/WhisperX/MERT/PANNs loaded behind the route) deferred to post-merge smoke check (mirror v1.1 Phase 7 CAST-01..04/08 deferred pattern).
 
 ### Quick Tasks Completed
 
@@ -124,15 +125,20 @@ Items acknowledged and carried forward from v1.0 + v1.1 Out-of-Scope + v1.2 plan
 | v1.2 (Future) | MUS-07: BGM staff/MIDI transcription | Deferred — AF-10 boundary | 2026-07-25 |
 | v1.2 (Future) | full V/A regression (valence mature from experimental) | Deferred — v1.3 | 2026-07-25 |
 | v1.2 (Future) | cross-video audio continuity (same BGM theme / same speaker across videos) | Deferred — v2 | 2026-07-25 |
-| v1.2 (CONDITIONAL) | DIA-04 dialogue emotion / DIA-05 word-level / MUS-04 instruments | Pending Phase 10 spike thresholds — may defer to v1.3 | 2026-07-25 |
+| v1.2 (CONDITIONAL) | DIA-04 dialogue emotion / DIA-05 word-level / MUS-04 instruments | Phase 10 spike resolved: DIA-04 ship-nullable+confidence; DIA-05 ship-experimental; MUS-04 defer to v1.3 | 2026-07-25 |
+| v1.2 (Phase 10 spike) | MUS-04 instruments field in `audio_semantic.json` schema | Deferred — MERT has no classifier head; PANNs Cnn14 zenodo-blocked at spike time; route host needs REAL MIR classifier (Phase 12+ / v1.3) | 2026-07-25 |
+| v1.2 (Phase 10 spike) | Rigorous DIA-04 macro-F1 (developer-annotated 30-segment ground truth) | Deferred — methodology_b ~1hr labor deferred; ship on calibrated estimate (self-consistency + qualitative sanity) Phase 12+ | 2026-07-25 |
+| v1.2 (Phase 10 spike) | WhisperX drift metric refinement (boundary drift, not per-word-from-segment-start) + multi-episode validation | Deferred — Phase 12 once route host is up | 2026-07-25 |
+| v1.2 (Phase 10 spike) | PANNs Cnn14 head-to-head vs MERT (zenodo `Cnn14_mAP=0.431.pth` download) | Deferred — Phase 12+ route-host selection; hf-mirror `nicofarr/panns_Cnn14` safetensors→pth conversion non-trivial | 2026-07-25 |
 
 ## Session Continuity
 
-Last session: 2026-07-25T10:57:22.716Z
-Stopped at: "v1.2 roadmap created — 8 phases (10-17), 33/33 requirements mapped, risk-validation-first sequencing locked. Phase 10 = model spike + route stub (no contract changes); Phase 11 = contract v1.2 lock; Phases 12-16 = producer/pipeline/prompts/HTML; Phase 17 = canvas consumer (deferrable). BLOCKER 1 (CUDA 12.8) + Chinese SER + folk-instrument recognition all parked as Phase 10 spike questions. Ready for /gsd:plan-phase 10."
+Last session: 2026-07-25T13:35:00.000Z
+Stopped at: "Phase 10 spike complete — 4 locked outcomes in PROJECT.md Key Decisions (lines 122-126: models_used per modality / CUDA stay-on-12.4 / DIA-04 ship-nullable+confidence / MUS-04 defer-v1.3 / DIA-05 ship-experimental). Spike report at `.planning/research/audio-spike-report.md` (254 lines). BLOCKER 1 RESOLVED stay-on-12.4. Phase 10 plans 01-06 all done. Ready for /gsd:verify-work then /gsd:plan-phase 11 (Contract v1.2 lock)."
 Resume file: None
 
 ## Operator Next Steps
 
-- Run `/gsd:plan-phase 10` to plan the risk-validation spike + route stub (this phase IS the research — expect a `--research-phase` flag)
-- Phase 10 must produce empirical evidence before Phase 11 contract locks (non-negotiable invariant #1)
+- Run `/gsd:verify-work` against Phase 10 (5 ROADMAP SC all empirically addressed)
+- Then run `/gsd:plan-phase 11` to lock the v1.2 contract (Phase 11 must respect: DIA-04 emotion field NULLABLE + confidence + fidelity_disclaimer; MUS-04 instruments field OMITTED; DIA-05 word-level timestamps EXPERIMENTAL with metric-definition caveat; WhisperX runs in isolated cu124 venv)
+- Phase 11 contract lock is now unblocked — empirical basis delivered by Phase 10 spike (non-negotiable invariant #1 satisfied)
