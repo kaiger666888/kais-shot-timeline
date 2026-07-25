@@ -27,8 +27,8 @@
 
 ### ROUTE — kais-aigc-platform 引擎（跨仓库）
 - [x] **ROUTE-01**: `audio-analysis` 路由 stub（envelope 镜像 shot-analysis `{"code":200,"data":{...}}`）—— 让 producer 客户端有 target URL + envelope，即使模型未加载也能集成测试
-- [ ] **ROUTE-02**: 路由托管 SenseVoice (SER+events) + WhisperX (transcribe+align+diarize) + MERT/librosa/PANNs (MIR)；**CUDA 12.8 升级是 Phase 1 前置**（WhisperX 硬需）
-- [ ] **ROUTE-03**: 路由 request/response 契约文档化（per-shot 输入：vocals→SER/diarize，drums+bass+other→MIR；输出：dialogue/music/sfx 子对象）
+- [x] **ROUTE-02**: 路由托管 SenseVoice (SER+events) + WhisperX (transcribe+align+diarize) + MERT/librosa/PANNs (MIR)；**CUDA 12.8 升级是 Phase 1 前置**（WhisperX 硬需）
+- [x] **ROUTE-03**: 路由 request/response 契约文档化（per-shot 输入：vocals→SER/diarize，drums+bass+other→MIR；输出：dialogue/music/sfx 子对象）
 
 ### DIALOGUE — 对白支路
 - [ ] **DIA-01**: 段级对白（shot 对齐，enrich 现有 transcript 语义层）— *table-stakes*
@@ -62,7 +62,7 @@
 
 ### PIPELINE — 流水线集成
 - [ ] **PIPE-01**: `step_audio_semantic` 流水线 slot 7（step_reid 与 step_timeline 之间）；`[N/8]→[N/9]` 重编号（17 banner instances）；CLI flags (`--skip-audio-semantic`/`--audio-url`/`--audio-timeout`/`--offline`)；`--force` 缓存清单扩展
-- [ ] **PIPE-02**: per-shot cache（4-tuple key: video_content_hash/route_name/route_version/+shot_id 隐含于文件名）+ poisoned-cache invalidation + read-merge-write `[audio]` warnings sidecar
+- [x] **PIPE-02**: per-shot cache（4-tuple key: video_content_hash/route_name/route_version/+shot_id 隐含于文件名）+ poisoned-cache invalidation + read-merge-write `[audio]` warnings sidecar
 - [ ] **PIPE-03**: `scripts/verify_phase_audio_smoke.py` 5-scenario 回归（route-up/down/cache-hit-offline/条件字段-defer/stub-only）
 
 ### PRESENT — shot-timeline HTML 展示
@@ -104,8 +104,8 @@ Each v1.2 REQ-ID maps to exactly one phase. Coverage: 33/33 (100%).
 | CONTRACT-04 | Phase 11 (Contract v1.2) | Complete |
 | CONTRACT-05 | Phase 11 (Contract v1.2) | Complete |
 | ROUTE-01 | Phase 10 (Risk-Validation Spike + Route Stub) | Complete |
-| ROUTE-02 | Phase 12 (Producer Route Client) | Pending |
-| ROUTE-03 | Phase 12 (Producer Route Client) | Pending |
+| ROUTE-02 | Phase 12 (Producer Route Client) | Complete |
+| ROUTE-03 | Phase 12 (Producer Route Client) | Complete |
 | DIA-01 | Phase 15 (Layered Reproduction Prompts) | Pending |
 | DIA-02 | Phase 13 (SPEAKER-01 Linkage HITL) | Pending |
 | DIA-03 | Phase 13 (SPEAKER-01 Linkage HITL) | Pending |
@@ -127,7 +127,7 @@ Each v1.2 REQ-ID maps to exactly one phase. Coverage: 33/33 (100%).
 | PROMPT-02 | Phase 15 (Layered Reproduction Prompts) | Pending |
 | PROMPT-03 | Phase 15 (Layered Reproduction Prompts) | Pending |
 | PIPE-01 | Phase 14 (Pipeline Integration) | Pending |
-| PIPE-02 | Phase 12 (Producer Route Client) | Pending |
+| PIPE-02 | Phase 12 (Producer Route Client) | Complete |
 | PIPE-03 | Phase 14 (Pipeline Integration) | Pending |
 | PRESENT-01 | Phase 16 (HTML Gallery) | Pending |
 | CONSUMER-01 | Phase 17 (Canvas Consumer) | Pending |
