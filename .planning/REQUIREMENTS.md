@@ -94,8 +94,54 @@
 
 ## Traceability
 
-(filled by roadmap — each REQ-ID → exactly one phase)
+Each v1.2 REQ-ID maps to exactly one phase. Coverage: 33/33 (100%).
 
-| REQ-ID | Phase |
-|--------|-------|
-| _to be populated by gsd-roadmapper_ | |
+| REQ-ID | Phase | Status |
+|--------|-------|--------|
+| CONTRACT-01 | Phase 11 (Contract v1.2) | Pending |
+| CONTRACT-02 | Phase 11 (Contract v1.2) | Pending |
+| CONTRACT-03 | Phase 11 (Contract v1.2) | Pending |
+| CONTRACT-04 | Phase 11 (Contract v1.2) | Pending |
+| CONTRACT-05 | Phase 11 (Contract v1.2) | Pending |
+| ROUTE-01 | Phase 10 (Risk-Validation Spike + Route Stub) | Pending |
+| ROUTE-02 | Phase 12 (Producer Route Client) | Pending |
+| ROUTE-03 | Phase 12 (Producer Route Client) | Pending |
+| DIA-01 | Phase 15 (Layered Reproduction Prompts) | Pending |
+| DIA-02 | Phase 13 (SPEAKER-01 Linkage HITL) | Pending |
+| DIA-03 | Phase 13 (SPEAKER-01 Linkage HITL) | Pending |
+| DIA-04 | Phase 15 (Layered Reproduction Prompts) — *CONDITIONAL on Phase 10 SER macro-F1* | Pending |
+| DIA-05 | Phase 15 (Layered Reproduction Prompts) — *CONDITIONAL on Phase 10 WhisperX drift* | Pending |
+| SPEAKER-01 | Phase 13 (SPEAKER-01 Linkage HITL) | Pending |
+| SPEAKER-02 | Phase 13 (SPEAKER-01 Linkage HITL) | Pending |
+| SPEAKER-03 | Phase 13 (SPEAKER-01 Linkage HITL) | Pending |
+| MUS-01 | Phase 15 (Layered Reproduction Prompts) | Pending |
+| MUS-02 | Phase 15 (Layered Reproduction Prompts) | Pending |
+| MUS-03 | Phase 15 (Layered Reproduction Prompts) | Pending |
+| MUS-04 | Phase 15 (Layered Reproduction Prompts) — *CONDITIONAL on Phase 10 mAP* | Pending |
+| MUS-05 | Phase 15 (Layered Reproduction Prompts) | Pending |
+| MUS-06 | Phase 15 (Layered Reproduction Prompts) | Pending |
+| SFX-01 | Phase 15 (Layered Reproduction Prompts) | Pending |
+| SFX-02 | Phase 15 (Layered Reproduction Prompts) | Pending |
+| SFX-03 | Phase 15 (Layered Reproduction Prompts) | Pending |
+| PROMPT-01 | Phase 15 (Layered Reproduction Prompts) | Pending |
+| PROMPT-02 | Phase 15 (Layered Reproduction Prompts) | Pending |
+| PROMPT-03 | Phase 15 (Layered Reproduction Prompts) | Pending |
+| PIPE-01 | Phase 14 (Pipeline Integration) | Pending |
+| PIPE-02 | Phase 12 (Producer Route Client) | Pending |
+| PIPE-03 | Phase 14 (Pipeline Integration) | Pending |
+| PRESENT-01 | Phase 16 (HTML Gallery) | Pending |
+| CONSUMER-01 | Phase 17 (Canvas Consumer) | Pending |
+
+**Phase coverage summary:**
+
+| Phase | Requirements | Count |
+|-------|--------------|-------|
+| 10. Risk-Validation Spike + Route Stub | ROUTE-01 (+ de-risks DIA-04/DIA-05/MUS-04) | 1 |
+| 11. Contract v1.2 | CONTRACT-01..05 | 5 |
+| 12. Producer Route Client | ROUTE-02, ROUTE-03, PIPE-02 | 3 |
+| 13. SPEAKER-01 Linkage HITL | SPEAKER-01..03, DIA-02, DIA-03 | 5 |
+| 14. Pipeline Integration | PIPE-01, PIPE-03 | 2 |
+| 15. Layered Reproduction Prompts | PROMPT-01..03, DIA-01, DIA-04, DIA-05, MUS-01..06, SFX-01..03 | 15 |
+| 16. HTML Gallery | PRESENT-01 | 1 |
+| 17. Canvas Consumer | CONSUMER-01 | 1 |
+| **Total** | | **33** |
