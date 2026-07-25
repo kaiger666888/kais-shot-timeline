@@ -227,7 +227,7 @@ def parse_sensevoice_tags(raw_text: str) -> dict:
 # ============================================================================
 # 结果写入（统一 stamp + Pitfall 6 redact）
 # ============================================================================
-def write_result(model: str, fixture: str, payload: dict) -> Path:
+def write_result(model: str, fixture: str, payload: dict, device: str = "cpu") -> Path:
     """写一份 spike 结果 JSON 到 ``spike/audio/results/<model>_<fixture>.json``。
 
     顶层 stamp 5 个字段（防 spike 脚本忘写）：
@@ -235,13 +235,19 @@ def write_result(model: str, fixture: str, payload: dict) -> Path:
       - ``fixture``: fixture 名（如 ``"ep01"``）
       - ``git_sha``: 当前 HEAD 短 sha（aggregate_report.py 用它做 staleness check）
       - ``timestamp_utc``: ISO8601 UTC 时间戳
-      - ``device``: 固定 ``"cpu"``（CONTEXT.md user decision）
+      - ``device``: 默认 ``"cpu"``（CONTEXT.md CPU 锁 —— SER/MIR/diarize 都用默认）；
+        WhisperX spike (Plan 10-05) 走 device="cuda:0" GPU 路径时显式传入。
 
     Args:
         model: 模型/脚本名，作为文件名前缀。
         fixture: fixture 名（通常 ``"ep01"``）。
         payload: 结果 dict（per_sample / sample_size / methodology / caveat 等）。
             本函数会就地补 stamp 字段。
+        device: 设备标签，写入 ``payload["device"]``。默认 ``"cpu"`` 保持
+            与 SER/MIR 等其它 Phase 10 spike 完全一致（向后兼容）。
+            Plan 10-05 WhisperX full run 在 GPU 可用时显式传 ``"cuda:0"``，
+            使落盘 JSON 的 device 字段如实反映 full-run 设备（device_directive
+            + environment_facts 要求 audit trail 诚实）。
 
     Returns:
         写入的 Path。
@@ -251,7 +257,7 @@ def write_result(model: str, fixture: str, payload: dict) -> Path:
     payload["fixture"] = fixture
     payload["git_sha"] = git_sha()
     payload["timestamp_utc"] = datetime.now(timezone.utc).isoformat()
-    payload["device"] = "cpu"
+    payload["device"] = device
     out = RESULTS_DIR / f"{model}_{fixture}.json"
     text = json.dumps(payload, ensure_ascii=False, indent=2)
     # 兜底：commit 前如果有残留 HF token，redact 一次再落盘。
