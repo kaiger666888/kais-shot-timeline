@@ -1,370 +1,286 @@
-# Stack Research — v1.1 分镜语义深化
+# Stack Research — v1.2 音频语义深化 (Audio Semantic Deepening)
 
-**Domain:** Video-shot-decomposition producer (Python CLI) + downstream canvas consumer (cross-repo TS/React) + external ComfyUI-hosted ML routes
-**Researched:** 2026-07-24
-**Confidence:** HIGH (live-verified against both repos + PyPI)
+**Domain:** Route-based three-modality audio semantic analysis (dialogue + music + sfx) + layered reproduction prompts (TTS / music-gen / foley), layered on top of the validated v1.0 Demucs+Whisper baseline and the v1.1 route-based cinematography pattern. Producer-side thin httpx client + heavy-ML route host.
+**Researched:** 2026-07-25
+**Confidence:** **HIGH** for production-ready picks (WhisperX, pyannote.audio 3.1, SenseVoice, librosa, CosyVoice, GPT-SoVITS — all verified against official repos / HuggingFace model cards); **MEDIUM** for MIR (MERT vs PANNs is a Phase 1 risk-validation call, not a paper claim — no head-to-head benchmark on Chinese pop exists); **MEDIUM** for music-gen/sfx targets (most open-weights models are NC-licensed — commercial path needs separate roadmap decision).
 
-> Scope: ONLY the stack additions/changes for **v1.1 NEW capabilities** — shot-timeline calling kais-aigc-platform HTTP routes, cross-shot character/prop re-id, prompt reference system, ShotTimelineAsset contract bump, dual-end display. The validated v1.0 baseline (PySceneDetect / Demucs / Whisper / ffmpeg / jsonschema) is OUT OF SCOPE — already shipped, do not re-litigate.
+> Scope: ONLY stack additions/changes for **v1.2 NEW capabilities**. The validated v1.0 baseline (PySceneDetect / Demucs htdemucs / faster-whisper / ffmpeg / jsonschema) and v1.1 route-based cinematography pattern are OUT OF SCOPE — already shipped.
 
 ---
 
-## TL;DR — The Hard Boundary
+## TL;DR — The Split That Governs Everything
 
-**shot-timeline stays THIN.** v1.1 adds exactly **ONE new runtime dependency** to shot-timeline (`httpx`, already installed in the env) and **ZERO new ML dependencies**. All heavy ML (embeddings, clustering, SAM3 segmentation, VLM inference) stays in `kais-aigc-platform` behind HTTP routes — consistent with the v1.0 "external producer" + "loose coupling" + "don't touch shot-timeline algorithms" decisions.
+v1.2 inherits v1.1's `call_shot_analysis.py` shape: **heavy ML lives in `kais-aigc-platform/audio-analysis` route; `shot-timeline` stays a thin httpx client with ZERO new ML deps.**
 
-| Surface | What's added in v1.1 |
-|---|---|
-| **shot-timeline (this repo, Python)** | `httpx` client lib (already in env); stdlib `json`/`argparse` (already); no torch, no transformers, no ML |
-| **kais-aigc-platform route (cross-repo)** | DINOv2 ViT-B/14 via `transformers`; `scikit-learn` for clustering; SAM3 already there |
-| **ShotTimelineAsset contract** | `schema_version` bump; 2 new optional data files (`characters.json`, `props.json`); existing `prompts.json` enriched; **NO breaking changes** |
-| **Canvas consumer (cross-repo)** | Reuse existing `asset` node type with `assetType: "character"\|"prop"` (already in Zod). **NO new node type, NO contract bump.** |
+| Side | Adds | Forbids |
+|------|------|---------|
+| **`kais-aigc-platform/audio-analysis` route (cross-repo)** | WhisperX, pyannote.audio 3.1, SenseVoice (funasr), MERT-v1-95M, librosa, optional PANNs | — (already a ComfyUI-bearing route host) |
+| **`shot-timeline` (this repo)** | `analysis/call_audio_analysis.py` (near-clone of call_shot_analysis.py); `httpx` (already a v1.1 dep); stdlib only | ANY new ML dep — no torch / whisper / WhisperX / pyannote / funasr / MERT / SER / TTS / music-gen / sfx-gen imports |
+
+**Single hardest constraint → CUDA 12.8 conflict (Phase 0/1 BLOCKER).** WhisperX's current PyPI release hard-requires CUDA toolkit 12.8 (official README "Setup step 0"). This project's runtime is `torch 2.6.0+cu124` (CUDA 12.4, see CLAUDE.md). The route host MUST upgrade to CUDA 12.8 before Phase 1 risk-validation can run. SenseVoice, pyannote 3.1, MERT, and librosa all work on 12.4 — WhisperX alone forces the upgrade. This is a route-host concern, not something this repo resolves.
+
+**SINGLE MOST IMPORTANT PICK → SenseVoice over RAVDESS.** Native Mandarin+Cantonese SER (Alibaba, 8.9k★, MIT code). The milestone flags "中文 SER 跨域" as the highest risk — SenseVoice is the mitigation: trained on Chinese speech, not English studio performances. Also emits audio-event tags (BGM / applause / laughter / cry / cough) in the same pass, covering part of sfx modality for free.
 
 ---
 
 ## Recommended Stack
 
-### 1. HTTP Client (shot-timeline → kais-aigc-platform route) — **httpx 0.28.1**
+### Core Technologies — ROUTE HOST (`kais-aigc-platform/audio-analysis`)
 
-| Technology | Version | Status | Purpose | Why |
-|---|---|---|---|---|
-| **httpx** | **0.28.1** (latest) | **Already installed** in env (`/home/kai/.local/lib/python3.12/site-packages`) | Sync HTTP client to call `POST /api/v1/production/shot-analysis` (and the new character-reid route) | Already in env (zero new install); sync mode (CLI is blocking); `HTTPTransport(retries=N)` for transport-level retry on transient failures; clean `timeout=httpx.Timeout(connect=5, read=900, write=10, pool=5)` semantics that match the route's 900s `execFileSync` timeout (verified `shot-analysis/index.ts:103`); first-class `httpx.Client` connection pooling if shot-timeline later batches N shots in one run |
+| Technology | Version | Purpose | Why Recommended |
+|------------|---------|---------|-----------------|
+| **WhisperX** | PyPI latest (v3.x line; CUDA 12.8 hard-req) | Word-level timestamps + speaker diarization (replaces segment-only `faster-whisper` for dialogue modality) | The canonical "Whisper + word alignment + diarization" pipeline (8.9k★, INTERSPEECH 2023 paper, 70× realtime with large-v2). Uses **faster-whisper as backend** (same as this project's `audio/transcribe.py`) — ASR quality is identical, only adds: (a) wav2vec2 forced alignment for sub-100ms word timestamps; (b) per-word speaker assignment via pyannote. **Preserves investment in `large-v3`.** Speaker diarization now uses `pyannote/speaker-diarization-community-1` (CC-BY-4.0, NOT gated 3.1) — RESOLVES the licensing concern raised in the milestone context. |
+| **pyannote.audio** | 3.1 (`pip install pyannote.audio`) | Standalone speaker diarization (fallback if WhisperX's bundled community-1 underperforms on Chinese animation dialogue with overlap) | De-facto diarization standard. 3.1 removed the `onnxruntime` dep that plagued 3.0 — segmentation + embedding now pure PyTorch, easier deployment. ~11–19% DER on least-forgiving benchmarks. MIT code; weights gated for 3.1 / CC-BY-4.0 for community-1. |
+| **SenseVoice** (FunAudioLLM) | SenseVoiceSmall via `funasr>=1.3.26` | Chinese-native SER + audio event detection (BGM / applause / laughter / cry / cough / sneeze / breath) | **The killer pick for the Chinese-SER cross-domain risk.** Native Mandarin + Cantonese training (NOT RAVDESS English performances). Reports SOTA on Chinese+English SER benchmarks WITHOUT target-domain finetuning. 7 emotion labels (HAPPY/SAD/ANGRY/NEUTRAL/FEARFUL/DISGUSTED/SURPRISED) + 8 audio event tags — covers BOTH dialogue-emotion AND part of sfx detection in ONE model. Non-autoregressive → 5–15× faster than Whisper-Small/Large. MIT code; weights under FunASR model card terms. Released Jul 2024, actively maintained. llama.cpp GGUF runtime since 2026/06 (q8 ~254MB, CPU/edge deployable). 8.9k★. |
+| **MERT-v1-95M** (m-a-p) | `m-a-p/MERT-v1-95M` via `transformers` | Music instrument recognition + tempo + key (foundation model for music MIR) | SOTA on 14 MIR tasks (ICLR 2024, 384+ citations). HuBERT-style SSL on music audio; finetune heads for instrument/tempo/key. 95M chosen over 330M for route VRAM discipline (~380MB fp16 vs ~660MB; both fit, but 95M leaves headroom for WhisperX + pyannote + SenseVoice on one GPU). **Phase 1 risk-validation MUST confirm tempo/key/instrument accuracy on Chinese pop/animation BGM — paper claims ≠ erhu/pipa/guzheng reality.** |
+| **PANNs / HTS-AT** (complement to MERT) | Pre-trained CNN14 / HTS-AT (HuggingFace `qiuqiangkong/audioset_tagging_cnn` lineage) | Polyphonic audio event detection + instrument recognition (sfx taxonomy) | More battle-tested for **polyphonic** sfx/instrument classification than MERT (trained on AudioSet 527 classes). Better coverage of "door creak / footsteps / glass break" foley than SenseVoice's 8 narrow event tags. Use as MERT's COMPLEMENT for sfx + polyphonic instrument, NOT replacement. |
+| **librosa** | 0.11.x stable | Tempo (beat_track) + key estimation (chroma) + onset detection — DSP-classic baselines | Industry-standard Python audio DSP. `beat_track` is the canonical BPM estimator; key detection via chroma. **Production-honest baseline** if MERT tempo head underperforms. Lightweight (CPU-only, no GPU contention). Already transitively present via Demucs/numpy ecosystem. |
+| **CosyVoice 2 / Fun-CosyVoice 3.0** (FunAudioLLM) | Fun-CosyVoice 3.0 line (Apache 2.0) | **Target** of TTS reproduction prompts (dialogue modality) | Apache 2.0 — **commercial-use OK** (unlike F5-TTS). Same FunAudioLLM family as SenseVoice — natural pairing for "transcribe with SenseVoice → reproduce with CosyVoice". Multilingual zero-shot voice cloning (perfect for SPEAKER-01: clone each speaker_id's timbre from the v1.1 character registry's audio sample). |
+| **GPT-SoVITS v4** (RVC-Boss) | v4 (MIT license) | Alternate TTS reproduction prompt target (esp. for 1-minute voice cloning from registry samples) | MIT — commercial OK. v4 fixes v3's metallic artifacts, native 48k output, supports Korean + Cantonese + Chinese + English. Designed for **few-shot cloning from <1 min of reference audio** — exactly the v1.1 character registry's representative_image → voice use case. |
+| **Stable Audio Open 1.0** (Stability AI) | open-weights (Stability Community License — **non-commercial**) | Target of music-gen + foley reproduction prompts | Only open-weights model purpose-built for **short foley** (footsteps, door creaks, environmental) per Stability's research paper. Generates ≤47s clips. **License blocker:** non-commercial only — prompts must be model-agnostic OR route must declare a commercial-vs-research mode flag. |
+| **AudioLDM2** (cvssp) | audioldm2 / audioldm2-large / audioldm2-music (CC-BY-NC-SA-4.0 — **non-commercial**) | Alternate target for sfx + music prompts | Latent text-to-audio diffusion, 48kHz, supports SFX / speech / music. **CC-BY-NC-SA-4.0 — non-commercial only.** Same licensing story as Stable Audio Open. |
 
-**Why httpx over the alternatives:**
+### Supporting Libraries — ROUTE HOST
 
-| Option | Verdict | Reason |
-|---|---|---|
-| **httpx** | **RECOMMENDED** | Already installed; modern API; transport-level retries built-in (`HTTPTransport(retries=3)` — verified via `help(httpx.HTTPTransport)`); explicit per-pool/connect/read timeouts (the route driver has a 900s ceiling, so `read` timeout MUST be ≥900s — urllib's `socket.setdefaulttimeout` is global and clumsy) |
-| stdlib `urllib.request` | Rejected for this use | The comfyui driver (`shot_analysis_driver.py:112-132`) uses urllib, BUT that driver makes tiny fire-and-forget POSTs to a localhost ComfyUI. shot-timeline→route calls are long-running (up to 900s), need explicit timeout carving, retry on 5xx, and JSON response parsing. Hand-rolling this on urllib is error-prone; the existing driver's pattern does NOT generalize to "robust client of a remote service" |
-| `requests` 2.34.0 | Acceptable fallback | Also already installed, but sync-only; no transport-level retry without `urllib3` adapter boilerplate; httpx is the modern replacement and is already there |
+| Library | Version | Purpose | When to Use |
+|---------|---------|---------|-------------|
+| `funasr` | ≥1.3.26 | SenseVoice runtime (also exposes FSMN-VAD + CAM++ + ct-punc for composed diarization without HF token) | SenseVoice emotion + AED; optional FSMN-VAD/CAM++ diarization that doesn't need HF token (unlike pyannote 3.1) |
+| `transformers` | ≥4.40 (5.x preferred) | MERT-v1 inference (AutoModel + AutoFeatureExtractor) | Music MIR — instrument/tempo/key classification heads |
+| `torch` + `torchaudio` | 2.6+ with **CUDA 12.8** backend (WhisperX req) | Backend for WhisperX, pyannote 3.1, MERT, SenseVoice | ALL heavy ML — shared GPU |
+| `faster-whisper` | 1.2.1 (same as project) | WhisperX backend (WhisperX WRAPS this, does NOT replace it) | Already the project's primary ASR — preserved through WhisperX |
+| `wav2vec2` Chinese align model | `jonatasgrosman/wav2vec2-large-xlsr-53-chinese-zh-cn` | WhisperX's Chinese word-alignment (DEFAULT_ALIGN_MODELS_HF["zh"]) | Loaded automatically by WhisperX when `language="zh"`; Phase 1 verify it lands Chinese animation dialogue well |
+| `pyannote.audio` | 3.1 | Standalone diarization Pipeline API | If choosing standalone 3.1 over WhisperX's community-1 default |
+| `librosa` | 0.11.x | Tempo (beat_track), key (chroma), onset detection | Baseline MIR + MERT cross-check |
+| `numpy` | 2.2.6 (same as project) | Array math | Already present |
+| `httpx` | 0.28.1+ | (Already on route host) Route-to-driver HTTP if needed | Mirror existing `shot-analysis` route pattern |
 
-**Retry / timeout / error semantics for the previously-offline CLI:**
+### Development Tools — ROUTE HOST
 
-```python
-# concrete pattern for the new step_semantic / step_reid client
-import httpx
+| Tool | Purpose | Notes |
+|------|---------|-------|
+| HuggingFace access token (read) | Required for: WhisperX diarization (community-1 ToU), pyannote 3.1 if used, MERT-v1 weights | Route-side env var, never crosses into shot-timeline |
+| **CUDA 12.8 toolkit** | WhisperX hard-requirement | **Phase 0/1 blocker** — current runtime is CUDA 12.4 (`torch 2.6.0+cu124`); route host needs upgrade |
+| Docker (optional) | SenseVoice ships a Dockerfile + docker-compose | Eases route-side deploy if the route host containerizes |
 
-ANALYSIS_TIMEOUT = httpx.Timeout(connect=5.0, read=960.0, write=10.0, pool=5.0)
-# read=960 > route's execFileSync 900s ceiling → server-side timeout surfaces first
-ANALYSIS_TRANSPORT = httpx.HTTPTransport(retries=2, limits=httpx.Limits(max_connections=4))
+### CLIENT SIDE — `shot-timeline` (this repo, v1.2 additions)
 
-def call_analysis_route(url: str, payload: dict, timeout: float = 960.0) -> dict | None:
-    """POST to kais-aigc-platform route; graceful-degrade returns None on any failure."""
-    try:
-        with httpx.Client(timeout=timeout, transport=ANALYSIS_TRANSPORT) as client:
-            r = client.post(url, json=payload)
-            r.raise_for_status()
-            body = r.json()
-            # route uses {success, data, message} envelope (verified: lib/responseFormat)
-            return body.get("data") if body.get("success") else None
-    except (httpx.HTTPError, httpx.TimeoutException, ValueError) as e:
-        print(f"[warn] analysis route unavailable, graceful-degrade: {e}")
-        return None  # caller skips the step, asset still exports
-```
-
-- **Graceful-degrade is non-negotiable** (PROJECT.md Constraint: "路由不可用时 shot-timeline 必须能 graceful-degrade"). The route lives in **two unmerged branches** (`feat/shot-geometry-nodes`, `feat/shot-analysis-route`) — at v1.1 ship time it may be down on any given box. `None` return → step prints warn + skips → `prompts.json` falls back to existing manual/merged fields → asset.json still emits at `schema_version "1.1"`.
-- **No global mutable state.** Use a fresh `httpx.Client` per call (context manager). Matches shot-timeline's "every stage is a fresh process" convention (CLAUDE.md "No global state at Python level").
-
-### 2. Re-ID Embedding Model (lives in kais-aigc-platform ROUTE, not shot-timeline) — **DINOv2 ViT-B/14**
-
-| Technology | Version | Status | Purpose | Why |
-|---|---|---|---|---|
-| **DINOv2 ViT-B/14** (`facebook/dinov2-base`) | model card on HF (weights stable since 2023, SOTA for self-supervised re-id); load via `transformers` 5.14.1 AutoModel | NEW in route | Produces 768-d visual embedding for any crop (face, profile, back-of-head, full-body, object, prop) — cluster across shots to form registry | Single-model solution for **both** characters AND props; works on non-frontal faces and objects where face-recognition models return nothing; k-NN retrieval on DINOv2 embeddings is a documented re-id pattern; runs in the existing torch 2.6+cu124 env (verified) |
-
-**Why DINOv2 over the alternatives — this is the load-bearing decision:**
-
-| Model | Verdict | Reason |
-|---|---|---|
-| **DINOv2 ViT-B/14** | **STANDARDIZE HERE** | (1) **Universal**: one model handles characters (face/frontal/profile/body) AND props (sword, cup, costume). The milestone registry is `characters` + `props` — one embedding space beats maintaining two pipelines. (2) **Self-supervised**: not biased toward text-prompt similarity (CLIP's failure mode for "same object, different framing"). (3) **No face-detection prerequisite**: InsightFace ArcFace requires a detectable 112×112 face; back-of-head / masked / wide shots produce no embedding and the crop is silently dropped. DINOv2 embeds anything. (4) **Human-in-the-loop absorbs its imprecision** — re-id won't be 100% accurate regardless of model (milestone Constraint), so the marginal accuracy of face-specific models is not worth a second pipeline. |
-| InsightFace `antelopev2` / `buffalo_l` (ArcFace, 512-d, ONNX) | DEFER to a later phase as additive | Best-in-class **for faces only**; both packs are non-commercial-research-licensed (verified — `insightface.ai/guides/choose-face-recognition-model`); antelopev2 download is fragile (issue #2517). If v1.2 finds DINOv2 misses same-actor links across extreme costume changes, ADD InsightFace as a face-only confirmation signal (weighted fusion), not a replacement. InsightFace 1.0.1 + `onnxruntime-gpu` 1.27.0 (latest, verified) when that day comes. |
-| OpenCLIP ViT-L/14 (`open-clip-torch` 3.3.0 latest) | Rejected as primary | CLIP-style models are trained for image-text alignment, not instance identity. Two crops of the same prop with very different framing can land far apart because their text-aligned features differ. Fine for zero-shot classification (which we don't need here), wrong tool for re-id. |
-| OpenAI CLIP `ViT-L/14` (`openai-clip` 1.0.1 latest) | Rejected | Same image-text alignment issue as OpenCLIP; additionally the `openai-clip` PyPI package is essentially a maintenance fork. No advantage over OpenCLIP. |
-
-**Concrete loading pattern (route side):**
-
-```python
-# route's re-id driver — NOT shot-timeline
-from transformers import AutoModel, AutoImageProcessor
-import torch
-
-MODEL_ID = "facebook/dinov2-base"  # 768-d, ViT-B/14, ~87M params, ~346MB
-processor = AutoImageProcessor.from_pretrained(MODEL_ID)
-model = AutoModel.from_pretrained(MODEL_ID).to("cuda").eval()
-
-@torch.inference_mode()
-def embed_crops(crops: list["PIL.Image"]) -> torch.Tensor:  # [N, 768]
-    inputs = processor(images=crops, return_tensors="pt").to("cuda")
-    outputs = model(**inputs)
-    # CLS-token pooler_output = image-level embedding (HF docs confirmed)
-    return outputs.pooler_output  # [N, 768], already L2-normalize before clustering
-```
-
-### 3. Clustering (lives in ROUTE, not shot-timeline) — **scikit-learn 1.9.0**
-
-| Technology | Version | Status | Purpose | Why |
-|---|---|---|---|---|
-| **scikit-learn** | **1.9.0** (latest, verified `pip index`) | NEW in route (numpy is already a shot-timeline dep but NOT a clustering lib) | AgglomerativeClustering (cosine, average linkage) over the DINOv2 embedding matrix → cluster ID per crop = registry entry ID | Built-in `AgglomerativeClustering(metric="cosine", linkage="average", distance_threshold=τ)` produces deterministic, interpretable clusters whose count is data-driven (no K to guess). Hand-rolling cosine linkage on numpy is a 50-line trap. |
-
-**Why agglomerative + cosine, not DBSCAN:**
-
-| Algorithm | Verdict | Reason |
-|---|---|---|
-| **AgglomerativeClustering** (cosine, average linkage, distance_threshold) | **RECOMMENDED** | Small N (≤ a few hundred crops per single video); deterministic; produces clean dendrogram for human review (matches "human-in-the-loop" milestone Constraint); `distance_threshold` lets the operator tune precision/recall at review time. Average linkage is the standard choice for re-id (resists single-linkage chaining). |
-| DBSCAN | Acceptable alternative | Its "noise" label (`-1`) is useful for flagging one-off crops that shouldn't enter the registry. Could be offered as `--clusterer dbscan` flag. Slightly more sensitive to `eps` than agglomerative is to threshold. |
-| Custom numpy cosine thresholding | Rejected | Reinvents the wheel; no dendrogram; no scikit-learn diagnostics. |
-
-**Threshold starting point:** cosine distance `τ ≈ 0.30` (≈ 0.70 cosine similarity) is a commonly-cited starting point for DINOv2 instance re-id; expect per-show tuning. Flag in PITFALLS.md.
-
-### 4. Character/Prop Image Extraction — **ROUTE owns it; shot-timeline only consumes JSON**
-
-The milestone context asks: *"just consuming route output? or local Pillow/crop?"*
-
-**Answer: just consume route output.** SAM3 segmentation already runs in the comfyui-side comfyui-primary container (`SAM3Segment` node, `output_mode="Merged"`, verified in `shot_analysis_driver.py:91-100`). The natural v1.1 extension is a NEW route (e.g. `POST /api/v1/production/character-reid`) that:
-
-1. Reuses SAM3 to mask the main subject per shot (already deployed infra).
-2. Applies the mask to first/last frames (Pillow `Image.crop` on the bbox — trivial, **route-side**).
-3. Runs DINOv2 over each crop.
-4. Agglomerative-clusters → returns `{characters: [{id, name?, crop_paths, shot_ids, embedding}], props: [...]}`.
-
-shot-timeline's only "image" responsibility is reading the route's JSON response and **writing crop file paths into `characters.json`/`props.json`**. shot-timeline does NOT do `Image.open` itself unless it needs to thumbnail crops for HTML display (and Pillow 12.2.0 is ALREADY a shot-timeline dep for that — `detectors/detect_v3b.py` imports `PIL.Image`).
-
-| Surface | Lib | Status |
-|---|---|---|
-| Crop extraction (mask → bbox → PNG) | Pillow 12.2.0 (route-side) | already a dep in shot-timeline; route will have it via the comfyui venv |
-| Thumbnail rendering for HTML gallery | Pillow 12.2.0 (shot-timeline side, IF we render crops into timeline.html) | already installed; no new dep |
-
-### 5. JSON Schema v2 Authoring/Validation — **jsonschema 4.26.0 (already used)**
-
-| Technology | Version | Status | Purpose | Why |
-|---|---|---|---|---|
-| **jsonschema** (Draft 2020-12) | **4.26.0** (latest, verified) | ALREADY USED (`scripts/export_asset.py:113` lazy-imports `Draft202012Validator`) | Author + validate the v2 schemas (`characters.schema.json`, `props.schema.json`, enriched `prompts.schema.json`, bumped `asset.schema.json`) | No new tooling. Same inline-validator pattern as v1.0. |
-
-**No new validation tooling.** The existing pattern in `scripts/export_asset.py:106-126` (load schema JSON → `Draft202012Validator` → `iter_errors` → fail loud with path) is the contract. v1.1 adds two new schemas following the same pattern; `spec/validate.py` SMOKE_SHAPES gets the two new files appended.
-
-**Do NOT add:** `fastjsonschema` (compile-time optimization — premature for ~6 schemas); `pydantic` (wrong tool — schemas are data contracts not runtime models, and the project has survived without it).
-
-### 6. Canvas Consumer Side — **Reuse existing `asset` node, NO Zod bump**
-
-LIVE-verified against `kais-aigc-platform/src/lib/canvasAssetSchema.ts:76-94` and `packages/infinite-canvas/src/types/canvas.ts:57,71-96`:
-
-- `CanvasNodeType` already includes `'asset'`.
-- `canvasAssetSchema.ts:82` ALREADY accepts `assetType: z.string().min(1, "asset node requires assetType (character|scene|prop)")` — the docstring literally lists **`character|scene|prop`**.
-- `AssetNodeData` (types/canvas.ts:71-96) already has `characterId`, `viewAngle`, `viewGroup`, `isPrimaryView` fields specifically for character multi-view registries.
-
-**Implication:** the v1.1 character/prop registry needs **NO new node type, NO Zod schema bump** on the canvas side. The `extractShotTimelineArtifacts` helper in `src/routes/canvas/v2/import-from-dir.ts:943` just needs to emit additional `RawArtifact` entries with `canvasType: "asset"`, `extra.assetType: "character"` (or `"prop"`), sourced from the new `characters.json` / `props.json`.
-
-| Surface | Change |
-|---|---|
-| `CanvasNodeType` union | **NONE** — `'asset'` already there |
-| `canvasAssetSchema.ts` Zod | **NONE** — `assetType: "character"\|"prop"` already accepted |
-| React renderers | **NONE** — AssetNode already renders character/prop; reuse 5 existing renderers (consistent with v1.0 "no custom renderer" decision) |
-| `extractShotTimelineArtifacts` | **EXTEND** — add `asset` artifact entries for each character/prop; add zone→asset child edges; optionally add `reference` edges from each `storyboard` to its referenced `character`/`prop` nodes (the prompt reference system made visible) |
-| `SHOT_TIMELINE_KNOWN_VERSIONS` (import-from-dir.ts:898) | **APPEND `"1.1"`** (or `"2"` — see Schema Bump Nuance below) — currently `new Set(["1"])`; bumping silences the graceful-degrade warn for the new version |
+| Technology | Version | Purpose | Why Recommended |
+|------------|---------|---------|-----------------|
+| **`httpx`** | already a v1.1 transitive dep (since `analysis/call_shot_analysis.py`) | Sync HTTP client to call `POST /api/v1/production/audio-analysis` | **The only "dependency"** on this side — and it's already there. v1.2 inherits v1.1's pattern verbatim. |
+| **stdlib only** (`json`, `argparse`, `hashlib`, `pathlib`, `re`, `os`, `sys`) | Python 3.10+ | Compose request body, parse response, write `audio_semantic.json` + `route_cache/audio_analysis/shot_XXX.json` + `warnings.json` sidecar, content-hash cache key | Match `call_shot_analysis.py` exactly. No new runtime deps. |
+| **`jsonschema.Draft202012Validator`** | already dep (`spec/validate.py`) | Validate `audio_semantic.json` against new schema before write | Project convention: fails-loud before writing downstream-corrupted JSON |
 
 ---
 
 ## Installation
 
+### Route host (`kais-aigc-platform/audio-analysis` route — NOT this repo)
+
 ```bash
-# ── shot-timeline: NEW runtime deps for v1.1 ──────────────────────────────
-# httpx is ALREADY installed in the runtime env (verified:
-#   /home/kai/.local/lib/python3.12/site-packages/httpx 0.28.1)
-# If/when shot-timeline grows a requirements.txt / pyproject.toml (it has none
-# today — CLAUDE.md "No package manifest"), pin:
-pip install "httpx>=0.28.1"
-# (OPTIONAL, only if timeline.html renders character/prop crops inline —
-#  Pillow is ALREADY installed: 12.2.0)
-# pip install "pillow>=12.2.0"   # already there
+# Phase 0 — CUDA 12.8 upgrade (WhisperX hard-req; current project runtime is 12.4)
+#   Follow NVIDIA CUDA Toolkit 12.8 install guide for Linux.
+#   Without this, WhisperX cannot load large-v3 on GPU.
 
-# ── kais-aigc-platform route: NEW deps for the re-id route ────────────────
-# (NOT installed in shot-timeline env; lives in route's venv)
-pip install "transformers>=5.14.1" "scikit-learn>=1.9.0"
-# DINOv2 weights cached via huggingface_hub on first call (~346MB to
-# ~/.cache/huggingface) — same pattern as existing Whisper large-v3 download.
+# Phase 1 risk-validation install
+pip install whisperx                       # PyPI latest; pulls faster-whisper, pyannote.audio 3.1, etc.
+pip install "funasr>=1.3.26"               # SenseVoice + FunASR runtime
+pip install "transformers>=4.40"           # MERT-v1
+pip install "librosa>=0.11"                # baseline MIR (tempo / key / onset)
+pip install "torch>=2.6" "torchaudio>=2.6" # CUDA 12.8 wheels
 
-# ── DEFERRED (v1.2 if face-accuracy matters more): InsightFace ────────────
-# pip install "insightface>=1.0.1" "onnxruntime-gpu>=1.27.0"
-# Note antelopev2/buffalo_l are NON-COMMERCIAL research-licensed.
+# HuggingFace auth (one-time per host)
+huggingface-cli login    # paste read token
+# In browser, accept ToU for:
+#   - pyannote/segmentation-3.0
+#   - pyannote/speaker-diarization-3.1   (only if used; WhisperX defaults to community-1)
+#   - m-a-p/MERT-v1-95M
 ```
 
-**Explicitly NOT installed in shot-timeline (the boundary):**
-`torch`, `transformers`, `insightface`, `open-clip-torch`, `openai-clip`, `scikit-learn`, `timm`, `ultralytics`, `onnxruntime-gpu`, DINOv2/ArcFace weights. **All heavy ML stays behind the HTTP route in kais-aigc-platform.**
+### This repo (`shot-timeline`) — v1.2 adds NOTHING
 
----
-
-## Integration Points into shot-timeline (LIVE-verified against `run_pipeline.py`)
-
-The current pipeline is 6 steps (`run_pipeline.py:1-30` docstring + `main():332-360`): `ensure_h264 → step_detect → step_separate → step_transcribe → step_timeline → step_export`. Two new steps slot in:
-
-### New step A: `step_semantic` — between `step_transcribe` and `step_timeline`
-
-```
-after:    output/<stem>/transcript.json + shots.json + frames.json
-call:     POST {ANALYSIS_URL}/api/v1/production/shot-analysis
-          body: {video: <container-visible path>, shots: shots.json content,
-                 semantic: true, subject: true}
-produce:  output/<stem>/prompt_analysis.json  (the route's shot_XXX.json payload)
-          + MERGE into output/<stem>/prompts.json (enriches camera/action/scene/
-          lighting/style fields; preserves any pre-existing manual fields)
-cache:    os.path.exists(prompt_analysis.json) → skip; --force clears
-flags:    --skip-semantic  (new)
-          --analysis-url   (new; default http://localhost:3000 or env ANALYSIS_URL)
-graceful-degrade: route down → return None → prompts.json untouched → continue
+```bash
+# NO pip install commands. v1.2 client code reuses:
+#   - httpx        (already used by analysis/call_shot_analysis.py since v1.1)
+#   - stdlib       (json, argparse, hashlib, pathlib, re, os, sys)
+#   - jsonschema   (already used by spec/validate.py)
 ```
 
-Field mapping (verified against actual `shot_003.json` at `/mnt/agents/output/gpu1/shot_analysis/shot_003.json`):
-
-| `prompts.json` field | Source in shot-analysis response |
-|---|---|
-| `camera` | `semantic.shot_scale` + `semantic.camera_primitive` + `geometry.primitive` + `geometry.speed` (e.g. "中景 / follow / fast") |
-| `action` | `semantic.subject_motion` + `subject.direction_cn` (e.g. "飞虫持刀向前飞行 / 向右") |
-| `lighting` | `semantic.lighting` (e.g. "雾气弥漫") |
-| `style` | `semantic.lens_feel` (e.g. "normal") |
-| `scene` | *(no direct source — leave for manual/Qwen-VL extension; do NOT fabricate)* |
-| `subject` | *(deferred to re-id step — filled in step_reid from registry)* |
-
-### New step B: `step_reid` — after `step_semantic`, before `step_timeline`
-
-```
-after:    shots.json + frames.json (first/last frames) + prompt_analysis.json
-call:     POST {ANALYSIS_URL}/api/v1/production/character-reid   (NEW route)
-          body: {video, shots, frames: frames.json content}
-produce:  output/<stem>/characters.json   (NEW — registry of cross-shot characters)
-          output/<stem>/props.json        (NEW — registry of cross-shot props)
-          + PATCH prompts.json: each prompt gets character_refs[]/prop_refs[] IDs
-cache:    os.path.exists(characters.json) → skip; --force clears
-flags:    --skip-reid  (new)
-graceful-degrade: route down → no characters.json/props.json → prompts.json
-                  reference arrays stay empty → continue
-```
-
-### `step_export` and `export_asset.py` (verified at `scripts/export_asset.py`)
-
-`step_export` already takes a hardcoded 5-tuple of data JSON paths (`run_pipeline.py:220-227`). For v1.1:
-
-- `build_asset_dict` (`export_asset.py:129-187`) gets the `schema_version` bump + two new optional `data.characters`/`data.props` entries **only written when the files exist** (graceful-degrade if step_reid was skipped).
-- The 5-required-JSON guard at `export_asset.py:218-232` stays as-is for `shots/audio_analysis/transcript/frames/prompts`; `characters.json`/`props.json` are OPTIONAL (not added to the required list — that would break graceful-degrade).
-- The 4 canonical-symlink set (`video.mp4`, `stems/{vocals,drums,other}.wav`) stays. Character/prop crop images live as a NEW media category under `media.characters[i].crop_path` / `media.props[i].crop_path` — relative paths, served by the same `scripts/serve.py` Range-aware server.
-
-### CLI flag additions (`run_pipeline.py:main`)
-
-```
---analysis-url <url>     default env ANALYSIS_URL or http://localhost:3000
---skip-semantic          skip step_semantic (route-driven prompt enrichment)
---skip-reid              skip step_reid (character/prop registry)
---analysis-timeout <sec> default 960 (just over route's 900s ceiling)
-```
-
-These mirror the existing `--skip-detect/--skip-separate/--skip-transcribe/--skip-export` kebab-flag convention (CLAUDE.md "CLI Argument Conventions").
+The new file `analysis/call_audio_analysis.py` will be a near-clone of `analysis/call_shot_analysis.py` (445 lines) with: route path swapped (`/api/v1/production/audio-analysis`), request body schema changed, response → `audio_semantic.json` mapping, `ROUTE_VERSION` constant bumped.
 
 ---
 
 ## Alternatives Considered
 
-| Recommended | Alternative | When to Use Alternative |
-|---|---|---|
-| **httpx** for shot-timeline→route | stdlib `urllib.request` | Only if the project formally adopts "zero third-party HTTP deps ever" — but the existing driver's urllib pattern (for comfyui on localhost) does NOT justify extending to remote-service calls. Use urllib only if you're willing to hand-roll timeout/retry/JSON-error-parsing. |
-| **DINOv2 ViT-B/14** for re-id | InsightFace antelopev2 | Wait for v1.2 if actual re-id precision on frontal faces proves insufficient AND the show is face-heavy. Then add as **fusion** (DINOv2 universal + ArcFace face-only confirmation), not replacement. Beware non-commercial license. |
-| **DINOv2 ViT-B/14** (768-d, 346MB) | DINOv2 ViT-L/14 (1024-d, ~1.2GB) | Only if re-id quality on B/14 is observably too low at v1.1 review. L/14 doubles GPU memory and download size for marginal gains; B/14 is the documented sweet spot. ViT-S/14 too weak. |
-| **AgglomerativeClustering** | DBSCAN | If the show produces many one-off "noise" crops that shouldn't enter the registry, DBSCAN's `-1` label is cleaner. Offer as a flag. |
-| **transformers** for DINOv2 loading | `torch.hub.load(...)` or `timm` 1.0.28 | `transformers` is the canonical HF path with the cleanest AutoModel API and is almost certainly already in the route's venv (Qwen3-VL uses it). `timm` adds an unrelated dep. `torch.hub` requires facebookresearch/dinov2 git URL — works but bypasses HF cache and the existing Qwen3-VL/transformers ecosystem. |
-| **scikit-learn AgglomerativeClustering** | numpy-only cosine thresholding | Never for this milestone. Reinvents linkage, gives no dendrogram for human review, no diagnostics. |
+| Category | Recommended | Alternative | Why Not (or When to Use Alternative) |
+|----------|-------------|-------------|--------------------------------------|
+| Word-level ASR | **WhisperX** | Keep faster-whisper + add standalone wav2vec2 forced alignment | WhisperX bundles exactly this — saves glue code, gets diarization for free. Standalone alignment only if WhisperX's CUDA 12.8 req is immovable AND route host can't upgrade (would block Phase 1). |
+| Diarization weights | **WhisperX's default `speaker-diarization-community-1` (CC-BY-4.0)** | pyannote 3.1 gated weights | Community-1 sidesteps the HF ToU + commercial-license ambiguity that 3.1 carries. Switch to 3.1 only if Phase 1 shows community-1 DER is too high on Chinese animation dialogue (multiple speakers + overlapping speech). |
+| Chinese SER | **SenseVoice (funasr)** | RAVDESS-trained English SER; EmoBox; C2SER-LLM; HuBERT+finetune | RAVDESS English performances → Chinese animation is exactly the cross-domain risk the milestone flags. SenseVoice is native-Mandarin-trained + production-deployed (Alibaba) + emits AED tags in same pass. C2SER-LLM and HuBERT-finetune are research-grade (more setup, less battle-tested). |
+| Music MIR | **MERT-v1-95M + librosa baseline** | MERT-v1-330M; PANNs/HTS-AT alone; "MuQ" | 330M is overkill for route VRAM budget alongside WhisperX+pyannote+SenseVoice. PANNs better for polyphonic sfx but weaker on music semantics — keep as **complement** for sfx. "MuQ" did NOT surface as a real published model in 2025 searches (possibly name confusion; treat as not-available until proven otherwise). |
+| Reproduction: TTS | **CosyVoice 2 / Fun-CosyVoice 3.0 (Apache 2.0)** | F5-TTS; GPT-SoVITS v4 (MIT) | CosyVoice is same family as SenseVoice → natural pair, commercial-safe. F5-TTS is higher quality but **CC-BY-NC-4.0 models block commercial use** — only choose if v1.2 is research-only. GPT-SoVITS is the right pick if 1-minute-few-shot cloning from registry samples matters more than zero-shot naturalness. |
+| Reproduction: music-gen | **Stable Audio Open (with license flag)** | Stable Audio 2.5/3.0 paid; Suno/Udio closed | No open-weights commercial-use model exists in this space as of mid-2026. Phase 1 MUST surface this to the user: either (a) declare v1.2 research-only and use Stable Audio Open + AudioLDM2; (b) target Stable Audio paid API; (c) emit model-agnostic NL prompts and let downstream user pick. **Roadmap decision, not tech decision.** |
+| Reproduction: sfx/foley | **Stable Audio Open (purpose-built for foley)** | AudioLDM2 | Stability's paper explicitly positions Stable Audio Open for foley (door creaks, footsteps). AudioLDM2 is more general (SFX + music + speech). Both non-commercial. |
+| Spike retirement | **Retire `audio/gen_audio_prompts.py` to `--offline` fallback** | Keep as primary sidecar | Per locked v1.2 decision #6: spike's NL prompt is superseded by layered TTS/music-gen/foley prompts. Keep code path as offline fallback so cache-only runs still produce *something*. |
 
 ---
 
 ## What NOT to Use (the boundary, made explicit)
 
-| Avoid (in shot-timeline) | Why | Lives Where Instead |
-|---|---|---|
-| `torch` / `transformers` / `timm` / `insightface` / `open-clip-torch` / `openai-clip` | Heavy ML; violates "shot-timeline stays thin" + "don't touch shot-timeline algorithms" decisions; multi-GB model downloads; GPU dependency shot-timeline doesn't own | kais-aigc-platform route (re-id driver) — already has comfyui+GPU infra |
-| `scikit-learn` | Clustering is the route's job; even if shot-timeline wanted to re-cluster, embeddings never leave the route (only registry IDs come back) | kais-aigc-platform route |
-| DINOv2 / ArcFace / SAM3 weights (any model `.pt`/`.safetensors`) | Same as above; shot-timeline has no GPU ownership model | route + comfyui-primary container |
-| `pydantic` | Project has zero pydantic usage; jsonschema Draft 2020-12 is the contract surface; adding pydantic now would split validation | — (don't add anywhere) |
-| `fastjsonschema` | Premature compile-time optimization for 6-8 schemas | — |
-| A new canvas node type (e.g. `'character'`, `'prop'`) | `CanvasNodeType='asset'` + `assetType='character'\|'prop'` already exists in `canvasAssetSchema.ts:82`; a new node type would force a contract bump + new renderer, violating "no custom renderer / no contract bump" decisions | reuse existing `asset` node |
-| Any retry framework (`tenacity`, `stamina`) | httpx `HTTPTransport(retries=N)` is enough at this scale | — |
+| Avoid | Why | Use Instead |
+|-------|-----|-------------|
+| **ANY new ML dep in `shot-timeline` repo** (torch, transformers, whisperx, pyannote, funasr, MERT, librosa, SenseVoice, TTS, music-gen, sfx-gen) | Violates locked v1.2 decision #1 ("shot-timeline stays thin httpx client with ZERO new ML deps"). Would duplicate route-side models, break 松耦合 contract, bloat producer with multi-GB downloads, force GPU ownership onto the producer. | `analysis/call_audio_analysis.py` (httpx + stdlib only) |
+| **RAVDESS-trained English SER models** | Known cross-domain risk: English studio performances ≠ Chinese animation dialogue. Multiple papers report >20% accuracy drop cross-domain. | SenseVoice (native Mandarin + Cantonese training) |
+| **pyannote 3.1 gated weights as default** | License ambiguity for commercial use; HF ToU gating adds friction for re-deployment | WhisperX's `speaker-diarization-community-1` (CC-BY-4.0, no gating) — fall back to 3.1 only if DER on Chinese dialogue is unacceptable |
+| **WhisperX without CUDA 12.8 upgrade** | WhisperX hard-requires CUDA 12.8 (README "Setup step 0") | Resolve CUDA upgrade FIRST in Phase 0/1; do NOT attempt CPU fallback (Whisper-large on CPU is hours-per-episode — already documented in CLAUDE.md) |
+| **MERT-v1-330M as the default** | 330M adds ~280MB VRAM for marginal accuracy gain over 95M; route host needs VRAM headroom for WhisperX + pyannote + SenseVoice | MERT-v1-95M; only upgrade to 330M if Phase 1 shows 95M underperforms on Chinese pop instruments (erhu, pipa, etc.) |
+| **F5-TTS pretrained models for commercial use** | CC-BY-NC-4.0 (Emilia dataset) — outputs cannot be used commercially | CosyVoice 2 (Apache 2.0) or GPT-SoVITS v4 (MIT) |
+| **`pyannote/speaker-diarization-3.0`** | Has problematic `onnxruntime` dep that 3.1 removed | pyannote.audio 3.1 + speaker-diarization-3.1 weights (or WhisperX's community-1) |
+| **Replacing `faster-whisper` entirely with WhisperX as a separate ASR** | WhisperX USES faster-whisper as backend — no replacement needed, just wrapping | Keep `audio/transcribe.py` AS-IS; route layer adds WhisperX above same backend |
+| **Demucs re-run for music MIR** | Demucs stems already produced by v1.0 baseline — re-running wastes ~3min/episode of GPU | Route consumes the existing `stems/htdemucs/<stem>/*.wav` from Demucs output; MERT/librosa/PANNs/SenseVoice read stems directly |
+| **AudioLDM2 / Stable Audio Open as a commercial product** (without flagging) | Both are non-commercial-licensed | Phase 1 must escalate to roadmap decision: research-only vs commercial path |
+| **`pydantic`** | Project has zero pydantic usage; jsonschema Draft 2020-12 is the contract surface; adding pydantic would split validation | jsonschema Draft202012Validator (already used) |
+| **A new canvas node type or contract bump for audio semantic data** | Consumer's `canvasAssetSchema.ts` already accepts arbitrary `assetType` string; v1.2 audio_semantic.json is a new optional sidecar under existing `data.*` pattern | Reuse existing `asset` node; bump only `SHOT_TIMELINE_KNOWN_VERSIONS` Set + `schema_version` 1.1→1.2 (pure minor) |
 
 ---
 
 ## Stack Patterns by Variant
 
-**If the route is reachable (`--analysis-url` resolves, route returns 200):**
-- `step_semantic` POSTs shots → enriches prompts.json; `step_reid` POSTs frames → produces characters.json + props.json
-- asset.json exports at `schema_version: "1.1"` with `data.characters` + `data.props` populated
+### Pattern A — "Full pipeline, route up" (default)
+```
+shot-timeline          kais-aigc-platform/audio-analysis route
+─────────────          ────────────────────────────────────
+step_audio_semantic →  POST /api/v1/production/audio-analysis
+  (httpx)               ├─ WhisperX (words + diarization, reads vocals.wav)
+                        ├─ SenseVoice (emotion + AED, reads vocals.wav)
+                        ├─ MERT-v1-95M (instruments + tempo + key, reads drums/bass/other.wav)
+                        ├─ librosa (tempo/key cross-check)
+                        ├─ PANNs (polyphonic sfx taxonomy, reads other.wav)
+                        └─ → audio_semantic.json (per shot:
+                            dialogue{words,speaker_id,emotion} +
+                            music{instruments,tempo_bpm,key,va,occurrences} +
+                            sfx{description[]} +
+                            reproduction_prompts{tts,music_gen,foley})
+```
+**When:** Route host healthy, CUDA 12.8 installed, all model licenses accepted.
 
-**If the route is unreachable (DNS fail, connection refused, 5xx after retries, timeout):**
-- Both new steps print `[warn] analysis route unavailable, graceful-degrade: <reason>` and return None
-- prompts.json keeps whatever was there (manual `part_*.json` merge output or empty)
-- characters.json/props.json are NOT written
-- asset.json STILL exports at `schema_version: "1.1"` but with `data.characters`/`data.props` OMITTED (they're optional in v1.1 schema — old v1.0 consumers already gracefully-degrade on unknown versions)
+### Pattern B — "Offline / cache-only" (mirror v1.1's `--offline`)
+```
+shot-timeline (--offline flag)
+───────────────────────────────
+step_audio_semantic →  reads route_cache/audio_analysis/shot_*.json only
+  (no network)         on cache miss → graceful-degrade to schema-valid
+                       empty audio_semantic.json + warning sidecar
+                       (existing audio_analysis.json from v1.0 still
+                        produced — audio_semantic.json is OPTIONAL)
+```
+**When:** Operator running offline, route host down, or re-running after cache populated. Exact mirror of `call_shot_analysis.py:--offline`.
 
-**If only the re-id route is down but semantic works:**
-- prompts.json gets enriched, characters.json/props.json absent; prompts' `character_refs[]`/`prop_refs[]` stay empty; `subject` field filled with Qwen's `subject_motion` text instead of a registry reference
+### Pattern C — "Spike fallback" (locked decision #6)
+```
+shot-timeline (--offline + cache-miss on all shots)
+───────────────────────────────────────────────────
+step_audio_semantic delegates to audio/gen_audio_prompts.py
+  → produces sidecar NL prompt from Demucs energies + transcript
+    (NOT the layered TTS/music-gen/foley; single NL string)
+```
+**When:** v1.2 spike retirement: `gen_audio_prompts.py` demoted to offline fallback per locked decision. NEVER the primary path.
 
-**If shot-timeline is run on a box with no GPU at all:**
-- Everything still works — shot-timeline itself never touches GPU; route-side ML is on the route's host
+### Pattern D — "Partial modality" (route returns partial)
+```
+shot-timeline handles route response with modality-level nulls:
+  - dialogue present, music null, sfx null → write partial audio_semantic
+  - all three null → graceful-degrade (Pattern B)
+  - warnings sidecar records which modalities failed
+```
+**When:** One model in the route crashes (e.g., MERT OOM) but others succeed. Route-side must support partial response; client treats missing keys as null. Mirror CR-02 defensive isinstance guards from `call_shot_analysis.py`.
 
 ---
 
 ## Version Compatibility
 
-Verified live against both repos + PyPI on 2026-07-24:
-
-| Package | Version (this research) | Compatible With | Notes |
-|---|---|---|---|
-| `httpx` | 0.28.1 | Python 3.12.3 (env) | Already installed; `HTTPTransport(retries=...)` available |
-| `jsonschema` | 4.26.0 | Python 3.12 | Draft 2020-12 Validator; already used |
-| `pillow` | 12.2.0 | Python 3.12 | Already installed; `PIL.Image` used in detect_v3b.py |
-| `transformers` | 5.14.1 | torch 2.6.0+cu124 (env) | Route side; loads `facebook/dinov2-base` |
-| `scikit-learn` | 1.9.0 | numpy 2.2.6 (env) | Route side; `AgglomerativeClustering(metric="cosine")` supported |
-| `facebook/dinov2-base` (HF weights) | stable since 2023 | transformers ≥4.31 (we have 5.14.1) | 768-d pooler_output, ViT-B/14, ~346MB |
-| `zod` (canvas consumer) | 3.25.76 (infinite-canvas) / 4.3.5 (backend) | existing | NO bump needed — `assetType` already accepts character/prop |
-| `express` (route host) | 5.2.1 | existing | shot-analysis route pattern proven; new re-id route mirrors it |
-
----
-
-## Schema Bump Nuance — Flag for Planner
-
-`PROJECT.md` says: *"v1.1 把 schema_version 升到 `"2"`"*. **This contradicts the project's own SPEC rule**, verified at `spec/schemas/asset.schema.json:7`:
-
-> "New field = minor version bump (old consumers degrade gracefully). Breaking change (rename, semantic shift, removal) = major bump"
-
-Adding `characters.json` + `props.json` + enriching `prompts.json` is **additive** — pure new fields, no rename/semantic-shift/removal. Per the project's own rule this is a **minor bump → `schema_version: "1.1"`**, NOT `"2"`.
-
-LIVE verification of the consumer's graceful-degrade behavior (`src/routes/canvas/v2/import-from-dir.ts:892-898`):
-```ts
-const SHOT_TIMELINE_KNOWN_VERSIONS = new Set(["1"]);
-// ...
-if (!SHOT_TIMELINE_KNOWN_VERSIONS.has(version)) {
-  console.warn(`[v2/import] ShotTimelineAsset schema_version="${...}" not in known set ... — graceful-degrade (SPEC §4)`);
-}
-```
-The consumer does NOT reject on unknown version — it warns and continues. So either `"1.1"` or `"2"` is functionally safe at the canvas side. **But picking `"2"` (a) violates the project's stated semver-lite rule and (b) burns the major-bump escape hatch for a future genuinely-breaking change.**
-
-**Recommendation to planner:** ship v1.1 as `schema_version: "1.1"`. Reserve `"2"` for the first genuinely breaking change (e.g. renaming `shots` → `segments`, removing `bass.wav`-tolerant fallback, etc.). Update PROJECT.md's `"2"` wording to `"1.1"` at phase 1.
-
-If the planner insists on `"2"`, document it explicitly in the SPEC.md migration section as an exception to the semver-lite rule (otherwise the SPEC contradicts itself).
+| Package A | Compatible With | Notes |
+|-----------|-----------------|-------|
+| `whisperx` (PyPI latest) | **CUDA 12.8** (hard req), torch ≥2.6, faster-whisper 1.x | **Current project CUDA 12.4 is NOT compatible — route host upgrade required.** WhisperX's bundled pyannote is community-1 (CC-BY-4.0). |
+| `whisperx` Chinese alignment | `jonatasgrosman/wav2vec2-large-xlsr-53-chinese-zh-cn` (DEFAULT_ALIGN_MODELS_HF["zh"]) | Auto-downloaded first run; verify it lands Chinese animation dialogue cleanly in Phase 1. |
+| `funasr>=1.3.26` (SenseVoice) | Python 3.10+, torch ≥1.13 (works with 2.6+cu124 too — SenseVoice does NOT require CUDA 12.8) | SenseVoice can run on the current 12.4 runtime — only WhisperX forces the upgrade. |
+| `pyannote.audio` 3.1 | torch ≥1.11, torchaudio ≥0.11, Python ≥3.9 | Pure PyTorch (no onnxruntime); works with both CUDA 12.4 and 12.8 |
+| MERT-v1 | transformers ≥4.40, torch compatible | Works on current runtime; CUDA 12.4 fine |
+| `pyannote/speaker-diarization-3.1` weights | pyannote.audio ≥3.1 + HF token + ToU acceptance | Gated; alternative is community-1 (no gating) |
+| `pyannote/speaker-diarization-community-1` weights | pyannote.audio ≥3.1, CC-BY-4.0 | WhisperX default as of current release; no gating but still requires HF token (read) |
+| CosyVoice 2 / Fun-CosyVoice 3.0 | Same FunAudioLLM/funasr ecosystem as SenseVoice | Apache 2.0 — commercial-safe target for TTS prompts |
+| Stable Audio Open 1.0 | diffusers ≥0.21 | Non-commercial — see license caveat |
+| AudioLDM2 | diffusers ≥0.21 | Non-commercial — see license caveat |
+| F5-TTS (code) | MIT | F5-TTS pretrained models are CC-BY-NC-4.0 — non-commercial only |
+| `httpx` (this repo) | 0.28.1+ already installed | No change for v1.2 |
 
 ---
 
-## Gaps / Open Questions for Phase-Specific Research
+## Integration With Existing v1.0/v1.1 Pipeline (Critical for Phase 1)
 
-1. **`character-reid` route does not yet exist.** Only `shot-analysis` exists (verified). A new route must be built in kais-aigc-platform (`src/routes/production/character-reid/`) mirroring the `shot-analysis` thin-wrapper pattern (`execFileSync` Python driver). Phase creating that route needs its own research for the SAM3-crop→DINOv2→cluster driver script.
-2. **Container path plumbing for frames.json.** `frames.json` carries base64 data URIs (verified, `gen_timeline_html.py`), NOT filesystem paths. The re-id route needs actual frame images to mask. Either: (a) shot-timeline writes first/last frame PNGs to disk as part of `step_reid` and ships their paths; or (b) re-id route re-extracts frames via ffmpeg from `--video`. Option (b) matches the existing `shot-analysis` route's `docker cp` video-then-extract pattern (`shot-analysis/index.ts:53-77`). Recommend (b) — keeps shot-timeline's I/O surface unchanged.
-3. **DINOv2 cosine threshold tuning.** τ=0.30 is a literature starting point, not validated on 《小江湖》-style animation. Phase that wires the route should A/B against hand-labeled ground truth on one episode; flag in PITFALLS.md.
-4. **Two unmerged comfyui branches.** `feat/shot-geometry-nodes` + `feat/shot-analysis-route` must merge before v1.1 ships (milestone Constraint). The route is unreachable until they do. Planner should sequence phase 1 after those merges (or flag the dependency).
+| Existing artifact | v1.2 consumer (route-side) | Notes |
+|-------------------|---------------------------|-------|
+| `stems/htdemucs/<stem>/{vocals,drums,bass,other}.wav` | WhisperX + SenseVoice (read `vocals.wav` for clean ASR / emotion — less BGM interference); MERT + PANNs + librosa (read `drums.wav` + `bass.wav` + `other.wav` for music MIR; `other.wav` for sfx) | **Demucs NOT re-run.** Route reuses existing 4-stem output. Saves ~3min/episode GPU. |
+| `shots.json` (V3b time grid) | Route chunks all per-shot analysis by `{start_sec, end_sec}` — same pattern as `call_shot_analysis.py:shot_id_range=[N,N]` | Per-shot isolation preserved; cache key includes `video_content_hash + route_name + route_version`. |
+| `transcript.json` (Whisper segments) | **NOT replaced.** v1.0 `audio/transcribe.py` stays untouched (still the producer of `transcript.json`); route overlays word-level + speakers + emotion into the NEW `audio_semantic.json` sidecar. | v1.0 transcript.json schema UNCHANGED; `audio_semantic.json` is the optional sidecar with richer per-shot data. Backward compatibility preserved. |
+| `prompts.json` (v1.1 cinematography prompts) | v1.2 reproduction prompts (TTS / music-gen / foley) live in NEW `audio_semantic.json` sidecar — `prompts.json` is NOT modified (it stays the visual-cinematography prompt). | Mirrors v1.1's decision to keep `audio_prompts.json` as a sidecar. |
+| `characters.json` (v1.1 registry) | SPEAKER-01: speaker attribution links `speaker_id → character_id` via the registry | Route returns speaker_id labels; client-side (or HITL step) maps speaker_id to character_id. v1.1's `registry/apply_edits.py` confirmed-only gate pattern applies. |
+| `route_cache/` pattern | New subdir `route_cache/audio_analysis/shot_XXX.json` + existing `route_cache/warnings.json` sidecar merge | Mirrors `call_shot_analysis.py` cache layout exactly (4-tuple key: video_content_hash + route_name + route_version). |
+| `asset.json` manifest | Add optional `data.audio_semantic` (v1.2 minor bump 1.1→1.2) | Pure-additive per SPEC §4 — old consumers graceful-degrade. |
+| `scripts/serve.py` (Range-aware HTTP) | Unchanged — serves `audio_semantic.json` as static JSON (no Range needed for JSON); stems/video Range still needed as before | Zero new server infrastructure. |
+
+---
+
+## Schema Bump Nuance — Confirm v1.1 Pattern
+
+v1.2 schema bump `1.1 → 1.2` follows the EXACT pattern v1.1 established (and PROJECT.md Key Decisions locks):
+
+- **Pure-additive only**: new optional `data.audio_semantic` field in `asset.json`; new optional `audio_semantic.schema.json` file; NO rename, NO semantic shift, NO new required field.
+- **Producer-locked literal**: `scripts/export_asset.py:SCHEMA_VERSION = "1.2"` (single-source constant, NOT schema `const` — so v1/v1.1 minimal fixtures still validate).
+- **Cross-version self-test**: `scripts/verify_contract.py:_cross_version_check` extended to cover v1.2; v1/v1.1/v1.2 bidirectional proof (forward 0 errors; backward only additional properties errors → 0 non-additive errors).
+- **`schema_version` pattern unchanged**: `^(0|[1-9]\d*)(\.(0|[1-9]\d*))?$` — no regex change.
+
+No new contract mechanism; mirrors v1.1 Phase 5 exactly.
 
 ---
 
 ## Sources
 
-- **LIVE-verified code in this repo:** `run_pipeline.py`, `scripts/export_asset.py`, `spec/schemas/asset.schema.json`, `spec/schemas/prompts.schema.json`, `prompts/merge_prompts.py`
-- **LIVE-verified code cross-repo (`kais-aigc-platform`):** `src/routes/production/shot-analysis/index.ts`, `src/routes/production/shot-analysis/_shared/config.ts`, `scripts/shot-analysis/shot_analysis_driver.py`, `scripts/shot-analysis/README.md`, `src/lib/canvasAssetSchema.ts`, `packages/infinite-canvas/src/types/canvas.ts`, `src/routes/canvas/v2/import-from-dir.ts`
-- **LIVE sample output:** `/mnt/agents/output/gpu1/shot_analysis/shot_003.json` (the actual route response shape)
-- **LIVE env probe:** `/usr/bin/python3` 3.12.3 + `pip index versions …` for every recommended version
-- PyPI currency (HIGH confidence): httpx 0.28.1, scikit-learn 1.9.0, transformers 5.14.1, insightface 1.0.1, open-clip-torch 3.3.0, timm 1.0.28, onnxruntime-gpu 1.27.0, jsonschema 4.26.0
-- [facebook/dinov2-base on Hugging Face](https://huggingface.co/facebook/dinov2-base) — model card, ViT-B/14 self-supervised, 768-d
-- [DINOv2 in HF Transformers (official docs)](https://huggingface.co/docs/transformers/en/model_doc/dinov2) — `AutoModel` + `pooler_output` for image embeddings
-- [DINOv2 official repo (facebookresearch/dinov2)](https://github.com/facebookresearch/dinov2) — ViT-B/14 checkpoint, re-id / image-matching use cases documented
-- [InsightFace model zoo & guide](https://www.insightface.ai/guides/choose-face-recognition-model-and-evaluate) — buffalo_l vs antelopev2 (both ArcFace, 512-d, 112×112 input); **non-commercial research license**
-- [immich-app/antelopev2 mirror](https://huggingface.co/immich-app/antelopev2) / [buffalo_l mirror](https://huggingface.co/immich-app/buffalo_l) — provenance for the ONNX packs
-- [ShotTimelineAsset graceful-degrade rule](file:///data/workspace/kais-shot-timeline/spec/schemas/asset.schema.json) — SPEC §4, semver-lite `(0|[1-9]\d*)(\.(0|[1-9]\d*))?$`
+### Authoritative (HIGH confidence)
+
+- **WhisperX GitHub** — [github.com/m-bain/whisperx](https://github.com/m-bain/whisperx): confirmed faster-whisper backend, wav2vec2 alignment, speaker-diarization-community-1 (CC-BY-4.0) default, **CUDA 12.8 hard-req**, <8GB VRAM for large-v2 beam_size=5. INTERSPEECH 2023 paper (Bain et al.). **Confidence: HIGH.**
+- **pyannote/speaker-diarization-3.1 HF model card** — [huggingface.co/pyannote/speaker-diarization-3.1](https://huggingface.co/pyannote/speaker-diarization-3.1): confirmed pyannote.audio 3.1+, pure-PyTorch (3.0 onnxruntime removed), 16kHz mono, `num_speakers` / `min_speakers` / `max_speakers` hints, MIT-licensed code, gated weights. **Confidence: HIGH.**
+- **FunAudioLLM/SenseVoice GitHub** — [github.com/FunAudioLLM/SenseVoice](https://github.com/FunAudioLLM/SenseVoice): confirmed SenseVoiceSmall supports Mandarin/Cantonese/English/Japanese/Korean ASR + LID + SER (7 emotions) + AED (8 events incl. BGM), non-autoregressive (5–15× faster than Whisper), MIT code, funasr≥1.3.26, llama.cpp/GGUF runtime since 2026/06 (q8 ~254MB), composed FSMN-VAD+CAM++ diarization pipeline, 8.9k★. SER benchmark table shows SenseVoice-Large is SOTA across Chinese+English test sets without target-domain finetuning. **Confidence: HIGH.**
+- **MERT-v1-330M HF model card + arXiv 2306.00107** — [huggingface.co/m-a-p/MERT-v1-330M](https://huggingface.co/m-a-p/MERT-v1-330M), [arxiv.org/abs/2306.00107](https://arxiv.org/abs/2306.00107): confirmed 95M/330M variants, ICLR 2024 (384+ citations), SOTA on 14 MIR tasks, ~660MB fp16 weights (330M) / ~380MB (95M). **Confidence: HIGH for existence/perf claims; MEDIUM for production-readiness on Chinese pop/animation BGM (must verify Phase 1).**
+- **CosyVoice GitHub** — [github.com/FunAudioLLM/CosyVoice](https://github.com/FunAudioLLM/CosyVoice): confirmed Apache 2.0 license, Fun-CosyVoice 3.0 line, multilingual zero-shot cloning. **Confidence: HIGH.**
+- **F5-TTS GitHub + Discussion #997** — confirmed MIT code + CC-BY-NC-4.0 pretrained models (Emilia dataset). **Confidence: HIGH.**
+- **GPT-SoVITS GitHub** — [github.com/RVC-Boss/GPT-SoVITS](https://github.com/RVC-Boss/GPT-SoVITS): confirmed MIT, v4 released 2025, 48k native output. **Confidence: HIGH.**
+- **Stable Audio Open model card + LICENSE.md** — [huggingface.co/stabilityai/stable-audio-open-1.0](https://huggingface.co/stabilityai/stable-audio-open-1.0): confirmed Stability Community License = non-commercial; ≤47s clips; designed for foley. **Confidence: HIGH.**
+- **AudioLDM2 HF model card** — [huggingface.co/cvssp/audioldm2](https://huggingface.co/cvssp/audioldm2): confirmed CC-BY-NC-SA-4.0 — non-commercial. **Confidence: HIGH.**
+- **librosa docs** — [librosa.org/doc/main](https://librosa.org/doc/main/generated/librosa.beat.beat_track.html): confirmed `beat_track` + chroma key detection as canonical DSP baseline. **Confidence: HIGH.**
+
+### Secondary (MEDIUM confidence)
+
+- **WhisperX Issue #810 + alignment.py source** — confirms Chinese default align model is `jonatasgrosman/wav2vec2-large-xlsr-53-chinese-zh-cn` (XLSR-53 finetune). Phase 1 must validate on animation dialogue.
+- **SenseVoice SER benchmark figure (image in README)** — claims SOTA without target-domain finetuning, but the benchmark is on standard test sets (not animation); cross-domain still a risk for v1.2 use case.
+- **arXiv 2603.04809 "Word-Boundary-Aware ASR and WhisperX-Anchored Pyannote Diarization"** — flags temporal drift when pairing WhisperX ASR with standalone pyannote pipelines using different VADs. **Actionable:** prefer WhisperX's bundled community-1 diarization over a standalone pyannote pipeline, to keep VAD consistent.
+
+### Not found / LOW confidence
+
+- **MuQ**: did NOT surface in 2025 searches as a real published model — possibly name confusion with another model. **Treat as not-available until proven otherwise.** If the user knows MuQ by another spelling, research can re-run.
+- **Polyphonic instrument recognition on Chinese pop specifically**: no head-to-head benchmark MERT vs PANNs on erhu/pipa/guzheng etc. Phase 1 risk-validation must produce this.
+
+---
+
+## Gaps / Open Questions for Phase-Specific Research
+
+1. **CUDA 12.8 upgrade path for the route host.** WhisperX cannot run without it. Phase 0/1 unblocks this BEFORE any model risk-validation. Not technically a "research gap" but a prerequisite gate.
+2. **MERT vs PANNs vs librosa on Chinese pop/animation BGM.** No head-to-head benchmark exists. Phase 1 risk-validation on 1 episode MUST measure tempo accuracy, key accuracy, and instrument classification precision on representative Chinese soundtrack samples — paper MERT benchmarks are Western music.
+3. **SenseVoice cross-domain on Chinese animation dialogue.** Native Mandarin training is promising but benchmark is on test sets, not animation. Phase 1 must spot-check 1 episode for emotion accuracy.
+4. **WhisperX `community-1` diarization DER on Chinese animation.** Multiple speakers + overlapping speech + BGM interference are the failure mode. Phase 1 measures DER vs standalone pyannote 3.1; if community-1 < 3.1 by >5pp DER, switch to 3.1.
+5. **Music-gen / sfx commercial roadmap decision.** Open-weights are all non-commercial. Phase 1 must escalate: research-only mode (use Stable Audio Open + AudioLDM2) vs commercial mode (Stable Audio paid API or model-agnostic prompts). This is a PLANNING decision, not a tech decision.
+6. **Speaker_id ↔ character_id linkage mechanism.** Route returns numeric speaker labels (SPEAKER_00, SPEAKER_01...); v1.1 character registry uses `char_NNN` IDs. Need a HITL mapping step (mirror v1.1 `registry/apply_edits.py` confirmed-only gate) or route-side heuristic (CAM++ voice embedding similarity to registry audio samples). Scope of SPEAKER-01 requirement.
+
+---
+
+*Stack research for: v1.2 音频语义深化 (route-based three-modality audio semantic analysis + layered reproduction prompts)*
+*Researched: 2026-07-25*
