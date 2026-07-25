@@ -629,6 +629,14 @@ def main():
 
     try:
         for s in shots_meta:
+            # WR-02：守卫 mirror --force 分支（:569-570）—— 非 dict 或 id 非 int
+            # 一律 skip + warn（畸形 shots.json 条目不应让 :03d format 抛 TypeError /
+            # missing id 抛 KeyError 而崩溃 pipeline）。
+            if not isinstance(s, dict) or not isinstance(s.get("id"), int):
+                bad = type(s).__name__ if not isinstance(s, dict) else s.get("id")
+                audio_warnings.append(
+                    f"skip malformed shots.json entry (not dict or id not int): {bad!r}")
+                continue
             sid = s["id"]
             cache_file = os.path.join(cache_dir, f"shot_{sid:03d}.json")
 
