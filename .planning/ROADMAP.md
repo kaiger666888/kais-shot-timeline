@@ -64,7 +64,13 @@ Route-based audio semantic deepening: a third sibling of the v1.1 route-pattern 
   3. Spike report documents polyphonic instrument recognition mAP on 1 episode `drums+bass+other` mix (esp. erhu/pipa/guzheng/dizi folk instruments), enabling the MUS-04 ship/defer decision and the MERT-vs-PANNs head-to-head pick
   4. Spike report documents WhisperX word-level alignment drift on ≥N Chinese segments (PyPI hard-requires CUDA 12.8), enabling the DIA-05 ship-experimental / defer decision AND the CUDA 12.8 upgrade vs stay-on-12.4 (drop WhisperX) decision
   5. PROJECT.md Key Decisions logs the 4 locked outcomes (models_used strings per modality; CUDA path; DIA-04/MUS-04/DIA-05 ship-or-defer per thresholds)
-**Plans**: TBD
+**Plans**:
+- [ ] 10-01-PLAN.md — Wave 0 foundation: spike/audio/common.py + tests/ smoke harness + aggregate_report.py skeleton
+- [ ] 10-02-PLAN.md — ROUTE-01 cross-repo stub (kais-aigc-platform feat/audio-analysis-route): envelope mirrors shot-analysis
+- [ ] 10-03-PLAN.md — SER spike (SenseVoice on ep01 vocals, DIA-04 de-risk) + methodology checkpoint
+- [ ] 10-04-PLAN.md — MIR head-to-head spike (MERT-v1-95M + PANNs Cnn14 on drums+bass+other, MUS-04 de-risk) + methodology checkpoint
+- [ ] 10-05-PLAN.md — WhisperX drift spike (isolated venv CPU, DIA-05 + CUDA-path de-risk)
+- [ ] 10-06-PLAN.md — Aggregate spike report + lock 4 outcomes into PROJECT.md + threshold-decision checkpoint
 
 ### Phase 11: Contract v1.2
 **Goal**: Lock the v1.2 contract — 3 new schemas + additive asset.schema extension + `SCHEMA_VERSION = "1.2"` single-source + 12-file fixture + bidirectional cross-version proof + SPEC + fidelity_disclaimer — BEFORE any producer code writes against it (mirror v1.1 Phase 5 contract-first).
@@ -168,7 +174,7 @@ v1.2 phases execute in numeric order: 10 → 11 → 12 → 13 → 14 → 15 → 
 | 7. Cross-Shot Re-ID Registry + HITL Review (`step_reid`) | v1.1 | 4/4 | Complete | 2026-07-25 |
 | 8. Prompt Reference System + shot-timeline HTML Gallery | v1.1 | 3/3 | Complete | 2026-07-25 |
 | 9. Canvas Consumer Integration (cross-repo) | v1.1 | 2/2 | Complete | 2026-07-25 |
-| 10. Risk-Validation Spike + Route Stub | v1.2 | 0/? | Not started | - |
+| 10. Risk-Validation Spike + Route Stub | v1.2 | 0/6 | Planned | - |
 | 11. Contract v1.2 | v1.2 | 0/? | Not started | - |
 | 12. Producer Route Client | v1.2 | 0/? | Not started | - |
 | 13. SPEAKER-01 Linkage HITL | v1.2 | 0/? | Not started | - |
