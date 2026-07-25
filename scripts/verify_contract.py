@@ -600,6 +600,19 @@ def _fixture_consistency_check() -> tuple:
                                 chars_v12_ids.add(c.get("id"))
                     except (json.JSONDecodeError, TypeError):
                         pass
+                # Reuse shots.json from v1.2 fixture (byte-copied from v1.1) — symmetric
+                # source-of-truth with chars_v12_ids above (WR-01 fix: was using v1.1
+                # shot_ids, which would false-pass/fail if v1.2/shots.json ever diverges).
+                shots_v12_path = v12_fix_dir / "shots.json"
+                shots_v12_ids = set()
+                if shots_v12_path.is_file():
+                    try:
+                        for s in json.loads(shots_v12_path.read_text(encoding="utf-8")):
+                            if isinstance(s, dict):
+                                shots_v12_ids.add(s.get("id"))
+                    except (json.JSONDecodeError, TypeError):
+                        pass
+                shot_ids_for_speakers = shots_v12_ids or shot_ids  # fall back to v1.1 if v1.2 absent
                 for spk in speakers_data.get("speakers", []):
                     sid = spk.get("spk_id")
                     if not (isinstance(sid, str) and re.match(r"^spk_[0-9]{3}$", sid)):
@@ -610,9 +623,9 @@ def _fixture_consistency_check() -> tuple:
                             f"v1.2 speakers.json {sid}: char_id {cid!r} not in "
                             f"v1.2 characters.json IDs (Pitfall 17 — speaker→character dangling)"
                         )
-                    # turn.shot_id ⊆ shots.json#id (mirror registry member check)
+                    # turn.shot_id ⊆ shots.json#id (mirror registry member check; v1.2 source)
                     for turn in spk.get("turns", []) or []:
-                        if turn.get("shot_id") not in shot_ids:
+                        if turn.get("shot_id") not in shot_ids_for_speakers:
                             failures.append(
                                 f"v1.2 speakers.json {sid}: turn shot_id "
                                 f"{turn.get('shot_id')} unknown"
