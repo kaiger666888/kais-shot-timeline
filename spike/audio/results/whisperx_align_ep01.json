@@ -1,0 +1,766 @@
+{
+  "sample_size": 30,
+  "per_sample": [
+    {
+      "transcript_idx": 42,
+      "segment": {
+        "start": 78.04,
+        "end": 78.9,
+        "text": "够了没有"
+      },
+      "duration_sec": 0.86,
+      "num_words": 4,
+      "word_drifts_ms": [
+        388.9999999999958,
+        552.9999999999973,
+        613.9999999999901,
+        736.9999999999948
+      ],
+      "boundary_drifts_ms": [
+        388.9999999999958,
+        102.00000000000387
+      ],
+      "max_word_drift_ms": 736.9999999999948,
+      "mean_word_drift_ms": 573.25,
+      "mean_word_score": 0.9958
+    },
+    {
+      "transcript_idx": 73,
+      "segment": {
+        "start": 138.76,
+        "end": 140.3,
+        "text": "等什么"
+      },
+      "duration_sec": 1.54,
+      "num_words": 3,
+      "word_drifts_ms": [
+        1033.0000000000155,
+        1216.0000000000082,
+        1397.9999999999961
+      ],
+      "boundary_drifts_ms": [
+        1033.0000000000155,
+        122.0000000000141
+      ],
+      "max_word_drift_ms": 1397.9999999999961,
+      "mean_word_drift_ms": 1215.67,
+      "mean_word_score": 0.5927
+    },
+    {
+      "transcript_idx": 151,
+      "segment": {
+        "start": 314.66,
+        "end": 314.74,
+        "text": "使家"
+      },
+      "duration_sec": 0.08,
+      "num_words": 0,
+      "word_drifts_ms": [],
+      "boundary_drifts_ms": [
+        0.0,
+        0.0
+      ],
+      "max_word_drift_ms": null,
+      "mean_word_drift_ms": null,
+      "mean_word_score": null
+    },
+    {
+      "transcript_idx": 130,
+      "segment": {
+        "start": 266.82,
+        "end": 266.84,
+        "text": "二三四五六七八"
+      },
+      "duration_sec": 0.02,
+      "num_words": 0,
+      "word_drifts_ms": [],
+      "boundary_drifts_ms": [
+        0.0,
+        0.0
+      ],
+      "max_word_drift_ms": null,
+      "mean_word_drift_ms": null,
+      "mean_word_score": null
+    },
+    {
+      "transcript_idx": 148,
+      "segment": {
+        "start": 312.9,
+        "end": 313.52,
+        "text": "博士"
+      },
+      "duration_sec": 0.62,
+      "num_words": 0,
+      "word_drifts_ms": [],
+      "boundary_drifts_ms": [
+        0.0,
+        0.0
+      ],
+      "max_word_drift_ms": null,
+      "mean_word_drift_ms": null,
+      "mean_word_score": null
+    },
+    {
+      "transcript_idx": 127,
+      "segment": {
+        "start": 262.72,
+        "end": 264.66,
+        "text": "他很聪明 一学就会"
+      },
+      "duration_sec": 1.94,
+      "num_words": 8,
+      "word_drifts_ms": [
+        181.99999999995953,
+        343.9999999999941,
+        545.9999999999923,
+        747.9999999999905,
+        1090.9999999999513,
+        1333.9999999999463,
+        1535.9999999999445,
+        1737.9999999999995
+      ],
+      "boundary_drifts_ms": [
+        181.99999999995953,
+        182.00000000001637
+      ],
+      "max_word_drift_ms": 1737.9999999999995,
+      "mean_word_drift_ms": 939.87,
+      "mean_word_score": 0.9674
+    },
+    {
+      "transcript_idx": 149,
+      "segment": {
+        "start": 313.52,
+        "end": 314.16,
+        "text": "饪家"
+      },
+      "duration_sec": 0.64,
+      "num_words": 0,
+      "word_drifts_ms": [],
+      "boundary_drifts_ms": [
+        0.0,
+        0.0
+      ],
+      "max_word_drift_ms": null,
+      "mean_word_drift_ms": null,
+      "mean_word_score": null
+    },
+    {
+      "transcript_idx": 25,
+      "segment": {
+        "start": 57.28,
+        "end": 57.64,
+        "text": "啊"
+      },
+      "duration_sec": 0.36,
+      "num_words": 1,
+      "word_drifts_ms": [
+        317.99999999999784
+      ],
+      "boundary_drifts_ms": [
+        317.99999999999784,
+        21.000000000000796
+      ],
+      "max_word_drift_ms": 317.99999999999784,
+      "mean_word_drift_ms": 318.0,
+      "mean_word_score": 0.0
+    },
+    {
+      "transcript_idx": 121,
+      "segment": {
+        "start": 240.92,
+        "end": 243.08,
+        "text": "借兄弟宝刀一用"
+      },
+      "duration_sec": 2.16,
+      "num_words": 7,
+      "word_drifts_ms": [
+        828.000000000003,
+        1070.0000000000216,
+        1292.0000000000016,
+        1453.000000000003,
+        1655.0000000000011,
+        1877.0000000000095,
+        1978.0000000000086
+      ],
+      "boundary_drifts_ms": [
+        828.000000000003,
+        161.00000000000136
+      ],
+      "max_word_drift_ms": 1978.0000000000086,
+      "mean_word_drift_ms": 1450.43,
+      "mean_word_score": 0.9507
+    },
+    {
+      "transcript_idx": 139,
+      "segment": {
+        "start": 293.64,
+        "end": 296.32,
+        "text": "爸爸 你在哪儿"
+      },
+      "duration_sec": 2.68,
+      "num_words": 6,
+      "word_drifts_ms": [
+        322.00000000000273,
+        343.00000000001774,
+        625.0,
+        806.00000000004,
+        1108.000000000004,
+        1490.9999999999854
+      ],
+      "boundary_drifts_ms": [
+        322.00000000000273,
+        1168.9999999999827
+      ],
+      "max_word_drift_ms": 1490.9999999999854,
+      "mean_word_drift_ms": 782.5,
+      "mean_word_score": 0.616
+    },
+    {
+      "transcript_idx": 21,
+      "segment": {
+        "start": 45.16,
+        "end": 49.12,
+        "text": "阁下可是黑头前辈"
+      },
+      "duration_sec": 3.96,
+      "num_words": 8,
+      "word_drifts_ms": [
+        1869.0000000000068,
+        2111.000000000004,
+        2493.0000000000023,
+        2633.0000000000027,
+        2774.000000000001,
+        3015.0000000000005,
+        3236.000000000004,
+        3457.000000000001
+      ],
+      "boundary_drifts_ms": [
+        1869.0000000000068,
+        481.9999999999993
+      ],
+      "max_word_drift_ms": 3457.000000000001,
+      "mean_word_drift_ms": 2698.5,
+      "mean_word_score": 0.8954
+    },
+    {
+      "transcript_idx": 3,
+      "segment": {
+        "start": 5.62,
+        "end": 8.02,
+        "text": "三 二"
+      },
+      "duration_sec": 2.4,
+      "num_words": 2,
+      "word_drifts_ms": [
+        705.9999999999995,
+        1210.0
+      ],
+      "boundary_drifts_ms": [
+        705.9999999999995,
+        1170.0
+      ],
+      "max_word_drift_ms": 1210.0,
+      "mean_word_drift_ms": 958.0,
+      "mean_word_score": 0.477
+    },
+    {
+      "transcript_idx": 136,
+      "segment": {
+        "start": 280.56,
+        "end": 284.4,
+        "text": "七十 九十七 九十八"
+      },
+      "duration_sec": 3.84,
+      "num_words": 8,
+      "word_drifts_ms": [
+        79.99999999998408,
+        341.99999999998454,
+        824.0000000000123,
+        1125.9999999999764,
+        1487.9999999999995,
+        2331.9999999999936,
+        2694.000000000017,
+        2975.0000000000227
+      ],
+      "boundary_drifts_ms": [
+        79.99999999998408,
+        843.9999999999941
+      ],
+      "max_word_drift_ms": 2975.0000000000227,
+      "mean_word_drift_ms": 1482.62,
+      "mean_word_score": 0.8961
+    },
+    {
+      "transcript_idx": 10,
+      "segment": {
+        "start": 23.28,
+        "end": 25.28,
+        "text": "爸爸是不能拒绝的"
+      },
+      "duration_sec": 2.0,
+      "num_words": 8,
+      "word_drifts_ms": [
+        585.9999999999985,
+        788.0000000000002,
+        969.9999999999989,
+        1131.0000000000002,
+        1292.9999999999993,
+        1494.9999999999975,
+        1696.999999999999,
+        1878.9999999999977
+      ],
+      "boundary_drifts_ms": [
+        585.9999999999985,
+        101.00000000000264
+      ],
+      "max_word_drift_ms": 1878.9999999999977,
+      "mean_word_drift_ms": 1229.87,
+      "mean_word_score": 0.9968
+    },
+    {
+      "transcript_idx": 14,
+      "segment": {
+        "start": 28.04,
+        "end": 32.08,
+        "text": "你不是说等我长大了就教我功夫吗"
+      },
+      "duration_sec": 4.04,
+      "num_words": 15,
+      "word_drifts_ms": [
+        763.9999999999993,
+        925.0000000000007,
+        1105.0000000000005,
+        1306.000000000001,
+        1789.0000000000014,
+        1949.9999999999993,
+        2090.0,
+        2311.0,
+        2512.0000000000005,
+        2894.000000000002,
+        3054.9999999999995,
+        3236.0000000000005,
+        3437.0000000000014,
+        3678.000000000001,
+        3859.000000000002
+      ],
+      "boundary_drifts_ms": [
+        763.9999999999993,
+        160.9999999999978
+      ],
+      "max_word_drift_ms": 3859.000000000002,
+      "mean_word_drift_ms": 2327.4,
+      "mean_word_score": 0.8942
+    },
+    {
+      "transcript_idx": 92,
+      "segment": {
+        "start": 184.4,
+        "end": 187.68,
+        "text": "啊"
+      },
+      "duration_sec": 3.28,
+      "num_words": 1,
+      "word_drifts_ms": [
+        824.9999999999886
+      ],
+      "boundary_drifts_ms": [
+        824.9999999999886,
+        2435.0000000000023
+      ],
+      "max_word_drift_ms": 824.9999999999886,
+      "mean_word_drift_ms": 825.0,
+      "mean_word_score": 0.0
+    },
+    {
+      "transcript_idx": 49,
+      "segment": {
+        "start": 88.02,
+        "end": 95.54,
+        "text": "一吃"
+      },
+      "duration_sec": 7.52,
+      "num_words": 2,
+      "word_drifts_ms": [
+        0.0,
+        140.00000000000057
+      ],
+      "boundary_drifts_ms": [
+        0.0,
+        7359.999999999999
+      ],
+      "max_word_drift_ms": 140.00000000000057,
+      "mean_word_drift_ms": 70.0,
+      "mean_word_score": 0.4285
+    },
+    {
+      "transcript_idx": 154,
+      "segment": {
+        "start": 316.3,
+        "end": 324.22,
+        "text": ""
+      },
+      "duration_sec": 7.92,
+      "num_words": 0,
+      "word_drifts_ms": [],
+      "boundary_drifts_ms": [
+        0.0,
+        0.0
+      ],
+      "max_word_drift_ms": null,
+      "mean_word_drift_ms": null,
+      "mean_word_score": null
+    },
+    {
+      "transcript_idx": 68,
+      "segment": {
+        "start": 118.8,
+        "end": 129.9,
+        "text": "看来你对僵尸武功还不够了解呀"
+      },
+      "duration_sec": 11.1,
+      "num_words": 14,
+      "word_drifts_ms": [
+        8375.0,
+        8555.000000000007,
+        8736.000000000004,
+        8896.0,
+        9055.999999999998,
+        9337.000000000004,
+        9557.000000000002,
+        9718.000000000004,
+        9917.999999999993,
+        10058.000000000007,
+        10178.000000000011,
+        10298.999999999993,
+        10559.000000000011,
+        10779.000000000011
+      ],
+      "boundary_drifts_ms": [
+        8375.0,
+        301.00000000001614
+      ],
+      "max_word_drift_ms": 10779.000000000011,
+      "mean_word_drift_ms": 9572.93,
+      "mean_word_score": 0.8902
+    },
+    {
+      "transcript_idx": 94,
+      "segment": {
+        "start": 189.56,
+        "end": 195.58,
+        "text": "啊"
+      },
+      "duration_sec": 6.02,
+      "num_words": 1,
+      "word_drifts_ms": [
+        20.000000000010232
+      ],
+      "boundary_drifts_ms": [
+        20.000000000010232,
+        5980.000000000018
+      ],
+      "max_word_drift_ms": 20.000000000010232,
+      "mean_word_drift_ms": 20.0,
+      "mean_word_score": 0.0
+    },
+    {
+      "transcript_idx": 60,
+      "segment": {
+        "start": 103.46,
+        "end": 109.02,
+        "text": "你풀 considered"
+      },
+      "duration_sec": 5.56,
+      "num_words": 12,
+      "word_drifts_ms": [
+        20.000000000010232,
+        60.000000000002274,
+        201.00000000000762,
+        261.0000000000099,
+        442.0000000000073,
+        1103.999999999999,
+        1285.000000000011,
+        1405.0000000000011,
+        1525.0000000000057,
+        1706.0000000000032,
+        1927.0000000000068,
+        2067.0000000000073
+      ],
+      "boundary_drifts_ms": [
+        20.000000000010232,
+        3471.999999999994
+      ],
+      "max_word_drift_ms": 2067.0000000000073,
+      "mean_word_drift_ms": 1000.25,
+      "mean_word_score": 0.7668
+    },
+    {
+      "transcript_idx": 137,
+      "segment": {
+        "start": 284.4,
+        "end": 289.44,
+        "text": "九十九 一百"
+      },
+      "duration_sec": 5.04,
+      "num_words": 5,
+      "word_drifts_ms": [
+        40.000000000020464,
+        281.0000000000059,
+        482.00000000002774,
+        1546.000000000049,
+        1727.0000000000323
+      ],
+      "boundary_drifts_ms": [
+        40.000000000020464,
+        3293.0000000000064
+      ],
+      "max_word_drift_ms": 1727.0000000000323,
+      "mean_word_drift_ms": 815.2,
+      "mean_word_score": 0.7474
+    },
+    {
+      "transcript_idx": 141,
+      "segment": {
+        "start": 296.82,
+        "end": 306.7,
+        "text": "见回了你"
+      },
+      "duration_sec": 9.88,
+      "num_words": 4,
+      "word_drifts_ms": [
+        0.0,
+        40.000000000020464,
+        60.000000000002274,
+        160.000000000025
+      ],
+      "boundary_drifts_ms": [
+        0.0,
+        9699.999999999989
+      ],
+      "max_word_drift_ms": 160.000000000025,
+      "mean_word_drift_ms": 65.0,
+      "mean_word_score": 0.3252
+    },
+    {
+      "transcript_idx": 6,
+      "segment": {
+        "start": 10.26,
+        "end": 16.72,
+        "text": "爸爸 我不喜欢你总跟别人打架"
+      },
+      "duration_sec": 6.46,
+      "num_words": 13,
+      "word_drifts_ms": [
+        3832.000000000001,
+        4032.0,
+        4333.0,
+        4554.0,
+        4734.999999999999,
+        4915.000000000001,
+        5096.0,
+        5276.0,
+        5516.999999999999,
+        5718.0,
+        5878.000000000002,
+        6078.999999999999,
+        6340.000000000002
+      ],
+      "boundary_drifts_ms": [
+        3832.000000000001,
+        99.99999999999787
+      ],
+      "max_word_drift_ms": 6340.000000000002,
+      "mean_word_drift_ms": 5100.38,
+      "mean_word_score": 0.8809
+    },
+    {
+      "transcript_idx": 53,
+      "segment": {
+        "start": 99.38,
+        "end": 99.6,
+        "text": "我不吃蛋糕"
+      },
+      "duration_sec": 0.22,
+      "num_words": 5,
+      "word_drifts_ms": [
+        0.0,
+        22.00000000000557,
+        44.00000000001114,
+        88.00000000000807,
+        198.0000000000075
+      ],
+      "boundary_drifts_ms": [
+        0.0,
+        0.0
+      ],
+      "max_word_drift_ms": 198.0000000000075,
+      "mean_word_drift_ms": 70.4,
+      "mean_word_score": 0.26
+    },
+    {
+      "transcript_idx": 146,
+      "segment": {
+        "start": 310.6,
+        "end": 310.72,
+        "text": "wording"
+      },
+      "duration_sec": 0.12,
+      "num_words": 0,
+      "word_drifts_ms": [],
+      "boundary_drifts_ms": [
+        0.0,
+        0.0
+      ],
+      "max_word_drift_ms": null,
+      "mean_word_drift_ms": null,
+      "mean_word_score": null
+    },
+    {
+      "transcript_idx": 143,
+      "segment": {
+        "start": 307.7,
+        "end": 308.3,
+        "text": "Architect"
+      },
+      "duration_sec": 0.6,
+      "num_words": 9,
+      "word_drifts_ms": [
+        40.99999999999682,
+        62.00000000001182,
+        83.00000000002683,
+        103.00000000000864,
+        124.00000000002365,
+        145.00000000003865,
+        165.99999999999682,
+        186.00000000003547,
+        206.99999999999363
+      ],
+      "boundary_drifts_ms": [
+        40.99999999999682,
+        372.0000000000141
+      ],
+      "max_word_drift_ms": 206.99999999999363,
+      "mean_word_drift_ms": 124.11,
+      "mean_word_score": 0.0
+    },
+    {
+      "transcript_idx": 145,
+      "segment": {
+        "start": 310.14,
+        "end": 310.6,
+        "text": "Pac album"
+      },
+      "duration_sec": 0.46,
+      "num_words": 0,
+      "word_drifts_ms": [],
+      "boundary_drifts_ms": [
+        0.0,
+        0.0
+      ],
+      "max_word_drift_ms": null,
+      "mean_word_drift_ms": null,
+      "mean_word_score": null
+    },
+    {
+      "transcript_idx": 103,
+      "segment": {
+        "start": 207.62,
+        "end": 207.64,
+        "text": "王"
+      },
+      "duration_sec": 0.02,
+      "num_words": 1,
+      "word_drifts_ms": [
+        0.0
+      ],
+      "boundary_drifts_ms": [
+        0.0,
+        0.0
+      ],
+      "max_word_drift_ms": 0.0,
+      "mean_word_drift_ms": 0.0,
+      "mean_word_score": 0.0
+    },
+    {
+      "transcript_idx": 129,
+      "segment": {
+        "start": 266.76,
+        "end": 266.82,
+        "text": "二三四"
+      },
+      "duration_sec": 0.06,
+      "num_words": 0,
+      "word_drifts_ms": [],
+      "boundary_drifts_ms": [
+        0.0,
+        0.0
+      ],
+      "max_word_drift_ms": null,
+      "mean_word_drift_ms": null,
+      "mean_word_score": null
+    }
+  ],
+  "drift_stats": {
+    "pct_under_200_ms": 0.1898,
+    "pct_under_200ms": 0.1898,
+    "mean_drift_ms": 2393.13,
+    "median_drift_ms": 1334.0,
+    "total_words": 137,
+    "pct_boundary_under_200_ms": 0.6,
+    "mean_boundary_drift_ms": 962.63,
+    "median_boundary_drift_ms": 101.5,
+    "total_boundary_samples": 60,
+    "per_bucket": {
+      "short": {
+        "n_words": 31,
+        "pct_under_200_ms": 0.4839,
+        "mean_drift_ms": 491.81,
+        "median_drift_ms": 207.0
+      },
+      "medium": {
+        "n_words": 55,
+        "pct_under_200_ms": 0.0182,
+        "mean_drift_ms": 1741.6,
+        "median_drift_ms": 1495.0
+      },
+      "long": {
+        "n_words": 51,
+        "pct_under_200_ms": 0.1961,
+        "mean_drift_ms": 4251.47,
+        "median_drift_ms": 4032.0
+      },
+      "dense": {
+        "n_words": 15,
+        "pct_under_200_ms": 0.9333,
+        "mean_drift_ms": 97.93,
+        "median_drift_ms": 88.0
+      }
+    }
+  },
+  "methodology": "WhisperX wav2vec2 forced align on existing faster-whisper/openai-whisper segments (A2 validated: no re-transcription, segments passed as-is to whisperx.align). Drift = abs(word_start - seg_start)*1000ms per word (plan body literal metric); boundary_drift = abs(aligned_seg_boundary - original_seg_boundary)*1000ms (research §Pattern 4口径, 2 samples per segment). stratified_sample(n=30, seed=10) — shared with SER/MIR (Pitfall 9 head-to-head integrity). Threshold: pct_under_200_ms ≥ 0.80 → ship.",
+  "caveat": "WhisperX Chinese wav2vec2-large-xlsr-53 align drift on 30 stratified ep01 vocals segments. device_directive gpu-hybrid: A1 smoke device=cpu, full run device=cuda:0. Drift stats are device-independent for this measurement (wav2vec2 forward is deterministic given same audio; GPU/CPU differ in speed not in alignment output modulo float precision). venv torch=2.6.0+cu124 (cu124 stack force-pinned to match system; whisperx 3.8.6 metadata declares torch~=2.8.0 but runs cleanly on 2.6.0+cu124 stack — documented for Plan 06 CUDA stay-on-12.4 vs upgrade decision). system torch=2.6.0+cu124 (Pitfall 1 canary: venv install did NOT poison system torch). Threshold judgment CANDIDATE (Plan 06 locks): pct_under_200_ms=0.1898 <0.80 → defer candidate.",
+  "a1_a2_smoke": {
+    "a1_status": "ok",
+    "a2_status": "ok",
+    "a1_error": null,
+    "a2_error": null,
+    "num_words_aligned": 3,
+    "device": "cpu"
+  },
+  "a1_device": "cpu",
+  "full_run_device": "cuda:0",
+  "full_run_fallback_reason": null,
+  "system_torch": "2.6.0+cu124",
+  "venv_torch": "2.6.0+cu124",
+  "device_path": "gpu-hybrid",
+  "align_model_load_sec": 8.11,
+  "align_total_sec": 1.15,
+  "wall_clock_sec": 9.26,
+  "status": "ok",
+  "model": "whisperx_align",
+  "fixture": "ep01",
+  "git_sha": "fe966c1",
+  "timestamp_utc": "2026-07-25T13:26:18.772312+00:00",
+  "device": "cuda:0"
+}
