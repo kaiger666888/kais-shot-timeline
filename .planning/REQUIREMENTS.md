@@ -61,9 +61,9 @@
 - [ ] **PROMPT-03**: spike `audio/gen_audio_prompts.py` 晋升为 pipeline producer（输入 audio_semantic.json，输出 in-place reproduction），`--offline` fallback（路由不可达降级为启发式）— *table-stakes；retires spike per locked decision #6*
 
 ### PIPELINE — 流水线集成
-- [ ] **PIPE-01**: `step_audio_semantic` 流水线 slot 7（step_reid 与 step_timeline 之间）；`[N/8]→[N/9]` 重编号（17 banner instances）；CLI flags (`--skip-audio-semantic`/`--audio-url`/`--audio-timeout`/`--offline`)；`--force` 缓存清单扩展
+- [x] **PIPE-01**: `step_audio_semantic` 流水线 slot 7（step_reid 与 step_timeline 之间）；`[N/8]→[N/9]` 重编号（17 banner instances）；CLI flags (`--skip-audio-semantic`/`--audio-url`/`--audio-timeout`/`--offline`)；`--force` 缓存清单扩展
 - [x] **PIPE-02**: per-shot cache（4-tuple key: video_content_hash/route_name/route_version/+shot_id 隐含于文件名）+ poisoned-cache invalidation + read-merge-write `[audio]` warnings sidecar
-- [ ] **PIPE-03**: `scripts/verify_phase_audio_smoke.py` 5-scenario 回归（route-up/down/cache-hit-offline/条件字段-defer/stub-only）
+- [x] **PIPE-03**: `scripts/verify_phase_audio_smoke.py` 5-scenario 回归（route-up/down/cache-hit-offline/条件字段-defer/stub-only）
 
 ### PRESENT — shot-timeline HTML 展示
 - [ ] **PRESENT-01**: `gen_timeline_html.py` 扩展 `--audio-semantic`/`--speakers`；per-shot 对白/音乐/音效 chips + speaker→character chip + 复现 prompt 面板（"estimated" 标签）+ XSS `_esc()` hardening（layered-prompt HTML 是新 attack surface）
@@ -126,9 +126,9 @@ Each v1.2 REQ-ID maps to exactly one phase. Coverage: 33/33 (100%).
 | PROMPT-01 | Phase 15 (Layered Reproduction Prompts) | Pending |
 | PROMPT-02 | Phase 15 (Layered Reproduction Prompts) | Pending |
 | PROMPT-03 | Phase 15 (Layered Reproduction Prompts) | Pending |
-| PIPE-01 | Phase 14 (Pipeline Integration) | Pending |
+| PIPE-01 | Phase 14 (Pipeline Integration) | Complete |
 | PIPE-02 | Phase 12 (Producer Route Client) | Complete |
-| PIPE-03 | Phase 14 (Pipeline Integration) | Pending |
+| PIPE-03 | Phase 14 (Pipeline Integration) | Complete |
 | PRESENT-01 | Phase 16 (HTML Gallery) | Pending |
 | CONSUMER-01 | Phase 17 (Canvas Consumer) | Pending |
 

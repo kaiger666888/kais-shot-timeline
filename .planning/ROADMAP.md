@@ -47,7 +47,7 @@ Route-based audio semantic deepening: a third sibling of the v1.1 route-pattern 
 - [x] **Phase 11: Contract v1.2** — 3 new schemas + 12-file fixture + SCHEMA_VERSION="1.2" + bidirectional cross-version proof (completed 2026-07-25)
 - [x] **Phase 12: Producer Route Client** — `call_audio_analysis.py` thin httpx + per-shot cache + poisoned-cache + read-merge-write [audio] warnings + graceful-degrade (completed 2026-07-25)
 - [x] **Phase 13: SPEAKER-01 Linkage HITL** — `link_speakers.py` confirmed-only + `gen_speaker_review.py` → `speakers.json` (closes v1.1 SPEAKER-01 deferral) (completed 2026-07-25)
-- [ ] **Phase 14: Pipeline Integration** — `step_audio_semantic` slot 7 of 9 + `[N/8]→[N/9]` renumber + 4 CLI flags + 5-scenario smoke harness
+- [x] **Phase 14: Pipeline Integration** — `step_audio_semantic` slot 7 of 9 + `[N/8]→[N/9]` renumber + 4 CLI flags + 5-scenario smoke harness (completed 2026-07-26)
 - [x] **Phase 15: Layered Reproduction Prompts** — promote `gen_audio_prompts.py` spike → in-place `reproduction.{tts,music_gen,foley}` + `--offline` fallback + table-stakes & differentiator modality enrichment + CONDITIONAL fields gated on Phase 10
 - [ ] **Phase 16: HTML Gallery** — dialogue/music/sfx chips + speaker→character chip + reproduction panel ("estimated" labels) + XSS hardening (completed 2026-07-25)
 - [ ] **Phase 17: Canvas Consumer (deferrable)** — `import-from-dir.ts` v1.2 + audio asset nodes via §7 post-process (no renderer / no Zod bump)
@@ -186,7 +186,7 @@ v1.2 phases execute in numeric order: 10 → 11 → 12 → 13 → 14 → 15 → 
 | 11. Contract v1.2 | v1.2 | 3/3 | Complete    | 2026-07-25 |
 | 12. Producer Route Client | v1.2 | 2/2 | Complete    | 2026-07-25 |
 | 13. SPEAKER-01 Linkage HITL | v1.2 | 3/3 | Complete    | 2026-07-25 |
-| 14. Pipeline Integration | v1.2 | 0/? | Not started | - |
+| 14. Pipeline Integration | v1.2 | 2/2 | Complete    | 2026-07-26 |
 | 15. Layered Reproduction Prompts | v1.2 | 0/? | Not started | - |
 | 16. HTML Gallery | v1.2 | 0/? | Not started | - |
 | 17. Canvas Consumer | v1.2 | 0/? | Not started | - |
