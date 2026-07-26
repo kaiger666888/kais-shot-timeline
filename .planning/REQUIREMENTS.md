@@ -66,7 +66,7 @@
 - [x] **PIPE-03**: `scripts/verify_phase_audio_smoke.py` 5-scenario 回归（route-up/down/cache-hit-offline/条件字段-defer/stub-only）
 
 ### PRESENT — shot-timeline HTML 展示
-- [ ] **PRESENT-01**: `gen_timeline_html.py` 扩展 `--audio-semantic`/`--speakers`；per-shot 对白/音乐/音效 chips + speaker→character chip + 复现 prompt 面板（"estimated" 标签）+ XSS `_esc()` hardening（layered-prompt HTML 是新 attack surface）
+- [x] **PRESENT-01**: `gen_timeline_html.py` 扩展 `--audio-semantic`/`--speakers`；per-shot 对白/音乐/音效 chips + speaker→character chip + 复现 prompt 面板（"estimated" 标签）+ XSS `_esc()` hardening（layered-prompt HTML 是新 attack surface）
 
 ### CONSUMER — canvas 消费者（跨仓库，可 defer）
 - [ ] **CONSUMER-01**: `@kais/infinite-canvas` 识别 `schema_version:"1.2"`；§7 post-process 每 shot emit 1 dialogue + 1 music + 1 sfx `type:"asset"` 子节点；typeIcons cosmetic（💬/🎵/🔊）；**无 custom renderer / 无 Zod bump**（跨仓库 kais-aigc-platform `feat/canvas-asset-collection`）；3-mode verify_contract.py v1.2 GREEN
@@ -129,7 +129,7 @@ Each v1.2 REQ-ID maps to exactly one phase. Coverage: 33/33 (100%).
 | PIPE-01 | Phase 14 (Pipeline Integration) | Complete |
 | PIPE-02 | Phase 12 (Producer Route Client) | Complete |
 | PIPE-03 | Phase 14 (Pipeline Integration) | Complete |
-| PRESENT-01 | Phase 16 (HTML Gallery) | Pending |
+| PRESENT-01 | Phase 16 (HTML Gallery) | Complete |
 | CONSUMER-01 | Phase 17 (Canvas Consumer) | Pending |
 
 **Phase coverage summary:**
