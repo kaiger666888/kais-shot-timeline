@@ -31,7 +31,7 @@
 - [x] **ROUTE-03**: 路由 request/response 契约文档化（per-shot 输入：vocals→SER/diarize，drums+bass+other→MIR；输出：dialogue/music/sfx 子对象）
 
 ### DIALOGUE — 对白支路
-- [ ] **DIA-01**: 段级对白（shot 对齐，enrich 现有 transcript 语义层）— *table-stakes*
+- [x] **DIA-01**: 段级对白（shot 对齐，enrich 现有 transcript 语义层）— *table-stakes*
 - [x] **DIA-02**: 说话人分离（pyannote via WhisperX integrated diarize）→ 每段 `spk_NNN` — *table-stakes*
 - [x] **DIA-03**: `speaker_id → character_id` HITL 映射（见 SPEAKER）— *table-stakes*
 - [x] **DIA-04**: 对白情绪（SenseVoice 7 emotions + VA）— *CONDITIONAL：Phase 1 SER macro-F1 ≥50% ship / <40% defer v1.3 / 40-50% ship nullable+confidence* — **Phase 10 resolved → ship-nullable+confidence** (PROJECT.md Key Decisions Row 3; implementation pending Phase 15)
@@ -43,22 +43,22 @@
 - [x] **SPEAKER-03**: producer registry integrity assert 扩展 speakers（镜像 v1.1 `_producer_registry_integrity`，additive + gated on file existence）
 
 ### MUSIC — 音乐/BGM 支路
-- [ ] **MUS-01**: BGM 出现/消失分段（in/out/fade）— *table-stakes*
-- [ ] **MUS-02**: BGM tempo (BPM) — *table-stakes*
-- [ ] **MUS-03**: BGM 离散 mood 标签 — *table-stakes*
+- [x] **MUS-01**: BGM 出现/消失分段（in/out/fade）— *table-stakes*
+- [x] **MUS-02**: BGM tempo (BPM) — *table-stakes*
+- [x] **MUS-03**: BGM 离散 mood 标签 — *table-stakes*
 - [x] **MUS-04**: 多标签乐器识别（含民族：erhu/pipa/guzheng/dizi）— *CONDITIONAL：Phase 1 mAP ≥0.30 ship / <0.20 defer / 0.20-0.30 ship nullable+confidence；MERT vs PANNs 对决 defer 到 Phase 1* — **Phase 10 resolved → DEFER to v1.3** (PROJECT.md Key Decisions Row 4; instruments field omitted from v1.2 schema)
-- [ ] **MUS-05**: BGM 调性 (key) — *differentiator*
-- [ ] **MUS-06**: VA 情绪回归（arousal ship，valence experimental）— *differentiator*
+- [x] **MUS-05**: BGM 调性 (key) — *differentiator*
+- [x] **MUS-06**: VA 情绪回归（arousal ship，valence experimental）— *differentiator*
 
 ### SFX — 音效支路
-- [ ] **SFX-01**: per-shot foley/sfx 描述（含 SenseVoice 8 audio-event tags）— *table-stakes*
-- [ ] **SFX-02**: foley 时间戳 + AudioSet taxonomy (PANNs) — *differentiator*
-- [ ] **SFX-03**: foley 复合事件序列 — *differentiator*
+- [x] **SFX-01**: per-shot foley/sfx 描述（含 SenseVoice 8 audio-event tags）— *table-stakes*
+- [x] **SFX-02**: foley 时间戳 + AudioSet taxonomy (PANNs) — *differentiator*
+- [x] **SFX-03**: foley 复合事件序列 — *differentiator*
 
 ### PROMPT — 分层复现 prompt
-- [ ] **PROMPT-01**: per-shot 分层复现 prompt `reproduction.{tts, music_gen, foley}`，**model-agnostic NL**，in-place 在 `audio_semantic.json#shots[].reproduction` — *table-stakes*
-- [ ] **PROMPT-02**: 每 prompt 字段 `nullable + confidence` + `fidelity_disclaimer`（AF-01 缓解：复现 ≠ 复原，TTS~70%/music~60-75%/foley~80%）— *table-stakes*
-- [ ] **PROMPT-03**: spike `audio/gen_audio_prompts.py` 晋升为 pipeline producer（输入 audio_semantic.json，输出 in-place reproduction），`--offline` fallback（路由不可达降级为启发式）— *table-stakes；retires spike per locked decision #6*
+- [x] **PROMPT-01**: per-shot 分层复现 prompt `reproduction.{tts, music_gen, foley}`，**model-agnostic NL**，in-place 在 `audio_semantic.json#shots[].reproduction` — *table-stakes*
+- [x] **PROMPT-02**: 每 prompt 字段 `nullable + confidence` + `fidelity_disclaimer`（AF-01 缓解：复现 ≠ 复原，TTS~70%/music~60-75%/foley~80%）— *table-stakes*
+- [x] **PROMPT-03**: spike `audio/gen_audio_prompts.py` 晋升为 pipeline producer（输入 audio_semantic.json，输出 in-place reproduction），`--offline` fallback（路由不可达降级为启发式）— *table-stakes；retires spike per locked decision #6*
 
 ### PIPELINE — 流水线集成
 - [x] **PIPE-01**: `step_audio_semantic` 流水线 slot 7（step_reid 与 step_timeline 之间）；`[N/8]→[N/9]` 重编号（17 banner instances）；CLI flags (`--skip-audio-semantic`/`--audio-url`/`--audio-timeout`/`--offline`)；`--force` 缓存清单扩展
@@ -106,7 +106,7 @@ Each v1.2 REQ-ID maps to exactly one phase. Coverage: 33/33 (100%).
 | ROUTE-01 | Phase 10 (Risk-Validation Spike + Route Stub) | Complete |
 | ROUTE-02 | Phase 12 (Producer Route Client) | Complete |
 | ROUTE-03 | Phase 12 (Producer Route Client) | Complete |
-| DIA-01 | Phase 15 (Layered Reproduction Prompts) | Pending |
+| DIA-01 | Phase 15 (Layered Reproduction Prompts) | Complete |
 | DIA-02 | Phase 13 (SPEAKER-01 Linkage HITL) | Complete |
 | DIA-03 | Phase 13 (SPEAKER-01 Linkage HITL) | Complete |
 | DIA-04 | Phase 15 (Layered Reproduction Prompts) — *CONDITIONAL on Phase 10 SER macro-F1* | Phase 10 resolved (ship-nullable+confidence); Phase 15 implementation pending |
@@ -114,18 +114,18 @@ Each v1.2 REQ-ID maps to exactly one phase. Coverage: 33/33 (100%).
 | SPEAKER-01 | Phase 13 (SPEAKER-01 Linkage HITL) | Complete |
 | SPEAKER-02 | Phase 13 (SPEAKER-01 Linkage HITL) | Complete |
 | SPEAKER-03 | Phase 13 (SPEAKER-01 Linkage HITL) | Complete |
-| MUS-01 | Phase 15 (Layered Reproduction Prompts) | Pending |
-| MUS-02 | Phase 15 (Layered Reproduction Prompts) | Pending |
-| MUS-03 | Phase 15 (Layered Reproduction Prompts) | Pending |
+| MUS-01 | Phase 15 (Layered Reproduction Prompts) | Complete |
+| MUS-02 | Phase 15 (Layered Reproduction Prompts) | Complete |
+| MUS-03 | Phase 15 (Layered Reproduction Prompts) | Complete |
 | MUS-04 | Phase 15 (Layered Reproduction Prompts) — *CONDITIONAL on Phase 10 mAP* | Phase 10 resolved (DEFER v1.3); instruments field omitted from v1.2 schema |
-| MUS-05 | Phase 15 (Layered Reproduction Prompts) | Pending |
-| MUS-06 | Phase 15 (Layered Reproduction Prompts) | Pending |
-| SFX-01 | Phase 15 (Layered Reproduction Prompts) | Pending |
-| SFX-02 | Phase 15 (Layered Reproduction Prompts) | Pending |
-| SFX-03 | Phase 15 (Layered Reproduction Prompts) | Pending |
-| PROMPT-01 | Phase 15 (Layered Reproduction Prompts) | Pending |
-| PROMPT-02 | Phase 15 (Layered Reproduction Prompts) | Pending |
-| PROMPT-03 | Phase 15 (Layered Reproduction Prompts) | Pending |
+| MUS-05 | Phase 15 (Layered Reproduction Prompts) | Complete |
+| MUS-06 | Phase 15 (Layered Reproduction Prompts) | Complete |
+| SFX-01 | Phase 15 (Layered Reproduction Prompts) | Complete |
+| SFX-02 | Phase 15 (Layered Reproduction Prompts) | Complete |
+| SFX-03 | Phase 15 (Layered Reproduction Prompts) | Complete |
+| PROMPT-01 | Phase 15 (Layered Reproduction Prompts) | Complete |
+| PROMPT-02 | Phase 15 (Layered Reproduction Prompts) | Complete |
+| PROMPT-03 | Phase 15 (Layered Reproduction Prompts) | Complete |
 | PIPE-01 | Phase 14 (Pipeline Integration) | Complete |
 | PIPE-02 | Phase 12 (Producer Route Client) | Complete |
 | PIPE-03 | Phase 14 (Pipeline Integration) | Complete |

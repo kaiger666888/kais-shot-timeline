@@ -187,6 +187,6 @@ v1.2 phases execute in numeric order: 10 → 11 → 12 → 13 → 14 → 15 → 
 | 12. Producer Route Client | v1.2 | 2/2 | Complete    | 2026-07-25 |
 | 13. SPEAKER-01 Linkage HITL | v1.2 | 3/3 | Complete    | 2026-07-25 |
 | 14. Pipeline Integration | v1.2 | 2/2 | Complete    | 2026-07-26 |
-| 15. Layered Reproduction Prompts | v1.2 | 0/? | Not started | - |
+| 15. Layered Reproduction Prompts | v1.2 | 2/2 | Complete    | 2026-07-26 |
 | 16. HTML Gallery | v1.2 | 0/? | Not started | - |
 | 17. Canvas Consumer | v1.2 | 0/? | Not started | - |
