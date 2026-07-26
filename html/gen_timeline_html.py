@@ -57,7 +57,7 @@ def build_shots_js(shots, frames_by_id, audio_by_id, transcript_segments=None,
         nullable+confidence: null/emo_unk → no badge) + 文本摘录。
       * music_chip (PRESENT-01) —— 仅当 reproduction.music_gen 非 null (隐含
         MUS-01 BGM 存在) → 渲染音乐 chip 显示 music_gen.text 摘录 (NL 中已 embed
-        tempo/mood/key/VA per Phase 15 producer)。**MUS-04 instruments 字段 NEVER
+        tempo/mood/key/VA per Phase 15 producer)。**MUS-04 乐器识别字段 NEVER
         渲染** (Phase 10 LOCKED defer v1.3)。
       * sfx_chip (PRESENT-01) —— SenseVoice 8-event tags + foley 描述摘录。
       * speaker_chip (SPEAKER-01 + PRESENT-02 mirror) —— spk_NNN → char_NNN 映射，
@@ -144,7 +144,7 @@ def build_shots_js(shots, frames_by_id, audio_by_id, transcript_segments=None,
             if isinstance(repro, dict):
                 # music_chip: 仅当 reproduction.music_gen 非 null (隐含 MUS-01 BGM)。
                 # music_gen.text 已 embed tempo/mood/key/VA per Phase 15 producer。
-                # **MUS-04 instruments 字段 NEVER 解析或渲染** (Phase 10 LOCKED defer v1.3)。
+                # **MUS-04 乐器识别字段 NEVER 解析或渲染** (Phase 10 LOCKED defer v1.3)。
                 music_gen = repro.get("music_gen")
                 if isinstance(music_gen, dict) and (music_gen.get("text") or "").strip():
                     js_shots[-1]["music_chip"] = {
@@ -272,6 +272,84 @@ def build_html(shots_js, stems_js, duration, video_src, title,
         # (避免 typeof 检查；显式 flag 更可读)。
         v12_bootstrap_lines = (audio_semantic_bootstrap + speakers_bootstrap
                                + "const V12_FEATURES = true;\n")
+        # Phase 16 v1.2 conditional CSS + JS (T-16-04 graceful-omit invariant):
+        # 仅当 v1.2 数据 loaded 时才 emit 新 CSS rules + buildReproPanel 函数定义。
+        # 当 flags 缺省 / 文件不可读 → v12_css = '' + v12_js = '' → <style> / <script>
+        # block byte-identical to v1.1 timeline (no new CSS rules, no new fn)。
+        v12_css = """
+/* ===== Phase 16: v1.2 audio semantic chips (PRESENT-01 extension) ===== */
+.dlg-chip, .music-chip, .sfx-chip, .spk-chip, .spk-char-chip {{
+    display:inline-block; font-size:9px; padding:0 4px; border-radius:2px;
+    margin-left:3px; vertical-align:middle; max-width:280px;
+    overflow:hidden; text-overflow:ellipsis; white-space:nowrap;
+}}
+.dlg-chip {{ background:#1a3a5e; color:#58a6ff; }}
+.music-chip {{ background:#1a3e1a; color:#3fb950; }}
+.sfx-chip {{ background:#3e351a; color:#d29922; }}
+.spk-chip {{ background:#2a2a3e; color:#8b949e; }}
+.spk-char-chip {{ background:#1a3a5e; color:#58a6ff; text-decoration:none; }}
+.spk-char-chip:hover {{ background:#264f78; }}
+.emo-badge {{ display:inline-block; font-size:8px; padding:0 2px; border-radius:1px;
+              margin-left:2px; background:#3e2a4a; color:#bc8cff; font-weight:600; }}
+/* ===== Phase 16: reproduction panel (AF-01 "estimated" labels) ===== */
+.repro-panel {{ margin-top:2px; padding:2px 6px; border-left:2px solid #bc8cff;
+               background:rgba(188,140,255,0.04); border-radius:2px; font-size:10px;
+               color:#8b949e; }}
+.repro-panel .repro-header {{ color:#bc8cff; cursor:pointer; user-select:none;
+                              font-weight:600; }}
+.repro-panel .repro-body {{ display:none; margin-top:2px; padding-left:6px;
+                            border-left:1px solid #30363d; }}
+.repro-panel.open .repro-body {{ display:block; }}
+.repro-field {{ margin:2px 0; }}
+.repro-field .lbl {{ color:#bc8cff; font-weight:600; }}
+.repro-field .estimated-tag {{ display:inline-block; padding:0 3px; margin-left:3px;
+                                background:#3e2a4a; color:#bc8cff; border-radius:1px;
+                                font-size:8px; font-weight:600; }}
+.repro-field .conf {{ color:#8b949e; font-size:9px; margin-left:4px; }}
+.repro-field .disclaimer {{ display:block; color:#6e7681; font-size:9px;
+                            font-style:italic; margin-left:8px; }}
+"""
+        v12_js = """
+
+// === Phase 16 (PRESENT-01): buildReproPanel(s) — AF-01 "estimated" labels ===
+// 仅当 v1.2 audio_semantic loaded 时定义 (typeof check 在 shot-row template)。
+// 默认 collapsed (CONTEXT.md discretion: 避免视觉杂乱)。
+function buildReproPanel(s) {{
+    if (!s || !s.reproduction) return '';
+    const r = s.reproduction;
+    const layers = [
+        {{key: 'tts',       label: 'TTS'}},
+        {{key: 'music_gen', label: 'music-gen'}},
+        {{key: 'foley',     label: 'foley'}},
+    ];
+    const fields = [];
+    layers.forEach(function(layer) {{
+        const v = r[layer.key];
+        if (!v || typeof v !== 'object' || !v.text) return;  // null/undefined → omit
+        const esc_text = _esc(v.text);
+        const esc_disc = v.fidelity_disclaimer ? _esc(v.fidelity_disclaimer) : '';
+        const conf = (typeof v.confidence === 'number') ? v.confidence.toFixed(2) : '?';
+        // AF-01 (SC#3): VISIBLE 'estimated（估算）' tag on EVERY non-null field.
+        // SPEC §10.1 mandate; non-negotiable per CONTEXT.md.
+        fields.push('<div class="repro-field">'
+            + '<span class="lbl">' + layer.label + '</span>'
+            + '<span class="estimated-tag">estimated（估算）</span>'
+            + '<span class="conf">conf=' + conf + '</span>: '
+            + '<span>' + esc_text + '</span>'
+            + (esc_disc ? '<span class="disclaimer">' + esc_disc + '</span>' : '')
+            + '</div>');
+    }});
+    if (!fields.length) return '';
+    return '<div class="repro-panel">'
+        + '<div class="repro-header" onclick="this.parentElement.classList.toggle(\\'open\\')">'
+        + '▶ 估算复现 prompt（estimated · AF-01 · 默认折叠）</div>'
+        + '<div class="repro-body">' + fields.join('') + '</div>'
+        + '</div>';
+}}
+"""
+    else:
+        v12_css = ""
+        v12_js = ""
     n_shots_val = n_shots if n_shots is not None else len(shots_js)
 
     # Phase 8 REVIEW CR-01 fix：title 是 operator-influenced（--title flag 或默认
@@ -407,7 +485,7 @@ video {{ width:100%; max-height:35vh; border-radius:8px; object-fit:contain; }}
              margin-left:3px; vertical-align:middle; }}
 .fill-filled {{ background:#1a3e1a; color:#3fb950; }}
 .fill-degraded {{ background:#2a2a3e; color:#8b949e; }}
-
+{v12_css}
 /* ===== Right: vertical timeline ===== */
 .timeline-inner {{ position:relative; }}
 .time-axis {{ position:absolute; left:0; top:0; width:36px; bottom:0; border-right:1px solid #21262d; z-index:5; }}
@@ -520,8 +598,81 @@ function buildShotChips(s) {{
     const fillChip = s.route_filled
         ? '<span class="fill-chip fill-filled" title="运镜分析已路由填充">✓ 运镜</span>'
         : '<span class="fill-chip fill-degraded" title="运镜分析 offline 降级">○ 降级</span>';
-    return charChips + propChips + fillChip;
+    // Phase 16 (PRESENT-01): v1.2 audio_semantic chips — gated on V12_FEATURES
+    // (only emitted when --audio-semantic / --speakers flag loaded v1.2 data).
+    // buildV12Chips returns '' when V12_FEATURES undefined (byte-identical to v1.1)。
+    const v12Chips = (typeof V12_FEATURES !== 'undefined' && V12_FEATURES)
+        ? buildV12Chips(s) : '';
+    return charChips + propChips + fillChip + v12Chips;
 }}
+
+// Phase 16 (PRESENT-01): buildV12Chips(s) — v1.2 per-shot dialogue/music/sfx chips
+// + speaker→character chip. Mirror Phase 8 buildShotChips patterns (lines 583-602)。
+// **MUS-04 乐器识别字段 NEVER referenced** (Phase 10 LOCKED defer v1.3; T-16-02)。
+// DIA-04 ship-nullable+confidence: emotion null/emo_unk/empty → NO badge (not 'unknown')。
+// SPEAKER-01: spk_id with char_id=null (旁白/群杂) → speaker label alone, no chip。
+function buildV12Chips(s) {{
+    if (!s) return '';
+    const parts = [];
+    // Dialogue chip (DIA-04 + DIA-01 text excerpt)
+    if (s.dialogue_chip) {{
+        const dc = s.dialogue_chip;
+        const spk = dc.spk_id || '?';
+        // Emotion badge: nullable per DIA-04 ship-nullable; emo_unk also suppresses badge
+        // (sense-voice self_consistency=100% is label-stability proxy, not calibration;
+        //  emo_unk = SER had no read — showing 'unknown' would over-claim).
+        let emoBadge = '';
+        if (dc.emotion && dc.emotion !== 'emo_unk') {{
+            emoBadge = '<span class="emo-badge">' + _esc(dc.emotion) + '</span>';
+        }}
+        const textExcerpt = dc.text_excerpt || '';
+        const bodyShort = textExcerpt.length > 30
+            ? textExcerpt.substring(0, 30) + '…' : textExcerpt;
+        parts.push('<span class="dlg-chip" title="' + _esc(textExcerpt) + '">'
+            + '💬 ' + _esc(spk) + emoBadge + ' '
+            + _esc(bodyShort) + '</span>');
+    }}
+    // Music chip (MUS-02/03/05/06 embedded in music_gen.text; MUS-04 OMITTED)
+    if (s.music_chip) {{
+        const mc = s.music_chip;
+        const tx = mc.text_excerpt || '';
+        // "(estimated)" suffix non-negotiable: music_chip text originates from
+        // reproduction.music_gen (AF-01 governed) → must carry estimated label.
+        parts.push('<span class="music-chip" title="' + _esc(tx) + '">'
+            + '🎵 音乐 (estimated)</span>');
+    }}
+    // SFX chip (SFX-01 foley description + SenseVoice 8-event tags)
+    if (s.sfx_chip) {{
+        const sc = s.sfx_chip;
+        const events = (sc.events || []).join('/');
+        const desc = sc.description_excerpt || '';
+        const descShort = desc.length > 30 ? desc.substring(0, 30) + '…' : desc;
+        const title = desc || events;
+        parts.push('<span class="sfx-chip" title="' + _esc(title) + '">'
+            + '🔊 ' + (events ? _esc(events) + ' ' : '')
+            + _esc(descShort) + '</span>');
+    }}
+    // Speaker→character chip (SPEAKER-01 + PRESENT-02 mirror)
+    if (s.speaker_chip) {{
+        const sp = s.speaker_chip;
+        if (sp.char_id) {{
+            // Resolved: render ref-chip linking to v1.1 character gallery card.
+            // Mirror Phase 8 PRESENT-02 char-chip pattern at lines 584-589。
+            const c = (typeof CHARACTERS !== 'undefined')
+                ? CHARACTERS.find(function(x) {{ return x.id === sp.char_id; }}) : null;
+            const n = c ? c.name : sp.char_id;
+            parts.push('<a href="#gallery-' + encodeURIComponent(sp.char_id) + '" '
+                + 'class="spk-char-chip" title="' + _esc(n) + ' (来自 ' + _esc(sp.spk_id) + ')">'
+                + '🧑 ' + _esc(n) + '</a>');
+        }} else {{
+            // Unresolved (旁白/群杂): speaker label alone, no chip-link (SC#2).
+            parts.push('<span class="spk-chip" title="旁白/群杂 — 未映射到角色">'
+                + '🎤 ' + _esc(sp.spk_id) + '</span>');
+        }}
+    }}
+    return parts.join('');
+}}
+{v12_js}
 
 function buildShotLayout() {{
     const layout = [];
@@ -635,6 +786,9 @@ SHOTS.forEach(s => {{
         + `<span class="type-badge type-${{s.type}}">${{typeIcons[s.type]||''}} ${{s.type}}</span>`
         + buildShotChips(s) + `</div>`                // Phase 8: ref-chips + fill-chip
         + `<div class="dlg">${{dlg}}</div>`
+        // Phase 16 (PRESENT-01): reproduction panel — typeof check returns '' when
+        // buildReproPanel undefined (v1.2 flags absent → byte-identical to v1.1)。
+        + (typeof buildReproPanel === 'function' ? buildReproPanel(s) : '')
         + `</div>`;
     shotListInner.appendChild(row);
 }});
@@ -1089,6 +1243,9 @@ function rebuildAll() {{
             + `<span class="type-badge type-${{s.type}}">${{typeIcons[s.type]||''}} ${{s.type}}</span>`
             + buildShotChips(s) + `</div>`            // Phase 8: ref-chips + fill-chip
             + `<div class="dlg">${{dlg}}</div>`
+            // Phase 16 (PRESENT-01): reproduction panel — typeof check returns '' when
+            // buildReproPanel undefined (v1.2 flags absent → byte-identical to v1.1)。
+            + (typeof buildReproPanel === 'function' ? buildReproPanel(s) : '')
             + `</div>`;
 
         row.onclick = () => playAt(s.start, s.id);
