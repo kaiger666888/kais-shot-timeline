@@ -42,13 +42,30 @@ def _esc(s):
 
 
 def build_shots_js(shots, frames_by_id, audio_by_id, transcript_segments=None,
-                   prompts_by_id=None):
+                   prompts_by_id=None,
+                   audio_semantic_by_id=None, speakers_by_spk=None):
     """合并 shots + frames + audio analysis → 前端 SHOTS 数组。
 
     Phase 8: prompts_by_id (可选 shot_id → prompt entry map) 用于：
       * route_filled (PRESENT-03) —— ALL of camera/action/lighting/style 非空 → True
         (green chip)；任一为空 → False (gray chip = offline degraded)。
       * character_refs[]/prop_refs[] (PRESENT-02) —— 传到前端让 chip 渲染无需另查。
+
+    Phase 16: audio_semantic_by_id (可选 shot_id → audio_semantic.shots[] entry) +
+    speakers_by_spk (可选 spk_id → confirmed speakers[] entry) 用于：
+      * dialogue_chip (PRESENT-01) —— speaker label + emotion badge (DIA-04
+        nullable+confidence: null/emo_unk → no badge) + 文本摘录。
+      * music_chip (PRESENT-01) —— 仅当 reproduction.music_gen 非 null (隐含
+        MUS-01 BGM 存在) → 渲染音乐 chip 显示 music_gen.text 摘录 (NL 中已 embed
+        tempo/mood/key/VA per Phase 15 producer)。**MUS-04 instruments 字段 NEVER
+        渲染** (Phase 10 LOCKED defer v1.3)。
+      * sfx_chip (PRESENT-01) —— SenseVoice 8-event tags + foley 描述摘录。
+      * speaker_chip (SPEAKER-01 + PRESENT-02 mirror) —— spk_NNN → char_NNN 映射，
+        char_id=null (旁白/群杂) → 仅渲染 speaker label，no chip。
+      * reproduction (AF-01) —— 3 层 (tts/music_gen/foley) 复现 prompt 原始数据，
+        供前端 panel 渲染 (每字段 VISIBLE "estimated" 标签)。
+    所有新字段 OPTIONAL —— 源缺席 → 字段 omitted (graceful-degrade，byte-identical
+    to v1.1 timeline.html 当 audio_semantic_by_id 与 speakers_by_spk 都 None)。
     """
     seg_by_shot = {}
     if transcript_segments:
@@ -89,6 +106,67 @@ def build_shots_js(shots, frames_by_id, audio_by_id, transcript_segments=None,
             "prop_refs": prompt_entry.get("prop_refs", []),
             "route_filled": route_filled,
         })
+        # Phase 16 (PRESENT-01): v1.2 audio_semantic chips + reproduction panel data.
+        # 每个字段 OPTIONAL —— 源缺席 → 字段 omitted (build_shots_js 的 dict 不含该 key)，
+        # JS 侧 buildShotChips / buildReproPanel 用 truthy check graceful-degrade。
+        # 这种 conditional-key 模式保证 graceful-omit byte-identical (T-16-04)。
+        if audio_semantic_by_id is not None:
+            sema = audio_semantic_by_id.get(shot["id"], {})
+            dlg = sema.get("dialogue") if isinstance(sema, dict) else None
+            sfx = sema.get("sfx") if isinstance(sema, dict) else None
+            repro = sema.get("reproduction") if isinstance(sema, dict) else None
+            if isinstance(dlg, dict):
+                dlg_text = (dlg.get("text") or "").strip()
+                spk = dlg.get("spk_id")  # may be null
+                emo = dlg.get("emotion")  # may be null / "emo_unk" / free string
+                emo_conf = dlg.get("emotion_confidence")  # may be null
+                # dialogue_chip: text 非空 OR spk 非空 OR emotion 非空 才渲染
+                # (空对白 shot 不 emit chip；节省视觉空间)。emotion 在 JS 侧判定
+                # null/emo_unk → no badge (DIA-04 ship-nullable)。
+                if dlg_text or spk or (emo and emo != "emo_unk"):
+                    js_shots[-1]["dialogue_chip"] = {
+                        "spk_id": spk,
+                        "emotion": emo,
+                        "emotion_confidence": emo_conf,
+                        # 200-char excerpt mirror Phase 8 .dlg substring(0,200)
+                        # at gen_timeline_html.py:519 (现 line ~536 after this edit)。
+                        "text_excerpt": dlg_text[:200],
+                    }
+            if isinstance(sfx, dict):
+                sfx_events = sfx.get("events") or []
+                sfx_desc = (sfx.get("description") or "").strip()
+                # sfx_chip: events OR description 非空才渲染
+                if sfx_events or sfx_desc:
+                    js_shots[-1]["sfx_chip"] = {
+                        "events": list(sfx_events),
+                        "description_excerpt": sfx_desc[:200],
+                    }
+            if isinstance(repro, dict):
+                # music_chip: 仅当 reproduction.music_gen 非 null (隐含 MUS-01 BGM)。
+                # music_gen.text 已 embed tempo/mood/key/VA per Phase 15 producer。
+                # **MUS-04 instruments 字段 NEVER 解析或渲染** (Phase 10 LOCKED defer v1.3)。
+                music_gen = repro.get("music_gen")
+                if isinstance(music_gen, dict) and (music_gen.get("text") or "").strip():
+                    js_shots[-1]["music_chip"] = {
+                        "text_excerpt": (music_gen.get("text") or "").strip()[:200],
+                    }
+                # reproduction: 全量透传给前端 buildReproPanel 渲染 (含 tts/music_gen/foley
+                # 三层 + confidence + fidelity_disclaimer)。各层 null → JS 侧自动 omit。
+                js_shots[-1]["reproduction"] = {
+                    "tts": repro.get("tts"),
+                    "music_gen": repro.get("music_gen"),
+                    "foley": repro.get("foley"),
+                }
+            # speaker_chip: dialogue.spk_id 解析 speakers.json → char_NNN。
+            # 此处仅传 IDs (spk_id + char_id)；JS 侧 buildShotChips 用 CHARACTERS
+            # find 解析 char_name (mirror Phase 8 character_refs 模式)。
+            if isinstance(dlg, dict) and dlg.get("spk_id") and speakers_by_spk is not None:
+                spk_entry = speakers_by_spk.get(dlg["spk_id"])
+                if isinstance(spk_entry, dict):
+                    js_shots[-1]["speaker_chip"] = {
+                        "spk_id": spk_entry.get("spk_id"),
+                        "char_id": spk_entry.get("char_id"),  # may be null (旁白/群杂)
+                    }
     return js_shots
 
 
@@ -137,7 +215,8 @@ def build_js_stems(stems_dir, duration, bucket_ms=350):
 def build_html(shots_js, stems_js, duration, video_src, title,
                stem_basename, n_dialogue=None, n_bgm=None, n_sfx=None,
                n_shots=None, transcript_segments=None,
-               characters_data=None, props_data=None):
+               characters_data=None, props_data=None,
+               audio_semantic_data=None, speakers_data=None):
     """生成完整 HTML。
 
     stem_basename: stem 文件名前缀，例如 'ep01'。HTML 内 <audio> 会引用
@@ -150,17 +229,49 @@ def build_html(shots_js, stems_js, duration, video_src, title,
         或 asset.json#generator.registry_snapshot）。非空 → 渲染 gallery section
         (PRESENT-01) + 提供 chip 锚点目标。graceful-degrade：None / [] → gallery
         OMITTED（HTML 仍 schema-valid + self-contained）。
+    Phase 16 (PRESENT-01):
+      audio_semantic_data/speakers_data: 可选 v1.2 sidecar dict。非空 → emit
+        AUDIO_SEMANTIC / SPEAKERS JSON-in-script bootstrap consts + 让 JS 侧
+        buildShotChips / buildReproPanel 渲染 v1.2 chips + 复现面板。
+        graceful-degrade：None → consts 不 emit + CSS/JS 条件段不 emit → 输出
+        byte-identical to v1.1 timeline.html (T-16-04 graceful-omit invariant)。
     """
     # CR-04 fix carry (commit 336d04f) —— JSON-in-<script> defense：所有 inline JSON
     # 替换 "</" → "<\/" 防 </script> payload 破出 script block（HTML 解析器见 </script>
     # 即终止 script，无视 JS string context）。operator-influenced name 含
     # "</script><script>alert(1)</script>" 时本转义中和攻击（Pattern 4）。
     # `\/` 是 JS 合法的 `/` 转义，client-side data round-trip 正确。
+    #
+    # Phase 16 (T-16-01 XSS gate): v1.2 audio_semantic + speakers carry route-derived
+    # NL strings (dialogue.text / sfx.description / reproduction.{tts,music_gen,foley}.text
+    # / fidelity_disclaimer / character names resolved via speakers) — full matrix XSS
+    # defense via the same .replace("</", "<\\/") applied to AUDIO_SEMANTIC_JSON +
+    # SPEAKERS_JSON bootstrap consts. _esc() (Python) covers body sinks in chips/panel
+    # rendered server-side; JS _esc (gen_timeline_html.py:384-388) covers client-rendered
+    # chips; .replace("</", "<\\/") covers inline JSON. Three-layer defense mirror Phase 8.
     shots_json = json.dumps(shots_js, ensure_ascii=False).replace("</", "<\\/")
     stems_json = json.dumps(stems_js).replace("</", "<\\/")
     transcript_json = json.dumps(transcript_segments or [], ensure_ascii=False).replace("</", "<\\/")
     chars_json = json.dumps(characters_data or [], ensure_ascii=False).replace("</", "<\\/")
     props_json = json.dumps(props_data or [], ensure_ascii=False).replace("</", "<\\/")
+    # Phase 16: v1.2 const bootstraps — CONDITIONAL emit (T-16-04 graceful-omit).
+    # 当 audio_semantic_data / speakers_data 都 None 时，v12_bootstrap_lines = ''
+    # → <script> block byte-identical to v1.1 (no new const lines)。
+    v12_bootstrap_lines = ""
+    audio_semantic_bootstrap = ""
+    speakers_bootstrap = ""
+    if audio_semantic_data is not None:
+        asj = json.dumps(audio_semantic_data, ensure_ascii=False).replace("</", "<\\/")
+        audio_semantic_bootstrap = f"const AUDIO_SEMANTIC = {asj};\n"
+    if speakers_data is not None:
+        spj = json.dumps(speakers_data, ensure_ascii=False).replace("</", "<\\/")
+        speakers_bootstrap = f"const SPEAKERS = {spj};\n"
+    if audio_semantic_data is not None or speakers_data is not None:
+        # 仅当至少一份 v1.2 数据 loaded 时才 emit 两个 const + V12_FEATURES flag。
+        # V12_FEATURES 让 JS 侧 buildShotChips / buildReproPanel 知道 v1.2 数据存在
+        # (避免 typeof 检查；显式 flag 更可读)。
+        v12_bootstrap_lines = (audio_semantic_bootstrap + speakers_bootstrap
+                               + "const V12_FEATURES = true;\n")
     n_shots_val = n_shots if n_shots is not None else len(shots_js)
 
     # Phase 8 REVIEW CR-01 fix：title 是 operator-influenced（--title flag 或默认
@@ -369,7 +480,7 @@ const TRANSCRIPT_SEGMENTS = {transcript_json};
 // JSON-in-script defense applied server-side (.replace("</", "<\\/") — Pattern 4).
 const CHARACTERS = {chars_json};
 const PROPS = {props_json};
-const DURATION = {duration};
+{v12_bootstrap_lines}const DURATION = {duration};
 const STEM_BASENAME = {json.dumps(stem_basename)};
 const N_PTS = STEMS.vocals.length;
 const PX_PER_SEC_LINEAR = 396;
@@ -1197,6 +1308,14 @@ def main():
     ap.add_argument("--asset-json", default=None,
                     help="asset.json 路径（preferred：读 generator.registry_snapshot "
                          "作为 gallery 数据源 —— 冻结 export-time truth）")
+    # Phase 16 (PRESENT-01): v1.2 audio_semantic + speakers CLI flags.
+    # 缺省 → graceful-omit (byte-identical to v1.1 timeline.html per T-16-04)。
+    ap.add_argument("--audio-semantic", default=None,
+                    help="v1.2 audio_semantic.json 路径（per-shot 对白/音乐/音效 chips "
+                         "+ 复现 prompt 数据源；缺省 → chips 省略 + reproduction panel 省略）")
+    ap.add_argument("--speakers", default=None,
+                    help="v1.2 speakers.json 路径（spk_NNN → char_NNN 映射数据源；"
+                         "缺省 → speaker→character chip 省略）")
     args = ap.parse_args()
 
     with open(args.shots) as f:
@@ -1251,9 +1370,47 @@ def main():
         except (OSError, json.JSONDecodeError):
             props_data = None
 
+    # Phase 16 (PRESENT-01): v1.2 audio_semantic + speakers loaders (graceful-degrade).
+    # 缺省 / 不可读 → None → build_shots_js 不 emit 对应字段 → JS chips/panel 不渲染
+    # → 输出 byte-identical to v1.1 timeline.html (T-16-04 graceful-omit invariant)。
+    audio_semantic_data = None
+    if args.audio_semantic and os.path.exists(args.audio_semantic):
+        try:
+            with open(args.audio_semantic, encoding="utf-8") as f:
+                audio_semantic_data = json.load(f)
+        except (OSError, json.JSONDecodeError) as e:
+            print(f"[warn] audio_semantic.json unreadable, degrading to no chips: {e}")
+            audio_semantic_data = None
+    audio_semantic_by_id = None
+    if isinstance(audio_semantic_data, dict):
+        sema_shots = audio_semantic_data.get("shots") or []
+        audio_semantic_by_id = {s["shot_id"]: s for s in sema_shots
+                                if isinstance(s, dict) and "shot_id" in s}
+
+    speakers_data = None
+    if args.speakers and os.path.exists(args.speakers):
+        try:
+            with open(args.speakers, encoding="utf-8") as f:
+                speakers_data = json.load(f)
+        except (OSError, json.JSONDecodeError) as e:
+            print(f"[warn] speakers.json unreadable, degrading to no speaker chips: {e}")
+            speakers_data = None
+    speakers_by_spk = None
+    if isinstance(speakers_data, dict):
+        # Pitfall 7 prevention (speakers.schema.json:36)：只有 review_state='confirmed'
+        # 流向下游渲染。'proposed'/'rejected' 不渲染 chip (HITL 未审 / 软删除)。
+        all_speakers = speakers_data.get("speakers") or []
+        confirmed = [s for s in all_speakers
+                     if isinstance(s, dict) and s.get("review_state") == "confirmed"]
+        if confirmed:
+            speakers_by_spk = {s["spk_id"]: s for s in confirmed
+                               if "spk_id" in s}
+
     frames_by_id = extract_frames_if_needed(shots, args.video, args.frames)
     shots_js = build_shots_js(shots, frames_by_id, audio_by_id, transcript_segments,
-                              prompts_by_id=prompts_by_id)
+                              prompts_by_id=prompts_by_id,
+                              audio_semantic_by_id=audio_semantic_by_id,
+                              speakers_by_spk=speakers_by_spk)
 
     duration = shots[-1]["end_sec"] if shots else 0.0
 
@@ -1284,6 +1441,8 @@ def main():
         transcript_segments=transcript_segments,
         characters_data=characters_data,
         props_data=props_data,
+        audio_semantic_data=audio_semantic_data,
+        speakers_data=speakers_data,
     )
     with open(args.output, "w") as f:
         f.write(html)
