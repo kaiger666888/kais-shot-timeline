@@ -327,7 +327,8 @@ def step_reid(video: str, work_dir: str, shots_json: str,
 def step_audio_semantic(video: str, work_dir: str, shots_json: str,
                         stems_dir: str, audio_semantic_json: str,
                         skip: bool, offline: bool,
-                        audio_url: str, audio_timeout: float) -> str:
+                        audio_url: str, audio_timeout: float,
+                        audio_analysis_json: str | None = None) -> str:
     """音频语义深化（step 7 of 9）—— 第三个网络依赖步骤。
 
     子进程调 analysis/call_audio_analysis.py（httpx POST → audio_semantic.json），
@@ -353,6 +354,9 @@ def step_audio_semantic(video: str, work_dir: str, shots_json: str,
             NO /v1/ —— 10-02-SUMMARY mount-path flag）。
         audio_timeout: 单次路由调用 read 超时秒（默认 900，= 路由侧 execFileSync
             硬超时；mirror Phase 6 Pitfall 1）。
+        audio_analysis_json: 可选 audio_analysis.json side input 路径（Phase 15
+            reproduction composer 用其 drums ratio + 频谱重心估 tempo/brightness；
+            缺席时 composer 降级为 BGM/mood-only music_gen，schema 仍合法）。
 
     Returns:
         audio_semantic_json 路径（若产出 / 已存在）；None 若 skip 且文件不存在。
@@ -394,6 +398,11 @@ def step_audio_semantic(video: str, work_dir: str, shots_json: str,
            "--route-timeout", str(audio_timeout)]
     if offline:
         cmd += ["--offline"]
+    # Phase 15：audio_analysis.json side input pass-through —— reproduction
+    # composer 用其 drums ratio + 频谱重心估 tempo/brightness（mirror --stems-dir
+    # argv-extension pattern at line 392-394）。
+    if audio_analysis_json and os.path.exists(audio_analysis_json):
+        cmd += ["--audio-analysis-json", audio_analysis_json]
     run_step(cmd, "[7/9] audio semantic analysis (audio-analysis route)")
     # 写 video 身份 sidecar —— best-effort（WR-01）。
     if current_video_id is not None:
@@ -761,7 +770,8 @@ def main():
     # subprocess 调用 link_speakers —— 全自动映射是 AF-05 violation）。
     step_audio_semantic(video, work_dir, shots, stems_dir, audio_semantic_json,
                         args.skip_audio_semantic, args.offline,
-                        args.audio_url, args.audio_timeout)
+                        args.audio_url, args.audio_timeout,
+                        audio_analysis_json=audio_json)
     # --skip-speaker-link 仅控制 HITL 提示输出（不阻塞 step_audio_semantic）。
     # 提示串拼出 operator 手动运行的完整 CLI 命令 —— mirror v1.1 apply_edits 提示。
     if (not args.skip_speaker_link
