@@ -1,5 +1,59 @@
 # Milestones
 
+## v1.2 v1.2 (Shipped: 2026-07-26)
+
+**Phases completed:** 8 phases, 20 plans, 39 tasks
+
+**Key accomplishments:**
+
+- `common.py` (260 lines)
+- Express stub route mounted at `/api/production/audio-analysis` in kais-aigc-platform with byte-identical envelope shape to shot-analysis — Phase 12 producer client has a POST target before any ML lands. Full curl round-trip proven (code:200 + stub_mode:true on happy path; code:400 on validation failure).
+- funasr 1.3.29 install (Pitfall 1 clear):
+- Package install (panns-inference 0.1.1 + transitive fixes):
+- A1 (CPU mode works without CUDA 12.8 toolkit):
+- Aggregated 4 Phase 10 spike JSONs (SER/MERT/PANNs-blocked/WhisperX) into a 254-line empirical report + locked 5 PROJECT.md Key Decisions rows resolving BLOCKER 1 (CUDA stay-on-12.4) + 3 CONDITIONAL requirements (DIA-04 ship-nullable / MUS-04 defer-v1.3 / DIA-05 ship-experimental).
+- 1. [Rule 1 — Bug] Strict instruments-grep required rewording $comment to avoid the English word "instrument"
+- 12-file v1.2 fixture (10 byte-copied from v1.1 + audio_semantic.json with real SenseVoice spike outputs + speakers.json with synthetic spk_NNN turns) wired into a 3-tier shape gate (minimal/v1.1/v1.2 all 0-failure) + verify_contract.py extended with v1.0↔v1.1↔v1.2 bidirectional proof (forward 0 errors, backward 0 non-additive errors) + speakers.char_id ⊆ characters.id consistency check.
+- 827-line httpx producer client for POST /api/production/audio-analysis — third sibling of v1.1 route-pattern family, with per-shot 4-tuple cache, poisoned-cache schema-invalidated auto-cleanup, byte-identical-absent graceful-degrade, and non-destructive [audio] warnings sidecar merge; SC#4 stub round-trip proven end-to-end before any ML lands.
+- SC#4 doubly proven: Task 1 delivers a deterministic 5-scenario smoke harness (in-process mock stub) proving `call_audio_analysis.py` correctly parses the Phase 10 stub envelope, manages per-shot cache (write/hit/poisoned-invalidate), and merges `[audio]` warnings non-destructively with `[semantic]`/`[reid]` tags. Task 2 supplementary live cross-repo cross-check SUCCEEDED (not deferred): producer client integrated cleanly with the actual `feat/audio-analysis-route` stub host, exit 0, audio_semantic.json absent (CONTRACT-05 byte-identical v1.1), `[audio]` warning with stub_mode:true diagnostic present.
+- link_speakers.py confirmed-only apply gate mirroring apply_edits.py (548 lines, byte-identical re-apply) + additive speakers.json block in _producer_registry_integrity (73 new lines, no-op when absent)
+- Self-contained monolithic HTML generator (760 lines) mirroring gen_registry_review.py: speaker cards sorted by shot_count desc + character dropdown filtered to confirmed-only (Pitfall 7 upstream gate) + Export-edits → speaker-edits.json (schema-valid) + _esc + JSON-in-script XSS hardening (T-13-01/09 mitigate)
+- 1. [Rule 1 — Bug] Scenario 4 poison spec didn't actually exercise `_esc`
+- 1. [Rule 1 - Test Bug] TINY_VIDEO has no audio stream → ffprobe fails on e2e
+- One-liner:
+- One-liner:
+- CLI flags
+- Cross-repo `@kais/infinite-canvas` consumer recognizes schema_version 1.2 + emits per-shot dialogue/music/sfx type:asset children via §7 buildPhaseTree post-process (gated on KNOWN_VERSIONS.has("1.2")); AssetNode typeIcons 💬🎵🔊 cosmetic; verify_contract 3-mode GREEN (40 assertions, +11 new); MUS-04 instruments absent; v1.1 Phase 9 invariant (no custom renderer / no Zod bump) preserved.
+
+---
+
+## v1.2 v1.2 (Shipped: 2026-07-26)
+
+**Phases completed:** 8 phases, 20 plans, 39 tasks
+
+**Key accomplishments:**
+
+- `common.py` (260 lines)
+- Express stub route mounted at `/api/production/audio-analysis` in kais-aigc-platform with byte-identical envelope shape to shot-analysis — Phase 12 producer client has a POST target before any ML lands. Full curl round-trip proven (code:200 + stub_mode:true on happy path; code:400 on validation failure).
+- funasr 1.3.29 install (Pitfall 1 clear):
+- Package install (panns-inference 0.1.1 + transitive fixes):
+- A1 (CPU mode works without CUDA 12.8 toolkit):
+- Aggregated 4 Phase 10 spike JSONs (SER/MERT/PANNs-blocked/WhisperX) into a 254-line empirical report + locked 5 PROJECT.md Key Decisions rows resolving BLOCKER 1 (CUDA stay-on-12.4) + 3 CONDITIONAL requirements (DIA-04 ship-nullable / MUS-04 defer-v1.3 / DIA-05 ship-experimental).
+- 1. [Rule 1 — Bug] Strict instruments-grep required rewording $comment to avoid the English word "instrument"
+- 12-file v1.2 fixture (10 byte-copied from v1.1 + audio_semantic.json with real SenseVoice spike outputs + speakers.json with synthetic spk_NNN turns) wired into a 3-tier shape gate (minimal/v1.1/v1.2 all 0-failure) + verify_contract.py extended with v1.0↔v1.1↔v1.2 bidirectional proof (forward 0 errors, backward 0 non-additive errors) + speakers.char_id ⊆ characters.id consistency check.
+- 827-line httpx producer client for POST /api/production/audio-analysis — third sibling of v1.1 route-pattern family, with per-shot 4-tuple cache, poisoned-cache schema-invalidated auto-cleanup, byte-identical-absent graceful-degrade, and non-destructive [audio] warnings sidecar merge; SC#4 stub round-trip proven end-to-end before any ML lands.
+- SC#4 doubly proven: Task 1 delivers a deterministic 5-scenario smoke harness (in-process mock stub) proving `call_audio_analysis.py` correctly parses the Phase 10 stub envelope, manages per-shot cache (write/hit/poisoned-invalidate), and merges `[audio]` warnings non-destructively with `[semantic]`/`[reid]` tags. Task 2 supplementary live cross-repo cross-check SUCCEEDED (not deferred): producer client integrated cleanly with the actual `feat/audio-analysis-route` stub host, exit 0, audio_semantic.json absent (CONTRACT-05 byte-identical v1.1), `[audio]` warning with stub_mode:true diagnostic present.
+- link_speakers.py confirmed-only apply gate mirroring apply_edits.py (548 lines, byte-identical re-apply) + additive speakers.json block in _producer_registry_integrity (73 new lines, no-op when absent)
+- Self-contained monolithic HTML generator (760 lines) mirroring gen_registry_review.py: speaker cards sorted by shot_count desc + character dropdown filtered to confirmed-only (Pitfall 7 upstream gate) + Export-edits → speaker-edits.json (schema-valid) + _esc + JSON-in-script XSS hardening (T-13-01/09 mitigate)
+- 1. [Rule 1 — Bug] Scenario 4 poison spec didn't actually exercise `_esc`
+- 1. [Rule 1 - Test Bug] TINY_VIDEO has no audio stream → ffprobe fails on e2e
+- One-liner:
+- One-liner:
+- CLI flags
+- Cross-repo `@kais/infinite-canvas` consumer recognizes schema_version 1.2 + emits per-shot dialogue/music/sfx type:asset children via §7 buildPhaseTree post-process (gated on KNOWN_VERSIONS.has("1.2")); AssetNode typeIcons 💬🎵🔊 cosmetic; verify_contract 3-mode GREEN (40 assertions, +11 new); MUS-04 instruments absent; v1.1 Phase 9 invariant (no custom renderer / no Zod bump) preserved.
+
+---
+
 ## v1.1 分镜语义深化 — 镜头语言 + 跨镜角色/道具注册表 (Shipped: 2026-07-24)
 
 **Phases completed:** 5 phases, 16 plans, 32 tasks

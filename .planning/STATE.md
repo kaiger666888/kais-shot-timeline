@@ -2,16 +2,16 @@
 gsd_state_version: 1.0
 milestone: v1.2
 milestone_name: 音频语义深化 — Audio Semantic Deepening
-status: milestone_complete
-stopped_at: Milestone complete (Phase 17 was final phase)
-last_updated: 2026-07-26T01:17:37.435Z
-last_activity: 2026-07-25 -- Phase 13 planning complete
+status: Awaiting next milestone
+stopped_at: ""Phase 10 spike complete — 4 locked outcomes in PROJECT.md Key Decisions (lines 122-126: models_used per modality / CUDA stay-on-12.4 / DIA-04 ship-nullable+confidence / MUS-04 defer-v1.3 / DIA-05 ship-experimental). Spike report at `.planning/research/audio-spike-report.md` (254 lines). BLOCKER 1 RESOLVED stay-on-12.4. Phase 10 plans 01-06 all done. Ready for /gsd:verify-work then /gsd:plan-phase 11 (Contract v1.2 lock).""
+last_updated: "2026-07-26T04:29:46.221Z"
+last_activity: 2026-07-26 — Milestone v1.2 completed and archived
 progress:
   total_phases: 8
-  completed_phases: 3
-  total_plans: 14
+  completed_phases: 8
+  total_plans: 20
   completed_plans: 20
-  percent: 38
+  percent: 100
 ---
 
 # Project State
@@ -25,12 +25,10 @@ See: .planning/PROJECT.md (updated 2026-07-25)
 
 ## Current Position
 
-Phase: 17
-Plan: Not started
-Status: Milestone complete
-Last activity: 2026-07-26
-
-Progress: [██████████] 100%
+Phase: Milestone v1.2 complete
+Plan: —
+Status: Awaiting next milestone
+Last activity: 2026-07-26 — Milestone v1.2 completed and archived
 
 ## Performance Metrics
 
@@ -152,6 +150,4 @@ Resume file: None
 
 ## Operator Next Steps
 
-- Run `/gsd:verify-work` against Phase 10 (5 ROADMAP SC all empirically addressed)
-- Then run `/gsd:plan-phase 11` to lock the v1.2 contract (Phase 11 must respect: DIA-04 emotion field NULLABLE + confidence + fidelity_disclaimer; MUS-04 instruments field OMITTED; DIA-05 word-level timestamps EXPERIMENTAL with metric-definition caveat; WhisperX runs in isolated cu124 venv)
-- Phase 11 contract lock is now unblocked — empirical basis delivered by Phase 10 spike (non-negotiable invariant #1 satisfied)
+- Start the next milestone with /gsd-new-milestone

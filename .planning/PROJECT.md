@@ -8,13 +8,27 @@
 
 把成片解构成可导航、多轨道的分镜资产（分镜 + 分离音轨 + 对白 + prompt），且这套形态可移植——能作为无限画布等下游消费者的「最终资产集合形态」被直接消费。
 
-## Last Shipped Milestone: v1.1 分镜语义深化 —— 镜头语言 + 跨镜角色/道具注册表 (SHIPPED 2026-07-25)
+## Prior Milestone: v1.1 分镜语义深化 —— 镜头语言 + 跨镜角色/道具注册表 (SHIPPED 2026-07-25)
 
-**Goal:** 把成片从「边界 + 音轨 + 对白 + prompt 文本」升级为带镜头语言、动作、可复用跨镜角色/道具注册表的叙事资产——prompt 引用注册表实现真实叙事连贯，并把 ShotTimelineAsset 契约 minor-bump 到 v1.1。**DELIVERED** — 5 phases, 16 plans, 34/34 requirements satisfied; producer/contract side complete, 3 cross-repo route dependencies pre-authorized deferred (see Validated + Known Deferred below).
+**Goal:** 把成片从「边界 + 音轨 + 对白 + prompt 文本」升级为带镜头语言、动作、可复用跨镜角色/道具注册表的叙事资产——prompt 引用注册表实现真实叙事连贯，并把 ShotTimelineAsset 契约 minor-bump 到 v1.1。**DELIVERED** — 5 phases, 16 plans, 34/34 requirements satisfied; producer/contract side complete, 3 cross-repo route dependencies pre-authorized deferred (see `.planning/milestones/v1.1-ROADMAP.md`).
 
-## Current Milestone: v1.2 音频语义深化 — Audio Semantic Deepening
+## Last Shipped Milestone: v1.2 音频语义深化 — Audio Semantic Deepening (SHIPPED 2026-07-26)
 
-**Status:** Planning (requirements/roadmap being defined).
+**Status:** DELIVERED — 8 phases (10-17), 20 plans, 33/33 requirements satisfied; milestone audit `tech_debt` (0 blockers, all 6 cross-phase integration checks GREEN, E2E flow complete). Archive: `.planning/milestones/v1.2-ROADMAP.md`.
+
+**Shipped:**
+- **v1.2 contract lock** — 3 new schemas (`audio_semantic`/`speakers`/`speaker-edits`) + additive `asset.schema` extension + `SCHEMA_VERSION="1.2"` single-source + 12-file fixture + bidirectional v1.0↔v1.1↔v1.2 cross-version proof.
+- **Phase-10-informed field shapes** — emotion nullable+confidence (DIA-04 ship-nullable); word-level experimental (DIA-05); **MUS-04 instruments DEFERRED to v1.3** (MERT has no classifier + PANNs zenodo-blocked).
+- **Producer chain** — `call_audio_analysis.py` httpx client (4-tuple cache + poisoned invalidation + `[audio]` warnings merge + graceful-degrade) + `link_speakers.py` confirmed-only HITL gate + `gen_audio_prompts.py` layered reproduction (tts/music_gen/foley, model-agnostic NL) + `step_audio_semantic` pipeline slot 7/9.
+- **SPEAKER-01 closed** — new `^spk_[0-9]{3}$` acoustic ID space (disjoint from `char_NNN`) + HITL review HTML + idempotent confirmed-only apply.
+- **Rendering** — `timeline.html` dialogue/music/sfx chips + speaker→character chip + reproduction panel ("estimated" labels) + XSS 3-layer hardening; canvas consumer recognizes `schema_version:"1.2"` + emits per-shot audio `type:"asset"` children via §7 buildPhaseTree.
+- **CUDA path resolved (BLOCKER 1)** — stay-on-12.4 (WhisperX runs on cu124 force-pin isolated venv; not a forcing function for 12.8).
+
+**Known deferred (pre-authorized, scope-fenced):** cross-repo PRs (`feat/audio-analysis-route` + `feat/canvas-asset-collection`, post-milestone per v1.1 Phase 9 precedent); MUS-04 instruments v1.3; rigorous DIA-04 macro-F1 annotation; WhisperX drift metric refinement; PANNs Cnn14 re-eval when zenodo-reachable; Phase 13/16 browser UAT; e2e backend verify mode.
+
+**Next:** `/gsd:new-milestone` — define v1.3 (likely: MUS-04 instruments via real MIR classifier + DIA-06 face-voice auto speaker→character + rigorous SER annotation).
+
+> **v1.1（已归档）** 分镜语义深化：镜头语言 + 跨镜角色/道具注册表 + prompt 引用 + 契约 1→1.1 + 双端展示。详见 `.planning/MILESTONES.md`。本 milestone 在其契约之上做音频语义深化与契约 minor bump 1.1→1.2。
 
 **Goal:** 把音频从「能量/频谱启发式」升级为带对白情绪+说话人、BGM 乐器/调性/氛围/出现时间、音效描述的**三模态语义资产**，并产出**分层复现 prompt**（TTS / music-gen / foley）——镜像 v1.1 `step_semantic` 的「thin 客户端 → kais-aigc-platform 路由」模式。
 
