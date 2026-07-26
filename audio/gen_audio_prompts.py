@@ -1,57 +1,50 @@
 #!/usr/bin/env python3
-"""为每镜生成 audio-gen 风格的自然语言 prompt（spike）
+"""每镜分层复现 prompt producer（v1.2 Phase 15 —— quick task 260725-afz spike 晋升版）
 
-用途：
-  本脚本是 producer-only spike —— 从已算好的 Demucs 能量/频谱 + Whisper 对白
-  + drum/bass onset 推导出每镜的 audio-gen NL prompt，写到 sidecar
-  `audio_prompts.json`。**合约零改动、未进 pipeline、未引入新依赖**（仅
-  stdlib + numpy）。输出 sidecar 不被 spec / asset.json / export_asset.py
-  引用，仅供肉眼 spot-check 是否值得晋升为 v1.2 milestone。
+本模块在 v1.2 Phase 15 中由 quick-task spike（sidecar audio_prompts.json 实验脚本）
+**晋升为 pipeline producer**（locked decision #6 spike 退休）：把 audio_semantic.json
+的单镜 normalized shot（dialogue/sfx modality）+ 可选 audio_analysis.json 频谱 side
+input 组合成 model-agnostic NL 复现 prompt，写到 audio_semantic.json#shots[].reproduction
+。**不内嵌 NC 权重**（locked decision #7）—— 仅 NL 文本。
 
-算法：
-  对每个分镜（覆盖 shots.json 全部 shot）：
-    1. 读 audio_analysis.json 取该 shot 的 energies / ratios /
-       spectral_centroid / dominant_type
-    2. 由 dominant_type + brightness (spectral_centroid) + vocal_presence
-       (ratios.vocals) 决定 leading phrase
-    3. 仅当 drums ratio ≥ 0.10 且 stems 可读时，从 drums.wav envelope
-       peak-pick 估 tempo (bpm)；onset < 3 视为不置信 → null
-    4. 仅当 transcript.json 可读时，找首个与该 shot 时间重叠的 segment，
-       截前 20 字符作 dialogue_excerpt
-    5. 按 {leading}[ ~Xbpm][, "excerpt"], {loudness} {brightness} bed 顺序
-       拼接成 prompt 字符串
+两个入口点：
 
-降级路径：
-  - 无 transcript.json → dialogue_excerpt=""、vocal_presence 仍由能量比推导
-  - 无 stems 目录 → tempo_bpm=null、prompt 不出现 "Xbpm"
-  两条降级都必须 graceful（仍产出 prompt，不崩溃）。
+  (1) **library function `compose_reproduction(shot, analysis_shot=None)`** ——
+      被 analysis/call_audio_analysis.py 在每镜 normalize 之后、写盘之前调用。
+      Pure function（无 I/O、无 RNG、无时间戳）—— 相同输入 byte-identical 输出
+      （mirror v1.1 Pattern 2 deterministic recompose）。
 
-输出 JSON schema（sidecar，不进 spec）：
-  [
-    {
-      "shot_id": 1,
-      "start_sec": 0.0,
-      "end_sec": 6.73,
-      "duration": 6.73,
-      "prompt": "calm male vocal narration, \"爸爸去哪儿？\", moderate warm mid-range bed",
-      "facets": {
-        "dominant_type": "dialogue",
-        "tempo_bpm": null,
-        "brightness": "warm mid-range",
-        "loudness": "moderate",
-        "vocal_presence": 0.9655,
-        "dialogue_excerpt": "爸爸去哪儿？"
-      }
-    }
-  ]
+  (2) **CLI `--recompose <audio_semantic.json>`** —— 操作员在路由 round-trip 完成后
+      离线迭代复现 prompt 组合：读现有 audio_semantic.json + 可选 audio_analysis.json
+      side input → 每镜 invoke compose_reproduction → in-place atomic 重写。Plan 15-02
+      owns this CLI；Plan 15-01 仅建立 library function。
 
-确定性：相同输入两次运行产出 byte-identical 的 audio_prompts.json（不写
-时间戳、不写绝对路径、字典遍历按固定 key 序）。
+输出形态（spec/schemas/audio_semantic.schema.json#$defs/repro_prompt LOCKED）：
 
-CLI 用法：
-  python3 audio/gen_audio_prompts.py --episode-dir output/<ep-name>/
-  python3 audio/gen_audio_prompts.py --episode-dir output/<ep-name>/ \\
-      --output /tmp/custom.json
+  shots[i].reproduction = {
+      "tts":       {"text": str(≥1), "confidence": 0..1,
+                    "fidelity_disclaimer": str(SPEC §10 lock)} | null,
+      "music_gen": {...} | null,
+      "foley":     {...} | null
+  }
+
+每非 null 层都带 SPEC §10 LOCKED 的 fidelity_disclaimer literal ——
+  - tts:        "TTS ~70% similarity to source voice (AF-01 mitigation)"
+  - music_gen:  "music-gen ~60-75% harmonic/rhythmic similarity; timbre not guaranteed (AF-01 mitigation)"
+  - foley:      "foley ~80% similarity for defined event types (AF-01 mitigation)"
+**绝不**出现绝对化复现措辞（SPEC §10.1 称为「绝对化复现措辞」的统称 —— 中英文
+均禁止；AF-01 grep 守门；Phase 11 SC#5 lock）。
+
+CONDITIONAL 字段 gating（Phase 10 spike LOCKED outcomes）：
+  - DIA-04 emotion ship-nullable+confidence —— emotion 进入 TTS prompt 词缀（nullable）
+  - DIA-05 word-level ship-experimental —— composer NEVER 读 dialogue.words[]；仅
+    用 dialogue.text（segment-level）。word_level_experimental flag 由 call_audio_analysis
+    顶层管理（ROUTE 侧 WhisperX 是否上线）。
+  - MUS-04 乐器识别 DEFER v1.3 —— composer NEVER emit 任何乐器相关字段或乐器名词；
+    music_gen bed 描述仅用 generic NL 词（"rhythmic bed"/"instrumental bed"）。
+
+确定性：相同输入 → byte-identical 输出。无时间戳、无绝对路径、dict key 固定序
+（Python 3.7+ insertion-order）、set-derived list 走 sorted()、float 走 round(x, 4)。
 """
 import argparse
 import json
@@ -173,6 +166,303 @@ def loudness_word(rms_energy: float) -> str:
         return "moderate"
     return "loud"
 
+
+# ============================================================================
+# Phase 15 reproduction composer（locked decision #6 spike 晋升）
+# ============================================================================
+# SPEC §10 LOCKED fidelity_disclaimer literals —— 每个 non-null repro_prompt
+# layer 必须 emit 对应字面量；**禁止**改写或省略 (AF-01 mitigation)。
+FIDELITY_DISCLAIMER_TTS = (
+    "TTS ~70% similarity to source voice (AF-01 mitigation)")
+FIDELITY_DISCLAIMER_MUSIC_GEN = (
+    "music-gen ~60-75% harmonic/rhythmic similarity; "
+    "timbre not guaranteed (AF-01 mitigation)")
+FIDELITY_DISCLAIMER_FOLEY = (
+    "foley ~80% similarity for defined event types (AF-01 mitigation)")
+
+# DIA-04 emotion → TTS 语气词缀（5 类；闭枚举会 over-claim 校准 —— SenseVoice
+# self_consistency=100% 是 label-stability 代理，NOT 精度。任何 emotion 落在
+# 表外 → 不加语气词缀（中性 TTS 描述）。Phase 10 spike LOCKED。）
+EMOTION_TONE_MAP = {
+    "HAPPY":   "开心愉悦",
+    "SAD":     "低落伤感",
+    "ANGRY":   "激动愤怒",
+    "NEUTRAL": "平稳中性",
+    # emo_unk 与表外值 → 不加语气词缀（emitted "中性" by default in text）
+}
+
+# MUS-03 emotion → music_gen mood 形容词（与 EMOTION_TONE_MAP 同源；英文
+# 形容词用于 music_gen prompt 因 music-gen 模型训练语料以英文为主）。
+MOOD_MAP = {
+    "HAPPY":   "upbeat",
+    "SAD":     "melancholic",
+    "ANGRY":   "tense",
+    "NEUTRAL": "mellow",
+    # emo_unk 与表外值 → 不加 mood 词缀
+}
+
+# SFX-01 SenseVoice 8-event 非语音子集 → 中文标签（用于 foley prompt 词缀）。
+# Speech 不在此（Speech 属于 dialogue.events）。
+EVENT_CN_MAP = {
+    "Applause": "掌声",
+    "Laughter": "笑声",
+    "Cry":      "哭声",
+    "Sneeze":   "喷嚏",
+    "Breath":   "呼吸声",
+    "Cough":    "咳嗽声",
+}
+
+# composer 数值常量
+TTS_CONFIDENCE_BASE = 0.65        # dialogue.text 存在但 emotion 缺席时的基线
+TTS_CONFIDENCE_EMOTION_STEP = 0.20  # emotion_confidence=1.0 时的增量
+TTS_CONFIDENCE_DEFAULT_EMOTION = 0.5  # emotion 缺席时使用的代理 emotion_confidence
+TTS_TEXT_MAX_CHARS = 40           # dialogue.text 截断阈值（中文按字符）
+
+MUSIC_GEN_CONFIDENCE_BASE = 0.55  # music_gen 基线（SPEC §10.2 music-gen 60-75%）
+MUSIC_GEN_CONFIDENCE_TEMPO_STEP = 0.15  # tempo 可推导时增量
+MUSIC_GEN_CONFIDENCE_MOOD_STEP = 0.05   # mood 可推导时增量
+
+FOLEY_CONFIDENCE_WITH_DESC = 0.80  # SPEC §10.2 foley ~80% central estimate
+FOLEY_CONFIDENCE_EVENTS_ONLY = 0.70  # 仅 events[] 时（标签，无 NL 描述）
+
+
+def _compose_tts_layer(dialogue: dict | None) -> dict | None:
+    """TTS 复现 prompt layer（DIA-01 段级文本 + DIA-04 emotion nullable+confidence）。
+
+    DIA-05 word-level：本函数 NEVER 读 dialogue.words[] —— word_level_experimental
+    顶层 flag 由 call_audio_analysis.py 管理；composer 是 segment-level only（T-15-04）。
+
+    Returns:
+        {"text": str(non-empty), "confidence": float[0,1],
+         "fidelity_disclaimer": FIDELITY_DISCLAIMER_TTS}
+        或 None（dialogue 缺席 OR text 为空）。
+    """
+    if not isinstance(dialogue, dict):
+        return None
+    text = dialogue.get("text")
+    if not isinstance(text, str) or not text.strip():
+        return None
+    text = text.strip()
+
+    # 拼 TTS NL prompt —— 段级文本（截断）+ 语气词缀 + 语言固定（CONTEXT D-XX zh 锁定）
+    excerpt = text[:TTS_TEXT_MAX_CHARS]
+    emotion = dialogue.get("emotion")
+    emotion_confidence = dialogue.get("emotion_confidence")
+    # confidence 计算（SPEC §10.2 TTS ~70% central estimate calibrated）
+    if isinstance(emotion_confidence, (int, float)):
+        ec = max(0.0, min(1.0, float(emotion_confidence)))
+    elif emotion is not None:
+        ec = TTS_CONFIDENCE_DEFAULT_EMOTION   # emotion 存在但 confidence 缺席
+    else:
+        ec = 0.0                                # 无 emotion → 基线
+    confidence = max(0.0, min(1.0,
+        TTS_CONFIDENCE_BASE + TTS_CONFIDENCE_EMOTION_STEP * ec))
+
+    # NL 拼接（确定性 —— 按固定序；无 RNG）
+    parts = ["再说一遍段级文本：", f"「{excerpt}」"]
+    if isinstance(emotion, str) and emotion in EMOTION_TONE_MAP:
+        parts.append(f"，语气{EMOTION_TONE_MAP[emotion]}")
+    parts.append("，中文普通话，节奏自然")
+    return {
+        "text": "".join(parts),
+        "confidence": round(confidence, 4),
+        "fidelity_disclaimer": FIDELITY_DISCLAIMER_TTS,
+    }
+
+
+def _compose_music_gen_layer(shot_semantic: dict,
+                             analysis_shot: dict | None,
+                             drum_audio=None,
+                             drum_sr: int = 0) -> dict | None:
+    """music_gen 复现 prompt layer。
+
+    Source signals:
+      - MUS-01 BGM presence（dialogue.events OR sfx.events 含 "BGM" SenseVoice tag）
+      - MUS-02 tempo BPM（analysis_shot.ratios.drums ≥ DRUM_RATIO_TEMPO_THRESHOLD 且
+        drum_audio 可读 → spike's estimate_tempo_from_envelope；onset < 3 → null）
+      - MUS-03 mood（shot.dialogue.emotion via MOOD_MAP；emotion 缺席 → 无 mood 词缀）
+      - MUS-05 key / MUS-06 VA：v1.2 路由不产信号 → 始终 null（differentiator-populated-
+        when-route-produces-signal is null-by-default）
+      - MUS-04 乐器：v1.3 deferred → NEVER emit 任何乐器字段或乐器名词
+        （T-15-02 mitigation；NL bed 描述仅用 generic 词）
+
+    Returns:
+        {"text": str, "confidence": float[0,1],
+         "fidelity_disclaimer": FIDELITY_DISCLAIMER_MUSIC_GEN}
+        或 None（无 BGM 信号 AND 无 tempo AND 无 mood）。
+    """
+    if not isinstance(shot_semantic, dict):
+        return None
+
+    # MUS-01 BGM presence（SenseVoice 8-event 的 "BGM" tag —— 可能在 dialogue.events
+    # 或 sfx.events 任一处出现；SenseVoice 的 BGM tag 是 BGM 存在检测的强信号）
+    bgm_present = False
+    dlg = shot_semantic.get("dialogue")
+    if isinstance(dlg, dict):
+        evts = dlg.get("events")
+        if isinstance(evts, list) and "BGM" in evts:
+            bgm_present = True
+    if not bgm_present:
+        sfx = shot_semantic.get("sfx")
+        if isinstance(sfx, dict):
+            evts = sfx.get("events")
+            if isinstance(evts, list) and "BGM" in evts:
+                bgm_present = True
+
+    # MUS-02 tempo（仅当 audio_analysis.json side input 提供 drums ratio + drum_audio）
+    tempo_bpm = None
+    if (isinstance(analysis_shot, dict)
+            and drum_audio is not None and drum_sr > 0):
+        ratios = analysis_shot.get("ratios")
+        if isinstance(ratios, dict) and isinstance(ratios.get("drums"), (int, float)):
+            if float(ratios["drums"]) >= DRUM_RATIO_TEMPO_THRESHOLD:
+                try:
+                    tempo_bpm, _onset_count = estimate_tempo_from_envelope(
+                        drum_audio, drum_sr,
+                        float(shot_semantic.get("start_sec", 0.0)),
+                        float(shot_semantic.get("end_sec", 0.0)))
+                except Exception:
+                    tempo_bpm = None   # defense-in-depth
+
+    # MUS-03 mood（emotion via MOOD_MAP；表外值 → 无词缀）
+    mood_word = None
+    if isinstance(dlg, dict):
+        emotion = dlg.get("emotion")
+        if isinstance(emotion, str) and emotion in MOOD_MAP:
+            mood_word = MOOD_MAP[emotion]
+
+    # 决策：是否 emit music_gen（任一信号源存在即 emit）
+    if not bgm_present and tempo_bpm is None and mood_word is None:
+        return None
+
+    # confidence（SPEC §10.2 music-gen 60-75% central estimate calibrated）
+    confidence = MUSIC_GEN_CONFIDENCE_BASE
+    if tempo_bpm is not None:
+        confidence += MUSIC_GEN_CONFIDENCE_TEMPO_STEP
+    if mood_word is not None:
+        confidence += MUSIC_GEN_CONFIDENCE_MOOD_STEP
+    confidence = max(0.0, min(1.0, confidence))
+
+    # NL 拼接（确定性 —— 不 emit 任何乐器名词；T-15-02 mitigation）
+    parts = []
+    if mood_word:
+        parts.append(mood_word)
+    if bgm_present and tempo_bpm is not None:
+        parts.append("rhythmic instrumental bed")
+        parts.append(f"~{tempo_bpm}bpm")
+    elif bgm_present:
+        parts.append("instrumental bed (BGM detected)")
+    elif tempo_bpm is not None:
+        parts.append(f"rhythmic bed ~{tempo_bpm}bpm")
+    else:
+        # 仅 mood 可推导（dialogue.emotion non-null 但无 BGM/tempo）——
+        # emit minimal "{mood} ambient bed"，confidence 最低
+        parts.append("ambient bed")
+    return {
+        "text": " ".join(parts),
+        "confidence": round(confidence, 4),
+        "fidelity_disclaimer": FIDELITY_DISCLAIMER_MUSIC_GEN,
+    }
+
+
+def _compose_foley_layer(sfx: dict | None) -> dict | None:
+    """foley 复现 prompt layer。
+
+    Source signals:
+      - SFX-01 sfx.description NL（verbatim pass-through）+ sfx.events（SenseVoice
+        8-event 非语音子集，转 EVENT_CN_MAP 中文标签拼 [笑声, 掌声] 词缀）
+      - SFX-02 AudioSet timestamps / SFX-03 foley complex events：v1.3 deferred → null
+
+    Returns:
+        {"text": str, "confidence": float[0,1],
+         "fidelity_disclaimer": FIDELITY_DISCLAIMER_FOLEY}
+        或 None（sfx 缺席 OR (description 空 AND events 空)）。
+    """
+    if not isinstance(sfx, dict):
+        return None
+    description = sfx.get("description")
+    if not isinstance(description, str):
+        description = ""
+    raw_events = sfx.get("events")
+    events_cn = []
+    if isinstance(raw_events, list):
+        # 确定性：sorted（防 set order 不稳定）+ 仅 EVENT_CN_MAP 命中的中文标签
+        for e in sorted(set(str(x) for x in raw_events if isinstance(x, str))):
+            if e in EVENT_CN_MAP:
+                events_cn.append(EVENT_CN_MAP[e])
+
+    description = description.strip()
+    if not description and not events_cn:
+        return None
+
+    # NL 拼装（确定性）
+    if events_cn and description:
+        text = f"[{', '.join(events_cn)}]: {description}"
+        confidence = FOLEY_CONFIDENCE_WITH_DESC
+    elif events_cn:
+        text = f"[{', '.join(events_cn)}]"
+        confidence = FOLEY_CONFIDENCE_EVENTS_ONLY
+    else:
+        text = description
+        confidence = FOLEY_CONFIDENCE_WITH_DESC
+    return {
+        "text": text,
+        "confidence": round(confidence, 4),
+        "fidelity_disclaimer": FIDELITY_DISCLAIMER_FOLEY,
+    }
+
+
+def compose_reproduction(shot_semantic: dict,
+                         analysis_shot: dict | None = None,
+                         drum_audio=None,
+                         drum_sr: int = 0) -> dict:
+    """Per-shot reproduction composer（Phase 15 LOCKED producer entry point）。
+
+    Pure function：无 I/O、无 RNG、无时间戳。相同输入 → byte-identical 输出
+    （mirror v1.1 Pattern 2 deterministic recompose）。
+
+    Args:
+        shot_semantic: 单镜 normalized shot（output of call_audio_analysis.
+            normalize_audio_semantic）—— 含 shot_id/start_sec/end_sec/duration
+            + 可选 dialogue {text, spk_id, emotion, emotion_confidence, events,
+            words} + 可选 sfx {events, description}。本函数 NEVER 读 dialogue.words
+            （DIA-05 word-level gating —— T-15-04 mitigation；word_level_experimental
+            flag 由 call_audio_analysis 顶层管理）。
+        analysis_shot: 可选 audio_analysis.json#shots[i] side input —— 含 ratios/
+            energies/spectral_centroid/dominant_type（Demucs 启发式特征）。composer
+            用其 ratios.drums 决定是否估 tempo；缺席时 music_gen 降级。
+        drum_audio: 可选 drums.wav mono numpy 数组（仅在 CLI --recompose 模式下
+            提供，用于 spike's estimate_tempo_from_envelope）。producer 内联调用
+            时传 None —— music_gen 不依赖 envelope 分析（只用 BGM/mood 信号）。
+        drum_sr: drum_audio 的采样率；drum_audio=None 时忽略。
+
+    Returns:
+        dict shaped {"tts": repro_prompt | None,
+                     "music_gen": repro_prompt | None,
+                     "foley": repro_prompt | None}
+        其中 repro_prompt = {"text": str(non-empty), "confidence": float[0,1],
+                              "fidelity_disclaimer": str(SPEC §10 lock)}。
+        各层 null 当对应模态无信号 —— schema 允许（#$defs/repro_prompt type
+        是 ['object','null']）。
+    """
+    if not isinstance(shot_semantic, dict):
+        return {"tts": None, "music_gen": None, "foley": None}
+    dlg = shot_semantic.get("dialogue")
+    sfx = shot_semantic.get("sfx")
+    return {
+        "tts":       _compose_tts_layer(dlg),
+        "music_gen": _compose_music_gen_layer(shot_semantic, analysis_shot,
+                                              drum_audio=drum_audio, drum_sr=drum_sr),
+        "foley":     _compose_foley_layer(sfx),
+    }
+
+
+# ============================================================================
+# SPIKE CLI (quick task 260725-afz) —— 在 Plan 15-02 Task 1 中退休。
+# 新 pipeline 入口是上面的 compose_reproduction()，由 analysis/call_audio_analysis.py
+# 在每镜 normalize 后 invoke。下面的 main()/gen_prompts()/derive_facets_and_prompt()
+# 在本 commit 中保留以让文件可运行；15-02 用 --recompose 模式替换之。
+# ============================================================================
 
 def leading_phrase(dominant_type: str, brightness: str,
                    vocal_presence: float) -> str:
