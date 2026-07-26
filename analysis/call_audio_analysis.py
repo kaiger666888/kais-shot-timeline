@@ -50,8 +50,9 @@ warnings 合并工作正常（mirror v1.1 Phase 7 CAST deferred 模式）。
     shots[].dialogue   ← 路由 SER+ASR 输出（text/spk_id/emotion/emotion_confidence/
                          events/words 各自独立投影，isinstance 守卫 CR-02）
     shots[].sfx        ← 路由 SenseVoice 非语音 events（events[]/description）
-    shots[].reproduction ← 路由返回的 tts/music_gen/foley 三层 repro_prompt
-                          （Phase 12 仅透传；Phase 15 owns recomposition）
+    shots[].reproduction ← producer-composed by audio/gen_audio_prompts.py
+                          ：compose_reproduction (Phase 15 owns；Phase 12 transparent
+                          passthrough RETIRED)
 
 phase-10-informed field shape rules（PROJECT.md + Phase 11 schema $comment）：
     emotion       : ["string","null"]  —— SenseVoice self_consistency=100% 是
@@ -295,34 +296,20 @@ def normalize_audio_semantic(route_shot: dict | None, shot_meta: dict) -> dict:
     except (KeyError, TypeError, ValueError, IndexError):
         pass   # sfx 畸形 → 缺席
 
-    # ─── reproduction 投影（tts / music_gen / fley 三层 repro_prompt） ────
-    # Phase 12 仅透传路由返回的 repro_prompt；Phase 15 owns recomposition。
-    # 每层 type: ['object','null'] —— null 合法，object 必须有非空 text。
+    # ─── reproduction: Phase 15 producer-composed (NOT projected from route) ──
+    # Phase 12 transparently passed route-returned reproduction; Phase 15 (locked
+    # decision #6) retires that pattern and owns producer composition. Composer
+    # is invoked post-normalize in main() per-shot loop (see line ~730). Route-
+    # returned reproduction (if any) is silently dropped —— producer-composed
+    # version wins. No code path here emits a reproduction object.
     try:
-        raw_repro = route_shot.get("reproduction")
-        if isinstance(raw_repro, dict):
-            repro: dict = {}
-            for key in ("tts", "music_gen", "foley"):
-                layer = raw_repro.get(key)
-                if layer is None:
-                    repro[key] = None
-                elif isinstance(layer, dict):
-                    text = layer.get("text")
-                    if isinstance(text, str) and text:
-                        proj: dict = {"text": text}
-                        conf = layer.get("confidence")
-                        if isinstance(conf, (int, float)):
-                            proj["confidence"] = max(0.0, min(1.0, float(conf)))
-                        disc = layer.get("fidelity_disclaimer")
-                        if isinstance(disc, str) and disc:
-                            proj["fidelity_disclaimer"] = disc
-                        repro[key] = proj
-                    # object 但无有效 text → 视同缺席（不 emit 该 key）
-                # 其他类型（list/number）→ 不 emit 该 key
-            if repro:
-                out["reproduction"] = repro
-    except (KeyError, TypeError, ValueError, IndexError):
-        pass   # reproduction 畸形 → 缺席
+        # Defensive: drop any route-returned reproduction to keep semantics clean.
+        # (normalize never reads it, but if route_shot accidentally carries one,
+        # we explicitly do NOT forward it.)
+        if isinstance(route_shot, dict) and "reproduction" in route_shot:
+            pass   # intentionally not projected
+    except (KeyError, TypeError):
+        pass
 
     # 乐器字段 OMITTED —— MUS-04 deferred v1.3（MERT 无 classifier head；
     # Phase 11 schema $comment lock）。不要在此处或文件任何位置 emit 乐器字段。
@@ -497,6 +484,13 @@ def main():
                     help="audio_semantic.json 输出路径")
     ap.add_argument("--stems-dir", required=True,
                     help="Demucs stems 目录（htdemucs/<video-stem>/，传给路由做 SER/MIR 输入）")
+    # Phase 15：audio_analysis.json side input —— reproduction composer 用其 drums
+    # ratio + 频谱重心估 tempo/brightness。缺席时 composer 降级（music_gen 仅靠
+    # BGM/mood 信号；schema 仍合法）。
+    ap.add_argument("--audio-analysis-json", default=None,
+                    help="audio_analysis.json 路径（per-shot Demucs 频谱/能量 side input；"
+                         "Phase 15 reproduction composer 用其 drums ratio + 频谱重心；"
+                         "缺席时 composer 降级为 BGM/mood-only music_gen（schema 仍合法）")
     ap.add_argument("--route-url",
                     default="http://127.0.0.1:8000/api/production/audio-analysis",
                     help="audio-analysis 路由 URL（含 /api/production/audio-analysis path；"
@@ -532,6 +526,22 @@ def main():
         sys.exit(f"--shots must point to a JSON array, got {type(shots_meta).__name__}")
     vch = video_content_hash(args.video)
 
+    # Phase 15: audio_analysis.json side-input index —— composer 用其 drums
+    # ratio 决定是否估 tempo。缺席时 analysis_by_id 为空 dict；composer 收到
+    # analysis_shot=None 仍可工作（music_gen 降级为 BGM/mood 信号 only）。
+    analysis_by_id: dict = {}
+    if args.audio_analysis_json and os.path.exists(args.audio_analysis_json):
+        try:
+            with open(args.audio_analysis_json, encoding="utf-8") as _f:
+                _aan = json.load(_f)
+            if isinstance(_aan, dict) and isinstance(_aan.get("shots"), list):
+                analysis_by_id = {
+                    s["shot_id"]: s for s in _aan["shots"]
+                    if isinstance(s, dict) and isinstance(s.get("shot_id"), int)}
+        except (OSError, json.JSONDecodeError) as _e:
+            print(f"[audio] warning: audio_analysis.json load failed ({_e}); "
+                  f"composer degraded to no-side-input mode")
+
     # ─── (3) SCHEMA_VERSION 单一真源（CONTRACT-03） ─────────────────────
     # scripts/export_asset.py:56 是 SCHEMA_VERSION = "1.2" 的单一真源 —— 本步骤
     # 绝不硬编码字面量 "1.2"。lazy-import 避免 module-load 副作用 + stage-decoupling
@@ -556,6 +566,30 @@ def main():
         SCHEMA_VERSION = "1.2"   # CONTRACT-03 fallback —— 仅 export_asset.py 不可用时
         print(f"[audio] warning: SCHEMA_VERSION lazy-import failed ({e}); "
               f"using fallback literal '{SCHEMA_VERSION}'")
+
+    # ─── (3b) Phase 15: compose_reproduction lazy-import ────────────────
+    # Mirror SCHEMA_VERSION lazy-import pattern（避免 stage-decoupling 违例 ——
+    # audio/ 不是 package，用 importlib.util filesystem load）。Fallback
+    # _compose_reproduction=None on import failure: composer 缺席 → reproduction
+    # 层缺席（schema-valid skeleton per CONTRACT-05 graceful-degrade）。
+    _compose_reproduction = None
+    try:
+        _gap_spec = importlib.util.spec_from_file_location(
+            "_gen_audio_prompts_for_compose",
+            repo_root / "audio" / "gen_audio_prompts.py")
+        if _gap_spec is not None and _gap_spec.loader is not None:
+            _gap_mod = importlib.util.module_from_spec(_gap_spec)
+            _gap_spec.loader.exec_module(_gap_mod)   # type: ignore[arg-type]
+            if hasattr(_gap_mod, "compose_reproduction"):
+                _compose_reproduction = _gap_mod.compose_reproduction
+            else:
+                print("[audio] warning: audio/gen_audio_prompts.py has no "
+                      "compose_reproduction attr; reproduction layer will be absent")
+        else:
+            raise ImportError("spec_from_file_location returned None")
+    except (ImportError, AttributeError, FileNotFoundError, OSError, SyntaxError) as _e:
+        print(f"[audio] warning: compose_reproduction lazy-import failed ({_e}); "
+              f"reproduction layer will be absent (schema-valid skeleton)")
 
     # ─── (4) cache_dir + warnings_sidecar + 本步 warnings ─────────────
     # cache dir: route_cache/audio_analysis/ —— v1.1 convention（NOT .cache/）。
@@ -726,6 +760,23 @@ def main():
             # 但 skeleton-only 镜（route_shot=None）若计入会让 word_level_experimental
             # 等标志语义稳定 —— 这里采用：始终写入 normalize 的 shot（含或不含 modality）。
             normalized = normalize_audio_semantic(route_shot, s)
+            # Phase 15: producer owns reproduction composition（locked decision #6）。
+            # compose_reproduction 是 pure + defense-in-depth（任何异常 → 该 shot 的
+            # reproduction 层整体 OMIT，schema-valid skeleton）。pre-write
+            # schema validator at line ~800 catches any escape。
+            # T-15-04: composer NEVER reads dialogue.words[]（DIA-05 gating）。
+            if _compose_reproduction is not None:
+                try:
+                    analysis_shot = analysis_by_id.get(s.get("id"))
+                    normalized["reproduction"] = _compose_reproduction(
+                        normalized, analysis_shot=analysis_shot)
+                except Exception as _e:
+                    audio_warnings.append(
+                        f"shot {s.get('id')}: reproduction composer raised "
+                        f"{type(_e).__name__}: {_e}")
+                    normalized.pop("reproduction", None)
+            # 若 lazy-import 失败（_compose_reproduction=None），reproduction 层
+            # 缺席 —— schema-valid skeleton（CONTRACT-05 graceful-degrade）。
             # 仅当 route_shot 非 None（实际有数据）才计入 words_present 判定。
             if route_shot is not None:
                 dlg = normalized.get("dialogue")
