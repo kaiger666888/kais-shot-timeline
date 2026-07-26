@@ -1,7 +1,8 @@
 #!/usr/bin/env python3
 """每镜分层复现 prompt producer（v1.2 Phase 15 —— quick task 260725-afz spike 晋升版）
 
-本模块在 v1.2 Phase 15 中由 quick-task spike（sidecar audio_prompts.json 实验脚本）
+本模块在 v1.2 Phase 15 中由 quick-task spike（sidecar 实验脚本，产 NL prompt
+数组到 episode 目录）
 **晋升为 pipeline producer**（locked decision #6 spike 退休）：把 audio_semantic.json
 的单镜 normalized shot（dialogue/sfx modality）+ 可选 audio_analysis.json 频谱 side
 input 组合成 model-agnostic NL 复现 prompt，写到 audio_semantic.json#shots[].reproduction
@@ -55,7 +56,7 @@ from pathlib import Path
 
 import numpy as np
 
-# ===== 可调阈值常量（spot-check 后可改；改动只影响输出文本，不影响合约） =====
+# ===== 可调阈值常量（composer + 既有 helper 共用；UPPER_CASE per CLAUDE.md） =====
 LOUDNESS_QUIET_THRESHOLD = 0.02       # overall_rms < 此值 → "quiet"
 LOUDNESS_MODERATE_THRESHOLD = 0.08    # overall_rms < 此值 → "moderate"，否则 "loud"
 BRIGHTNESS_DEEP_THRESHOLD = 400       # spectral_centroid_hz < 此值 → "deep low rumble"
@@ -67,9 +68,6 @@ TEMPO_ONSET_WIN = 1024                # envelope win（samples）
 TEMPO_DEBOUNCE_SEC = 0.20             # onset 防抖最小间距（秒）
 TEMPO_MIN_BPM = 40                    # bpm clamp 下界
 TEMPO_MAX_BPM = 200                   # bpm clamp 上界
-DIALOGUE_EXCERPT_MAX_CHARS = 20       # 对白摘录最大字符数（中文按字符算）
-VOCAL_PRESENCE_HIGH = 0.70            # vocal_presence ≥ 此值视为高（用于 dialogue leading）
-SC_HIGH_CENTROID_HZ = 2500.0          # dialogue 降级路径（无 transcript）频谱重心高低分界
 
 
 def load_audio_stem(path: str):
@@ -331,8 +329,11 @@ def _compose_music_gen_layer(shot_semantic: dict,
         if isinstance(emotion, str) and emotion in MOOD_MAP:
             mood_word = MOOD_MAP[emotion]
 
-    # 决策：是否 emit music_gen（任一信号源存在即 emit）
-    if not bgm_present and tempo_bpm is None and mood_word is None:
+    # 决策：是否 emit music_gen —— Plan 15-01 Task 1 spec lock：emit triggers are
+    # BGM presence OR tempo BPM available. Mood alone is a MODIFIER, not a trigger
+    # （dialogue.emotion 在没有 BGM/tempo 时不构成音乐证据 —— 否则会对纯对白
+    # shot over-claim 音乐复现）。
+    if not bgm_present and tempo_bpm is None:
         return None
 
     # confidence（SPEC §10.2 music-gen 60-75% central estimate calibrated）
@@ -344,6 +345,7 @@ def _compose_music_gen_layer(shot_semantic: dict,
     confidence = max(0.0, min(1.0, confidence))
 
     # NL 拼接（确定性 —— 不 emit 任何乐器名词；T-15-02 mitigation）
+    # 注：到此处 bgm_present 或 tempo_bpm 至少一个非 None（前面 early-return 保证）
     parts = []
     if mood_word:
         parts.append(mood_word)
@@ -352,12 +354,8 @@ def _compose_music_gen_layer(shot_semantic: dict,
         parts.append(f"~{tempo_bpm}bpm")
     elif bgm_present:
         parts.append("instrumental bed (BGM detected)")
-    elif tempo_bpm is not None:
+    else:   # tempo_bpm is not None, bgm_present is False
         parts.append(f"rhythmic bed ~{tempo_bpm}bpm")
-    else:
-        # 仅 mood 可推导（dialogue.emotion non-null 但无 BGM/tempo）——
-        # emit minimal "{mood} ambient bed"，confidence 最低
-        parts.append("ambient bed")
     return {
         "text": " ".join(parts),
         "confidence": round(confidence, 4),
@@ -457,231 +455,161 @@ def compose_reproduction(shot_semantic: dict,
     }
 
 
+
 # ============================================================================
-# SPIKE CLI (quick task 260725-afz) —— 在 Plan 15-02 Task 1 中退休。
-# 新 pipeline 入口是上面的 compose_reproduction()，由 analysis/call_audio_analysis.py
-# 在每镜 normalize 后 invoke。下面的 main()/gen_prompts()/derive_facets_and_prompt()
-# 在本 commit 中保留以让文件可运行；15-02 用 --recompose 模式替换之。
+# Phase 15-02 Task 1: --recompose CLI mode (spike retirement, locked decision #6)
 # ============================================================================
+# quick task 260725-afz 的旧 sidecar spike CLI 行为（扫描 episode 目录、产
+# NL prompt 数组 sidecar）已 RETIRE。新 CLI 入口是 --recompose：离线
+# in-place recompose 已有 audio_semantic.json#shots[].reproduction。Plan 15-02
+# SC#6 byte-identical determinism proof 的目标对象。library 入口
+# compose_reproduction 仍由 analysis/call_audio_analysis.py 内联调用
+# （producer hot path）。
 
-def leading_phrase(dominant_type: str, brightness: str,
-                   vocal_presence: float) -> str:
-    """由 dominant_type + brightness + vocal_presence 决定 leading phrase。
 
-    返回确定性（同输入 → 同短语）。dialogue 降级路径（无 transcript 时）由
-    derive_facets_and_prompt 在调用后按频谱重心覆盖。
+def recompose_audio_semantic(input_path: str,
+                             output_path: str | None = None,
+                             audio_analysis_json: str | None = None,
+                             schema_path: str | None = None) -> dict:
+    """离线 in-place recompose audio_semantic.json#shots[].reproduction。
+
+    读取现有 audio_semantic.json + 可选 audio_analysis.json side input，对每个
+    shot invoke compose_reproduction 写回 reproduction 层，atomic 重写。
+
+    Pure given file contents（无 RNG、无时间戳、无绝对路径嵌入输出）—— 相同
+    输入 → byte-identical 输出（mirror v1.1 Pattern 2 deterministic recompose；
+    SC#6 load-bearing）。
+
+    Args:
+        input_path: 待 recompose 的 audio_semantic.json 路径（REQUIRED）。
+        output_path: 输出路径（默认 = input_path；in-place 重写）。当传入与
+            input_path 不同的路径时，可用于 dry-run / 测试。
+        audio_analysis_json: 可选 audio_analysis.json side input（per-shot
+            Demucs 频谱/能量）。提供时 composer 用其 drums ratio 估 tempo；
+            缺席时 music_gen 降级为 BGM/mood 信号 only。
+        schema_path: 可选 schema 路径（默认仓库 spec/schemas/
+            audio_semantic.schema.json）。写前 Draft202012Validator 自校验。
+
+    Returns:
+        Recomposed payload dict（同时写到 output_path）。
+
+    Raises:
+        SystemExit on schema validation failure（mirror call_audio_analysis.py
+        801-804 fail-loud 惯例）。
     """
-    if dominant_type == "dialogue":
-        if vocal_presence >= VOCAL_PRESENCE_HIGH:
-            return "clear lead vocal, calm male vocal narration"
-        return "calm male vocal narration"
-    if dominant_type == "bgm":
-        return f"{brightness} instrumental bed"
-    if dominant_type == "sfx":
-        return f"textural {brightness} effect"
-    if dominant_type == "mixed":
-        return f"blended {brightness} bed with vocals"
-    # 兜底（理论不会走到，dominant_type 限定四值之一）
-    return f"{brightness} bed"
+    if output_path is None:
+        output_path = input_path
+    if schema_path is None:
+        schema_path = str(Path(__file__).resolve().parent.parent
+                          / "spec" / "schemas" / "audio_semantic.schema.json")
 
+    # 1. Load existing audio_semantic.json
+    with open(input_path, encoding="utf-8") as f:
+        payload = json.load(f)
+    if not isinstance(payload, dict):
+        sys.exit(f"[recompose] {input_path} root must be object, got "
+                 f"{type(payload).__name__}")
+    shots = payload.get("shots")
+    if not isinstance(shots, list):
+        sys.exit(f"[recompose] {input_path}#shots must be array, got "
+                 f"{type(shots).__name__ if shots is not None else 'absent'}")
 
-def find_dialogue_excerpt(transcript_segments, start_sec: float,
-                          end_sec: float,
-                          max_chars: int = DIALOGUE_EXCERPT_MAX_CHARS) -> str:
-    """找首个与 [start_sec, end_sec) 重叠的 segment，取前 max_chars 字符。
-
-    引号转义防止破坏 JSON / 注入未预期字符到 prompt 字符串（T-afz-02 mitigate）。
-    无匹配或 transcript_segments 为 None 时返回空串。
-    """
-    if not transcript_segments:
-        return ""
-    for seg in transcript_segments:
-        seg_start = seg.get("start", 0.0)
-        seg_end = seg.get("end", 0.0)
-        if seg_start < end_sec and seg_end > start_sec:
-            text = (seg.get("text") or "").strip()
-            excerpt = text[:max_chars]
-            return excerpt.replace('"', '\\"')
-    return ""
-
-
-def compose_prompt(leading: str, tempo_bpm, dialogue_excerpt: str,
-                   loudness: str, brightness: str) -> str:
-    """按序拼接 prompt。
-
-    顺序：{leading}[ ~Xbpm][, "excerpt"], {loudness} {brightness} bed
-    无 tempo 不出现 bpm 片段；无对白不出现引号片段。
-    """
-    out = leading
-    if tempo_bpm is not None:
-        out += f" ~{tempo_bpm}bpm"
-    if dialogue_excerpt:
-        out += f", \"{dialogue_excerpt}\""
-    out += f", {loudness} {brightness} bed"
-    return out
-
-
-def derive_facets_and_prompt(shot: dict, drum_audio, drum_sr: int,
-                             transcript_segments) -> dict:
-    """从单个 shot 的特征 + drum stem + transcript 派生 prompt + facets。"""
-    dominant_type = shot["dominant_type"]
-    energies = shot["energies"]
-    ratios = shot["ratios"]
-    spectral_centroid = shot["spectral_centroid"]
-
-    overall_rms = float(sum(energies.values()))
-    loudness = loudness_word(overall_rms)
-
-    # dominant_stem 与 brightness 推导
-    if dominant_type == "bgm":
-        dominant_stem = "drums" if energies.get("drums", 0.0) >= energies.get("bass", 0.0) else "bass"
-        brightness = brightness_word(float(spectral_centroid.get(dominant_stem, 0.0)))
-    elif dominant_type == "sfx":
-        dominant_stem = "other"
-        brightness = brightness_word(float(spectral_centroid.get("other", 0.0)))
-    elif dominant_type == "mixed":
-        # 四 stem 频谱按能量加权平均
-        total_e = sum(energies.values()) + 1e-10
-        weighted_hz = sum(energies.get(k, 0.0) * spectral_centroid.get(k, 0.0)
-                          for k in ("vocals", "drums", "bass", "other")) / total_e
-        brightness = brightness_word(float(weighted_hz))
-    else:  # dialogue（及其它未知值兜底用 vocals）
-        dominant_stem = "vocals"
-        brightness = brightness_word(float(spectral_centroid.get("vocals", 0.0)))
-
-    vocal_presence = float(ratios.get("vocals", 0.0))
-
-    # tempo：仅当 drum stem 可读且 drums ratio 充分
-    if drum_audio is not None and ratios.get("drums", 0.0) >= DRUM_RATIO_TEMPO_THRESHOLD:
-        tempo_bpm, _onset_count = estimate_tempo_from_envelope(
-            drum_audio, drum_sr, shot["start_sec"], shot["end_sec"])
-    else:
-        tempo_bpm = None
-
-    # dialogue_excerpt（transcript_segments 为 None 时直接空串）
-    dialogue_excerpt = find_dialogue_excerpt(
-        transcript_segments, shot["start_sec"], shot["end_sec"])
-
-    # leading phrase（dialogue + 无 transcript 时按频谱重心降级覆盖）
-    leading = leading_phrase(dominant_type, brightness, vocal_presence)
-    if dominant_type == "dialogue" and transcript_segments is None:
-        vocals_sc = float(spectral_centroid.get("vocals", 0.0))
-        if vocals_sc >= SC_HIGH_CENTROID_HZ:
-            leading = "non-vocal melodic vocalise"
-        else:
-            leading = "vocal texture"
-
-    prompt = compose_prompt(leading, tempo_bpm, dialogue_excerpt, loudness, brightness)
-
-    return {
-        "shot_id": shot["shot_id"],
-        "start_sec": round(shot["start_sec"], 4),
-        "end_sec": round(shot["end_sec"], 4),
-        "duration": round(shot["duration"], 4),
-        "prompt": prompt,
-        "facets": {
-            "dominant_type": dominant_type,
-            "tempo_bpm": tempo_bpm,
-            "brightness": brightness,
-            "loudness": loudness,
-            "vocal_presence": round(vocal_presence, 4),
-            "dialogue_excerpt": dialogue_excerpt,
-        },
-    }
-
-
-def gen_prompts(episode_dir: str, output_path: str):
-    """对 episode_dir 下所有 shot 生成 prompt，写出 audio_prompts.json。"""
-    episode_dir = str(Path(episode_dir))
-    print(f"[stage] gen_audio_prompts — episode_dir={episode_dir}")
-
-    shots_path = os.path.join(episode_dir, "shots.json")
-    audio_analysis_path = os.path.join(episode_dir, "audio_analysis.json")
-    transcript_path = os.path.join(episode_dir, "transcript.json")
-
-    if not os.path.exists(shots_path):
-        sys.exit(f"[stage] shots.json not found: {shots_path}")
-    if not os.path.exists(audio_analysis_path):
-        sys.exit(f"[stage] audio_analysis.json not found: {audio_analysis_path}")
-
-    with open(shots_path) as f:
-        shots_meta = json.load(f)
-    with open(audio_analysis_path) as f:
-        audio_analysis = json.load(f)
-
-    # 按 shot_id 建索引字典（实测数组是顺序的，但不假设）
-    analysis_by_id = {s["shot_id"]: s for s in audio_analysis.get("shots", [])}
-
-    # transcript.json 缺失 → 降级路径 A
-    if os.path.exists(transcript_path):
-        with open(transcript_path) as f:
-            transcript_segments = json.load(f).get("segments")
-        print(f"[stage] transcript loaded ({len(transcript_segments or [])} segments)")
-    else:
-        print("[stage] no transcript.json — degrading (dialogue_excerpt will be empty)")
-        transcript_segments = None
-
-    # stem 目录解析兜底（镜像 separate_stems.py:67-73）
-    ep_name = os.path.basename(episode_dir)
-    drums_path_primary = os.path.join(episode_dir, "stems", "htdemucs", ep_name, "drums.wav")
-    drums_path_secondary = os.path.join(episode_dir, "stems", "drums.wav")
-    drum_audio = None
-    drum_sr = 0
-    if os.path.exists(drums_path_primary):
-        drums_path = drums_path_primary
-    elif os.path.exists(drums_path_secondary):
-        drums_path = drums_path_secondary
-    else:
-        drums_path = None
-    if drums_path is not None:
+    # 2. Optional side input
+    analysis_by_id: dict = {}
+    if audio_analysis_json and os.path.exists(audio_analysis_json):
         try:
-            drum_audio, drum_sr = load_audio_stem(drums_path)
-            print(f"[stage] drums loaded ({len(drum_audio) / drum_sr:.1f}s, sr={drum_sr})")
-        except Exception as e:
-            print(f"[stage] stems not found — degrading (tempo will be null) [{e}]")
-            drum_audio = None
+            with open(audio_analysis_json, encoding="utf-8") as f:
+                aan = json.load(f)
+            if isinstance(aan, dict) and isinstance(aan.get("shots"), list):
+                analysis_by_id = {
+                    s["shot_id"]: s for s in aan["shots"]
+                    if isinstance(s, dict) and isinstance(s.get("shot_id"), int)}
+        except (OSError, json.JSONDecodeError) as e:
+            print(f"[recompose] warning: audio_analysis.json load failed ({e}); "
+                  f"composer degraded to no-side-input mode")
+
+    # 3. Per-shot: replace ONLY shots[i].reproduction (preserve everything else
+    #    —— T-15-07 mitigation: schema_version / word_level_experimental /
+    #    shots[i].dialogue / shots[i].sfx / timing 全部 verbatim 保留)
+    n_tts = n_music = n_foley = 0
+    for shot in shots:
+        if not isinstance(shot, dict):
+            continue   # defensive —— skip malformed entry
+        sid = shot.get("shot_id")
+        analysis_shot = analysis_by_id.get(sid) if isinstance(sid, int) else None
+        repro = compose_reproduction(shot, analysis_shot=analysis_shot)
+        shot["reproduction"] = repro    # overwrite; preserves all other keys
+        if repro["tts"]:
+            n_tts += 1
+        if repro["music_gen"]:
+            n_music += 1
+        if repro["foley"]:
+            n_foley += 1
+
+    # 4. Pre-write schema validation (T-15-07 defense-in-depth)
+    try:
+        import jsonschema
+        from jsonschema import Draft202012Validator
+    except ImportError:
+        jsonschema = None
+        print("[recompose] warning: jsonschema not installed; "
+              "skipping pre-write schema validation (defense-in-depth skipped)")
     else:
-        print("[stage] stems not found — degrading (tempo will be null)")
+        with open(schema_path, encoding="utf-8") as f:
+            schema = json.load(f)
+        errors = list(Draft202012Validator(schema).iter_errors(payload))
+        if errors:
+            sys.exit(
+                f"[recompose] schema validation failed ({len(errors)} errors): "
+                + "; ".join(f"{'/'.join(map(str, e.absolute_path))}: {e.message}"
+                            for e in errors[:3]))
 
-    out = []
-    n_with_bpm = 0
-    n_with_dialogue = 0
-    for i, shot_meta in enumerate(shots_meta):
-        shot_id = shot_meta["id"]
-        analysis = analysis_by_id.get(shot_id)
-        if analysis is None:
-            sys.exit(f"[stage] shot_id={shot_id} not in audio_analysis.json — aborting")
-        entry = derive_facets_and_prompt(
-            analysis, drum_audio, drum_sr, transcript_segments)
-        if entry["facets"]["tempo_bpm"] is not None:
-            n_with_bpm += 1
-        if entry["facets"]["dialogue_excerpt"]:
-            n_with_dialogue += 1
-        out.append(entry)
-        if (i + 1) % 10 == 0:
-            print(f"  {i + 1}/{len(shots_meta)}")
+    # 5. Atomic write: temp + os.replace (T-15-06 mitigation —— 防 partial-write
+    #    被下游读到)
+    tmp = output_path + ".tmp"
+    try:
+        out_dir = os.path.dirname(output_path)
+        if out_dir:
+            os.makedirs(out_dir, exist_ok=True)
+        with open(tmp, "w", encoding="utf-8") as f:
+            # ensure_ascii=False + indent=2 mirror call_audio_analysis.py:810
+            # + spec fixture format —— 字节级稳定。
+            json.dump(payload, f, ensure_ascii=False, indent=2)
+        os.replace(tmp, output_path)
+    except OSError as e:
+        try:
+            if os.path.exists(tmp):
+                os.unlink(tmp)
+        except OSError:
+            pass
+        sys.exit(f"[recompose] atomic write failed: {e}")
 
-    print(f"[stage] stats: bpm-coverage={n_with_bpm}/{len(out)}, "
-          f"with-dialogue={n_with_dialogue}/{len(out)}")
-
-    with open(output_path, "w") as f:
-        json.dump(out, f, indent=2, ensure_ascii=False)
-    return out
+    print(f"[recompose] updated {len(shots)} shots reproduction "
+          f"(tts={n_tts}, music_gen={n_music}, foley={n_foley}) → {output_path}")
+    return payload
 
 
 def main():
+    """CLI entry —— --recompose mode (locked decision #6 spike retirement)."""
     ap = argparse.ArgumentParser(
-        description="为每镜生成 audio-gen 风格 NL prompt（spike，sidecar 输出，不进 spec/pipeline）")
-    ap.add_argument("--episode-dir", required=True,
-                    help="episode 输出目录（包含 shots.json + audio_analysis.json）")
-    ap.add_argument("--output", default=None,
-                    help="输出 JSON 路径（默认 <episode-dir>/audio_prompts.json）")
+        description="离线 recompose audio_semantic.json#shots[].reproduction "
+                    "（Phase 15 producer；locked decision #6 spike 退休）")
+    ap.add_argument("--recompose", required=True, metavar="AUDIO_SEMANTIC_JSON",
+                    help="待 recompose 的 audio_semantic.json 路径"
+                         "（in-place 重写 reproduction 层）")
+    ap.add_argument("--audio-analysis-json", default=None,
+                    help="audio_analysis.json side input（per-shot Demucs 频谱/能量；"
+                         "提供时 composer 用其 drums ratio 估 tempo；"
+                         "缺席时 music_gen 降级）")
+    ap.add_argument("--schema", default=None,
+                    help="audio_semantic.schema.json 路径"
+                         "（默认仓库 spec/schemas/audio_semantic.schema.json）")
     args = ap.parse_args()
 
-    output = args.output or os.path.join(args.episode_dir, "audio_prompts.json")
-    out = gen_prompts(args.episode_dir, output)
-    print(f"[stage] wrote {len(out)} shot prompts → {output}")
-    print("sidecar spike — NOT referenced by spec/asset.json (per D4)")
+    recompose_audio_semantic(
+        input_path=args.recompose,
+        audio_analysis_json=args.audio_analysis_json,
+        schema_path=args.schema)
 
 
 if __name__ == "__main__":
