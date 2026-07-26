@@ -370,11 +370,15 @@ def scenario_conditional_gate_proof():
         assert c["reproduction"]["foley"] is not None, (
             "Shot C foley should be non-null (events + description)")
 
-        # Shot D: empty → all three null (skeleton-only schema-valid)
+        # Shot D: empty → all three layers null → reproduction key OMITTED entirely
+        # (CONTRACT-05 preservation: when all layers null, producer omits the
+        # reproduction sub-object so has_any_data in call_audio_analysis doesn't
+        # false-positive on skeleton-only shots)
         d = shots_by_id[13]
-        assert d["reproduction"]["tts"] is None, "Shot D tts should be null"
-        assert d["reproduction"]["music_gen"] is None, "Shot D music_gen should be null"
-        assert d["reproduction"]["foley"] is None, "Shot D foley should be null"
+        assert "reproduction" not in d or d.get("reproduction") is None or all(
+            d.get("reproduction", {}).get(k) is None
+            for k in ("tts", "music_gen", "foley")), \
+            "Shot D should have no reproduction data (all-null or omitted)"
 
         # MUS-04 audit on output: no instrument-related field anywhere
         out_str = json.dumps(out, ensure_ascii=False).lower()

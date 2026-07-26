@@ -530,7 +530,10 @@ def recompose_audio_semantic(input_path: str,
 
     # 3. Per-shot: replace ONLY shots[i].reproduction (preserve everything else
     #    —— T-15-07 mitigation: schema_version / word_level_experimental /
-    #    shots[i].dialogue / shots[i].sfx / timing 全部 verbatim 保留)
+    #    shots[i].dialogue / shots[i].sfx / timing 全部 verbatim 保留).
+    #    CONTRACT-05 preservation: 仅当 ≥1 layer 非 null 才 emit reproduction key
+    #    —— 全 null 时 OMIT 整个子对象（mirror call_audio_analysis.py 行为；
+    #    防 recompose 写出空 reproduction 后被下游误判为 "有数据"）。
     n_tts = n_music = n_foley = 0
     for shot in shots:
         if not isinstance(shot, dict):
@@ -538,12 +541,16 @@ def recompose_audio_semantic(input_path: str,
         sid = shot.get("shot_id")
         analysis_shot = analysis_by_id.get(sid) if isinstance(sid, int) else None
         repro = compose_reproduction(shot, analysis_shot=analysis_shot)
-        shot["reproduction"] = repro    # overwrite; preserves all other keys
-        if repro["tts"]:
+        if isinstance(repro, dict) and any(
+                repro.get(k) is not None for k in ("tts", "music_gen", "foley")):
+            shot["reproduction"] = repro    # overwrite; preserves all other keys
+        else:
+            shot.pop("reproduction", None)
+        if repro.get("tts"):
             n_tts += 1
-        if repro["music_gen"]:
+        if repro.get("music_gen"):
             n_music += 1
-        if repro["foley"]:
+        if repro.get("foley"):
             n_foley += 1
 
     # 4. Pre-write schema validation (T-15-07 defense-in-depth)

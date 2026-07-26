@@ -765,11 +765,22 @@ def main():
             # reproduction 层整体 OMIT，schema-valid skeleton）。pre-write
             # schema validator at line ~800 catches any escape。
             # T-15-04: composer NEVER reads dialogue.words[]（DIA-05 gating）。
+            #
+            # CONTRACT-05 preservation：仅当 ≥1 layer 非 null 时才 emit reproduction
+            # key —— 全 null 时 OMIT 整个 reproduction 子对象（不让 has_any_data
+            # 误判 skeleton-only shot 为 "有数据"，破坏 byte-identical-absent）。
             if _compose_reproduction is not None:
                 try:
                     analysis_shot = analysis_by_id.get(s.get("id"))
-                    normalized["reproduction"] = _compose_reproduction(
+                    repro = _compose_reproduction(
                         normalized, analysis_shot=analysis_shot)
+                    if isinstance(repro, dict) and any(
+                            repro.get(k) is not None for k in ("tts", "music_gen", "foley")):
+                        normalized["reproduction"] = repro
+                    else:
+                        # 全 null → 不 emit reproduction key（mirror 路由降级时
+                        # normalize 也不 emit 该 key 的语义）
+                        normalized.pop("reproduction", None)
                 except Exception as _e:
                     audio_warnings.append(
                         f"shot {s.get('id')}: reproduction composer raised "

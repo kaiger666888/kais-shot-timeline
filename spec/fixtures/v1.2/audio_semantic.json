@@ -21,17 +21,21 @@
         ]
       },
       "sfx": {
-        "events": [],
-        "description": ""
+        "events": ["Laughter"],
+        "description": "观众轻笑声，持续约 1 秒"
       },
       "reproduction": {
         "tts": {
-          "text": "成年女性说话者，语气开心愉悦，中文普通话，节奏自然",
-          "confidence": 0.7,
+          "text": "再说一遍段级文本：「你好世界」，语气开心愉悦，中文普通话，节奏自然",
+          "confidence": 0.85,
           "fidelity_disclaimer": "TTS ~70% similarity to source voice (AF-01 mitigation)"
         },
         "music_gen": null,
-        "foley": null
+        "foley": {
+          "text": "[笑声]: 观众轻笑声，持续约 1 秒",
+          "confidence": 0.80,
+          "fidelity_disclaimer": "foley ~80% similarity for defined event types (AF-01 mitigation)"
+        }
       }
     },
     {
@@ -46,11 +50,6 @@
         "emotion_confidence": 1.0,
         "events": [],
         "words": []
-      },
-      "reproduction": {
-        "tts": null,
-        "music_gen": null,
-        "foley": null
       }
     }
   ]
