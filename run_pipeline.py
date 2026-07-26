@@ -500,6 +500,16 @@ def step_timeline(video: str, work_dir: str, shots_json: str,
     # registry_snapshot，回退到 --characters/--props。
     if os.path.exists(asset_json_path):
         cmd += ["--asset-json", asset_json_path]
+    # Phase 16 (PRESENT-01): pass --audio-semantic + --speakers so HTML gallery
+    # renders v1.2 chips + speaker→character chip + reproduction panel. Phase 14
+    # mtime cache (run_pipeline.py:461-464) already includes these files as inputs
+    # —— Phase 16 only adds cmd argv (mirror --prompts / --characters pattern at
+    # run_pipeline.py:489-502)。graceful-omit：文件不存在 → flag 不传 → 输出 byte-
+    # identical to v1.1 timeline (gen_timeline_html.py T-16-04 invariant)。
+    if audio_semantic_json and os.path.exists(audio_semantic_json):
+        cmd += ["--audio-semantic", audio_semantic_json]
+    if speakers_json and os.path.exists(speakers_json):
+        cmd += ["--speakers", speakers_json]
     run_step(cmd, "[8/9] timeline HTML generation")
     return out_html
 
