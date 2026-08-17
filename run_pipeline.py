@@ -11,6 +11,11 @@
      调用 kais-aigc-platform POST /api/v1/production/shot-analysis 路由，
      把逐镜运镜分析填进 prompts.json 的 camera/action/lighting/style facets；
      路由不可达时 graceful-degrade 写空 facets + warnings sidecar）
+  5.5 本地 VL facet 填充（analysis/local_vision_facets.py —— 无编号 pre-step，
+     mirror attach_refs 先例不 bump step counter；本地 qwen-eye 引擎 :8125 对
+     frames_5fps 帧做 observe_single，填 prompts.json 的 scene/subject facets
+     （call_shot_analysis.py:160-161 文档化留空的两键）；引擎不可用时
+     graceful-degrade 保持空值 + [vision] warnings；--no-local-vision 关闭）
   6. 跨镜 re-id 聚类（analysis/call_reid.py + html/gen_registry_review.py ——
      第二个网络依赖步骤；调用 DEFERRED kais-aigc-platform
      POST /api/v1/production/character-reid 路由 → registry.draft.json +
@@ -33,6 +38,7 @@
                          [--skip-detect] [--skip-separate] [--skip-transcribe]
                          [--skip-semantic] [--skip-reid] [--skip-export]
                          [--skip-audio-semantic] [--skip-speaker-link]
+                         [--no-local-vision] [--no-subject]
                          [--offline]   # 全局：仅读 route_cache 不联网（5/6/7 共用）
                          [--analysis-url URL] [--analysis-timeout 960]
                          [--reid-url URL] [--reid-timeout 960]
@@ -658,6 +664,18 @@ def main():
     ap.add_argument("--skip-speaker-link", action="store_true",
                     help="跳过 link_speakers HITL 提示（link_speakers.py 本身是独立 CLI —— "
                          "操作员手动运行；本 flag 仅控制提示输出，不影响 step_audio_semantic）")
+    # 本地 VL facet 填充（step 5 之后的无编号 pre-step）。dest+store_false 双
+    # flag 惯例（mirror gen_audio_html.py --extract-frames/--no-extract-frames）。
+    ap.add_argument("--local-vision", dest="local_vision",
+                    action="store_true", default=True,
+                    help="启用本地 qwen-eye VL 填充 prompts.json 的 scene/subject "
+                         "facets（默认启用；step 5 之后的无编号 pre-step）")
+    ap.add_argument("--no-local-vision", dest="local_vision",
+                    action="store_false",
+                    help="禁用本地 VL facet 填充（scene/subject 保持 step 5 产出的空值）")
+    ap.add_argument("--no-subject", action="store_true",
+                    help="本地 VL 只填 scene、跳过 subject facet（subject 外观描述可选；"
+                         "仅 --local-vision 时生效）")
     ap.add_argument("--sample-fps", type=float, default=5.0,
                     help="V3b Pass2 HistCorr 抽帧频率（默认 5）")
     ap.add_argument("--demucs-model", default="htdemucs",
@@ -764,6 +782,29 @@ def main():
     step_semantic(video, work_dir, shots, prompts_json,
                   args.skip_semantic, args.offline,
                   args.analysis_url, args.analysis_timeout)
+
+    # 5.5 本地 VL facet 填充（qwen-eye pre-step —— 无编号，mirror attach_refs
+    # 先例 at step_timeline；不 bump step counter，保持 grep count 不变）。
+    # step 5 产 prompts.json 后：对 scene/subject 为空的镜，用本地 qwen-eye 引擎
+    # （frames_5fps 首中尾 ≤3 帧 observe_single）填充 scene/subject facet。
+    # graceful-degrade：引擎不可用（VRAM 不足/启动失败）→ facet 保持 "" +
+    # [vision] warning，exit 0，管线继续。--no-local-vision 整段跳过。
+    # 注意 attach_refs（step 8 内）在此之后跑 —— 它基于 prompts.json 重写
+    # prompt_text，本步骤只改 scene/subject 两键，互不覆盖。
+    if (args.local_vision and not args.skip_semantic
+            and os.path.exists(prompts_json)
+            and os.path.isdir(frames_dir)):
+        cmd_vision = [sys.executable,
+                      str(HERE / "analysis" / "local_vision_facets.py"),
+                      "--shots", shots,
+                      "--frames-dir", frames_dir,
+                      "--work-dir", work_dir,
+                      "--output", prompts_json]
+        if args.no_subject:
+            cmd_vision += ["--no-subject"]
+        cmd_vision += ["--video", video]
+        # Banner label 故意不带 numeric 前缀 —— 与 attach_refs 同款 plain label。
+        run_step(cmd_vision, "local vision facets (qwen-eye pre-step)")
 
     # 6. 跨镜 re-id（character-reid 路由 —— DEFERRED；graceful-degrade）
     # 非阻塞：产 registry.draft.json + 自动调 gen_registry_review 产 HITL HTML；
