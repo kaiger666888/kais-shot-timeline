@@ -191,3 +191,33 @@ def test_no_create_project_rejects(asset_dir, monkeypatch):
         ci.main()
     assert excinfo.value.code != 0
     assert len(calls) == 1                       # 只 list 了一次，零 addProject
+
+
+# ── wiring 冒烟（mirror tests/test_pipeline_vision_wiring.py 写法）─────────
+
+def test_run_pipeline_help_flags():
+    """run_pipeline --help 含三个新 flag（subprocess 冒烟，不跑 pipeline body）。"""
+    import subprocess
+    r = subprocess.run(
+        [sys.executable, str(REPO_ROOT / "run_pipeline.py"), "--help"],
+        capture_output=True, text=True, timeout=60)
+    assert r.returncode == 0
+    for flag in ("--canvas-auto-import", "--ep-name", "--canvas-project-name"):
+        assert flag in r.stdout, f"{flag} missing from --help"
+
+
+def test_canvas_wiring_static():
+    """静态断言：canvas_import 调用块在 step_export 之后、check=False、
+    无 [10/ 编号 banner（plain label post-step，step counter 不 bump）。"""
+    src = (REPO_ROOT / "run_pipeline.py").read_text(encoding="utf-8")
+    assert "canvas_import.py" in src
+    # 调用块在 step_export 之后（源码顺序；argparse help 亦提及脚本名，均晚于
+    # step_export 定义，故首现位置断言成立）
+    assert src.index("step_export(work_dir") < src.index("canvas_import.py")
+    # check=False —— graceful-degrade，不用 run_step（check=True 会 raise 阻断）
+    idx_call = src.index('str(HERE / "scripts" / "canvas_import.py")')
+    assert "check=False" in src[idx_call:idx_call + 800]
+    # banner 无编号前缀（mirror attach_refs / local-vision 先例）；banner 是单条
+    # f-string print（含内嵌 \n 分隔线），label 非独立引号串 —— 断言文本本身
+    assert "[10/" not in src
+    assert "canvas auto-import (canvas_import post-step)" in src
