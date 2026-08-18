@@ -140,16 +140,29 @@ def test_create_project_when_missing(asset_dir, monkeypatch):
 
 # ── import body 字段与编码 ────────────────────────────────────────────────
 
-def test_import_body_fields(asset_dir, monkeypatch):
+def test_import_body_fields(tmp_path, monkeypatch):
     """projectId/episodesId 为 int、episodesId==1、workdir==abspath、mode==replace、
-    Content-Type 含 application/json、raw bytes utf-8 可解且含 CJK。"""
+    Content-Type 含 application/json、raw bytes utf-8 可解且含 CJK。
+
+    CJK 载体是 workdir：import body 按 Task 1 action spec 只有 4 键
+    （projectId/episodesId/workdir/mode），无 name 字段 —— 真实世界里进
+    body 的 CJK 是资产目录路径（output/虫虫武侠…第01话…/，T-AW2-01），
+    故用 CJK 命名的 asset-dir 钉死 UTF-8 编码路径。
+    """
     name = "小江湖·逆推资产集(ep01)"
+    cjk_dir = tmp_path / "虫虫武侠小故事《小江湖》第01话：测试"
+    cjk_dir.mkdir()
+    (cjk_dir / "asset.json").write_text(
+        json.dumps({"source": {"video_filename":
+                               "虫虫武侠小故事《小江湖》第01话：测试.mp4"}},
+                   ensure_ascii=False),
+        encoding="utf-8")
     calls = _fake_urlopen(monkeypatch, [
         {"code": 200, "data": [{"id": 123, "name": name}]},
         {"code": 200, "data": {"imported": 0, "links": 0, "artifacts": 0,
                                "phases": 0, "mode": "replace", "workdir": "/x"}},
     ])
-    _run_main(monkeypatch, ["--asset-dir", str(asset_dir),
+    _run_main(monkeypatch, ["--asset-dir", str(cjk_dir),
                             "--project-name", name])
     url, data, headers = calls[1]
     body = json.loads(data.decode("utf-8"))
@@ -157,12 +170,12 @@ def test_import_body_fields(asset_dir, monkeypatch):
     assert isinstance(body["projectId"], int)
     assert isinstance(body["episodesId"], int)
     assert body["episodesId"] == 1
-    assert body["workdir"] == str(asset_dir)     # abspath（tmp_path 已是绝对）
+    assert body["workdir"] == str(cjk_dir)      # abspath（tmp_path 已是绝对）
     assert body["mode"] == "replace"
     lowered = {k.lower(): v for k, v in headers.items()}
     assert "application/json" in lowered.get("content-type", "")
-    # UTF-8 编码 + ensure_ascii=False —— CJK 项目名以原文出现在 raw bytes
-    assert name in data.decode("utf-8")
+    # UTF-8 编码 + ensure_ascii=False —— CJK + 全角标点以原文出现在 raw bytes
+    assert "《小江湖》第01话：测试" in data.decode("utf-8")
 
 
 # ── 场景B'：--no-create-project 拒绝创建 ─────────────────────────────────
