@@ -31,6 +31,8 @@
      --skip-speaker-link 仅控制提示输出，本步永远不 subprocess 调用 link_speakers）
   8. 生成时间轴双面板 HTML（html/gen_timeline_html.py）
   9. ShotTimelineAsset 导出（scripts/export_asset.py —— asset.json + canonical symlinks）
+  10. 导出后自动导入画布（可选，--canvas-auto-import 开启；失败 warning 不阻断
+      —— plain label post-step，不占编号也不 bump [N/9] step counter）
 
 用法：
   python run_pipeline.py --video input.mp4
@@ -39,6 +41,8 @@
                          [--skip-semantic] [--skip-reid] [--skip-export]
                          [--skip-audio-semantic] [--skip-speaker-link]
                          [--no-local-vision] [--no-subject]
+                         [--canvas-auto-import] [--ep-name NAME]
+                         [--canvas-project-name NAME]
                          [--offline]   # 全局：仅读 route_cache 不联网（5/6/7 共用）
                          [--analysis-url URL] [--analysis-timeout 960]
                          [--reid-url URL] [--reid-timeout 960]
@@ -664,6 +668,17 @@ def main():
     ap.add_argument("--skip-speaker-link", action="store_true",
                     help="跳过 link_speakers HITL 提示（link_speakers.py 本身是独立 CLI —— "
                          "操作员手动运行；本 flag 仅控制提示输出，不影响 step_audio_semantic）")
+    # 画布自动导入（step_export 之后可选 post-step —— 无编号 plain label，
+    # mirror attach_refs / local-vision 先例不 bump step counter）。失败仅打
+    # [canvas-import] warning 不阻断管线（graceful-degrade，与 route 步骤同口径）。
+    ap.add_argument("--canvas-auto-import", action="store_true",
+                    help="导出成功后自动调 scripts/canvas_import.py 把资产目录导入画布"
+                         "（kap 默认 http://127.0.0.1:10588；失败仅 warning 不阻断管线）")
+    ap.add_argument("--ep-name", default=None,
+                    help="剧集短名（画布项目命名用；缺省取 video 文件 stem）")
+    ap.add_argument("--canvas-project-name", default=None,
+                    help="覆盖画布项目名（缺省 小江湖·逆推资产集(<ep_label>)，"
+                         "ep_label = --ep-name 或 video stem）")
     # 本地 VL facet 填充（step 5 之后的无编号 pre-step）。dest+store_false 双
     # flag 惯例（mirror gen_audio_html.py --extract-frames/--no-extract-frames）。
     ap.add_argument("--local-vision", dest="local_vision",
@@ -851,6 +866,41 @@ def main():
     stems_source_dir = stems_dir  # stems/htdemucs/<stem>/
     step_export(work_dir, video, stems_source_dir, asset_json,
                 args.skip_export, args.force)
+
+    # 9.5 画布自动导入（可选 post-step —— 无编号 plain label，mirror attach_refs
+    # / local-vision 先例；不 bump [N/9] step counter，保住 vision wiring 测试的
+    # grep 锁）。触发条件：--canvas-auto-import 且 asset.json 存在（step_export
+    # 成功或 cached 都算成功）。graceful-degrade：canvas_import 失败（kap 宕 /
+    # 项目建失败 / import 400）只打 [canvas-import] warning，管线继续走到
+    # [done]，绝不 re-raise（与 route 步骤同口径）。
+    if args.canvas_auto_import:
+        if not os.path.exists(asset_json):
+            print(f"[canvas-import] warning: asset.json 不存在"
+                  f"（export 被跳过或失败），跳过画布导入")
+        else:
+            ep_label = args.ep_name or stem
+            project_name = args.canvas_project_name or \
+                f"小江湖·逆推资产集({ep_label})"
+            print(f"\n{'='*60}\ncanvas auto-import (canvas_import post-step)\n{'='*60}")
+            # argv 只传 --asset-dir / --project-name —— episodes-id/mode 走
+            # canvas_import.py 自身默认（1 / replace），不重复透传。list-form
+            # argv 不经 shell（T-AW2-01 injection mitigation）。
+            cmd_canvas = [sys.executable,
+                          str(HERE / "scripts" / "canvas_import.py"),
+                          "--asset-dir", work_dir,
+                          "--project-name", project_name]
+            # NOT run_step —— 那是 check=True helper，失败会 raise 阻断管线；
+            # 本 post-step 要求 graceful-degrade，自写 check=False + returncode
+            # 判断（T-AW2-03 mitigation）。
+            try:
+                r = subprocess.run(cmd_canvas, check=False)
+            except OSError as e:
+                print(f"[canvas-import] warning: 无法启动 canvas_import.py: "
+                      f"{e}（graceful-degrade，管线继续）")
+            else:
+                if r.returncode != 0:
+                    print(f"[canvas-import] warning: canvas_import.py 退出码 "
+                          f"{r.returncode}（graceful-degrade，管线继续）")
 
     print(f"\n[done] timeline: {html}")
     print(f"       work dir: {work_dir}")
