@@ -75,67 +75,90 @@ Round-trip closes the loop the first three milestones opened: qwen-eye v2 watche
 ## Phase Details
 
 ### Phase 18: Contract v1.3
+
 **Goal**: Lock the v1.3 contract — `roundtrip.schema.json` sidecar（per-shot: regen video ref + scores{midframe_sim, judge} + verdict{accepted/rejected} + attribution + reason）+ `asset.json#data.roundtrip` optional 挂载 + `SCHEMA_VERSION="1.3"` 单源 + fixture/validate gate + SPEC — BEFORE any round-trip code writes against it（契约先行，mirror v1.1 Phase 5 / v1.2 Phase 11 先例）。
 **Depends on**: Nothing (first phase of milestone; v1.2 baseline shipped)
 **Requirements**: RT-01, RT-02, RT-03, RT-04
 **Success Criteria** (what must be TRUE):
+
   1. `spec/schemas/roundtrip.schema.json`（draft 2020-12、`additionalProperties:false`）对一个人工 fixture 全字段校验通过（regen video ref / scores{midframe_sim, judge} / verdict{accepted,rejected} / attribution / reason）；`asset.schema.json` 增 optional `data.roundtrip`（不进 `required[]`）
   2. `SCHEMA_VERSION = "1.3"` 在 export_asset.py 单源锁定；roundtrip.json 缺席时 v1.2 及以前全部数据文件 byte-identical（RT-01 红线，契约级证明）
   3. `validate.py` shape gate 扩展三层门（minimal / v1.2 / v1.3 fixture 全绿）+ `verify_contract.py` v1.2↔v1.3 bidirectional cross-version proof（forward 0 errors / backward 0 non-additive errors）
   4. roundtrip 数据缺席时导出照常 + `[roundtrip]` warnings sidecar 记因通道落地——ComfyUI 不可达 / VRAM 不足 / 打分模型缺席三种因由在 warnings 形状中可表达（RT-04 契约级 degrade）
   5. SPEC.md §4 changelog 1.2→1.3 + §5 roundtrip 形状文档 + fidelity disclaimer（accepted = 「h3 可复现」≠「prompt 完美」）一次人类审阅通过
+
 **Plans**: 3 plans
 
 Plans:
+**Wave 1**
+
 - [ ] 18-01-PLAN.md — roundtrip.schema.json + asset.schema.json 两处 delta（data.roundtrip object 挂载 + warnings items 加宽）+ export_asset.py（SCHEMA_VERSION "1.3" + 挂载统计 + warnings 装载加宽）
+
+**Wave 2** *(blocked on Wave 1 completion)*
+
 - [ ] 18-02-PLAN.md — spec/fixtures/v1.3/ 13 文件 + validate.py 四阶 gate + verify_contract.py v1.2↔v1.3 双向证明（backward 过滤扩展 + 负测试 + EIGHT_SHAPES object 特判 + 一致性块）
+
+**Wave 3** *(blocked on Wave 2 completion)*
+
 - [ ] 18-03-PLAN.md — SPEC.md §1/§4/§5/§10 + README v1.3（三层 fidelity disclaimer + AF-01 守门 + 人类审阅 checkpoint）
 
 ### Phase 19: qwen-eye v2 看片段
+
 **Goal**: prompts.json 的 action/camera facet 从「3 静帧脑补」升级为「≤8 帧序列逐帧实证」（llama.cpp 单图 bug 硬约束下的务实版），v1.2 `audio_semantic` 作为 ear 融进视觉 prompt——独立于 round-trip 闭环就提升 prompt 质量。
 **Depends on**: Nothing hard within v1.3（可与 Phase 18 并行规划；qwen-eye :8125 引擎与 v1.2 audio_semantic 数据已在位，零新基建）
 **Requirements**: VISION-01, VISION-02
 **Success Criteria** (what must be TRUE):
+
   1. ep01 抽样镜跑 v2 后，prompts.json 的 action/camera facet 含跨帧合并出的完整动作链/运镜描述（与 v1 三静帧产物对比差异可见）；只填空缺/更短 facet——route/人工已有产物不被覆盖（mirror local_vision 边界，兼容 260819-aw2-fast 防覆盖守卫）
   2. 合并策略（最长回答 vs 时序拼接）在 ep01 小样本 spike 上 A/B 对比后锁定，结论记录在案——Q3 27B 帧序列动作描述质量有实证而非假设（research Pitfall 3）
   3. 带 `audio_semantic.json` 的集上 ear 融合可见生效（雨声→scene=雨天、脚步声→动作链补「走近」一类修正）；`--no-ear` 跳过后输出与不带 ear 版本一致（additive、可跳过）
   4. 重复运行幂等：per-shot cache 命中不重复烧 GPU（重跑秒级完成）；全程逐帧 `observe_single`，零新引擎、零新模型下载
+
 **Plans**: TBD
 
 ### Phase 20: h3 复现客户端
+
 **Goal**: kst 侧 ComfyUI 直连客户端把每镜 (首帧, 尾帧, prompt) 用 MiniMax H3 fl2va 复现成 regen mp4——per-shot 4-tuple cache + 断点续跑 + VRAM guard + 串行编排，让 8-13h/集 的批量渲染可管理、不撞 OOM（不经 kmc/hermes runtime，不经 subagent）。
 **Depends on**: Phase 18（`[roundtrip]` warnings 通道 + regen video ref 约定 + byte-identical-absent 红线是客户端的写入目标）
 **Requirements**: REGEN-01, REGEN-02, REGEN-03, REGEN-04
 **Success Criteria** (what must be TRUE):
+
   1. `analysis/roundtrip/` 客户端对 ep01 `--sample-shots 20` 提交 fl2va workflow（shift_video=12.0 / cfg=1.0 / euler+simple / length 17k+5 对齐），每镜回收 regen mp4；中断后重跑只补缺失镜（cache-hit 不重渲）——直接 API 提交+轮询，不经 subagent（p11b Pitfall 7）
   2. VRAM guard 生效：TTS 服务器（VoiceDesign :5111 / IndexTTS :5110）占用时先 kill + `POST /free`；剩余显存 <22GB 拒绝提交并记 `[roundtrip]` warning（不撞 OOM / 黑屏）
   3. qwen-eye（13.4GB lease）与 h3 批串行编排：eye 批跑完释放后 h3 才提交——同卡不互踩（research Pitfall 1）
   4. per-shot 4-tuple cache（video_content_hash + engine_name + engine_version + prompt_version，mirror WR-04）：prompt_version 变化后旧 cache 失效重渲；`--force` 清单扩展清 regen cache
   5. >10s 长镜按配置跳过（跳过清单可查）+ `--regen-resolution` 降分辨率验证模式可用
+
 **Plans**: TBD
 
 ### Phase 21: Scorer + 阈值校准
+
 **Goal**: 双信号打分——中段帧 CLIP/SigLIP 轨迹相似度（便宜信号）+ VLM judge 归因（区分 prompt 好/h3 不行 vs prompt 欠约束）——在 ep01 ≤20 镜抽样上实测分布、锁定 accepted 双门槛，verdict 写入 schema 合法的 `roundtrip.json`，rejected 永不删除。
 **Depends on**: Phase 18（schema gate 是 verdict 写入的校验目标）+ Phase 20（regen mp4 是打分对象）；judge 复用 qwen-eye——与 h3 批串行（复用 Phase 20 编排约定）
 **Requirements**: SCORE-01, SCORE-02, SCORE-03, DATASET-01
 **Success Criteria** (what must be TRUE):
+
   1. 对抽样 regen 镜跑 scorer：每镜产出 `scores{midframe_sim, judge}`，`roundtrip.json` 条目过 Phase 18 schema gate（含 verdict + attribution + reason）
   2. midframe 相似度显式只用 25%-75% 时窗帧——t=0/t=end 被 fl2va condition 无信息量，排除在打分外（打分帧清单可审计，research Pitfall 4）
   3. judge 归因三分类（`prompt_faithful` / `model_diverged` / `prompt_underspecified`）以结构化输出产出（glm-structured-output 模式），ep01 抽样上有人工抽检一致的示例——归因不是信口开河
   4. ep01 ≤20 镜双信号分布实测 → accepted 双门槛锁定 + 决策记录进 PROJECT.md Key Decisions；rejected 占比被记录且可审计（防数据集静默偏向简单动作，research Pitfall 5）
   5. verdict 合并幂等：重跑不丢 rejected（hard negatives + h3 能力边界测绘数据永续保留）
+
 **Plans**: TBD
 
 ### Phase 22: Dataset Export + Integration
+
 **Goal**: 闭环进流水线（`step_roundtrip` slot + CLI flags）+ gallery round-trip HITL 审阅面板 + accepted 子集独立 dataset 目录导出——用户对 ep01 跑一次抽样流水线即端到端拿到 (首帧, 尾帧, prompt) 真值数据集。
 **Depends on**: Phase 18（schema/warnings）+ Phase 20（regen mp4 + flags）+ Phase 21（verdict/scores）（Phase 19 独立、不阻塞本 phase；全流水线 e2e 时 ep01 自然带上 v2 facets）
 **Requirements**: RT-05, DATASET-02, PIPE-01, PIPE-02, PRESENT-01
 **Success Criteria** (what must be TRUE):
+
   1. `step_roundtrip` 进 run_pipeline（slot 精确位置本 phase 定）+ CLI flags（`--skip-roundtrip` / `--comfyui-url` / `--sample-shots` / `--regen-resolution` 等）+ banner 重编号 + `--force` 缓存清单扩展；ep01 抽样端到端一次跑出 roundtrip.json + regen mp4 + dataset 目录
   2. gallery round-trip 审阅面板：原片段 vs 重生成片段并排播放 + 双分数 + 归因标签 + accept/reject 按钮（HITL 复核硬门，mirror registry/speaker review 先例），复核结果可导出回写
   3. XSS `_esc()` hardening 覆盖 verdict / reason / attribution 全部模型产出文本（新 attack surface），注入用例（`<script>` / `onerror=` / base64）不执行
   4. accepted 子集导出独立 `dataset/<video-stem>/`：per-shot 首帧/尾帧 jpg + prompt.json + manifest（scores / attribution / 引擎版本 / prompt 快照）+ accepted/rejected 分清单（hard-negative 索引）——消费端不依赖 asset 契约可直接取用
   5. smoke 回归 harness ≥4 场景全绿：ComfyUI down（byte-identical-absent degrade）/ cache-hit 断点续跑 / 抽样模式 / VRAM-guard 拒提交（mirror v1.2 Phase 14 模式）
+
 **Plans**: TBD
 **UI hint**: yes
 
