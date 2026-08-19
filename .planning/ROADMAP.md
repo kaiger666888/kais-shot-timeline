@@ -155,7 +155,7 @@ Plans:
 
 **Wave 3** *(blocked on Wave 2 completion)*
 
-- [ ] 20-03-PLAN.md — roundtrip.json regen 半边写入（schema 合法 degrade 中间态，三层 parent 路径修正）+ ep01 真 ComfyUI smoke（--sample-shots 2 = shots 1/47，896×512，预期 10-30min）+ cache-hit 重跑实证 + 目视抽检 checkpoint
+- [ ] 20-03-PLAN.md — roundtrip.json regen 半边写入（schema 合法 degrade 中间态，三层 parent 路径修正）+ ep01 真 ComfyUI smoke（--sample-shots 2 = shots 1/47，896×512，预期 10-30min）+ cache-hit 重跑实证 + 目视抽检 checkpoint *(Tasks 1-2 done 2026-08-20 @2d6d41a/9a5174b — smoke 10.5min 双镜真回收 + 重跑全 cache-hit 零新提交；Task 3 目视抽检 checkpoint awaiting Kai → 见 20-03-SUMMARY.md)*
 
 ### Phase 21: Scorer + 阈值校准
 

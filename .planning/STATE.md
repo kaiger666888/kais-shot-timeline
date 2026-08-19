@@ -3,15 +3,15 @@ gsd_state_version: 1.0
 milestone: v1.3
 milestone_name: Round-trip Validation（逆推→复现→比对闭环数据集）
 status: executing
-stopped_at: Completed 20-01-PLAN.md (Phase 20 1/3 — h3 复现客户端渲染链 + 4-tuple cache + 断点续跑，88 passed)
-last_updated: "2026-08-19T20:26:58.505Z"
+stopped_at: 20-03 checkpoint（Tasks 1-2 done — sidecar + 真机 smoke 双镜 cache-hit 实证；Task 3 目视抽检 awaiting Kai）
+last_updated: "2026-08-19T20:49:43.007Z"
 last_activity: 2026-08-19
 progress:
   total_phases: 5
-  completed_phases: 2
+  completed_phases: 3
   total_plans: 9
-  completed_plans: 8
-  percent: 40
+  completed_plans: 9
+  percent: 60
 ---
 
 # Project State
@@ -27,8 +27,8 @@ See: .planning/PROJECT.md (updated 2026-08-19)
 
 Phase: 20 (h3 复现客户端) — EXECUTING
 Plan: 3 of 3
-Status: Ready to execute
-Last activity: 2026-08-19
+Status: Checkpoint — 20-03 Tasks 1-2 complete（sidecar + 真机 smoke + cache-hit 实证）；Task 3 目视抽检 awaiting Kai approved
+Last activity: 2026-08-20
 
 Progress: [█████████░] 89%
 
@@ -99,6 +99,8 @@ Carried (still load-bearing): contract-first minor bump（一个 milestone 一�
 - [Phase 20]: 20-02: REGEN-03/04 保持未勾选 —— guard/抽样离线半边已交付，真机 smoke（20-03）共享同 requirement IDs（mirror 20-01 先例）
 - [Phase 20]: 20-02: guard 五步固定序（TTS 端口→PID 定向 SIGTERM → /free → eye 串行等待 → 二次 /free → 22GB gate）；kill 审计 warning 沿用 vram_insufficient 码（三码闭包内事件归因，不扩 enum）
 - [Phase 20]: 20-02: 每镜复查只看外来进程 Σused≥4096MiB（PID 归因 diff vs baseline），绝不设绝对 free 下限 —— ComfyUI 自身 ~18GB cache 驻留在 baseline 内防 Pitfall 1 自锁；先抽样后过滤 + --regen-resolution 冻 engine_version 整 cache 失效
+- [Phase 20]: 20-03: roundtrip.json 写 regen 半边（Open Q2 落地）——READ-merge by shot_id 只替换 regen/status、Phase 21 scores/verdict 原样保留；schema_version 从 export_asset importlib 单源加载；早退路径不写 sidecar（空集 merge 是恒等变换）
+- [Phase 20]: 20-03 smoke 实测：渲后 free 水位 1321-22539MiB 波动一个数量级（post_render_free_mib 留档）——每镜复查必须 PID 归因、绝对 free 下限必自锁（Pitfall 1 一手证据）；紧接渲染批的重跑 eye 绝对值检查会瞬时误读自身 cache 后自愈（deferred-items D2）
 
 ### Pending Todos
 
@@ -137,10 +139,11 @@ Items acknowledged and carried forward (full history in archived milestone REQUI
 
 ## Session Continuity
 
-Last session: 2026-08-19T20:26:58.497Z
-Stopped at: Completed 20-01-PLAN.md (Phase 20 1/3 — h3 复现客户端渲染链 + 4-tuple cache + 断点续跑，88 passed)
-Resume file: None
+Last session: 2026-08-19T20:47:09.301Z
+Stopped at: 20-03 Tasks 1-2 done（2d6d41a/9a5174b；103 passed + ep01 真机 smoke 双镜 cache-hit 实证）；Task 3 目视抽检 checkpoint awaiting Kai —— http://100.124.72.88:8765/_compare/compare.html（reply "approved" 或问题镜号）
+Resume file: .planning/phases/20-h3-regen-client/20-03-SUMMARY.md（Continuation Steps 小节）
 
 ## Operator Next Steps
 
-- `/gsd:execute-phase 20` — 继续 Phase 20（20-02 VRAM guard + 抽样 CLI）
+- Kai 目视抽检 2 镜（compare.html 并排同播）→ 回复 "approved" 或问题镜号
+- approved 后 continuation：勾 REGEN-01/02/03/04 → state.advance-plan + update-progress + record-metric → ROADMAP 20-03 勾选 → 视反馈启动 Phase 21 前置 overnight uniform-20 批任务
