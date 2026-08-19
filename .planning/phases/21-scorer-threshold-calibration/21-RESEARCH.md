@@ -409,7 +409,7 @@ proc = subprocess.run(
 | A4 | SigLIP 高窄带意味着 τ_sim 区分度可能不足 | Pitfall 5 | 若 19 镜分布无区分度，校准报告如实呈现并回 Kai 裁决（可能触发窗口/粒度调整讨论）——不是静默改参数 |
 | A5 | grid cell 640×360 足够 judge 辨细节 | Pattern 3 | 若抽检发现细节盲，升 cell 到 896 宽（grid ~1836×2072 仍在 token 预算边缘，需重验） |
 
-## Open Questions
+## Open Questions (RESOLVED)
 
 1. **verdict 应用器放哪个模块**
    - What we know: CONTEXT 锁两模块（scorer.py + judge.py）；verdict 应用需要双信号齐备 + τ_sim。
