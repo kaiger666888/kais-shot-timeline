@@ -114,7 +114,20 @@ Plans:
   3. 带 `audio_semantic.json` 的集上 ear 融合可见生效（雨声→scene=雨天、脚步声→动作链补「走近」一类修正）；`--no-ear` 跳过后输出与不带 ear 版本一致（additive、可跳过）
   4. 重复运行幂等：per-shot cache 命中不重复烧 GPU（重跑秒级完成）；全程逐帧 `observe_single`，零新引擎、零新模型下载
 
-**Plans**: TBD
+**Plans**: 3 plans
+
+Plans:
+**Wave 1**
+
+- [ ] 19-01-PLAN.md — qwen_eye_client 扩展（observe_pair/ask_text + shape 测试）+ `analysis/vision_seq_facets.py` v2 模块（均匀 ≤8 帧/相邻帧对问/RAW-answer 双信封 cache/ear 白名单注入/只填空缺）+ 离线单测矩阵（全离线零 GPU）
+
+**Wave 2** *(blocked on 19-01)*
+
+- [ ] 19-02-PLAN.md — ep01 spike：sandbox 置空副本双跑（no-ear 6 镜 + ear 3 镜，tmux 后台 + cache 断点续跑）→ 三策略产物 + 客观指标 + ear diff → spike report DRAFT → Kai 盲评 checkpoint 锁合并策略 + 定稿
+
+**Wave 3** *(blocked on 19-01 + 19-02)*
+
+- [ ] 19-03-PLAN.md — run_pipeline 无编号 pre-step 5.6 挂载（--vision-seq/--no-vision-seq/--no-ear，plain-label banner）+ wiring 四件套测试 + SC1/SC4 集成证据（sandbox 填充 diff + live prompts.json sha 不变负测试 + 秒级重跑实测）
 
 ### Phase 20: h3 复现客户端
 
