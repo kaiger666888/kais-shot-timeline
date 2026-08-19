@@ -381,7 +381,15 @@ def build_asset_dict(work_dir: str, video_path: str,
                 raise ValueError(
                     f"top-level is {type(rt).__name__}, expected object")
             counts = {"accepted": 0, "rejected": 0}
-            for s in rt.get("shots") or []:
+            # WR-02（Phase 18 review）：shots 非 list（int → TypeError 逃出
+            # handler 直接崩 main()；str/dict 可迭代但形状非法 → 静默 emit 0/0
+            # 假统计）统一走 ValueError → 下方 except 的 [warn] + OMIT 路径，
+            # 兑现本块注释的「malformed → 不持久化可疑统计」语义。
+            rt_shots = rt.get("shots")
+            if not isinstance(rt_shots, list):
+                raise ValueError(
+                    f"shots is {type(rt_shots).__name__}, expected array")
+            for s in rt_shots:
                 if not isinstance(s, dict):
                     continue  # 非法条目不计（计数是 best-effort）
                 verdict = s.get("verdict")

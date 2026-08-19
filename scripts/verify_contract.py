@@ -739,7 +739,15 @@ def _fixture_consistency_check() -> tuple:
                     except (json.JSONDecodeError, TypeError):
                         pass
                 shot_ids_for_speakers = shots_v12_ids or shot_ids  # fall back to v1.1 if v1.2 absent
-                for spk in speakers_data.get("speakers", []):
+                # WR-02：speakers 非 list（schema 要求 array）→ 记 failure，
+                # 不让 str/dict 值的可迭代性把 harness 崩成 AttributeError。
+                spk_list = speakers_data.get("speakers")
+                if not isinstance(spk_list, list):
+                    failures.append(
+                        f"v1.2 speakers.json: speakers is "
+                        f"{type(spk_list).__name__}, expected array")
+                    spk_list = []
+                for spk in spk_list:
                     sid = spk.get("spk_id")
                     if not (isinstance(sid, str) and re.match(r"^spk_[0-9]{3}$", sid)):
                         failures.append(f"v1.2 speakers.json: spk_id malformed: {sid!r}")
@@ -782,7 +790,15 @@ def _fixture_consistency_check() -> tuple:
                                 shots_v13_ids.add(s.get("id"))
                     except (json.JSONDecodeError, TypeError):
                         pass
-                for entry in rt_data.get("shots", []) or []:
+                # WR-02：shots 非 list（schema 要求 array）→ 记 failure 而非
+                # TypeError 崩掉 harness（int 值）/ 静默 0 条目（str/dict 值）。
+                rt_shots = rt_data.get("shots")
+                if not isinstance(rt_shots, list):
+                    failures.append(
+                        f"v1.3 roundtrip.json: shots is "
+                        f"{type(rt_shots).__name__}, expected array")
+                    rt_shots = []
+                for entry in rt_shots:
                     if not isinstance(entry, dict):
                         continue
                     if entry.get("shot_id") not in shots_v13_ids:
