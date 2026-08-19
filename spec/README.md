@@ -61,7 +61,7 @@ python3 spec/validate.py
 python3 spec/validate.py --strict-smoke
 ```
 
-预期输出:6 行 `[valid] <shape>`(minimal: asset / shots / audio_analysis / transcript / frames / prompts)+ 9 行 `[valid-v11] <shape>`(v1.1: 上述 6 + characters / props / registry)+ 至少 5 行 `[smoke-valid|smoke-FAIL] <shape>`(只要仓库 `output/` 下有真实生产产物)。minimal 仍 gate 退出码(CONTRACT-09);v1.1 失败也计入(Plan 01 schemas 必须接受 Plan 03 fixtures)。
+预期输出:6 行 `[valid] <shape>`(minimal: asset / shots / audio_analysis / transcript / frames / prompts)+ 10 行 `[valid-v11] <shape>`(v1.1: 上述 6 + characters / props / registry / registry-edits)+ 12 行 `[valid-v12] <shape>`(v1.2: 上述 10 + audio_semantic / speakers)+ 13 行 `[valid-v13] <shape>`(v1.3: 上述 12 + roundtrip)+ 至少 5 行 `[smoke-valid|smoke-FAIL] <shape>`(只要仓库 `output/` 下有真实生产产物)。四阶 fixture gate 均计入退出码(minimal 仍 gate,CONTRACT-09;v1.1/v1.2/v1.3 失败也计入);smoke 默认不计入退出码(`--strict-smoke` 计入)。
 
 ## Canonical asset layout (CONTEXT D-03)
 
