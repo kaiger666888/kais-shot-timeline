@@ -4,13 +4,13 @@ milestone: v1.3
 milestone_name: Round-trip Validation（逆推→复现→比对闭环数据集）
 status: executing
 stopped_at: Completed 20-01-PLAN.md (Phase 20 1/3 — h3 复现客户端渲染链 + 4-tuple cache + 断点续跑，88 passed)
-last_updated: "2026-08-19T20:11:12.535Z"
+last_updated: "2026-08-19T20:26:58.505Z"
 last_activity: 2026-08-19
 progress:
   total_phases: 5
   completed_phases: 2
   total_plans: 9
-  completed_plans: 7
+  completed_plans: 8
   percent: 40
 ---
 
@@ -26,11 +26,11 @@ See: .planning/PROJECT.md (updated 2026-08-19)
 ## Current Position
 
 Phase: 20 (h3 复现客户端) — EXECUTING
-Plan: 2 of 3
+Plan: 3 of 3
 Status: Ready to execute
 Last activity: 2026-08-19
 
-Progress: [████████░░] 78%
+Progress: [█████████░] 89%
 
 ## Performance Metrics
 
@@ -62,6 +62,7 @@ Progress: [████████░░] 78%
 | Phase 19 P02 | ~1h35m | 3 tasks | 12 files |
 | Phase 19 P03 | ~21m | 3 tasks | 5 files |
 | Phase 20 P01 | 9m | 3 tasks | 4 files |
+| Phase 20 P02 | ~12min | 3 tasks | 2 files |
 
 ## Accumulated Context
 
@@ -95,6 +96,9 @@ Carried (still load-bearing): contract-first minor bump（一个 milestone 一�
 - [Phase 19]: 19-03: run_pipeline 5.6 无编号 pre-step 落地（--vision-seq/--no-vision-seq/--no-ear）；SC1/SC4 wiring 形态收口（sandbox temporal 填充 diff 可见 + live sha256 前后等值 + 0.968s/0.939s 零引擎重跑）；VISION-01/02 随本 plan 勾选
 - [Phase 20]: 20-01: REGEN-01/02 保持未勾选 —— 离线代码半边已交付，VRAM guard+抽样（20-02）与真机 smoke（20-03）共享同 requirement IDs（mirror 18-01/19-01 先例）
 - [Phase 20]: 20-01: derive_seed=sha256(vch:shot_id)[:8] 跨进程确定（kmc hash() 随机化是 Pitfall 2 实锤）；engine_version 冻结 model+sampler+scheduler+steps+resolution 五参数进版本串
+- [Phase 20]: 20-02: REGEN-03/04 保持未勾选 —— guard/抽样离线半边已交付，真机 smoke（20-03）共享同 requirement IDs（mirror 20-01 先例）
+- [Phase 20]: 20-02: guard 五步固定序（TTS 端口→PID 定向 SIGTERM → /free → eye 串行等待 → 二次 /free → 22GB gate）；kill 审计 warning 沿用 vram_insufficient 码（三码闭包内事件归因，不扩 enum）
+- [Phase 20]: 20-02: 每镜复查只看外来进程 Σused≥4096MiB（PID 归因 diff vs baseline），绝不设绝对 free 下限 —— ComfyUI 自身 ~18GB cache 驻留在 baseline 内防 Pitfall 1 自锁；先抽样后过滤 + --regen-resolution 冻 engine_version 整 cache 失效
 
 ### Pending Todos
 
@@ -133,7 +137,7 @@ Items acknowledged and carried forward (full history in archived milestone REQUI
 
 ## Session Continuity
 
-Last session: 2026-08-19T20:11:12.528Z
+Last session: 2026-08-19T20:26:58.497Z
 Stopped at: Completed 20-01-PLAN.md (Phase 20 1/3 — h3 复现客户端渲染链 + 4-tuple cache + 断点续跑，88 passed)
 Resume file: None
 

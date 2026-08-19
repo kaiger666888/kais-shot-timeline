@@ -151,7 +151,7 @@ Plans:
 
 **Wave 2** *(blocked on Wave 1 completion)*
 
-- [ ] 20-02-PLAN.md — VRAM guard（TTS 端口→PID kill + 双 /free + 批开始严格 22GB + 每镜 PID 归因复查——Pitfall 1 反自锁）+ eye 串行编排 + --sample-shots/--max-shot-sec/--regen-resolution CLI + 离线单测
+- [x] 20-02-PLAN.md — VRAM guard（TTS 端口→PID kill + 双 /free + 批开始严格 22GB + 每镜 PID 归因复查——Pitfall 1 反自锁）+ eye 串行编排 + --sample-shots/--max-shot-sec/--regen-resolution CLI + 离线单测
 
 **Wave 3** *(blocked on Wave 2 completion)*
 
@@ -215,6 +215,6 @@ v1.3 phases execute in numeric order: 18 → 19 → 20 → 21 → 22
 | 17. Canvas Consumer | v1.2 | 1/1 | Complete | 2026-07-26 |
 | 18. Contract v1.3 | v1.3 | 3/3 | Complete    | 2026-08-19 |
 | 19. qwen-eye v2 看片段 | v1.3 | 3/3 | Complete    | 2026-08-19 |
-| 20. h3 复现客户端 | v1.3 | 1/3 | In Progress|  |
+| 20. h3 复现客户端 | v1.3 | 2/3 | In Progress|  |
 | 21. Scorer + 阈值校准 | v1.3 | 0/TBD | Not started | - |
 | 22. Dataset Export + Integration | v1.3 | 0/TBD | Not started | - |
