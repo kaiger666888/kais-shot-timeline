@@ -3,15 +3,15 @@ gsd_state_version: 1.0
 milestone: v1.3
 milestone_name: Round-trip Validation（逆推→复现→比对闭环数据集）
 status: executing
-stopped_at: "Completed 18-01-PLAN.md (contract schemas + producer emission; next: 18-02 fixtures/gates/proof)"
-last_updated: "2026-08-19T13:37:01.973Z"
+stopped_at: "Completed 18-02-PLAN.md (fixtures/gates/proof; next: 18-03 SPEC docs)"
+last_updated: "2026-08-19T13:49:47.586Z"
 last_activity: 2026-08-19
 progress:
   total_phases: 5
   completed_phases: 0
   total_plans: 3
-  completed_plans: 1
-  percent: 33
+  completed_plans: 2
+  percent: 67
 ---
 
 # Project State
@@ -26,24 +26,24 @@ See: .planning/PROJECT.md (updated 2026-08-19)
 ## Current Position
 
 Phase: 18 (Contract v1.3) — EXECUTING
-Plan: 2 of 3
+Plan: 3 of 3
 Status: Ready to execute
 Last activity: 2026-08-19
 
-Progress: [███░░░░░░░] 33%
+Progress: [███████░░░] 67%
 
 ## Performance Metrics
 
 **Velocity (cumulative historical):**
 
 - Total plans completed: 65 (v1.0: 7, v1.1: 16, v1.2: 20 — all archived)
-- v1.3 plans completed: 1
+- v1.3 plans completed: 2
 
 **By Phase (v1.3 — populates as plans complete):**
 
 | Phase | Plans | Total | Avg/Plan |
 |-------|-------|-------|----------|
-| 18. Contract v1.3 | 1/3 | 5m | 5m |
+| 18. Contract v1.3 | 2/3 | 13m | 7m |
 | 19. qwen-eye v2 看片段 | 0/TBD | - | - |
 | 20. h3 复现客户端 | 0/TBD | - | - |
 | 21. Scorer + 阈值校准 | 0/TBD | - | - |
@@ -54,6 +54,7 @@ Progress: [███░░░░░░░] 33%
 | Plan | Duration | Tasks | Files |
 |------|----------|-------|-------|
 | Phase 18 P01 | 5m | 3 tasks | 3 files |
+| Phase 18 P02 | 8m | 3 tasks | 15 files |
 
 ## Accumulated Context
 
@@ -75,6 +76,8 @@ Carried (still load-bearing): contract-first minor bump（一个 milestone 一�
 
 - [Phase 18]: 18-01: roundtrip.json 挂载前不做 schema 校验（仅 JSON-parse + verdict 计数；完整 gate 留在 validate.py V13 / verify_contract producer mode — Open Q3 锁定）
 - [Phase 18]: 18-01: RT-01/RT-02/RT-04 保持未勾选 — 本 plan 只交付 schema/single-source/channel 半边，fixture+gate+proof 半边在 18-02（同 requirement IDs）
+- [Phase 18]: 18-02: backward v1.3→v1.2 过滤豁免恰为两类（additionalProperties 任意处；type/anyOf 仅当 absolute_path 前两段==(generator,warnings)）—— 注入 asset_type const 漂移仍 FAIL（A3 负测试证过滤不盲）
+- [Phase 18]: 18-02: ep01 默认目录 producer-mode 失败是 pre-existing 运行时漂移（registry.draft.json method/total_clusters/total_crops，2026-07-30 实验产物 untracked）—— 不修（scope boundary），记 deferred-items #2；验证走文档化 PHASE4_ASSET_DIR=ep02 覆盖
 
 ### Pending Todos
 
@@ -113,8 +116,8 @@ Items acknowledged and carried forward (full history in archived milestone REQUI
 
 ## Session Continuity
 
-Last session: 2026-08-19T13:37:01.965Z
-Stopped at: Completed 18-01-PLAN.md (contract schemas + producer emission; next: 18-02 fixtures/gates/proof)
+Last session: 2026-08-19T13:49:47.579Z
+Stopped at: Completed 18-02-PLAN.md (fixtures/gates/proof; next: 18-03 SPEC docs)
 Resume file: None
 
 ## Operator Next Steps

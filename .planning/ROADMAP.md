@@ -96,7 +96,7 @@ Plans:
 
 **Wave 2** *(blocked on Wave 1 completion)*
 
-- [ ] 18-02-PLAN.md — spec/fixtures/v1.3/ 13 文件 + validate.py 四阶 gate + verify_contract.py v1.2↔v1.3 双向证明（backward 过滤扩展 + 负测试 + EIGHT_SHAPES object 特判 + 一致性块）
+- [x] 18-02-PLAN.md — spec/fixtures/v1.3/ 13 文件 + validate.py 四阶 gate + verify_contract.py v1.2↔v1.3 双向证明（backward 过滤扩展 + 负测试 + EIGHT_SHAPES object 特判 + 一致性块）
 
 **Wave 3** *(blocked on Wave 2 completion)*
 
@@ -187,7 +187,7 @@ v1.3 phases execute in numeric order: 18 → 19 → 20 → 21 → 22
 | 15. Layered Reproduction Prompts | v1.2 | 2/2 | Complete | 2026-07-26 |
 | 16. HTML Gallery | v1.2 | 1/1 | Complete | 2026-07-26 |
 | 17. Canvas Consumer | v1.2 | 1/1 | Complete | 2026-07-26 |
-| 18. Contract v1.3 | v1.3 | 1/3 | In Progress|  |
+| 18. Contract v1.3 | v1.3 | 2/3 | In Progress|  |
 | 19. qwen-eye v2 看片段 | v1.3 | 0/TBD | Not started | - |
 | 20. h3 复现客户端 | v1.3 | 0/TBD | Not started | - |
 | 21. Scorer + 阈值校准 | v1.3 | 0/TBD | Not started | - |
