@@ -415,3 +415,81 @@ sha256sum "output/虫虫武侠小故事《小江湖》第01话：爸爸去哪儿
 | `spike/vision_seq/results/strategy_mapping.txt` | 甲/乙/丙 ↔ 策略映射（seed=20260819） |
 | `spike/vision_seq/results/metrics.json` | 指标机器可读全量 |
 | `spike/vision_seq/{sandbox,sandbox_ear}/route_cache/vision_seq/*.json` | RAW 证据 cache（ear_off 6 镜 / ear_on 3 镜） |
+| `spike/vision_seq/results/sc1_evidence.txt` | SC1/SC4 集成证据全文（post-wiring，见下节） |
+
+## SC1/SC4 集成证据（post-wiring —— 19-03 追加）
+
+> 2026-08-19（19-03 Task 3）。wiring 落地（run_pipeline 无编号 pre-step 5.6 +
+> `--vision-seq`/`--no-vision-seq`/`--no-ear` 三 flag）后，以**锁定默认策略**
+> （temporal = `MERGE_STRATEGY_DEFAULT`，本报告 §Recommendations 裁决）补齐
+> SC1/SC4 的生产路径形态半边：经 wiring argv 形态 + 真实 work_dir 布局。
+> 全部 cache 命中 —— 零 GPU、零引擎启动（模块预判生命周期不实例化 QwenEye）。
+> 六镜逐值并排全文见 `spike/vision_seq/results/sc1_evidence.txt`。
+
+### SC1 sandbox 填充（diff 可见）
+
+```bash
+# 重置（只重置 sandbox 六镜 facets，route_cache 保留；sandbox_ear 的 ear_on
+# 证据状态原样不动 —— 故显式 --target sandbox，不用默认 both）
+python3 spike/vision_seq/build_sandbox.py --reset --target sandbox
+
+# 重跑（不带 --merge-strategy → 默认 temporal；--no-ear 对齐 spike 烧的
+# ear_off 信封；argv 形态 mirror run_pipeline 5.6 wiring —— 恒传
+# --audio-semantic，文件存在性由模块自判）
+time python3 analysis/vision_seq_facets.py \
+    --shots spike/vision_seq/sandbox/shots.json \
+    --frames-dir spike/vision_seq/sandbox/frames_5fps \
+    --work-dir spike/vision_seq/sandbox \
+    --output spike/vision_seq/sandbox/prompts.json \
+    --video spike/vision_seq/sandbox/video.mp4 \
+    --audio-semantic spike/vision_seq/sandbox/audio_semantic.json \
+    --no-ear
+# → [vision-seq] wrote ... (action filled: 6, camera filled: 6,
+#    strategy: temporal, ear: off, 0 new warnings)，REAL 0.968s
+```
+
+六镜 action/camera 全部被 temporal 合并产物填充（填充前 = 重置后 `""`）。diff
+可见性：v2 是逐帧「→」时序证据链（200-360 字/镜），v1 现行值是单句概览
+（20-40 字）—— 与盲评裁决「甲=temporal 保完整时序证据链」一致。样例（#91
+camera，全文见 sc1_evidence.txt）：
+
+- v2 temporal：`镜头向后拉远，景别由近景变为中景，主体在画面中变小…（7 对
+  逐对答案以「→」串链，覆盖整段拉远过程）`
+- v1 现行值：`由面部大特写大幅拉升拉远至大远景，航拍式拉镜`
+
+### SC1 负测试：live ep01 不覆盖（sha256 前后相等）
+
+```bash
+LIVE="output/虫虫武侠小故事《小江湖》第01话：爸爸去哪儿？（ 画面只是工具，情绪才是目的。"
+# 跑前 sha256：
+7cc4a4841e7f53975e5cd28e6399f66a21fb996f32414f80cb55efa32afaced5
+# 运行（--work-dir 指向 scratch —— cache/warnings 不落 live；live 93 镜
+# action/camera 全满 → 只填空缺守卫全跳过 → 零修改短路不重写文件）：
+python3 analysis/vision_seq_facets.py \
+    --shots "$LIVE/shots.json" \
+    --frames-dir "$LIVE/frames_5fps" \
+    --work-dir /tmp/vision_seq_sc1_scratch \
+    --output "$LIVE/prompts.json" \
+    --video "$LIVE/h264.mp4" \
+    --no-ear
+# → ... unchanged (zero facets modified — output not rewritten; ear: off)
+# 跑后 sha256：
+7cc4a4841e7f53975e5cd28e6399f66a21fb996f32414f80cb55efa32afaced5
+```
+
+两值相等，且与本报告 §Reproducibility 记录的同一哈希一致（交叉验证）。
+`git status output/` 为空；`/tmp/vision_seq_sc1_scratch/` 目录为空（模块零
+写入：cache 懒创建未触发、warnings sidecar 未创建）—— live 隔离的最强形态。
+「只填空缺、永不覆盖」语义 + aw2-fast 防覆盖守卫（字段级 vs 步骤级互补，
+Pitfall 7）在 wiring 后路径上复证。
+
+### SC4 runtime：cache 命中秒级重跑（wiring 形态复证）
+
+| 场景 | wall-clock | 引擎 |
+|------|-----------|------|
+| sandbox 六镜置空 + ear_off RAW cache 全命中（temporal 重填 6+6） | **0.968s** | 0（无引擎生命周期输出行） |
+| live 93 镜全满扫描（零修改短路，scratch work-dir） | **0.939s** | 0（QwenEye 零实例化） |
+
+与 §Reproducibility 的 19-02 实测（0.94-0.98s 三场景）一致 —— SC4 在生产
+路径形态（经 wiring 的默认策略 + 真实 work_dir 布局）下复证成立；对照首烧
+≈12 min（147 calls）零 GPU 重烧的设计不变。
