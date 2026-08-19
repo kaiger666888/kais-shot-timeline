@@ -1199,6 +1199,16 @@ def run_self_test(args) -> tuple:
         shutil.copy2(src_asset, temp_asset)
         manifest_copy = json.loads(temp_asset.read_text(encoding="utf-8"))
         for shape, rel in manifest_copy.get("data", {}).items():
+            # WR-01（Phase 18 review）：v1.3 object mount（data.roundtrip 值是
+            # dict）—— mirror validate_eight_shapes 的 unwrap 特判（Pitfall 2
+            # 勿只做一半）：dict 值取 .path 再拼路径；.path 非字符串
+            # （malformed mount）→ skip 不 copy（asset-shape schema 校验负责
+            # flag 该漂移）。旧代码直接 src_dir / rel 会对 dict 值抛
+            # TypeError: unsupported operand type(s) for /: 'PosixPath' and 'dict'。
+            if isinstance(rel, dict):
+                rel = rel.get("path")
+                if not isinstance(rel, str):
+                    continue
             src_data = src_dir / rel
             if src_data.is_file():
                 dst = temp_dir / rel
