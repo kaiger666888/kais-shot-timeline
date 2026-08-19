@@ -55,8 +55,27 @@
         },
         "warnings": {
           "type": "array",
-          "items": { "type": "string" },
-          "description": "v1.1 additive (OPTIONAL — Phase 6). Non-fatal warnings encountered during asset generation (e.g. cinematography route unreachable → empty prompts facets). Older assets omit it and still validate (graceful-degrade). Producer emits the field only when the list is non-empty; absent on clean runs. Operator-facing failure reasons only (exception class + message, route status codes) — no PII, no auth tokens, no body payloads."
+          "items": {
+            "anyOf": [
+              { "type": "string" },
+              {
+                "type": "object",
+                "additionalProperties": false,
+                "required": ["code"],
+                "properties": {
+                  "code": {
+                    "enum": [
+                      "comfyui_unreachable",
+                      "vram_insufficient",
+                      "scorer_model_missing"
+                    ]
+                  },
+                  "detail": { "type": "string" }
+                }
+              }
+            ]
+          },
+          "description": "v1.1 additive (OPTIONAL — Phase 6). Non-fatal warnings encountered during asset generation (e.g. cinematography route unreachable → empty prompts facets). Older assets omit it and still validate (graceful-degrade). Producer emits the field only when the list is non-empty; absent on clean runs. Operator-facing failure reasons only (exception class + message, route status codes) — no PII, no auth tokens, no body payloads. v1.3 widening：items 从纯 string 加宽为双形（v1.x 首个 items 类型加宽；对旧数据 additive —— 纯 string 条目仍合法）。v1.3 起 [roundtrip] degrade 记因条目为结构化 {code, detail}（RT-04）：code 是 closed enum（comfyui_unreachable / vram_insufficient / scorer_model_missing）使三因由机器可 grep；detail 是 producer-local 自由文本（no PII, no auth tokens 惯例延续）。degrade 记因最小单元是 code —— detail 可缺席。"
         },
         "registry_snapshot": {
           "type": "object",
@@ -160,6 +179,29 @@
           "type": "string",
           "pattern": "^(?!.*\\.\\.)[^:*?\"<>|]+\\.json$",
           "description": "v1.2 additive (OPTIONAL — 缺席 on v1.0/v1.1 assets). Relative path to speakers.json (canonical confirmed speaker registry produced by Phase 13 HITL link_speakers). Same emission rule as characters/props — file exists on disk → emit; absent → OMIT (byte-identical to v1.0/v1.1 producer output)."
+        },
+        "roundtrip": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["path", "accepted_count", "rejected_count"],
+          "description": "v1.3 additive (OPTIONAL — 缺席 on v1.0/v1.1/v1.2 assets). Round-trip validation sidecar mount（RT-01）. 与兄弟挂载不同，这不是纯 string path —— 值是 v1.x 第一个 object 值 data.* 挂载：携带 file ref（path，pattern 与兄弟挂载同款）+ accepted_count/rejected_count 统计字段，让 consumer 不打开 roundtrip.json 即可渲染 verdict 概览；per-shot 数据留在 sidecar 内（不内嵌 per-shot 数据）。Emission rule：roundtrip.json 存在且可 JSON 解析才 emit；malformed/non-dict → OMIT（[warn] + 不持久化可疑统计，mirror registry_snapshot WR-05）。不进 data.required[]（additive-only，5 keys 不变）。",
+          "properties": {
+            "path": {
+              "type": "string",
+              "pattern": "^(?!.*\\.\\.)[^:*?\"<>|]+\\.json$",
+              "description": "Relative path to roundtrip.json (canonical: roundtrip.json at asset root). Anti-traversal enforced, identical pattern to sibling data.* mounts."
+            },
+            "accepted_count": {
+              "type": "integer",
+              "minimum": 0,
+              "description": "roundtrip.json 内 verdict.decision=='accepted' 的 shot 计数（producer export 时统计）。"
+            },
+            "rejected_count": {
+              "type": "integer",
+              "minimum": 0,
+              "description": "roundtrip.json 内 verdict.decision=='rejected' 的 shot 计数。verdict 缺席或其它值的 shot 不计入。"
+            }
+          }
         }
       }
     },
