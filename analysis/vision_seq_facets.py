@@ -33,7 +33,8 @@ facet 边界（不越权）：只填 action/camera 两个 facet；已有值永�
 
 ear 时序后果（pipeline 挂载位 5.6 在 step 7 audio_semantic 产出之前）：
 ear 激活发生在 audio_semantic.json 就位后的第二次管线跑（5.6 在 step 7
-之前）；ear 进 cache key，切换 ear 会重烧一次；想跳过重烧保持 --no-ear。
+之前）；ear 进 cache key，切换 ear 或 audio_semantic 内容变化（WR-04
+指纹）会重烧一次；想跳过重烧保持 --no-ear。
 
 graceful-degrade：引擎不可用（ensure_ready 失败：VRAM 不足 / 启动超时 /
 server.log 记录 load 失败）→ pending 镜 facet 保持 "" + [vision-seq]
@@ -50,7 +51,9 @@ cache（mirror WR-04 4-tuple 惯例 + ear 第 5 维）：_cache_key =
 {video_content_hash, engine_name, engine_version, prompt_version, ear}
 —— 任一不匹配即 miss 重拉；信封另持久化 window 采样契约（start/end/
 fps/n_frames/needed，WR-01/02）——窗口漂移（shots 重检测）或抽帧率变化
-即整体 miss，合并只消费当前窗口所需索引；查找只读本 ear 信封，写入
+即整体 miss，合并只消费当前窗口所需索引；ear_on 信封另存 ear_ctx_fp
+（音频上下文 sha256[:8]，WR-04）——audio_semantic 内容变化即 miss（无需
+bump PROMPT_VERSION 连累 ear_off 证据）；查找只读本 ear 信封，写入
 read-merge-write
 只更新本 ear 信封（ear on/off 双跑证据共存，切换不丢数据）。
 
@@ -240,17 +243,26 @@ def _envelope_name(ear: bool) -> str:
     return "ear_on" if ear else "ear_off"
 
 
-def _fresh_envelope(key: dict, window: dict) -> dict:
-    return {"_cache_key": key, "window": window, "answers": {}}
+def _audio_ctx_fp(audio_ctx: str) -> str:
+    """ear 音频上下文内容指纹（WR-04）：sha256(audio_ctx)[:8]。ear 提问内容
+    随 audio_semantic.json 内容变（dialogue/sfx 白名单字段），仅 boolean ear
+    维只感知开关不感知内容 —— 指纹进信封匹配，内容变即 miss 重烧，无需
+    bump PROMPT_VERSION（那会连 ear_off 证据一起丢）。ear 关时调用方不使用。"""
+    return hashlib.sha256(audio_ctx.encode("utf-8")).hexdigest()[:8]
+
+
+def _fresh_envelope(key: dict, window: dict, ear_fp: str = "") -> dict:
+    return {"_cache_key": key, "window": window, "ear_ctx_fp": ear_fp,
+            "answers": {}}
 
 
 def _load_cache_envelope(cache_file: str, ear: bool, key: dict,
-                         window: dict) -> dict:
+                         window: dict, ear_fp: str = "") -> dict:
     """读本 ear 信封。文件缺失 / 损坏 / 文件非 dict / 信封缺席 /
     _cache_key 任一字段不匹配 / window 采样契约不匹配（shots 重检测、窗口
-    或帧数漂移）→ 全新空信封（miss 重拉）。
-    他 ear 信封绝不被本函数触碰。"""
-    miss = _fresh_envelope(key, window)
+    或帧数漂移）/ ear_ctx_fp 不匹配（audio_semantic 内容变化）→ 全新空
+    信封（miss 重拉）。他 ear 信封绝不被本函数触碰。"""
+    miss = _fresh_envelope(key, window, ear_fp)
     if not os.path.exists(cache_file):
         return miss
     try:
@@ -265,19 +277,23 @@ def _load_cache_envelope(cache_file: str, ear: bool, key: dict,
         return miss
     if env.get("window") != window:
         return miss   # WR-01：旧窗口（更密/偏移采样）的键绝不服务新窗口
+    if env.get("ear_ctx_fp", "") != ear_fp:
+        return miss   # WR-04：audio_semantic 内容变 → ear 提问变 → miss 重烧
     if not isinstance(env.get("answers"), dict):
         env["answers"] = {}
     return env
 
 
 def _save_cache_envelope(cache_file: str, ear: bool, key: dict, window: dict,
+                         ear_fp: str = "",
                          new_answers: dict | None = None,
                          merged_b: dict | None = None) -> None:
     """read-merge-write 只更新本 ear 信封（他 ear 信封原样保留 —— ear on/off
     双跑证据共存，切换不丢数据）。cache 目录懒创建（零写入时连目录都不留）。
     best-effort：写失败不阻塞，下次重拉即可。
     WR-01：window 采样契约随信封持久化并参与匹配；new_answers 落盘时同步
-    失效受影响 facet 的 merged_B（旧合并产物不再反映 RAW 证据）。"""
+    失效受影响 facet 的 merged_B（旧合并产物不再反映 RAW 证据）。
+    WR-04：ear_ctx_fp（音频上下文指纹）随信封持久化并参与匹配。"""
     data: dict = {}
     if os.path.exists(cache_file):
         try:
@@ -290,8 +306,9 @@ def _save_cache_envelope(cache_file: str, ear: bool, key: dict, window: dict,
     name = _envelope_name(ear)
     env = data.get(name)
     if not isinstance(env, dict) or env.get("_cache_key") != key \
-            or env.get("window") != window:
-        env = _fresh_envelope(key, window)
+            or env.get("window") != window \
+            or env.get("ear_ctx_fp", "") != ear_fp:
+        env = _fresh_envelope(key, window, ear_fp)
     answers = env.get("answers") if isinstance(env.get("answers"), dict) else {}
     if new_answers:
         answers.update(new_answers)
@@ -426,7 +443,8 @@ def _ask_raw_answers(engine, item: dict, audio_ctx: str) -> tuple[dict, str | No
         k = _facet_key(facet, i)
         fresh[k] = ans
         _save_cache_envelope(item["cache_file"], item["ear"], item["key"],
-                             item["window"], new_answers={k: ans})
+                             item["window"], item["ear_fp"],
+                             new_answers={k: ans})
     return fresh, None
 
 
@@ -463,7 +481,7 @@ def _merge_llm_pass(engine, work: list[dict], warnings: list[str]) -> None:
                             f"{item['facet']}: {err}")
             continue
         _save_cache_envelope(item["cache_file"], item["ear"], item["key"],
-                             item["window"],
+                             item["window"], item["ear_fp"],
                              merged_b={item["facet"]: merged})
         item["env"].setdefault("merged_B", {})[item["facet"]] = merged
 
@@ -571,8 +589,14 @@ def main():
                   "fps": args.frame_fps, "n_frames": len(frames),
                   "needed": {"action": _needed_count("action", len(frames)),
                              "camera": _needed_count("camera", len(frames))}}
+        # WR-04：ear 提问内容随 audio_semantic 内容变 —— 音频上下文 sha256[:8]
+        # 进信封匹配（boolean ear 维只感知开关）。audio_ctx 存 work item 供
+        # step 5 提问复用（一次计算）。
+        audio_ctx = (build_audio_context(audio_by_shot.get(sid) or {})
+                     if ear else "")
+        ear_fp = _audio_ctx_fp(audio_ctx) if ear else ""
         cache_file = os.path.join(cache_dir, f"shot_{sid:03d}.json")
-        env = _load_cache_envelope(cache_file, ear, key, window)
+        env = _load_cache_envelope(cache_file, ear, key, window, ear_fp)
         for facet in ("action", "camera"):
             if p.get(facet):
                 continue   # 已有值（route/人工产物）—— 不覆盖，永不替换
@@ -587,6 +611,7 @@ def main():
             work.append({"p": p, "sid": sid, "facet": facet, "frames": frames,
                          "cache_file": cache_file, "env": env, "ear": ear,
                          "key": key, "window": window, "needed": needed,
+                         "audio_ctx": audio_ctx, "ear_fp": ear_fp,
                          "missing": missing, "error": False})
             if missing:
                 needs_engine = True
@@ -621,8 +646,7 @@ def main():
                 for item in work:
                     if not item["missing"]:
                         continue
-                    audio_ctx = (build_audio_context(audio_by_shot.get(item["sid"]) or {})
-                                 if ear else "")
+                    audio_ctx = item["audio_ctx"]   # WR-04：预判阶段已算好
                     fresh, err = _ask_raw_answers(engine, item, audio_ctx)
                     if fresh:
                         item["env"].setdefault("answers", {}).update(fresh)

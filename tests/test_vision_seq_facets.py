@@ -413,6 +413,34 @@ def test_empty_cached_answer_warns_partial_merge(tmp_path, monkeypatch):
     assert any("RAW answers empty" in w and "1/6" in w for w in warnings)
 
 
+def test_ear_content_change_invalidates_cache(tmp_path, monkeypatch):
+    """WR-04 回归：audio_semantic.json 内容变化（ear 仍开、_cache_key.ear
+    不变）→ ear_ctx_fp 不匹配 → miss 重烧，不再服务旧音频上下文烧的答案。"""
+    work, shots, pp = make_workdir(tmp_path)
+    audio = make_audio_file(work)
+    patch_engine(monkeypatch, FakeEngine("旧音频答"))
+    run_main(work, pp, extra_args=["--audio-semantic", str(audio)])
+    cache_file = work / "route_cache" / "vision_seq" / "shot_001.json"
+    data = json.loads(cache_file.read_text(encoding="utf-8"))
+    old_fp = data["ear_on"].get("ear_ctx_fp")
+    assert old_fp and len(old_fp) == 8
+    # 对白内容改写（ear 开关不变 —— boolean 维感知不到这次变化）
+    audio2 = work / "audio_semantic_v2.json"
+    audio2.write_text(json.dumps({"schema_version": "1.2", "shots": [
+        {"shot_id": sid, "dialogue": {"text": "全新的对白内容"}, "sfx": {}}
+        for sid in (1, 2)]}, ensure_ascii=False), encoding="utf-8")
+    reset_facets(pp)
+    fake2 = FakeEngine("新音频答")
+    patch_engine(monkeypatch, fake2)
+    run_main(work, pp, extra_args=["--audio-semantic", str(audio2)])
+    assert fake2.calls > 0                    # 内容变 → 信封 miss 重烧
+    assert any("全新的对白内容" in q for q in fake2.questions)
+    out = json.loads(pp.read_text(encoding="utf-8"))
+    assert out[0]["action"].startswith("新音频答")
+    data = json.loads(cache_file.read_text(encoding="utf-8"))
+    assert data["ear_on"]["ear_ctx_fp"] != old_fp
+
+
 def test_ear_envelope_isolation_dual_coexistence(tmp_path, monkeypatch):
     """ear_on 信封不服务 ear_off 运行（miss 重拉）；双信封共存（切换不丢数据）。"""
     work, shots, pp = make_workdir(tmp_path)
