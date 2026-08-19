@@ -175,7 +175,7 @@ Plans:
 Plans:
 **Wave 1**
 
-- [ ] 21-01-PLAN.md — scorer.py + judge.py（含 --apply-verdict 冻结应用器 + --summarize）+ 全离线单测（FakeSigLIP/FakeEye/帧窗数学/解析容错矩阵/冻结幂等）——零 GPU
+- [x] 21-01-PLAN.md — scorer.py + judge.py（含 --apply-verdict 冻结应用器 + --summarize）+ 全离线单测（FakeSigLIP/FakeEye/帧窗数学/解析容错矩阵/冻结幂等）——零 GPU
 
 **Wave 2** *(blocked on 21-01)*
 
@@ -229,5 +229,5 @@ v1.3 phases execute in numeric order: 18 → 19 → 20 → 21 → 22
 | 18. Contract v1.3 | v1.3 | 3/3 | Complete    | 2026-08-19 |
 | 19. qwen-eye v2 看片段 | v1.3 | 3/3 | Complete    | 2026-08-19 |
 | 20. h3 复现客户端 | v1.3 | 3/3 | Complete    | 2026-08-19 |
-| 21. Scorer + 阈值校准 | v1.3 | 0/3 | Not started | - |
+| 21. Scorer + 阈值校准 | v1.3 | 1/3 | In Progress|  |
 | 22. Dataset Export + Integration | v1.3 | 0/TBD | Not started | - |
