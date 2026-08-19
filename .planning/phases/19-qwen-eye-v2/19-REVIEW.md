@@ -17,7 +17,10 @@ findings:
   warning: 4
   info: 7
   total: 12
-status: issues_found
+status: fixed
+fixed_at: 2026-08-19T18:52:08Z
+fix_scope: critical_warning
+fix_report: 19-REVIEW-FIX.md
 ---
 
 # Phase 19: Code Review Report
@@ -25,7 +28,7 @@ status: issues_found
 **Reviewed:** 2026-08-19T18:38:14Z
 **Depth:** standard
 **Files Reviewed:** 8
-**Status:** issues_found
+**Status:** fixed（CR-01 + WR-01..04 已修，见 19-REVIEW-FIX.md；IN-01..07 为 Info 不在 fix scope）
 
 ## Summary
 
@@ -57,6 +60,8 @@ lo = math.ceil(start_sec * FRAME_SAMPLING_FPS) + 1   # 首个 t=(N-1)/fps >= sta
 ```
 `math.ceil` is a no-op for grid-aligned boundaries (integer `start*fps` behaves identically to today). Because the RAW cache keys (`action_frame_N`) are frame-index based, the fix changes *which image* each index maps to — bump `PROMPT_VERSION` (e.g., `vision-seq-v1b`) in the same change so existing caches don't serve answers burned against the shifted window, and add a regression test with a fractional window (e.g., `[0.5, 2.5]` must start at frame 4).
 
+**Outcome (fix pass 2026-08-19 UTC):** fixed @ 0caae2a — `lo = math.ceil(start_sec*fps)+1` + `PROMPT_VERSION` bump `vision-seq-v1`→`vision-seq-v2` + 回归测试（[0.5,2.5] 首帧=4、网格对齐边界行为不变）。v1 镜像 `analysis/local_vision_facets.py:126` 同 floor 惯例 —— v1 红线零改动，本 phase 不修，记 deferred（见 19-REVIEW-FIX.md）。
+
 ## Warnings
 
 ### WR-01: Cache key omits the sampling/window dimension; merge consumes unbounded stale keys and `merged_B` is never invalidated on RAW change
@@ -72,11 +77,15 @@ Proven by execution: seeded a cache with `action_frame_1..8`, ran with a 6-frame
 Also note: an engine answer that `_clean_answer` reduces to `""` is cached as `""`, permanently counts as "answered" (never re-asked), and is silently dropped from the merge — partial evidence merges without any warning.
 **Fix:** Persist the sampling contract inside the envelope (e.g., `"window": {"start_sec", "end_sec", "fps", "n_frames", "needed": {"action": N, "camera": M}}`) and treat it as part of the key match in `_load_cache_envelope`; bound `_facet_answer_values` to the current needed indices in step 6; delete `env["merged_B"][facet]` whenever new RAW answers are written for that facet; optionally warn when a non-zero share of needed answers is empty.
 
+**Outcome (fix pass 2026-08-19 UTC):** fixed @ 9209d75 — window 契约（start/end/fps/n_frames/needed）随信封持久化并参与 load/save 匹配；合并限界当前 needed 索引；merged_B 随新 RAW 答案失效（落盘 + 内存双路径）；空答占比显式 [vision-seq] warning。4 个回归测试。
+
 ### WR-02: `FRAME_SAMPLING_FPS` hardcoded 5.0 while `run_pipeline --sample-fps` is configurable — wrong windows at any non-default fps
 
 **File:** `analysis/vision_seq_facets.py:99, 161-176`; `run_pipeline.py:706-707, 793-794`
 **Issue:** `run_pipeline.py` exposes `--sample-fps` (default 5.0) and passes it to `detect_v3b`, which writes `frames_5fps/` at that rate. `vision_seq_facets.py` hardcodes `FRAME_SAMPLING_FPS = 5.0` and receives no fps argument. At `--sample-fps 10`, a shot `[10, 20]` maps to computed frame numbers 51..101, which on the 10fps grid are `t=5.0..10.0` — the module questions frames from the **wrong half of the shot**, silently. No warning is produced; facets are filled from misaligned evidence. (The v1 5.5 module shares the assumption, but this phase's code hardcodes it anew.)
 **Fix:** Thread the actual rate through: `run_pipeline` adds `--frame-fps`, `str(args.sample_fps)` to `cmd_vseq`, and `vision_seq_facets` takes `--frame-fps` (default 5.0) used by `select_uniform_frames`. Alternatively have `detect_v3b` write a `frames_5fps/fps.json` sidecar that consumers read.
+
+**Outcome (fix pass 2026-08-19 UTC):** fixed @ 72e1878 — 直通方案落地：`--frame-fps` flag + `run_pipeline` 传 `str(args.sample_fps)` + fps 进 window 契约（fps 变 → cache 必 miss）+ fps<=0 fail-loud + 单测/静态接线锁。残留缺口（deferred）：frames 目录按旧 `--sample-fps` 抽出而 shots.json 命中缓存时，直通值仍反映新 flag —— 完整修法是 detect_v3b 写 fps sidecar（需碰 validated 基线模块，见 19-REVIEW-FIX.md）。
 
 ### WR-03: Engine lifecycle leak — failed start returns `(False, True)` but `_owned` stays False; KAP allocate has no release counterpart
 
@@ -84,11 +93,15 @@ Also note: an engine answer that `_clean_answer` reduces to `""` is cached as `"
 **Issue:** `_owned` is set True only on the health-OK path (line 210). The fallback-script/KAP-allocate start attempts that fail to reach health within the deadline return `(False, True)` (lines 216, 218) — the tuple contract per the docstring says "started_by_us=True → 用完即停适用于自己拉起的" — yet `stop_if_owned()` is a no-op because `_owned` is False. A slow-loading server that misses the 120s deadline keeps loading after the caller exits, eventually holding 13.4GB VRAM with nobody managing it, and the KAP lease granted at allocate (`POST :10588/api/production/llm/allocate`) is never released — the file contains no release call; the only teardown is `kap-llm.sh stop`, which is gated on `_owned`. `vision_seq_facets.main()` correctly relies on `stop_if_owned()` in `finally`, so it inherits this hole. (The header claims line-for-line equivalence with upstream `qwen_eye.py` @c3949404, so this is likely inherited — but it is new code in this repo and the phase brief explicitly asks for lifecycle leak paths.)
 **Fix:** Set `self._owned = True` before the health-polling loop starts whenever the allocate or fallback-script path actually issued a start (i.e., track "we attempted a start" separately from "we observed healthy"), so `stop_if_owned()` stops the half-started server; and pair the KAP allocate success with a release call (or document that `kap-llm.sh stop` releases the lease server-side, with a comment pointing at the evidence).
 
+**Outcome (fix pass 2026-08-19 UTC):** fixed @ a97ae2c — start 发起（allocate 成功或 fallback 脚本已跑）即 `_owned=True`，慢启动超时 / Guard-2 load 失败的 (False, True) 路径同样被 stop_if_owned 覆盖；KAP lease 配对释放已落地：allocate 授予过才 `POST :10588/api/production/llm/release`（mirror caller；路由证据 kais-aigc-platform `src/routes/production/llm/index.ts:135-147`；已核验 kap-llm.sh stop 仅 pkill、不触碰 lease —— 脚本内无任何 release 调用）。3 个回归测试。
+
 ### WR-04: ear cache dimension is boolean — audio_semantic.json content changes never invalidate the ear_on envelope
 
 **File:** `analysis/vision_seq_facets.py:210-219, 319-324`
 **Issue:** The ear question content depends on `audio_semantic.json` *content* (dialogue.text/emotion, sfx.events/description via `build_audio_context`), but the cache key records only `ear: bool`. If step 7 re-runs with changed route output (route cache version bump in `call_audio_analysis`, or the file regenerated after a route fix), the questions change while the key does not — stale RAW answers burned against the old audio context are served for the new questions. Unlike prompts, there is no manual knob (`PROMPT_VERSION` covers only ACTION/CAMERA text; bumping it to force ear re-burn also discards ear_off evidence).
 **Fix:** When `ear` is on, fold a cheap content fingerprint of the per-shot audio context into the key or envelope (e.g., `sha256(audio_ctx)[:8]` stored per shot alongside the answers, treated as part of the key match).
+
+**Outcome (fix pass 2026-08-19 UTC):** fixed @ 0523483 — `ear_ctx_fp`（sha256(audio_ctx)[:8]）随 ear_on 信封持久化并参与 load/save 匹配；audio_ctx 在预判阶段一次算好存 work item 复用。回归测试：对白内容改写（ear 开关不变）→ miss 重烧 + 新提问串含新对白。
 
 ## Info
 
