@@ -16,6 +16,28 @@
   * --force：客户端自身清 cache/产物后全量重渲。
   * warnings 双形 merge：[vision-seq] str 保留、上一轮 dict strip、新 dict 追加。
   * graceful-degrade：system_stats 非 200 → rc=0 + comfyui_unreachable dict warning。
+
+覆盖（20-02 Task 3 行为清单——VRAM guard / 抽样 / 降载，假 nvidia-smi + 假 ss +
+假 os.kill）：
+  * 批开始严格 gate：free=21000 → 拒整批（rc=0、零提交、vram_insufficient
+    detail 含 22528 与 top 占用者 pid）；free=23000 → 提交发生。
+  * eye 串行等待超时：total=24576/free=10855（used=13721 达 eye 阈值）+
+    --vram-wait-timeout=0 → blocked、零提交、detail 记 eye 等待超时、
+    第二次 /free 未发生（五步序中 eye 阻断在其之前）。
+  * 每镜 PID 归因（Pitfall 1 反自锁回归锚）：基线含 ComfyUI pid=100、批中
+    自身 18432MiB cache 驻留 → 不等待直接提交；新 foreign pid=999 13721MiB →
+    等待至超时 → warning + rc=0 优雅终止（cache 保留续跑）。
+  * TTS kill 定向：假 ss 含 :5110 pid=111 / :5111 pid=222 → SIGTERM 恰发往
+    {111,222}、无 pkill、before/after 双审计 warning；无监听 → 无 kill 调用、
+    仍记 after 审计 warning、批继续（no-op 安全）。
+  * /free 时机：POST /free 恰 2 次（kill 后 + 批开始前），payload 双布尔，
+    首次 /prompt 之后不再有 /free（批中每镜之间不调）。
+  * uniform_sample ep01 锚点清单逐项相等 + n≥N 全镜 + 小 n 锚点。
+  * 抽样在过滤之前：93 镜 uniform-20 落样含 shot 70（19.7s）→ 被
+    --max-shot-sec 10 跳过 → 实渲 19 + skipped.json 条目 + str warning。
+  * --regen-resolution：1344x768 跑 1 镜后换 896x512 重跑同镜重渲
+    （engine_version 联动 cache 失效 + workflow 宽高下发）；100x100/897x512/
+    非 WxH 形 SystemExit。
 """
 import importlib.util
 import json
@@ -63,9 +85,9 @@ class FakeClock:
 
 
 class _FakeProc:
-    def __init__(self, stdout=""):
+    def __init__(self, stdout="", returncode=0):
         self.stdout = stdout
-        self.returncode = 0
+        self.returncode = returncode
 
 
 def history_success(prompt_id: str, filename: str) -> dict:
@@ -79,8 +101,9 @@ def history_success(prompt_id: str, filename: str) -> dict:
 
 
 def ok_responses(n_shots: int) -> list:
-    """一次全 miss 成功批的 FakeHTTP 回放序列（gate + 每镜 prompt/history）。"""
-    res = [(200, {"system": "ok"})]
+    """一次全 miss 成功批的 FakeHTTP 回放序列（gate + guard 双 /free + 每镜
+    prompt/history——20-02 起 guard 在 gate 后消耗两次 /free 响应）。"""
+    res = [(200, {"system": "ok"})] + GUARD_FREES
     for i in range(n_shots):
         pid = f"pid-{i + 1:03d}"
         res.append((200, {"prompt_id": pid}))
@@ -88,13 +111,44 @@ def ok_responses(n_shots: int) -> list:
     return res
 
 
-def make_workdir(tmp_path, n_shots=5):
+# ── guard 假数据（20-02：假 nvidia-smi / 假 ss / 假 docker）─────────────────
+
+# ss -tlnp 假输出：:5110→pid 111（IndexTTS）/ :5111→pid 222（VoiceDesign），
+# 另含一条非 TTS 监听（:8188 ComfyUI——必须不被端口匹配误伤）。
+SS_WITH_TTS = (
+    "State Recv-Q Send-Q Local Address:Port Peer Address:Port Process\n"
+    "LISTEN 0 511 127.0.0.1:5110 0.0.0.0:* "
+    "users:((\"indextts25-server.py\",pid=111,fd=3))\n"
+    "LISTEN 0 511 127.0.0.1:5111 0.0.0.0:* "
+    "users:((\"python\",pid=222,fd=4))\n"
+    "LISTEN 0 128 127.0.0.1:8188 0.0.0.0:* "
+    "users:((\"python\",pid=9999,fd=5))\n")
+
+SS_EMPTY = "State Recv-Q Send-Q Local Address:Port Peer Address:Port Process\n"
+
+# nvidia-smi 假 stdout（query-gpu 形 "total, free"；compute-apps 形 "pid, used"）。
+NM_TOTAL_FREE_23000 = "24576, 23000"          # used=1576 < eye 阈值 → gate 过
+NM_TOTAL_FREE_21000 = "24576, 21000"          # free < 22528 → 批开始 gate 拒
+NM_TOTAL_FREE_EYE = "24576, 10855"            # used=13721 → eye lease 在跑
+NM_APPS_MUSIC3 = "1234, 676"                  # music3 常驻（top 占用者断言用）
+NM_APPS_SELF_18G = "100, 18432"               # ComfyUI 自身 cache 驻留（基线内）
+NM_APPS_WITH_FOREIGN = "100, 692\n999, 13721"  # 批中冒出的 foreign（基线外）
+
+# guard 五步序中两次 POST /free（kill 后 + 批开始前）的回放响应。
+GUARD_FREES = [(200, {"freed": True}), (200, {"freed": True})]
+
+
+def make_workdir(tmp_path, n_shots=5, duration_by_id=None):
     """最小 work_dir：shots.json + prompts.json（顶层是 list）+ 假 h264.mp4
-    （帧提取被 fake，几字节即可）。镜 duration 2.0s → length 网格保底 124。"""
+    （帧提取被 fake，几字节即可）。镜 duration 默认 2.0s（→ length 保底 124）；
+    duration_by_id 可按 id 覆盖时长（ep01 抽样用例给 shot 70 塞 19.7s）。"""
     work = tmp_path / "work"
     work.mkdir(parents=True)
-    shots = [{"id": i + 1, "start_sec": i * 2.0, "end_sec": i * 2.0 + 2.0,
-              "duration": 2.0} for i in range(n_shots)]
+    shots = []
+    for i in range(n_shots):
+        dur = float((duration_by_id or {}).get(i + 1, 2.0))
+        shots.append({"id": i + 1, "start_sec": i * 2.0,
+                      "end_sec": i * 2.0 + dur, "duration": dur})
     (work / "shots.json").write_text(
         json.dumps(shots, ensure_ascii=False), encoding="utf-8")
     prompts = [{"shot_id": s["id"], "start_sec": s["start_sec"],
@@ -123,9 +177,19 @@ def run_main(work, extra_args=None):
     return rc
 
 
-def patch_pipeline(monkeypatch, fake_http, mp4_bytes=b"x" * 2048):
-    """打满四个 patch 点：_http_json / subprocess.run（curl+ffmpeg 分发）/
-    time.sleep / _view_download（直写产物字节）。返回 subprocess 调用记录。"""
+def patch_pipeline(monkeypatch, fake_http, mp4_bytes=b"x" * 2048,
+                   ss_stdout="", gpu_mem=None, compute_apps_stdout="",
+                   docker_pid=None):
+    """打满 patch 点：_http_json / subprocess.run（curl+ffmpeg+ss+nvidia-smi+
+    docker 分发）/ time.sleep（不真等 15s）/ _view_download（直写产物字节）。
+    guard 相关参数（20-02）：
+    - ss_stdout：假 ss -tlnp stdout（None = 抛 OSError 模拟 ss 不可用探测失败）；
+    - gpu_mem：query-gpu 假 stdout（None/"" = nvidia-smi 无读数 → fail-open）；
+    - compute_apps_stdout：query-compute-apps 假 stdout；传 list = 逐次弹出后
+      停在末值（模拟「基线快照时无 foreign、批中冒出」的时序差）；
+    - docker_pid：docker inspect 主 PID 假 stdout（None = returncode 1 失败，
+      走 best-effort 忽略路径）。
+    返回 subprocess 调用记录。"""
     monkeypatch.setattr(h3m, "_http_json", fake_http)
     calls = []
 
@@ -138,6 +202,25 @@ def patch_pipeline(monkeypatch, fake_http, mp4_bytes=b"x" * 2048):
         if cmd[0] == "ffmpeg":
             dest = [a for a in cmd if a.endswith(".jpg")][-1]
             Path(dest).write_bytes(b"\xff\xd8fake-jpeg")
+            return _FakeProc("")
+        if cmd[0] == "ss":
+            if ss_stdout is None:
+                raise OSError("ss not available")
+            return _FakeProc(ss_stdout)
+        if cmd[0] == "nvidia-smi":
+            if any(a.startswith("--query-compute-apps") for a in cmd):
+                if isinstance(compute_apps_stdout, list):
+                    if len(compute_apps_stdout) > 1:
+                        return _FakeProc(compute_apps_stdout.pop(0))
+                    return _FakeProc(compute_apps_stdout[0])
+                return _FakeProc(compute_apps_stdout)
+            return _FakeProc(gpu_mem if gpu_mem is not None else "")
+        if cmd[0] == "docker":
+            if docker_pid is None:
+                return _FakeProc("", returncode=1)
+            return _FakeProc(str(docker_pid))
+        if cmd[0] == "pkill":
+            return _FakeProc("", returncode=1)     # 默认无命中（returncode 1）
         return _FakeProc("")
 
     monkeypatch.setattr(h3m.subprocess, "run", fake_run)
@@ -283,6 +366,7 @@ def test_history_error_branch(tmp_path, monkeypatch, capsys):
     work = make_workdir(tmp_path, n_shots=1)
     fake = FakeHTTP([
         (200, {"system": "ok"}),
+        *GUARD_FREES,
         (200, {"prompt_id": "pid-001"}),
         (200, {"pid-001": {"status": {"status_str": "error",
                                       "messages": ["execution error"]}}}),
@@ -301,7 +385,8 @@ def test_history_timeout(tmp_path, monkeypatch, capsys):
     """history 永不返回完成（瞬态 (0,None) continue）→ 轮询超时 → 单镜失败
     rc=0。FakeClock 前进时间避免真等。"""
     work = make_workdir(tmp_path, n_shots=1)
-    fake = FakeHTTP([(200, {"system": "ok"}), (200, {"prompt_id": "pid-001"})])
+    fake = FakeHTTP([(200, {"system": "ok"}), *GUARD_FREES,
+                     (200, {"prompt_id": "pid-001"})])
     patch_pipeline(monkeypatch, fake)
     monkeypatch.setattr(h3m.time, "time", FakeClock(step=5.0))
     assert run_main(work, ["--shot-timeout", "10"]) == 0
@@ -355,7 +440,7 @@ def test_prompt_version_change_invalidates(tmp_path, monkeypatch, capsys):
     prompts[0]["prompt_text"] += "改"
     (work / "prompts.json").write_text(
         json.dumps(prompts, ensure_ascii=False, indent=2), encoding="utf-8")
-    fake2 = FakeHTTP([(200, {"system": "ok"}),
+    fake2 = FakeHTTP([(200, {"system": "ok"}), *GUARD_FREES,
                       (200, {"prompt_id": "pid-001b"}),
                       (200, history_success("pid-001b", "kst_x_shot001_00002_.mp4"))])
     patch_pipeline(monkeypatch, fake2)
@@ -393,7 +478,7 @@ def test_resume_only_missing(tmp_path, monkeypatch, capsys):
         extra.append((200, {"prompt_id": f"pid-{sid:03d}"}))
         extra.append((200, history_success(f"pid-{sid:03d}",
                                            f"kst_x_shot{sid:03d}_00001_.mp4")))
-    fake2 = FakeHTTP([(200, {"system": "ok"})] + extra)
+    fake2 = FakeHTTP([(200, {"system": "ok"}), *GUARD_FREES] + extra)
     patch_pipeline(monkeypatch, fake2)
     assert run_main(work) == 0
     assert sum(u.endswith("/prompt") for u, _ in fake2.calls) == 2   # 只补缺失 2 镜
@@ -443,3 +528,222 @@ def test_warnings_dual_shape_merge(tmp_path):
     h3m.append_roundtrip_warnings(str(tmp_path), [])
     got3 = json.loads((sc / "warnings.json").read_text(encoding="utf-8"))["warnings"]
     assert got3 == ["[vision-seq] old"]              # 只剩陌生 str 条目
+
+
+# ── VRAM guard：批开始 gate / eye 等待 / 每镜 PID 归因（20-02）──────────────
+
+def read_warnings(work) -> list:
+    return json.loads((work / "route_cache" / "warnings.json")
+                      .read_text(encoding="utf-8"))["warnings"]
+
+
+def test_vram_batch_gate_refuses(tmp_path, monkeypatch, capsys):
+    """批开始严格 gate：free=21000 < 22528 → rc=0、零提交、vram_insufficient
+    warning detail 含 22528 与 top 占用者 pid（Pitfall 9）。"""
+    work = make_workdir(tmp_path, n_shots=2)
+    fake = FakeHTTP([(200, {"system": "ok"}), *GUARD_FREES])
+    patch_pipeline(monkeypatch, fake, gpu_mem=NM_TOTAL_FREE_21000,
+                   compute_apps_stdout=NM_APPS_MUSIC3)
+    assert run_main(work, ["--gpu-index", "1"]) == 0
+    assert not any(u.endswith("/prompt") for u, _ in fake.calls)   # 零提交
+    warns = read_warnings(work)
+    vram = [w for w in warns if isinstance(w, dict)
+            and w["code"] == "vram_insufficient"]
+    assert vram and "22528" in vram[-1]["detail"]
+    assert "21000" in vram[-1]["detail"] and "1234" in vram[-1]["detail"]  # top 占用者
+    out = capsys.readouterr().out
+    assert "guard 拒绝" in out and "graceful-degrade" in out
+
+
+def test_vram_batch_gate_passes(tmp_path, monkeypatch):
+    """free=23000（music3/ComfyUI idle 常驻后的实测量级）→ gate 过 → 提交发生。"""
+    work = make_workdir(tmp_path, n_shots=1)
+    fake = FakeHTTP(ok_responses(1))
+    patch_pipeline(monkeypatch, fake, gpu_mem=NM_TOTAL_FREE_23000)
+    assert run_main(work, ["--gpu-index", "1"]) == 0
+    assert sum(u.endswith("/prompt") for u, _ in fake.calls) == 1
+    assert (work / "roundtrip" / "shot_001_regen.mp4").is_file()
+
+
+def test_vram_batch_eye_wait_timeout(tmp_path, monkeypatch, capsys):
+    """批开始 eye 等待分支：used=13721（total-free）达 eye 阈值 +
+    --vram-wait-timeout=0 → 立即超时 blocked：rc=0、零提交、detail 记 eye
+    等待超时、第二次 /free 未发生（五步序中 eye 阻断在④之前）。"""
+    work = make_workdir(tmp_path, n_shots=2)
+    fake = FakeHTTP([(200, {"system": "ok"}), (200, {"freed": True})])
+    patch_pipeline(monkeypatch, fake, gpu_mem=NM_TOTAL_FREE_EYE)
+    assert run_main(work, ["--gpu-index", "1", "--vram-wait-timeout", "0"]) == 0
+    assert not any(u.endswith("/prompt") for u, _ in fake.calls)
+    assert sum(u.endswith("/free") for u, _ in fake.calls) == 1
+    warns = read_warnings(work)
+    assert any(isinstance(w, dict) and w["code"] == "vram_insufficient"
+               and "eye" in w["detail"] and "13721" in w["detail"]
+               for w in warns)
+    out = capsys.readouterr().out
+    assert "eye lease" in out and "超时" in out
+
+
+def test_vram_per_shot_own_cache_not_blocking(tmp_path, monkeypatch, capsys):
+    """Pitfall 1 反自锁回归锚：基线（compute-apps ∪ 容器主 PID）含 ComfyUI
+    pid=100；镜 2 时自身 18432MiB cache 驻留 → 不等待直接提交（PID 归因，
+    绝对值 free 复查在此水位下必自锁）。渲后水位 post_render_free_mib 留档。"""
+    work = make_workdir(tmp_path, n_shots=2)
+    fake = FakeHTTP(ok_responses(2))
+    patch_pipeline(monkeypatch, fake, gpu_mem=NM_TOTAL_FREE_23000,
+                   compute_apps_stdout=NM_APPS_SELF_18G, docker_pid=100)
+    assert run_main(work, ["--gpu-index", "1"]) == 0
+    assert sum(u.endswith("/prompt") for u, _ in fake.calls) == 2   # 两镜都直接提交
+    out = capsys.readouterr().out
+    assert "foreign" not in out                                   # 从未进入等待分支
+    assert "rendered=2" in out
+    meta = json.loads((work / "route_cache" / "h3_regen" / "shot_001.json")
+                      .read_text(encoding="utf-8"))
+    assert meta["post_render_free_mib"] == 23000                  # Open Q1 留档
+
+
+def test_vram_per_shot_foreign_blocks(tmp_path, monkeypatch, capsys):
+    """批中冒出 foreign（基线外 pid=999 占 13721MiB）→ 等待循环（sleep 已
+    patch）至 --vram-wait-timeout=0 → vram_insufficient warning（detail 含
+    foreign pid 与 free）+ rc=0 优雅终止，零提交、cache 保留续跑语义。"""
+    work = make_workdir(tmp_path, n_shots=2)
+    fake = FakeHTTP(ok_responses(2))
+    # list 逐次弹出：基线快照时只有 pid=100；每镜复查时冒出 pid=999
+    patch_pipeline(monkeypatch, fake, gpu_mem=NM_TOTAL_FREE_23000,
+                   compute_apps_stdout=["100, 692", NM_APPS_WITH_FOREIGN])
+    assert run_main(work, ["--gpu-index", "1", "--vram-wait-timeout", "0"]) == 0
+    assert not any(u.endswith("/prompt") for u, _ in fake.calls)
+    warns = read_warnings(work)
+    assert any(isinstance(w, dict) and w["code"] == "vram_insufficient"
+               and "999" in w["detail"] and "13721" in w["detail"]
+               for w in warns)
+    out = capsys.readouterr().out
+    assert "foreign GPU 占用" in out and "优雅终止" in out
+
+
+# ── TTS kill 定向 + /free 时机（20-02）──────────────────────────────────────
+
+def test_kill_tts_port_pid(tmp_path, monkeypatch):
+    """假 ss 含 :5110 pid=111 / :5111 pid=222 → os.kill(SIGTERM) 恰发往
+    {111,222}（:8188 ComfyUI 监听不误伤）、无 pkill、before/after 双审计
+    warning（detail 含 pid/端口）。"""
+    work = make_workdir(tmp_path, n_shots=1)
+    fake = FakeHTTP(ok_responses(1))
+    calls = patch_pipeline(monkeypatch, fake, ss_stdout=SS_WITH_TTS,
+                           gpu_mem=NM_TOTAL_FREE_23000)
+    kills = []
+    monkeypatch.setattr(h3m.os, "kill", lambda pid, sig: kills.append((pid, sig)))
+    assert run_main(work, ["--gpu-index", "1"]) == 0
+    assert {p for p, _ in kills} == {111, 222}
+    assert all(s == h3m.signal.SIGTERM for _, s in kills)
+    assert not any(c[0] == "pkill" for c in calls)          # 定向 kill，无回退
+    warns = read_warnings(work)
+    tts = [w for w in warns if isinstance(w, dict) and "TTS kill" in w["detail"]]
+    assert len(tts) == 2                                    # before + after
+    assert "pid=111" in tts[0]["detail"] and "pid=222" in tts[0]["detail"]
+    assert "5110" in tts[0]["detail"] and "5111" in tts[0]["detail"]
+
+
+def test_kill_tts_no_listeners(tmp_path, monkeypatch):
+    """假 ss 无 TTS 监听 → 无 os.kill、无 pkill 回退、仍记 after 审计
+    warning、批继续提交（TTS 当前未运行的 no-op 安全证明）。"""
+    work = make_workdir(tmp_path, n_shots=1)
+    fake = FakeHTTP(ok_responses(1))
+    calls = patch_pipeline(monkeypatch, fake, ss_stdout=SS_EMPTY,
+                           gpu_mem=NM_TOTAL_FREE_23000)
+    kills = []
+    monkeypatch.setattr(h3m.os, "kill", lambda pid, sig: kills.append((pid, sig)))
+    assert run_main(work, ["--gpu-index", "1"]) == 0
+    assert kills == []
+    assert not any(c[0] == "pkill" for c in calls)
+    assert sum(u.endswith("/prompt") for u, _ in fake.calls) == 1   # 批继续
+    warns = read_warnings(work)
+    assert any(isinstance(w, dict) and w["code"] == "vram_insufficient"
+               and "无监听" in w["detail"] for w in warns)
+
+
+def test_vram_free_called_twice(tmp_path, monkeypatch):
+    """POST /free 恰 2 次（kill 后 + 批开始前——CONTEXT 字面语义的机器证明），
+    payload 双布尔；首次 /prompt 之后不再有 /free（批中每镜之间不调）。"""
+    work = make_workdir(tmp_path, n_shots=2)
+    fake = FakeHTTP(ok_responses(2))
+    patch_pipeline(monkeypatch, fake, gpu_mem=NM_TOTAL_FREE_23000)
+    assert run_main(work, ["--gpu-index", "1"]) == 0
+    frees = [p for u, p in fake.calls if u.endswith("/free")]
+    assert len(frees) == 2
+    assert all(p == {"unload_models": True, "free_memory": True} for p in frees)
+    urls = [u for u, _ in fake.calls]
+    first_prompt = next(i for i, u in enumerate(urls) if u.endswith("/prompt"))
+    assert all(not u.endswith("/free") for u in urls[first_prompt:])   # 批中不调
+
+
+# ── 抽样 / 跳镜 / 降载（20-02）──────────────────────────────────────────────
+
+def test_uniform_sample_ep01():
+    """ep01 锚点（RESEARCH 实算清单）逐项相等 + n≥N 全镜 + 边界 n。"""
+    ids = list(range(1, 94))
+    exp = [1, 5, 10, 14, 19, 24, 28, 33, 38, 42, 47, 52, 56, 61, 66, 70,
+           75, 80, 84, 89]
+    assert h3m.uniform_sample(ids, 20) == exp
+    assert h3m.uniform_sample(ids, 93) == ids        # n == N → 全镜
+    assert h3m.uniform_sample(ids, 200) == ids       # n > N → 全镜
+    assert h3m.uniform_sample(ids, 2) == [1, 47]
+    assert h3m.uniform_sample(ids, 1) == [1]
+    assert h3m.uniform_sample(ids, 0) == ids         # 0 = 不抽样（CLI 默认）
+    assert h3m.uniform_sample([9, 3, 7], 2) == [3, 7]  # 非连续 id：先升序再映射
+
+
+def test_sample_before_filter(tmp_path, monkeypatch, capsys):
+    """抽样在 >10s 过滤之前（A6）：93 镜 uniform-20 落样含 shot 70（19.7s）
+    → 被 --max-shot-sec 10 跳过 → 实渲 19 + skipped.json 条目 + str warning。"""
+    work = make_workdir(tmp_path, n_shots=93, duration_by_id={70: 19.7})
+    fake = FakeHTTP(ok_responses(20))                # 20 落样，1 个被跳 → 用 19
+    patch_pipeline(monkeypatch, fake, gpu_mem=NM_TOTAL_FREE_23000)
+    assert run_main(work, ["--gpu-index", "1", "--sample-shots", "20",
+                           "--max-shot-sec", "10"]) == 0
+    assert sum(u.endswith("/prompt") for u, _ in fake.calls) == 19
+    skipped = json.loads((work / "route_cache" / "h3_regen" / "skipped.json")
+                         .read_text(encoding="utf-8"))
+    assert [e["shot_id"] for e in skipped] == [70]
+    assert skipped[0]["reason"] == "duration_over_max"
+    assert skipped[0]["duration_sec"] == pytest.approx(19.7)
+    out = capsys.readouterr().out
+    assert "[roundtrip] shot 70 skipped: 19.7s > max 10.0s" in out
+    assert "rendered=19" in out and "skipped=1" in out and "sampled=20" in out
+    assert any(isinstance(w, str) and "shot 70 skipped" in w
+               for w in read_warnings(work))
+
+
+def test_resolution_flag_invalidates_cache(tmp_path, monkeypatch):
+    """1344x768 跑 1 镜 → 换 --regen-resolution 896x512 重跑 → 同镜重渲
+    （engine_version 联动 cache 整体失效 + workflow 宽高真下发）。"""
+    work = make_workdir(tmp_path, n_shots=1)
+    patch_pipeline(monkeypatch, FakeHTTP(ok_responses(1)),
+                   gpu_mem=NM_TOTAL_FREE_23000)
+    assert run_main(work, ["--gpu-index", "1"]) == 0
+    meta1 = json.loads((work / "route_cache" / "h3_regen" / "shot_001.json")
+                       .read_text(encoding="utf-8"))
+    assert meta1["engine_version"] == "fl2va-int8/euler+simple/15/1344x768"
+    assert meta1["width"] == 1344 and meta1["height"] == 768
+    fake2 = FakeHTTP(ok_responses(1))
+    patch_pipeline(monkeypatch, fake2, gpu_mem=NM_TOTAL_FREE_23000)
+    assert run_main(work, ["--gpu-index", "1",
+                           "--regen-resolution", "896x512"]) == 0
+    assert sum(u.endswith("/prompt") for u, _ in fake2.calls) == 1   # 重渲
+    payload = [p for u, p in fake2.calls if u.endswith("/prompt")][0]
+    assert payload["prompt"]["20"]["inputs"]["width"] == 896
+    assert payload["prompt"]["20"]["inputs"]["height"] == 512
+    meta2 = json.loads((work / "route_cache" / "h3_regen" / "shot_001.json")
+                       .read_text(encoding="utf-8"))
+    assert meta2["engine_version"] == "fl2va-int8/euler+simple/15/896x512"
+
+
+def test_resolution_invalid_rejected(tmp_path, monkeypatch):
+    """畸形分辨率 fail-fast SystemExit（100x100 比例破 / 897x512 非 32 倍 /
+    非 WxH 形），且在任何 HTTP 动作之前（零 FakeHTTP 消耗）。"""
+    work = make_workdir(tmp_path, n_shots=1)
+    for bad in ("100x100", "897x512", "not-a-resolution"):
+        fake = FakeHTTP([])
+        patch_pipeline(monkeypatch, fake)
+        with pytest.raises(SystemExit):
+            run_main(work, ["--regen-resolution", bad])
+        assert fake.calls == []                      # gate 前退出，零 HTTP
