@@ -74,6 +74,7 @@ from __future__ import annotations
 import argparse
 import hashlib
 import json
+import math
 import os
 import sys
 from pathlib import Path
@@ -92,7 +93,10 @@ from engine_clients.qwen_eye_client import (  # noqa: E402
 # cache key 组成部分。PROMPT_VERSION 是 cache-invalidation 旋钮 —— ACTION_PROMPT/
 # CAMERA_PAIR_PROMPT 文案变了就 bump 此串 → 全部 cache miss（mirror ROUTE_VERSION 惯例）。
 CACHE_NAME = "vision_seq"
-PROMPT_VERSION = "vision-seq-v1"
+# v1 → v2（19-REVIEW CR-01）：时窗下界 floor→ceil 修正改变了帧号→图像的映射
+# （RAW cache 键 action_frame_N 按帧号索引），旧 cache 的答案是按偏移窗口烧的
+# —— bump 使全部 cache miss 重烧（设计行为；spike 实录约 15min/集）。
+PROMPT_VERSION = "vision-seq-v2"
 
 # frames_5fps 抽帧频率（run_pipeline --sample-fps 默认 5.0；detect_v3b 同值）。
 # 帧文件名 f%06d.jpg 从 1 起编号：f000001.jpg ≈ t=0s，f000N.jpg ≈ (N-1)/fps。
@@ -172,7 +176,11 @@ def select_uniform_frames(frames_dir: str, start_sec: float, end_sec: float,
         p for p in Path(frames_dir).glob("f[0-9]*.jpg")
         if "_ds" not in p.stem
     )
-    lo = int(start_sec * FRAME_SAMPLING_FPS) + 1     # 首个 ≥ start 的帧号
+    # CR-01（19-REVIEW）：帧 N 时间戳 = (N-1)/fps，首个 t ≥ start 的帧号是
+    # ceil(start*fps)+1 —— int() floor 会把 start*fps 非整数时窗前的最后一帧
+    # （通常是上一镜的硬切尾帧）拉进证据链。ceil 对网格对齐边界（整数
+    # start*fps）与旧行为完全一致。hi 用 floor 不变（inclusive-safe 侧）。
+    lo = math.ceil(start_sec * FRAME_SAMPLING_FPS) + 1   # 首个 t≥start 的帧号
     hi = int(end_sec * FRAME_SAMPLING_FPS) + 1       # 最后一个 ≤ end 的帧号上界
     window = [p for p in all_frames
               if lo <= _frame_number(p) <= hi]

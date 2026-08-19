@@ -202,6 +202,24 @@ def test_select_uniform_frames():
         assert vsf.select_uniform_frames(str(fd), 99.0, 100.0) == []
 
 
+def test_select_uniform_frames_fractional_window():
+    """CR-01 回归：分数时窗下界 = ceil(start*fps)+1（首个 t≥start 的帧），
+    绝不取窗前帧。[0.5, 2.5]@5fps：帧 3（t=0.4<0.5）是上一镜尾帧，必须从
+    帧 4（t=0.6）起；网格对齐边界（整数 start*fps）行为与 floor 版一致。"""
+    import tempfile
+    with tempfile.TemporaryDirectory() as td:
+        fd = Path(td)
+        for i in range(1, 21):
+            (fd / f"f{i:06d}.jpg").write_bytes(b"x")
+        picks = vsf.select_uniform_frames(str(fd), 0.5, 2.5)
+        assert picks[0].name == "f000004.jpg"    # ceil(0.5*5)+1 = 4
+        assert picks[-1].name == "f000013.jpg"   # floor(2.5*5)+1 = 13（t=2.4≤2.5）
+        assert all(int(p.stem.lstrip("f")) >= 4 for p in picks)
+        # 整数 start*fps（网格对齐）：floor 与 ceil 等价 —— [1.0, 2.0] → 帧 6..11
+        assert [p.name for p in vsf.select_uniform_frames(str(fd), 1.0, 2.0)] == [
+            f"f{i:06d}.jpg" for i in range(6, 12)]
+
+
 def test_existing_facet_not_overwritten(tmp_path, monkeypatch):
     """已有值的 action/camera（路由/人工产物）不被覆盖 —— 只填空缺语义。"""
     work, shots, pp = make_workdir(
@@ -240,7 +258,7 @@ def test_cache_hit_second_run_zero_engine_calls(tmp_path, monkeypatch):
     assert set(ck) == {"video_content_hash", "engine_name",
                        "engine_version", "prompt_version", "ear"}
     assert ck["ear"] is False
-    assert ck["prompt_version"] == "vision-seq-v1"
+    assert ck["prompt_version"] == "vision-seq-v2"
     # answers 存 RAW 逐帧/逐对答案；temporal 不产 merged_B
     assert env["answers"]["action_frame_1"] == "scene-answer"
     assert env["answers"]["camera_pair_1"] == "scene-answer"
