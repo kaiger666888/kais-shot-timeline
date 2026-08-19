@@ -1,0 +1,79 @@
+{
+  "schema_version": "1.2",
+  "shots": [
+    {
+      "shot_id": 1,
+      "start_sec": 0.0,
+      "end_sec": 6.73,
+      "duration": 6.73,
+      "dialogue": {
+        "text": "八 七 六，他有一百种方法逗我开心，每次都能成功，三 二"
+      },
+      "sfx": {
+        "events": [
+          "脚步声",
+          "鸟鸣"
+        ],
+        "description": "由远及近的脚步声"
+      }
+    },
+    {
+      "shot_id": 46,
+      "start_sec": 123.7,
+      "end_sec": 129.4,
+      "duration": 5.7,
+      "dialogue": {
+        "text": "看来你对僵尸武功还不够了解呀"
+      }
+    },
+    {
+      "shot_id": 66,
+      "start_sec": 175.23,
+      "end_sec": 182.17,
+      "duration": 6.94,
+      "dialogue": {
+        "text": "啊，raft，展嫂出根，以绝后患"
+      }
+    },
+    {
+      "shot_id": 70,
+      "start_sec": 186.6,
+      "end_sec": 206.33,
+      "duration": 19.73,
+      "dialogue": {
+        "text": "啊，啊，啊，啊，哦，不能，嗯，嗯，佐"
+      }
+    },
+    {
+      "shot_id": 88,
+      "start_sec": 260.2,
+      "end_sec": 273.2,
+      "duration": 13.0,
+      "dialogue": {
+        "text": "他是个好孩子，教他一些功夫吧，他很聪明 一学就会，一二三四，二三四，二三四五六七八，二三四五六七八，拜托了，六十一 六十二 六十三"
+      },
+      "sfx": {
+        "events": [
+          "呼吸声",
+          "衣料摩擦"
+        ],
+        "description": "紧张的近距离呼吸与衣料摩擦"
+      }
+    },
+    {
+      "shot_id": 91,
+      "start_sec": 281.27,
+      "end_sec": 296.37,
+      "duration": 15.1,
+      "dialogue": {
+        "text": "七十 九十七 九十八，九十九 一百，爸爸，爸爸 你在哪儿，爸爸"
+      },
+      "sfx": {
+        "events": [
+          "雨声"
+        ],
+        "description": "持续的中雨声，伴随远雷"
+      }
+    }
+  ]
+}
