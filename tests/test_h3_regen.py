@@ -38,6 +38,16 @@
   * --regen-resolution：1344x768 跑 1 镜后换 896x512 重跑同镜重渲
     （engine_version 联动 cache 失效 + workflow 宽高下发）；100x100/897x512/
     非 WxH 形 SystemExit。
+
+覆盖（20-03 Task 2 行为清单——roundtrip.json sidecar，fake probe_duration_sec
+固定值，不依赖真 ffprobe 速度）：
+  * degrade 中间态合法：regen-only + failed 混合（scores/verdict 全缺席）→
+    jsonschema 零错；schema_version 取 export_asset 单源 '1.3'。
+  * READ-merge：既有同 shot_id 条目的 scores/verdict（Phase 21 未来字段）
+    原样保留、regen 半边替换；陌生 shot_id 条目整条不动；JSON 损坏视为
+    空重建。
+  * 路径穿越拒绝：regen.path 含 .. → schema pattern 拒 → sys.exit 且
+    文件未写（T-20-08 写前自校验兜底）。
 """
 import importlib.util
 import json
@@ -46,6 +56,7 @@ import sys
 from pathlib import Path
 
 import pytest
+from jsonschema import Draft202012Validator
 
 REPO_ROOT = Path(__file__).resolve().parent.parent
 
@@ -747,3 +758,103 @@ def test_resolution_invalid_rejected(tmp_path, monkeypatch):
         with pytest.raises(SystemExit):
             run_main(work, ["--regen-resolution", bad])
         assert fake.calls == []                      # gate 前退出，零 HTTP
+
+
+# ── roundtrip.json sidecar（20-03：schema 合法性 / READ-merge / 穿越拒绝）──
+
+VCH_EP01 = "ece64d62bcbc534a"
+
+
+def read_sidecar(work) -> dict:
+    return json.loads((work / "roundtrip.json").read_text(encoding="utf-8"))
+
+
+def validate_sidecar(data: dict) -> list:
+    schema = json.loads(h3m.SCHEMA_PATH.read_text(encoding="utf-8"))
+    return list(Draft202012Validator(schema).iter_errors(data))
+
+
+def sidecar_result(sid: int, mp4: str, **over) -> dict:
+    """rendered/cache-hit 镜的 results 元素（cache meta + shot_id + mp4）。"""
+    meta = {"video_content_hash": VCH_EP01, "engine_name": "comfyui-fl2va",
+            "engine_version": "fl2va-int8/euler+simple/15/896x512",
+            "prompt_version": "ab12cd34", "width": 896, "height": 512}
+    meta.update(over)
+    return dict(meta, shot_id=sid, mp4=mp4)
+
+
+def test_sidecar_schema_valid_degenerate(tmp_path, monkeypatch):
+    """degrade 中间态合法（Open Q2）：regen-only + failed 混合、scores/verdict
+    全缺席 → jsonschema 零错；schema_version 取 export_asset 单源 '1.3'；
+    duration_sec 来自 probe（fake 固定值）。"""
+    monkeypatch.setattr(h3m, "probe_duration_sec", lambda p: 5.25)
+    mp4 = tmp_path / "roundtrip" / "shot_001_regen.mp4"
+    mp4.parent.mkdir()
+    mp4.write_bytes(b"x" * 2048)
+    entries = h3m.build_sidecar_entries(
+        [sidecar_result(1, str(mp4)), {"shot_id": 2, "error": "render timeout"}],
+        VCH_EP01, 896, 512)
+    h3m.write_roundtrip_sidecar(str(tmp_path), entries)
+    data = read_sidecar(tmp_path)
+    assert validate_sidecar(data) == []
+    assert data["schema_version"] == "1.3"           # export_asset 单源
+    by = {s["shot_id"]: s for s in data["shots"]}
+    assert by[1]["regen"]["path"] == "roundtrip/shot_001_regen.mp4"
+    assert by[1]["regen"]["duration_sec"] == 5.25
+    assert by[1]["regen"]["video_content_hash"] == VCH_EP01
+    assert by[2]["status"] == {"state": "failed", "error": "render timeout"}
+
+
+def test_sidecar_merge_preserves_future_fields(tmp_path, monkeypatch):
+    """READ-merge：既有同 shot_id 条目的 scores/verdict（Phase 21 未来字段）
+    原样保留、regen 半边替换为新值；陌生 shot_id 条目整条不动；JSON 损坏
+    视为空重建（Phase 18 决策：挂载前仅 JSON-parse）。"""
+    monkeypatch.setattr(h3m, "probe_duration_sec", lambda p: 0.0)
+    pre = {"schema_version": "1.3", "shots": [
+        {"shot_id": 1,
+         "regen": {"path": "roundtrip/shot_001_regen.mp4",
+                   "video_content_hash": "0" * 16, "engine_name": "old-engine",
+                   "engine_version": "old-version", "prompt_version": "old-pv"},
+         "scores": {"midframe_sim": {"score": 0.9, "model": "clip"}},
+         "verdict": {"decision": "accepted", "source": "human"}},
+        {"shot_id": 7, "scores": {"judge": {
+            "attribution": "prompt_faithful", "confidence": 0.8,
+            "reason": "运动贴合"}}}]}
+    (tmp_path / "roundtrip.json").write_text(
+        json.dumps(pre, ensure_ascii=False), encoding="utf-8")
+    results = [sidecar_result(1, str(tmp_path / "roundtrip" / "shot_001_regen.mp4"))]
+    h3m.write_roundtrip_sidecar(
+        str(tmp_path), h3m.build_sidecar_entries(results, VCH_EP01, 896, 512))
+    data = read_sidecar(tmp_path)
+    assert validate_sidecar(data) == []
+    by = {s["shot_id"]: s for s in data["shots"]}
+    assert set(by) == {1, 7}
+    assert by[1]["scores"] == pre["shots"][0]["scores"]      # Phase 21 字段保留
+    assert by[1]["verdict"] == pre["shots"][0]["verdict"]
+    assert by[7]["scores"] == pre["shots"][1]["scores"]      # 陌生条目不动
+    regen = by[1]["regen"]                                   # regen 半边已替换
+    assert regen["engine_version"] == "fl2va-int8/euler+simple/15/896x512"
+    assert regen["prompt_version"] == "ab12cd34"
+    assert regen["video_content_hash"] == VCH_EP01
+    # JSON 损坏 → 空重建（既有条目不救回——Phase 18 挂载前仅 JSON-parse 决策）
+    (tmp_path / "roundtrip.json").write_text("{corrupt", encoding="utf-8")
+    h3m.write_roundtrip_sidecar(
+        str(tmp_path), h3m.build_sidecar_entries(results, VCH_EP01, 896, 512))
+    data2 = read_sidecar(tmp_path)
+    assert [s["shot_id"] for s in data2["shots"]] == [1]
+    assert validate_sidecar(data2) == []
+
+
+def test_sidecar_refuses_invalid_path(tmp_path, monkeypatch):
+    """regen.path 含 ..（路径穿越）→ schema pattern 拒 → sys.exit 且文件
+    未写（T-20-08：写前 Draft202012Validator 全量自校验是客户端自构造
+    path 之外的兜底）。"""
+    monkeypatch.setattr(h3m, "probe_duration_sec", lambda p: 1.0)
+    entries = [{"shot_id": 1, "regen": {
+        "path": "roundtrip/../../etc/shot_001_regen.mp4",
+        "video_content_hash": "a" * 16, "engine_name": "comfyui-fl2va",
+        "engine_version": "v", "prompt_version": "p",
+        "duration_sec": 1.0, "width": 896, "height": 512}}]
+    with pytest.raises(SystemExit):
+        h3m.write_roundtrip_sidecar(str(tmp_path), entries)
+    assert not (tmp_path / "roundtrip.json").exists()        # 拒绝落盘
