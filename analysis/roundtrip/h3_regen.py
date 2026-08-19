@@ -11,10 +11,11 @@
 算法步骤
 --------
 1. 载入 shots.json（分割权威镜列表）+ prompts.json（按 shot_id join prompt_text）；
-2. --force 时显式清单清除本 step 的 cache 与产物；
-3. ComfyUI 可达性 gate（GET /system_stats 非 200 → 结构化 warning + exit 0，
+2. ComfyUI 可达性 gate（GET /system_stats 非 200 → 结构化 warning + exit 0，
    graceful-degrade）——标准序第一位（ComfyUI down 时先降级退出，不白杀 TTS、
-   不空轮 eye lease）；
+   不空轮 eye lease，**更不执行 --force 破坏性清除**——CR-02：引擎确认可用
+   之前 cache/产物/sidecar 一个字节都不动）；
+3. --force 时显式清单清除本 step 的 cache 与产物（gate 之后才执行）；
 4. 批开始 VRAM guard 五步固定序（kill TTS → /free → eye 等待 → /free → 严格
    gate，见下「VRAM guard 语义」）；
 5. 批循环逐镜：每镜提交前 PID 归因复查 → 4-tuple cache 预判 → miss 则 ffmpeg
@@ -1042,6 +1043,26 @@ def main() -> int:
           f"待处理镜数={len(shots)}（缺 prompt_text 跳过 {len(join_warnings)} 镜）")
     pending_warnings: list = list(join_warnings)
 
+    # 分辨率解析 + 校验（CLI fail-fast：非法值在任何 guard 动作/HTTP 之前退出）。
+    width, height = parse_resolution(args.regen_resolution)
+    if not validate_resolution(width, height):
+        sys.exit(f"{STEP_TAG} --regen-resolution {args.regen_resolution} 非法"
+                 f"（需 %32==0 + 严格 7:4 + 面积≤{MAX_PIXELS}；"
+                 f"如 {DEFAULT_WIDTH}x{DEFAULT_HEIGHT} / 896x512）")
+    engine_version = build_engine_version(width, height)
+
+    # ComfyUI 可达性 gate（标准序第一位：ComfyUI down 时先降级退出，不白杀 TTS、
+    # 不空轮 eye lease，**更不执行 --force 破坏性清除**——CR-02：引擎确认可用
+    # 之前 cache/产物/sidecar 一个字节都不动）→ --force 清单清除 → 抽样/过滤
+    # → batch_start_guard → 批循环（20-01 标准序 + CR-02 重排）。
+    status, _body = _http_json(f"{args.comfy_url}/system_stats")
+    if status != 200:
+        pending_warnings.append({"code": "comfyui_unreachable",
+                                 "detail": f"system_stats status={status}"})
+        append_roundtrip_warnings(work_dir, pending_warnings)
+        print(f"{STEP_TAG} ComfyUI 不可达（status={status}）—— graceful-degrade 退出")
+        return 0
+
     if args.force:
         import shutil
         force_cache_dir = os.path.join(work_dir, "route_cache", "h3_regen")
@@ -1054,16 +1075,10 @@ def main() -> int:
             os.unlink(force_sidecar)
         print(f"{STEP_TAG} [force] 已清除 {force_cache_dir} / {force_out_dir} / {force_sidecar}")
 
-    # 分辨率解析 + 校验（CLI fail-fast：非法值在任何 guard 动作/HTTP 之前退出）。
-    width, height = parse_resolution(args.regen_resolution)
-    if not validate_resolution(width, height):
-        sys.exit(f"{STEP_TAG} --regen-resolution {args.regen_resolution} 非法"
-                 f"（需 %32==0 + 严格 7:4 + 面积≤{MAX_PIXELS}；"
-                 f"如 {DEFAULT_WIDTH}x{DEFAULT_HEIGHT} / 896x512）")
-    engine_version = build_engine_version(width, height)
-
     # 抽样 → 时长过滤（顺序锁定：先抽样后过滤——A6 语义：抽样代表性不被过滤
-    # 顺序扭曲；ep01 锚点 shot 70 落样后被 max-shot-sec 跳过 → 实渲 19）。
+    # 顺序扭曲；ep01 锚点 shot 70 落样后被 max-shot-sec 跳过 → 实渲 19。
+    # 放在 --force 之后：force 清掉旧 skipped.json 后由本轮回写，清单始终
+    # 反映最新一轮的过滤决定）。
     sampled_count = 0
     if args.sample_shots > 0:
         all_count = len(shots)
@@ -1088,16 +1103,6 @@ def main() -> int:
             else:
                 kept_shots.append(s)
         shots = kept_shots
-
-    # ComfyUI 可达性 gate（标准序第一位：ComfyUI down 时先降级退出，不白杀 TTS、
-    # 不空轮 eye lease）→ batch_start_guard → 批循环（20-01 注释锁定的标准序）。
-    status, _body = _http_json(f"{args.comfy_url}/system_stats")
-    if status != 200:
-        pending_warnings.append({"code": "comfyui_unreachable",
-                                 "detail": f"system_stats status={status}"})
-        append_roundtrip_warnings(work_dir, pending_warnings)
-        print(f"{STEP_TAG} ComfyUI 不可达（status={status}）—— graceful-degrade 退出")
-        return 0
 
     # 批开始 VRAM guard（五步固定序，见模块 docstring）。blocked → 优雅退出
     # exit 0（graceful-degrade：vram_insufficient warning，cache 保留续跑语义）。

@@ -513,6 +513,28 @@ def test_client_force_rerenders_all(tmp_path, monkeypatch, capsys):
     assert "cache hit" not in out
 
 
+def test_force_with_engine_down_preserves_everything(tmp_path, monkeypatch, capsys):
+    """CR-02 回归锚：--force + system_stats 非 200 → 破坏性清除未执行——
+    cache meta / mp4 产物 / roundtrip.json 全部原样保留，rc=0 优雅降级。"""
+    work = make_workdir(tmp_path, n_shots=1)
+    patch_pipeline(monkeypatch, FakeHTTP(ok_responses(1)))
+    assert run_main(work) == 0
+    mp4_before = (work / "roundtrip" / "shot_001_regen.mp4").read_bytes()
+    meta_before = (work / "route_cache" / "h3_regen" / "shot_001.json") \
+        .read_text(encoding="utf-8")
+    fake2 = FakeHTTP([(0, "connection refused")])
+    patch_pipeline(monkeypatch, fake2)
+    assert run_main(work, ["--force"]) == 0
+    out = capsys.readouterr().out
+    assert "graceful-degrade" in out and "[force]" not in out   # 清除未执行
+    assert len(fake2.calls) == 1                                 # 只有 gate 探测
+    # 三个破坏目标全部完好
+    assert (work / "roundtrip" / "shot_001_regen.mp4").read_bytes() == mp4_before
+    assert (work / "route_cache" / "h3_regen" / "shot_001.json") \
+        .read_text(encoding="utf-8") == meta_before
+    assert (work / "roundtrip.json").is_file()
+
+
 # ── warnings 双形 merge ─────────────────────────────────────────────────────
 
 def test_warnings_dual_shape_merge(tmp_path):

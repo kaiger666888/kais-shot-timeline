@@ -84,6 +84,8 @@ Add a regression test mirroring this exact three-run sequence (current suite has
 ```
 (No existing test pins the current order — `test_client_force_rerenders_all` uses a healthy FakeHTTP, so the reorder is safe. Add a test: `--force` + non-200 gate → files still present.)
 
+**Outcome (fix):** FIXED — `--force` block moved to immediately after the `system_stats` gate (before sampling/filter/guard). Engine-down degrade now exits with cache, `roundtrip/`, and `roundtrip.json` byte-identical. One deliberate adaptation: the sampling/`--max-shot-sec` filter (which writes `skipped.json` under `route_cache/h3_regen/`) was moved to *after* the force clear, so a `--force` run rewrites the skipped list for the new round instead of having it rmtree'd after being written. Module docstring step list updated. Regression anchor: `test_force_with_engine_down_preserves_everything`.
+
 ## Warnings
 
 ### WR-01: `--force` deletes `roundtrip.json` wholesale, violating the "rejected 永不删除" sidecar invariant
