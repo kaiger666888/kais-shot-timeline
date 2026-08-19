@@ -2,9 +2,9 @@
 gsd_state_version: 1.0
 milestone: v1.3
 milestone_name: Round-trip Validation（逆推→复现→比对闭环数据集）
-status: executing
-stopped_at: "20-03 COMPLETE（Task 3 目视抽检 Kai approved 2026-08-20）— Phase 20 三 plan 收口，REGEN-01..04 全勾；next: /gsd:plan-phase 21（或 Kai 指令启动 overnight uniform-20 前置批）"
-last_updated: "2026-08-20"
+status: ready_to_plan
+stopped_at: Phase 20 complete (3/3) — ready to discuss Phase 21
+last_updated: 2026-08-19T21:28:56.106Z
 last_activity: 2026-08-20
 progress:
   total_phases: 5
@@ -21,14 +21,14 @@ progress:
 See: .planning/PROJECT.md (updated 2026-08-19)
 
 **Core value:** 把成片解构成可导航、多轨道、带语义的分镜资产（分镜 + 分离音轨 + 对白 + 镜头语言/动作/场景 prompt + 跨镜角色/道具注册表 + 三模态音频语义），且形态可移植——能作为无限画布等下游消费者的「最终资产集合形态」被直接消费。
-**Current focus:** Phase 21 — Scorer + 阈值校准（Phase 20 已收口 2026-08-20）
+**Current focus:** Phase 21 — scorer + 阈值校准
 
 ## Current Position
 
-Phase: 20 (h3 复现客户端) — COMPLETE (3/3 plans)
-Plan: 3 of 3 (Task 3 目视抽检 Kai approved 2026-08-20)
-Status: Phase 20 收口 — REGEN-01..04 全勾；next = /gsd:plan-phase 21（Scorer + 阈值校准，0/TBD 未规划）
-Last activity: 2026-08-20
+Phase: 21
+Plan: Not started
+Status: Ready to plan
+Last activity: 2026-08-19
 
 Progress: [██████████] 100%（已规划 plan 维度 9/9；milestone phase 维度 4/5）
 
@@ -36,7 +36,7 @@ Progress: [██████████] 100%（已规划 plan 维度 9/9；mi
 
 **Velocity (cumulative historical):**
 
-- Total plans completed: 71 (v1.0: 7, v1.1: 16, v1.2: 20 — all archived)
+- Total plans completed: 74 (v1.0: 7, v1.1: 16, v1.2: 20 — all archived)
 - v1.3 plans completed: 9
 
 **By Phase (v1.3 — populates as plans complete):**
@@ -48,6 +48,7 @@ Progress: [██████████] 100%（已规划 plan 维度 9/9；mi
 | 20. h3 复现客户端 | 3/3 | ~41min | ~14m |
 | 21. Scorer + 阈值校准 | 0/TBD | - | - |
 | 22. Dataset Export + Integration | 0/TBD | - | - |
+| 20 | 3 | - | - |
 
 **Plan metrics (per executed plan):**
 
