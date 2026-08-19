@@ -858,3 +858,71 @@ def test_sidecar_refuses_invalid_path(tmp_path, monkeypatch):
     with pytest.raises(SystemExit):
         h3m.write_roundtrip_sidecar(str(tmp_path), entries)
     assert not (tmp_path / "roundtrip.json").exists()        # 拒绝落盘
+
+
+# ── CR-01：下载原子性 + stale meta/截断产物的 cache-hit 拦截 ────────────────
+
+def test_view_download_atomic_on_mid_transfer_failure(tmp_path, monkeypatch):
+    """下载中途异常（IncompleteRead 形）→ dest 不存在、.part 清理、异常上抛
+    ——半截文件永不占住最终路径（CR-01 主张）。"""
+    dest = tmp_path / "shot_001_regen.mp4"
+
+    class _Boom(Exception):
+        pass
+
+    class _Resp:
+        def __enter__(self):
+            return self
+
+        def __exit__(self, *a):
+            return False
+
+        def read(self):
+            raise _Boom("IncompleteRead(0 bytes read)")
+
+    monkeypatch.setattr(h3m.urllib.request, "urlopen",
+                        lambda url, timeout=None: _Resp())
+    with pytest.raises(_Boom):
+        h3m._view_download({"filename": "a.mp4", "subfolder": ""},
+                           "http://127.0.0.1:8188", str(dest))
+    assert not dest.exists()                          # 最终路径从未被触碰
+    assert not (tmp_path / "shot_001_regen.mp4.part").exists()   # .part 已清理
+
+
+def test_view_download_success_leaves_no_part(tmp_path, monkeypatch):
+    """成功路径：字节经 .part 落位 dest，无 .part 残留。"""
+    dest = tmp_path / "shot_001_regen.mp4"
+
+    class _Resp:
+        def __enter__(self):
+            return self
+
+        def __exit__(self, *a):
+            return False
+
+        def read(self):
+            return b"mp4-bytes" * 512
+
+    monkeypatch.setattr(h3m.urllib.request, "urlopen",
+                        lambda url, timeout=None: _Resp())
+    h3m._view_download({"filename": "a.mp4", "subfolder": ""},
+                       "http://127.0.0.1:8188", str(dest))
+    assert dest.read_bytes() == b"mp4-bytes" * 512
+    assert not (tmp_path / "shot_001_regen.mp4.part").exists()
+
+
+def test_truncated_mp4_rejected_as_cache_hit(tmp_path, monkeypatch, capsys):
+    """CR-01 三步序列回归锚：Run A 渲染成功 → mp4 被外改/截断（size 仍 >1KB）
+    → Run C 虽 4-tuple 全等、size 过线，mp4_sha256 不一致 → miss 重渲
+    （旧实现在此 true false-hit，坏视频流入 roundtrip.json）。"""
+    work = make_workdir(tmp_path, n_shots=1)
+    patch_pipeline(monkeypatch, FakeHTTP(ok_responses(1)))
+    assert run_main(work) == 0
+    mp4 = work / "roundtrip" / "shot_001_regen.mp4"
+    mp4.write_bytes(b"y" * 4096)                      # 截断/外改（>1KB 过 size 线）
+    fake2 = FakeHTTP(ok_responses(1))
+    patch_pipeline(monkeypatch, fake2)
+    assert run_main(work) == 0
+    assert sum(u.endswith("/prompt") for u, _ in fake2.calls) == 1   # miss → 重渲
+    out = capsys.readouterr().out
+    assert "cache hit" not in out and "rendered=1" in out

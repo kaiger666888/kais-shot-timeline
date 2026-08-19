@@ -66,6 +66,8 @@ def cache_is_hit(meta: dict | None, mp4_path: str) -> bool:
 ```
 Add a regression test mirroring this exact three-run sequence (current suite has no stale-meta/partial-file case).
 
+**Outcome (fix):** FIXED — `_view_download` now writes `dest + ".part"` and `os.replace`s into place only after a complete read (mid-transfer failure unlinks the `.part` and re-raises; final path never holds a partial file). `cache_is_hit` additionally verifies stored `mp4_sha256` on hit (backward-compatible: metas without the field degrade to size-only). Docstring "cache 惯例" updated. Regression anchors added: `test_view_download_atomic_on_mid_transfer_failure`, `test_view_download_success_leaves_no_part`, `test_truncated_mp4_rejected_as_cache_hit` (the three-run sequence).
+
 ### CR-02: `--force` destroys cache/artifacts/sidecar before the ComfyUI reachability gate
 
 **File:** `analysis/roundtrip/h3_regen.py:1027-1037` (force clear) vs `1076-1082` (gate)

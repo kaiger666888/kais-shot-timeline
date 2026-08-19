@@ -61,8 +61,9 @@ cache 惯例
 - 元数据 work_dir/route_cache/h3_regen/shot_{NNN}.json（4-tuple：video_content_hash
   + engine_name + engine_version + prompt_version；另存 prompt_id/seed/length/
   width/height/mp4_sha256/rendered_at），与 mp4 实体分离；
-- hit = 4-tuple 全等 + mp4 存在且 size>1KB（不做 ffprobe 深检——损坏由
-  Phase 21 scorer 自然暴露）；
+- hit = 4-tuple 全等 + mp4 存在且 size>1KB +（meta 存档时）mp4_sha256 一致
+  （CR-01：半截/外改产物拒绝命中；不做 ffprobe 深检——编码级损坏由
+  Phase 21 scorer 自然暴露）；下载走 .part + os.replace 原子落位；
 - prompt_version = sha256(该镜 prompt_text)[:8]（per-shot，改一字即重渲该镜）；
 - engine_version 冻结 model+sampler+scheduler+steps+resolution
   （"fl2va-int8/euler+simple/15/{W}x{H}"），cache 不设第 5 维。
@@ -515,16 +516,28 @@ def sanitize_view_filename(filename: str) -> bool:
 
 
 def _view_download(item: dict, comfy_url: str, dest: str) -> None:
-    """GET /view?filename=&subfolder=&type=output → 二进制直写 dest
-    （实测 byte-identical 路径；timeout 300s 覆盖 ~10-50MB mp4）。"""
+    """GET /view?filename=&subfolder=&type=output → 二进制写 .part 临时文件，
+    全量读完才 os.replace 落位 dest（CR-01：半截文件**永不占住最终路径**——
+    中途 IncompleteRead/timeout/连接重置只留下可清理的 .part，上一轮完整产物
+    与 cache meta 不受污染）。实测 byte-identical 路径；timeout 300s 覆盖
+    ~10-50MB mp4。"""
     q = urllib.parse.urlencode({
         "filename": item.get("filename", ""),
         "subfolder": item.get("subfolder", ""),
         "type": "output",
     })
-    with urllib.request.urlopen(f"{comfy_url}/view?{q}", timeout=300) as resp, \
-            open(dest, "wb") as f:
-        f.write(resp.read())
+    tmp = dest + ".part"
+    try:
+        with urllib.request.urlopen(f"{comfy_url}/view?{q}", timeout=300) as resp, \
+                open(tmp, "wb") as f:
+            f.write(resp.read())
+        os.replace(tmp, dest)
+    except BaseException:
+        try:
+            os.unlink(tmp)          # 半截 .part 不残留（dest 从未被触碰）
+        except OSError:
+            pass
+        raise
 
 
 # ─── 4-tuple cache（REGEN-02）───────────────────────────────────────────────
@@ -566,13 +579,18 @@ def cache_read(shot_id: int, work_dir: str, key4: dict) -> dict | None:
 
 
 def cache_is_hit(meta: dict | None, mp4_path: str) -> bool:
-    """hit = meta 非 None 且 mp4 实体存在且 size>MIN_MP4_BYTES。
-    不做 ffprobe 深检（CONTEXT 锁定——损坏由 Phase 21 scorer 自然暴露）。"""
+    """hit = meta 非 None 且 mp4 实体存在且 size>MIN_MP4_BYTES 且（meta 存档
+    mp4_sha256 时）哈希一致（CR-01：下载截断/外改产物在 hit 口即拦截——深检
+    成本 ~一次 50MB 顺序读，远低于重渲；旧版 meta 无此字段时退化为 size-only）。
+    ffprobe 级编码损坏仍不检（CONTEXT 锁定——由 Phase 21 scorer 自然暴露）。"""
     if not isinstance(meta, dict):
         return False
     if not os.path.isfile(mp4_path):
         return False
-    return os.path.getsize(mp4_path) > MIN_MP4_BYTES
+    if os.path.getsize(mp4_path) <= MIN_MP4_BYTES:
+        return False
+    expected = meta.get("mp4_sha256")
+    return not expected or _file_sha256(mp4_path) == expected
 
 
 def _file_sha256(path: str, chunk: int = 1024 * 1024) -> str:
