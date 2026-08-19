@@ -63,7 +63,8 @@ cache 惯例
   + engine_name + engine_version + prompt_version；另存 prompt_id/seed/length/
   width/height/mp4_sha256/rendered_at），与 mp4 实体分离；
 - hit = 4-tuple 全等 + mp4 存在且 size>1KB +（meta 存档时）mp4_sha256 一致
-  （CR-01：半截/外改产物拒绝命中；不做 ffprobe 深检——编码级损坏由
+  + length 与当前 duration 网格值一致（CR-01：半截/外改产物拒绝命中；
+  WR-02：重分割边界漂移即重渲。不做 ffprobe 深检——编码级损坏由
   Phase 21 scorer 自然暴露）；下载走 .part + os.replace 原子落位；
 - prompt_version = sha256(该镜 prompt_text)[:8]（per-shot，改一字即重渲该镜）；
 - engine_version 冻结 model+sampler+scheduler+steps+resolution
@@ -579,17 +580,23 @@ def cache_read(shot_id: int, work_dir: str, key4: dict) -> dict | None:
     return meta
 
 
-def cache_is_hit(meta: dict | None, mp4_path: str) -> bool:
+def cache_is_hit(meta: dict | None, mp4_path: str,
+                 expected_length: int | None = None) -> bool:
     """hit = meta 非 None 且 mp4 实体存在且 size>MIN_MP4_BYTES 且（meta 存档
     mp4_sha256 时）哈希一致（CR-01：下载截断/外改产物在 hit 口即拦截——深检
-    成本 ~一次 50MB 顺序读，远低于重渲；旧版 meta 无此字段时退化为 size-only）。
-    ffprobe 级编码损坏仍不检（CONTEXT 锁定——由 Phase 21 scorer 自然暴露）。"""
+    成本 ~一次 50MB 顺序读，远低于重渲；旧版 meta 无此字段时退化为 size-only）
+    且（给 expected_length 时）存档 length 与当前帧数网格值一致（WR-02：
+    video_content_hash 只钉视频不钉分割——重分割后边界漂移的镜必须重渲，
+    绝不复用旧 start/end_sec 首/尾帧渲染）。ffprobe 级编码损坏仍不检
+    （CONTEXT 锁定——由 Phase 21 scorer 自然暴露）。"""
     if not isinstance(meta, dict):
         return False
     if not os.path.isfile(mp4_path):
         return False
     if os.path.getsize(mp4_path) <= MIN_MP4_BYTES:
         return False
+    if expected_length is not None and meta.get("length") != expected_length:
+        return False                        # 镜边界变了 → 该镜重渲
     expected = meta.get("mp4_sha256")
     return not expected or _file_sha256(mp4_path) == expected
 
@@ -1178,8 +1185,12 @@ def main() -> int:
             "prompt_version": prompt_version_for(shot["prompt_text"]),
         }
         mp4 = _mp4_path(sid, work_dir)
+        # length 在 cache 预判**之前**算（WR-02：4-tuple 只钉视频不钉分割——
+        # 同源视频重分割后，存档 length 与当前 duration 网格值不一致即 miss
+        # 重渲，绝不复用旧边界首/尾帧的渲染）。
+        length = h3_frame_count(shot["duration"])
         hit_meta = cache_read(sid, work_dir, key4)
-        if cache_is_hit(hit_meta, mp4):
+        if cache_is_hit(hit_meta, mp4, expected_length=length):
             cache_hits += 1
             # cache-hit 镜也进 sidecar results（从 cache meta 重建条目——
             # 断点续跑后 roundtrip.json 完整性的关键）。
@@ -1204,7 +1215,6 @@ def main() -> int:
                   f"（cache 保留续跑）")
             break
         try:
-            length = h3_frame_count(shot["duration"])
             seed = derive_seed(vch, sid)
             ff_path, lf_path = extract_endpoint_frames(src_video, shot, vch, frames_dir)
             ff_name = upload_image(ff_path, args.comfy_url)

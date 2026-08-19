@@ -987,3 +987,32 @@ def test_truncated_mp4_rejected_as_cache_hit(tmp_path, monkeypatch, capsys):
     assert sum(u.endswith("/prompt") for u, _ in fake2.calls) == 1   # miss → 重渲
     out = capsys.readouterr().out
     assert "cache hit" not in out and "rendered=1" in out
+
+
+# ── WR-02：length 参与命中比对——重分割不复用旧边界渲染 ─────────────────────
+
+def test_resegmentation_same_prompt_invalidates(tmp_path, monkeypatch, capsys):
+    """WR-02：同源视频（vch 不变）重分割——shot 1 边界 2.0s→5.5s（length
+    124→141）而 prompt_text 恰未变 → 4-tuple 全等也 miss 重渲（旧实现复用
+    旧 start/end_sec 首/尾帧渲染）。"""
+    work = make_workdir(tmp_path, n_shots=2)
+    patch_pipeline(monkeypatch, FakeHTTP(ok_responses(2)))
+    assert run_main(work) == 0
+    # 模拟重分割：只动 shots.json 边界/时长；prompts.json 的 prompt_text 不动
+    shots = json.loads((work / "shots.json").read_text(encoding="utf-8"))
+    shots[0]["start_sec"] = 0.0
+    shots[0]["end_sec"] = 5.5
+    shots[0]["duration"] = 5.5
+    (work / "shots.json").write_text(
+        json.dumps(shots, ensure_ascii=False), encoding="utf-8")
+    fake2 = FakeHTTP([(200, {"system": "ok"}), *GUARD_FREES,
+                      (200, {"prompt_id": "pid-001b"}),
+                      (200, history_success("pid-001b",
+                                            "kst_x_shot001_00002_.mp4"))])
+    patch_pipeline(monkeypatch, fake2)
+    assert run_main(work) == 0
+    assert sum(u.endswith("/prompt") for u, _ in fake2.calls) == 1   # 边界变了 → 重渲
+    payload = [p for u, p in fake2.calls if u.endswith("/prompt")][0]
+    assert payload["prompt"]["20"]["inputs"]["length"] == 141       # 5.5s 网格值
+    out = capsys.readouterr().out
+    assert out.count("cache hit, skipping") == 1                    # 未变镜仍命中

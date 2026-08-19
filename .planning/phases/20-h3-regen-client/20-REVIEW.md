@@ -107,6 +107,8 @@ if meta.get("length") != h3_frame_count(shot["duration"]):
 ```
 (or fold `f"{start_sec:.3f}-{end_sec:.3f}"` into `prompt_version` input, which keeps the 4-tuple shape).
 
+**Outcome (fix):** FIXED (first option) — `cache_is_hit` gained an `expected_length` parameter; `main` computes `h3_frame_count(shot["duration"])` before the cache probe (moved out of the render `try`) and a stored-vs-current length mismatch is a miss → re-render. The 4-tuple cache-key shape is unchanged. Docstring "cache 惯例" updated. Regression anchor: `test_resegmentation_same_prompt_invalidates` (boundary 2.0s→5.5s, prompt_text unchanged → re-render at length 141; untouched sibling shot still hits).
+
 ### WR-03: No concurrency guard on cache/sidecar/warnings read-merge-write; fixed `.tmp` name
 
 **File:** `analysis/roundtrip/h3_regen.py:590-598` (`_atomic_write_json`), `620-634` (`append_roundtrip_warnings`), `705-743` (`write_roundtrip_sidecar`)
