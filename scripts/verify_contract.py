@@ -296,13 +296,21 @@ def _recover_v1_schema(shape: str):
     """恢复 v1.0 schema 用于 backward cross-version check（CONTRACT-07）。
 
     Primary: ``git show v1.0:spec/schemas/<shape>.schema.json`` —— 最真实。
-    Fallback（tag 缺失 / git 不可用）: 程序化剥离 —— deep-copy v1.1 schema，
-    删除 v1.1 Phase 5 已知的 additive keys，得到等价的 v1 schema。两路径任一
+    Fallback（tag 缺失 / git 不可用）: 程序化剥离 —— deep-copy **当前** schema，
+    删除 v1.0 之后所有已知的 additive keys，得到等价的 v1 schema。两路径任一
     成功即返回 dict；都失败返回 None（caller 记 failure）。
 
-    已知 v1.1 additive keys（CONTRACT-04/05，全 optional，绝不在 required[]）:
-      asset:    data.properties.characters, data.properties.props,
-                media.properties.characters, media.properties.props
+    已知 v1.0 之后的 additive keys（CONTRACT-04/05，全 optional，绝不在
+    required[]；WR-04：strip 列表必须 CUMULATIVE —— fallback 从「当前」schema
+    剥离，每个 minor bump 后都要追加新 delta，否则产出的「v1.0」schema 仍带
+    后续版本字段，tag-less CI 场景下 backward 证明会假绿）:
+      asset:    data.properties.characters/props（v1.1）,
+                data.properties.audio_semantic/speakers（v1.2）,
+                data.properties.roundtrip（v1.3）,
+                media.properties.characters/props（v1.1）,
+                generator.properties.warnings（v1.1 Phase 6）
+                + generator.properties.registry_snapshot（v1.1 Phase 8）
+                —— v1.0 的 generator 只有 tool/version/generated_at
       prompts:  items.properties.character_refs, items.properties.prop_refs
     """
     # Primary: git show v1.0 tag
@@ -326,9 +334,18 @@ def _recover_v1_schema(shape: str):
     if shape == "asset":
         data_props = stripped.get("properties", {}).get("data", {}).get("properties", {})
         media_props = stripped.get("properties", {}).get("media", {}).get("properties", {})
-        for k in ("characters", "props"):
+        generator_props = (
+            stripped.get("properties", {}).get("generator", {}).get("properties", {})
+        )
+        # WR-04：cumulative —— v1.1 + v1.2 + v1.3 的 data.* additions 全剥。
+        for k in ("characters", "props", "audio_semantic", "speakers", "roundtrip"):
             data_props.pop(k, None)
+        for k in ("characters", "props"):
             media_props.pop(k, None)
+        # WR-04：generator.warnings / registry_snapshot 都是 v1.1 additions
+        # （Phase 6 / Phase 8），v1.0 的 generator 不含它们。
+        for k in ("warnings", "registry_snapshot"):
+            generator_props.pop(k, None)
     elif shape == "prompts":
         item_props = stripped.get("items", {}).get("properties", {})
         for k in ("character_refs", "prop_refs"):
@@ -341,17 +358,25 @@ def _recover_v11_schema(shape: str):
 
     Primary: ``git show v1.1:spec/schemas/<shape>.schema.json`` —— v1.1 git tag
     的 immutable truth。Fallback（tag 缺失 / git 不可用，e.g. CI shallow clone）:
-    程序化剥离 v1.2 additive keys —— deep-copy 当前（v1.2-extended）schema，
-    删除 Phase 11 已知的 additive keys，得到等价的 v1.1 schema。两路径任一
-    成功即返回 dict；都失败返回 None（caller 记 failure）。
+    程序化剥离 —— deep-copy **当前**（v1.3-extended）schema，删除 v1.1 之后
+    所有已知的 additive keys，得到等价的 v1.1 schema。两路径任一成功即返回
+    dict；都失败返回 None（caller 记 failure）。
 
-    已知 v1.2 additive keys（CONTRACT-04/05，全 optional，绝不在 required[]）:
-      asset:    data.properties.audio_semantic, data.properties.speakers
-                （v1.2 没有 media.* additions；只有 data.*）
+    已知 v1.1 之后的 additive keys（CONTRACT-04/05，全 optional，绝不在
+    required[]；WR-04：strip 列表必须 CUMULATIVE，mirror _recover_v1_schema）:
+      asset:    data.properties.audio_semantic, data.properties.speakers（v1.2）
+                + data.properties.roundtrip（v1.3）
+                + generator.properties.warnings.items 还原为 {"type": "string"}
+                （v1.3 的 items 加宽；v1.1 有 warnings 字段但 items 仅 string ——
+                 还原逻辑 mirror _recover_v12_schema 的 Wrinkle 1 连锁，否则
+                 fallback 产出被 v1.3 污染的假 v1.1 schema，backward (d) 会放过
+                 v1.3-only 的结构化 warnings 条目；T-18-08 污染类）
+                （v1.2/v1.3 没有 media.* additions；只有 data.*）
 
-    与 _recover_v1_schema 的关系：v1 recover 剥离 v1.1 additions
-    （characters/props），v1.1 recover 剥离 v1.2 additions（audio_semantic/speakers）。
-    一致用 fallback 模式：deep-copy current → pop additive keys。
+    与 _recover_v1_schema 的关系：v1 recover 剥离 v1.1+ additions
+    （characters/props/audio_semantic/speakers/roundtrip + generator 两键），
+    v1.1 recover 剥离 v1.2+ additions（audio_semantic/speakers/roundtrip
+    + warnings items 还原）。一致用 fallback 模式：deep-copy current → 剥离。
     """
     # Primary: git show v1.1 tag
     try:
@@ -363,7 +388,7 @@ def _recover_v11_schema(shape: str):
             return json.loads(r.stdout)
     except (subprocess.SubprocessError, json.JSONDecodeError, OSError):
         pass
-    # Fallback: programmatic strip of v1.2-additive keys from current schema
+    # Fallback: programmatic strip of post-v1.1 additive keys from current schema
     import copy
     try:
         stripped = copy.deepcopy(
@@ -373,8 +398,17 @@ def _recover_v11_schema(shape: str):
         return None
     if shape == "asset":
         data_props = stripped.get("properties", {}).get("data", {}).get("properties", {})
-        for k in ("audio_semantic", "speakers"):
+        # WR-04：cumulative —— v1.2 的 audio_semantic/speakers + v1.3 的 roundtrip。
+        for k in ("audio_semantic", "speakers", "roundtrip"):
             data_props.pop(k, None)
+        # WR-04：v1.3 的 warnings items 加宽必须还原（v1.1 有 warnings，但
+        # items 仅 string —— mirror _recover_v12_schema 的 Wrinkle 1 连锁）。
+        warnings_schema = (
+            stripped.get("properties", {}).get("generator", {})
+            .get("properties", {}).get("warnings")
+        )
+        if isinstance(warnings_schema, dict):
+            warnings_schema["items"] = {"type": "string"}
     return stripped
 
 
