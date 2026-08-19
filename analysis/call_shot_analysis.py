@@ -2,7 +2,7 @@
 """逐镜头运镜分析路由调用（shot-analysis route）→ prompts.json facets
 
 本模块是 shot-timeline 首个网络依赖：通过 httpx sync client 调用
-kais-aigc-platform 的 `POST /api/v1/production/shot-analysis` 路由（分支
+kais-aigc-platform 的 `POST /api/production/shot-analysis` 路由（master
 feat/shot-analysis-route），把每镜的运镜分析（geometry + semantic）映射进
 prompts.json 的 camera/action/lighting/style 结构化字段。
 
@@ -57,7 +57,7 @@ miss 不静默）。preflight 只跑一次，失败即短路（Pitfall 7：无 p
       --shots /abs/path/to/shots.json \\
       --work-dir output/<video-stem>/ \\
       --output output/<video-stem>/prompts.json \\
-      [--analysis-url http://127.0.0.1:8000/api/v1/production/shot-analysis] \\
+      [--analysis-url http://127.0.0.1:10588/api/production/shot-analysis] \\
       [--analysis-timeout 960] \\
       [--offline]
 """
@@ -74,14 +74,17 @@ from pathlib import Path
 # cache key 组成部分。ROUTE_VERSION 是 cache-invalidation 旋钮 —— 路由逻辑变了
 # 就 bump 此串 → 全部 cache miss（Pitfall 5：避免"改了代码但行为不变"）。
 ROUTE_NAME = "shot_analysis"
-ROUTE_VERSION = "feat-shot-analysis-route-v1"
+ROUTE_VERSION = "prod-mount-no-v1-v2"
 
 # 路由 path（CONTEXT lock，硬编码 —— 不可由 --analysis-url 自定义）。IN-01：旧实现
 # 把此串散落在 call_route.post / preflight.rsplit / preflight.get 三处，改 path 需
-# 改三行无编译期保证。抽成单一真源。WR-03：--analysis-url 的 /api/v1 之后部分会被
+# 改三行无编译期保证。抽成单一真源。WR-03：--analysis-url 的 /api 之后部分会被
 # 一致 strip 掉（preflight + main client 都 rsplit 到 host root 再拼 ROUTE_PATH），
 # 不再出现"main 用全 URL 作 base、preflight 却 strip"的静默不一致。
-ROUTE_PATH = "/api/v1/production/shot-analysis"
+# 2026-08-19：kap master 实际挂载是 /api/production/shot-analysis（router.ts:242，
+# 无 /v1 —— v1 只存在于未合并的 feat/shot-analysis-route 分支），旧 /api/v1 值
+# 导致 404 → 全量 degrade。ROUTE_VERSION 同步 bump（cache 失效）。
+ROUTE_PATH = "/api/production/shot-analysis"
 
 # prompts.schema.json 绝对路径（写前 Draft202012Validator 自校验用）。
 # analysis/call_shot_analysis.py → repo root/spec/schemas/prompts.schema.json
@@ -226,10 +229,10 @@ def preflight(base_url: str, timeout: float = 5.0) -> tuple[bool, str | None]:
     剩余 shots（Pitfall 7：无 per-shot retry storm）。
     """
     import httpx
-    # base_url 含 /api/v1/production/shot-analysis path；探测时 rsplit 掉 /api/v1
-    # 之后的部分取 host root，再拼 ROUTE_PATH（WR-03：与 main client 一致 strip，
-    # 不再用散落的字面串 —— ROUTE_PATH 单一真源）。
-    base = base_url.rsplit("/api/v1", 1)[0]
+    # base_url 含 /api/... path；探测时 rsplit 掉 /api 之后的部分取 host root
+    # （保留 /prod/api 这类反代前缀），再拼 ROUTE_PATH（WR-03：与 main client
+    # 一致 strip，不再用散落的字面串 —— ROUTE_PATH 单一真源）。
+    base = base_url.rsplit("/api", 1)[0]
     try:
         with httpx.Client(base_url=base,
                           timeout=httpx.Timeout(connect=5.0, read=5.0,
@@ -255,8 +258,8 @@ def main():
     ap.add_argument("--output", required=True,
                     help="prompts.json 输出路径")
     ap.add_argument("--analysis-url",
-                    default="http://127.0.0.1:8000/api/v1/production/shot-analysis",
-                    help="shot-analysis 路由 URL（含 /api/v1/production/shot-analysis path）")
+                    default="http://127.0.0.1:10588/api/production/shot-analysis",
+                    help="shot-analysis 路由 URL（含 /api/production/shot-analysis path）")
     ap.add_argument("--analysis-timeout", type=float, default=960.0,
                     help="单次路由调用 read 超时秒（默认 960，> 路由侧 900s execFileSync）")
     ap.add_argument("--offline", action="store_true",
@@ -295,11 +298,12 @@ def main():
     client = None
     if not args.offline:
         import httpx
-        # WR-03：base 只取 host root（rsplit 掉 /api/v1 之后部分），post 用 ROUTE_PATH。
-        # 旧实现 base_url=全 URL + post 绝对路径 → RFC 3986 把 /api/v1 之前的 path
-        # 前缀（如反代 /prod/api/v1）静默丢弃，且与 preflight（strip 过）不一致。
-        # 现与 preflight 一致 strip 到 host root；ROUTE_PATH 是 CONTEXT-locked 常量。
-        base = args.analysis_url.rsplit("/api/v1", 1)[0]
+        # WR-03：base 只取 host root（rsplit 掉 /api 之后部分，保留 /prod/api 类
+        # 反代前缀），post 用 ROUTE_PATH。旧实现 base_url=全 URL + post 绝对路径 →
+        # RFC 3986 把 /api 之前的 path 前缀（如反代 /prod/api）静默丢弃，且与
+        # preflight（strip 过）不一致。现与 preflight 一致 strip 到 host root；
+        # ROUTE_PATH 是 CONTEXT-locked 常量。
+        base = args.analysis_url.rsplit("/api", 1)[0]
         client = httpx.Client(
             base_url=base,
             timeout=httpx.Timeout(connect=5.0, read=args.analysis_timeout,
