@@ -26,24 +26,20 @@
 
 **Known deferred (pre-authorized, scope-fenced):** cross-repo PRs (`feat/audio-analysis-route` + `feat/canvas-asset-collection`, post-milestone per v1.1 Phase 9 precedent); MUS-04 instruments v1.3; rigorous DIA-04 macro-F1 annotation; WhisperX drift metric refinement; PANNs Cnn14 re-eval when zenodo-reachable; Phase 13/16 browser UAT; e2e backend verify mode.
 
-**Next:** `/gsd:new-milestone` — define v1.3 (likely: MUS-04 instruments via real MIR classifier + DIA-06 face-voice auto speaker→character + rigorous SER annotation).
+**Next:** ✅ v1.3 已启动（2026-08-19）——Round-trip Validation（见下 Current Milestone）；MUS-04 / DIA-06 继续 defer。
 
-> **v1.1（已归档）** 分镜语义深化：镜头语言 + 跨镜角色/道具注册表 + prompt 引用 + 契约 1→1.1 + 双端展示。详见 `.planning/MILESTONES.md`。本 milestone 在其契约之上做音频语义深化与契约 minor bump 1.1→1.2。
+## Current Milestone: v1.3 Round-trip Validation（逆推→复现→比对闭环数据集）
 
-**Goal:** 把音频从「能量/频谱启发式」升级为带对白情绪+说话人、BGM 乐器/调性/氛围/出现时间、音效描述的**三模态语义资产**，并产出**分层复现 prompt**（TTS / music-gen / foley）——镜像 v1.1 `step_semantic` 的「thin 客户端 → kais-aigc-platform 路由」模式。
+**Goal:** 用「qwen-eye 看片段逆推 prompt → h3 fl2va 首尾帧复现 → 与原片段比对打分」的闭环，把 prompts.json 从「看起来合理」升级为「经复现验证的可信真值」，产出 (首帧, 尾帧, prompt) 高价值数据集——rejection sampling 造 SFT 真值。
 
 **Target features:**
-- **路由式引擎**——kais-aigc-platform 新 `audio-analysis` 路由托管重模型（WhisperX 词级 + pyannote 说话人 + 中文适配 SER + MIRFLEX/MERT 乐器/tempo/key/VA）；shot-timeline 当 thin httpx 客户端 `analysis/call_audio_analysis.py` + per-shot cache + graceful-degrade
-- **三模态分析**——对白（词级时间戳 + 说话人 + 情绪）/ 音乐（乐器 + tempo + key + VA 情绪 + 出现时间）/ 音效（foley 描述）
-- **分层复现 prompt**——每镜产 TTS / music-gen / foley 三套（替代单一 NL prompt）
-- **ShotTimelineAsset 契约 minor bump**——新增 optional sidecar `audio_semantic.json`；schema_version `1.1`→`1.2`（纯增量，与 v1.0/v1.1 缺省 byte-identical）
-- **SPEAKER-01 进 scope**——说话人归属，speaker_id 挂 v1.1 character registry（v1.1 曾因「大 lift」列为 Out of Scope）
-- **消费者**——infinite-canvas 音频语义节点（跨仓库 kais-aigc-platform）
-- **Spike 退役**——`audio/gen_audio_prompts.py`（quick task 260725-afz）降级为 `--offline` fallback
+- **Contract v1.3**——`roundtrip.schema.json` sidecar（per-shot: regen video ref + scores + verdict{accepted/rejected} + attribution + reason）+ `asset.json#data` optional 挂载 + fixture + validate gate（mirror v1.2 三层门）
+- **qwen-eye v2 看片段**——每镜抽 8 帧序列逐帧 `observe_single` 问答 → 升级 action/camera facet（现只看首/中/尾 3 静帧是最大质量缺口）；同时把 v1.2 `audio_semantic` 当 ear 输入融进视觉 prompt（雨声→scene=雨天）
+- **h3 复现客户端**——kst 直连 ComfyUI API 提交 MiniMax H3 fl2va workflow（参考 kmc `h3_batch_render_v4.py` 模式），per-shot cache + 断点续跑 + VRAM guard（自动 `/free` + TTS 共存检测，p11b pitfalls）
+- **Scorer**——中段帧 CLIP/SigLIP 轨迹相似度（首尾帧被 fl2va condition 无信息量，信号全在中段）+ VLM judge 归因（区分 prompt 好/h3 不行 vs prompt 欠约束）
+- **数据集产出**——verdict 写 `roundtrip.json`；accepted 子集导出独立 dataset 目录（首帧/尾帧/prompt.json/manifest）；rejected 带归因保留（hard negatives + h3 能力边界）；gallery 加 round-trip 审阅面板（原片段 vs 重生成并排 + 分数 + accept 按钮）
 
-**Key context:** Phase 1 必须是「路由搭建 + 模型 risk-validation on 1 集」（取证中文 SER + 乐器识别精度/延迟/显存），再锁 `audio_semantic.json` 契约——镜像 v1.1 Phase 7 DINOv2 τ spike（先证模型、再立契约）。**最高风险**：中文 SER 跨域（RAVDESS 英文表演式→中文动画对白）+ 多音轨乐器识别未验证。参考 Kimi 4 层管线（Demucs→WhisperX+pyannote+emotion→MIR→分层 prompt），采其「分模态模型 + 分层 prompt」形状，弃其「全本地单脚本、无契约/消费端」实现。
-
-> **v1.1（已归档）** 分镜语义深化：镜头语言 + 跨镜角色/道具注册表 + prompt 引用 + 契约 1→1.1 + 双端展示。详见 `.planning/MILESTONES.md`。本 milestone 在其契约之上做音频语义深化与契约 minor bump 1.1→1.2。
+**Key context:** 基础设施 ~80% 就位（详见 `.planning/research/v1.3-roundtrip-validation-proposal.md` + `SUMMARY.md`）：qwen-eye 引擎 :8125 已接（`analysis/local_vision_facets.py`）但 llama.cpp 单图 bug 硬约束；h3 fl2va 3090 实战化（5s/124帧 5-8min/镜，11-22GB VRAM）；~100 镜/集 × 5-8min = 8-13h/轮 → 必须 per-shot cache + 抽样先行校准阈值。**最高风险**：① verdict 混淆 prompt 质量与 h3 能力（不归因则数据集系统性偏向简单动作）② h3 渲染时长/VRAM 竞争 ③ 帧序列问答在 Q3 27B 上的动作描述质量未验证。
 
 ## Requirements
 
@@ -70,9 +66,9 @@
 
 ### Active
 
-<!-- v1.2 音频语义深化 — requirements scoped via /gsd:new-milestone; full REQ-IDs live in .planning/REQUIREMENTS.md. -->
+<!-- v1.3 Round-trip Validation — requirements scoped via /gsd:new-milestone; full REQ-IDs live in .planning/REQUIREMENTS.md. -->
 
-_v1.2 requirements defined in `.planning/REQUIREMENTS.md` (categories: ROUTE / DIALOGUE / MUSIC / SFX / CONTRACT / CONSUMER)._
+_v1.3 requirements defined in `.planning/REQUIREMENTS.md` (categories: CONTRACT / VISION / REGEN / SCORE / DATASET / PIPELINE / PRESENT)._
 
 ### Known Deferred (v1.1 → post-merge / v2)
 
@@ -138,6 +134,13 @@ Cross-repo dependencies out of this repo's control; producer/contract side compl
 | **v1.2 Phase 10 — DIA-04 dialogue emotion: SHIP-NULLABLE+CONFIDENCE** (Row 3 of 5) | SenseVoice self_consistency_pct=100.0 is a LABEL-STABILITY proxy (NOT accuracy); short clips + deterministic CPU explain the 100%; qualitative sanity coherent (HAPPY dialogue→HAPPY, ANGRY→😡-tagged confrontational lines); no rigorous macro-F1 (methodology_b developer annotation deferred — ~1hr labor) | `emotion` field NULLABLE in `audio_semantic.json` schema + `confidence` field populated + `fidelity_disclaimer` applies. Rigorous macro-F1 deferred to Phase 12+ once route host is up + developer-annotated ground truth exists. *(decided_at: 2026-07-25; phase: 10; evidence: `.planning/research/audio-spike-report.md#section-1-ser-sensevoice--dia-04-evidence`)* |
 | **v1.2 Phase 10 — MUS-04 instruments: DEFER to v1.3** (Row 4 of 5) | MERT-v1-95M has NO instrument classifier head — spike only produced K-means embedding clusters (5) correlating with shot DURATION (mean-pooling artifact), NOT instruments; PANNs Cnn14 BLOCKED (zenodo.org download stalled; hf-mirror `nicofarr/panns_Cnn14` `.pth` conversion deferred); NO instrument predictions produced | `instruments` field OMITTED/DEFERRED in v1.2 `audio_semantic.json` schema; route host needs a REAL MIR classifier (PANNs once zenodo-reachable, or fine-tuned MERT head) — Phase 12+ / v1.3. *(decided_at: 2026-07-25; phase: 10; evidence: `.planning/research/audio-spike-report.md#section-2-mir-head-to-head-mert-vs-panns--mus-04-evidence`)* |
 | **v1.2 Phase 10 — DIA-05 word-level timestamps: SHIP-EXPERIMENTAL** (Row 5 of 5) | A1 (CPU `load_align_model`) OK in 7.9s; A2 (arbitrary-segment align) OK; **boundary drift median=101.5ms (<200 ✓)**; dense-speech bucket `pct_under_200ms=0.933` (≥0.80 ✓); aggregate per-word `pct_under_200ms=0.189` is BELOW 0.80 — BUT this is a **METRIC-DEFINITION ARTIFACT** (drift=`word_start−segment_start` inflates for interior words in long segments; `mean_drift_ms=2393` dominated by this) | Word-level timestamps SHIP as EXPERIMENTAL with metric-definition caveat; refine drift metric in Phase 12 (use boundary drift, not per-word-from-segment-start) + validate on more episodes; segment-level remains SLA path. *(decided_at: 2026-07-25; phase: 10; evidence: `.planning/research/audio-spike-report.md#section-3-whisperx-drift--dia-05-evidence--cuda-path`)* |
+| **v1.3** = Round-trip Validation（逆推→复现→比对闭环数据集） | prompt 静帧反推无验证机制，round-trip 是唯一客观信号；rejection sampling 把「看起来合理」变成「经复现验证的真值」 | — Pending |
+| **v1.3** qwen-eye v2 走「N 帧序列逐帧问答」务实版（非先上 vLLM 视频原生） | 现引擎 llama.cpp 单图 bug 硬约束 + ctx 16K；`/data/models/comfyui/LLM/Qwen-VL/Qwen3-VL-8B-Instruct` 已在盘上留升级位，先零新基建跑通 | — Pending |
+| **v1.3** ear = 复用 v1.2 `audio_semantic` 融合进视觉 prompt（不新引音频理解引擎） | 对白/sfx/foley 语义 v1.2 已产出；缺的只是融合进 prompt 修正（雨声→scene=雨天） | — Pending |
+| **v1.3** 打分围绕中段帧 + verdict 必须归因 + rejected 保留 | 首尾帧被 fl2va condition 无信息量；不归因则数据集系统性偏向简单动作；rejected = hard negatives + h3 能力边界测绘 | — Pending |
+| **v1.3** h3 客户端 kst 直连 ComfyUI API（非经 kmc/hermes runtime） | 闭环是 kst 资产生产一部分；mirror route-client 模式 + p11b VRAM pitfalls（kill TTS + `/free`）+ per-shot cache | — Pending |
+| **v1.3** dataset 导出独立目录（非 asset.json 内嵌 subset） | 消费端不受契约约束；asset 契约只 additive 挂 `roundtrip.json` sidecar | — Pending |
+| **v1.3** MUS-04 乐器识别继续 defer（v1.2 遗留，PANNs zenodo-blocked 未解） | 本 milestone 已满载不捎带；DIA-06 同理继续 defer | — Pending |
 
 ## Evolution
 
@@ -157,4 +160,4 @@ This document evolves at phase transitions and milestone boundaries.
 4. Update Context with current state
 
 ---
-*Last updated: 2026-07-25 — started milestone **v1.2 音频语义深化** (route-based audio semantic deepening: dialogue/music/sfx → layered TTS/music-gen/foley reproduction prompts; schema 1.1→1.2; SPEAKER-01 in scope). v1.1 分镜语义深化 SHIPPED (5 phases, 16 plans, 34/34 reqs).*
+*Last updated: 2026-08-19 — started milestone **v1.3 Round-trip Validation** (qwen-eye v2 看片段逆推 → h3 fl2va 复现 → 中段帧打分 + 归因 → accepted 数据集导出; schema 1.2→1.3). v1.2 音频语义深化 SHIPPED (8 phases, 20 plans, 33/33 reqs).*
