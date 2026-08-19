@@ -1,9 +1,9 @@
 # ShotTimelineAsset — Contract Specification
 
-**Version:** 1.1 (active; `schema_version: "1.1"`) — v1.0 (`"1"`) archived
+**Version:** 1.3 (active; `schema_version: "1.3"`) — v1.2 (`"1.2"`) / v1.1 (`"1.1"`) / v1.0 (`"1"`) archived
 **Owner:** `kais-shot-timeline` (本仓库,authoritative spec owner)
 **Consumers:** `@kais/infinite-canvas` (`kais-aigc-platform`,跨仓库,branch `feat/canvas-asset-collection`)
-**Status:** Active — Phase 5 v1.1 additive extension (2026-07-24); v1.0 contract published 2026-07-20。v1.1 是首个 minor bump(纯增量,见 §4 Changelog)。
+**Status:** Active — Phase 18 v1.3 additive extension (2026-08-19); Phase 11 v1.2 additive extension (2026-07-25); Phase 5 v1.1 additive extension (2026-07-24); v1.0 contract published 2026-07-20。v1.1 是首个 minor bump;v1.3 是第三个 minor bump(additive 为主,含两处诚实记录的非纯 property-delta,见 §4 Changelog)。
 
 > 这份文档是 **ShotTimelineAsset** 的人读权威契约:它把「一支成片如何被解构为可移植的多轨道分镜资产集合」用 15 分钟可读完的形式写下来,让生产端(本仓库 Phase 2 导出器)和消费端(画布 Phase 3 集合节点)对着同一份描述实现,无需口口相传字段名、类型、媒体路径或版本规则。Tribal knowledge is the failure mode this milestone exists to kill.
 
@@ -15,12 +15,12 @@
 
 | 层级 | 角色 | 文件 |
 |------|------|------|
-| **机器可校验的权威源** | JSON Schema (draft 2020-12) — 生产端导出时被 `spec/validate.py` 校验,消费端可据此生成 TS 类型 | `spec/schemas/*.schema.json` (13 份) |
+| **机器可校验的权威源** | JSON Schema (draft 2020-12) — 生产端导出时被 `spec/validate.py` 校验,消费端可据此生成 TS 类型 | `spec/schemas/*.schema.json` (14 份) |
 | **人读概览(本文档)** | prose spec — 给新贡献者一份 15 分钟可读完的导览,串起 5 数据形状 + 版本规则 + 媒体约定 + 自描述 manifest | `spec/SPEC.md` (本文档) |
 
 两层必须保持一致(schema drift = silent interop bug,见 §5 graceful-degrade 规则不放松 schema 本身)。当文档与 schema 冲突时,**以 schema 为准**;同时本文档的任何与 schema 不一致都视为 Phase 1 缺陷,必须修复。
 
-### 13 个 schema 文件(按 filename 索引)
+### 14 个 schema 文件(按 filename 索引)
 
 | 文件 | 一句话概述 |
 |------|-----------|
@@ -36,8 +36,9 @@
 | `spec/schemas/audio_semantic.schema.json` | 顶层对象 — per-shot 三模态音频语义(dialogue/sfx)+ 分层复现 prompt(TTS/music-gen/foley);`word_level_experimental` 顶层 flag gate word-level timestamps;`emotion` nullable string + `emotion_confidence`(见 §10 fidelity_disclaimer)。**`1.2`** |
 | `spec/schemas/speakers.schema.json` | 顶层对象 — 声学说话人注册表(NEW `^spk_[0-9]{3}$` acoustic ID space,与 `^char_[0-9]{3}$` 视觉 ID 刻意 disjoint);nullable `char_id` link;`review_state` 门控下游流向。**`1.2`** |
 | `spec/schemas/speaker-edits.schema.json` | 顶层对象 — speaker HITL 审阅 edits round-trip shape(mirrors `registry-edits.schema.json` + 新 `link_mappings` 作 spk→char N:M 映射;Phase 13 `link_speakers.py` 消费)。pipeline-internal 工作产物,**不在** `asset.json#data`。**`1.2`** |
+| `spec/schemas/roundtrip.schema.json` | 顶层对象 — per-shot h3 重生成 ref(`regen` 5-tuple)+ 双信号打分 `scores{midframe_sim, judge}` + `verdict{accepted/rejected}`;`shots[]` 是结果集(regen 失败 = `status{state:failed}`,未尝试 = 缺席);阈值不进 schema(见 §10 / Phase 21)。**`1.3`** |
 
-**下游 TS 类型生成:** Phase 3 消费端可从这 13 个 schema 生成 TS 类型(`json-schema-to-typescript` 或等价工具);本 phase 不产生 TS 代码。
+**下游 TS 类型生成:** Phase 3 消费端可从这 14 个 schema 生成 TS 类型(`json-schema-to-typescript` 或等价工具);本 phase 不产生 TS 代码。
 
 ---
 
@@ -182,6 +183,21 @@ Reference schema: `spec/schemas/asset.schema.json`
   - **向后兼容**:`spec/fixtures/minimal/`(v1)仍 6/6 绿;`spec/fixtures/v1.1/`仍 10/10 绿;`spec/fixtures/v1.2/`(12 文件)新增;`scripts/verify_contract.py` `_cross_version_check` 实测三向兼容(v1.0↔v1.1↔v1.2 forward 0 errors;backward 仅 additionalProperties errors → 0 non-additive errors);`speakers.char_id ⊆ characters.id` consistency GREEN。
   - **`fidelity_disclaimer`**:见 §10 — 复现 prompt 是 regeneration 友好的 NL 描述(非源音频精确逆向),per-modality 估算 TTS~70%/music-gen~60-75%/foley~80%(AF-01 缓解)。prose 层(two-tier authority),非 schema field。
 
+- **2026-08-19 — `1.3`(v1.3 additive extension,Phases 18-22)** — 第三个 minor bump。与前两个 minor bump 的「纯增量」不同,**本条目诚实记录两处非纯 property-delta 的变更** — `generator.warnings.items` 类型加宽(string → `string | {code, detail}` 双形)与 `data.roundtrip` object 值挂载(v1.x 首个 object 值的 `data.*` 挂载)— 两者**对旧数据仍是 additive**(v1.0-v1.2 资产的纯文本 warnings 对加宽后的 items 天然合法;无 roundtrip 输入跑导出,v1.2 及以前 12 个数据文件 byte-identical),但不是「新增 optional property」式的纯增量,backward 证明的过滤规则因此同步扩展(见下方向后兼容 bullet)。整个 v1.3 milestone(phases 18-22)共享此版本号 — Phase 18 锁契约,Phase 19-22 实现 producer/scorer/consumer。变更:
+  - **1 个新 schema**:`roundtrip.schema.json`(per-shot h3 重生成 ref + `scores{midframe_sim, judge}` 双信号打分 + `verdict{accepted/rejected}`;8 层 `additionalProperties:false`;阈值不进 schema — two-tier authority。形状文档见 §5.10 **Round-trip**)。
+  - **`asset.schema.json` additive,两处 delta(诚实记录)**:
+    - **`generator.warnings.items` 加宽** — 从 `{"type":"string"}` 加宽为 `anyOf: [string, {code, detail}]`,**v1.x 首个 items 类型加宽**。`code` 是 closed enum `{comfyui_unreachable, vram_insufficient, scorer_model_missing}`(RT-04 点名的三种 roundtrip 缺席因由,机器可 grep),`detail` optional(degrade 记因最小单元是 code)。"no PII, no auth tokens" 条款保留。
+    - **新增 optional `data.roundtrip` object** `{path, accepted_count, rejected_count}` — **v1.x 首个 object 值的 `data.*` 挂载**(file ref + verdict 统计:消费端不开 sidecar 即可渲染 round-trip 概览;per-shot 数据留在 `roundtrip.json`,不内嵌)。`data.required` 仍为 5 keys 不变(`data.properties` 现 10 keys)。
+  - **`schema_version` pattern 不变**(`^(0|[1-9]\d*)(\.(0|[1-9]\d*))?$`)— 版本字面量锁在 producer 单一真源 `scripts/export_asset.py:SCHEMA_VERSION = "1.3"`(line 59,本条目写作时 grep 实测;README v1.2 小节所引 "line 55" 在 v1.3 已过时),非 schema `const`(否则拒绝 v1 minimal fixture `"1"`,破坏 CONTRACT-09)。
+  - **CONTEXT-locked decisions**(Phase 18 18-CONTEXT 锁定):
+    - **`judge.attribution` closed enum 三分类** `{prompt_faithful, model_diverged, prompt_underspecified}` — SCORE-02 三分类是自有分类学(非未校准外部模型输出),enum 使 SCORE-03「rejected 占比可审计」机器可查;与 v1.2 `emotion` free-string 判例不矛盾(那是未校准的模型标签)。
+    - **`scores.midframe_sim` 必带 `model` 标识** — clip/siglip 变体不可跨模型比较,不标 model 名的分数不可审计。
+    - **`judge` 无连续分** — 分类器非回归器,连续相似度分是伪精度;只有 attribution + confidence + reason 三件套。
+    - **`shots[]` 结果集语义,无 pending/rendering 任务态** — 只收「有产物」的 shot;regen 失败收录为 `status{state:failed, error}`;未尝试 = 缺席(schema 是结果集不是任务队列)。
+    - **regen 元数据 minimal** — 帧率/总帧数/随机种子/完整 workflow 参数不收(h3 workflow 是 kst 外部资产,不契约化;只收 5-tuple + optional `duration_sec`/`width`/`height`)。
+  - **向后兼容**:`spec/fixtures/minimal/`(v1)6/6、`v1.1/` 10/10、`v1.2/` 12/12 仍全绿(`spec/validate.py` 四阶 gate:minimal 6 / v1.1 10 / v1.2 12 / v1.3 13,全部 failures=0);`spec/fixtures/v1.3/` 13 文件新增(**11 个 v1.2 substrate 文件 byte-copied(diff-clean)+ `asset.json` 四点编辑 + `roundtrip.json` 新增**);`scripts/verify_contract.py` `_cross_version_check` 实测四向兼容(**v1.0↔v1.1↔v1.2↔v1.3** forward 0 errors;backward 0 non-additive errors — **excluding documented v1.3 deltas**:`data.roundtrip` 新键 + warnings items 加宽,过滤规则按 error path 精确豁免,注入 `asset_type` const 漂移的负测试仍 FAIL 证明过滤不盲);无 roundtrip 输入跑 `build_asset_dict`,data 块 keys 与 v1.2 时代逐键等价(byte-identical-absent 红线,data-keys smoke 证明)。
+  - **`fidelity_disclaimer`**:见 §10 v1.3 三层(§10.5)— accepted = 「h3 可复现」≠「prompt 完美」;rejected 是 hard negatives + h3 能力边界测绘数据(非垃圾);judge attribution 是模型判断带 confidence(非 ground truth);accepted 双阈值由 Phase 21 校准后锁定,校准前本 SPEC 不给数值。prose 层(two-tier authority),非 schema field。
+
 ---
 
 ## 5. The 5 Canonical Data Shapes (SPEC-01)
@@ -191,6 +207,8 @@ Reference schema: `spec/schemas/asset.schema.json`
 > **v1.1 (Phase 5):** §5.1–§5.5 是 v1.0 的 5 个 required 数据形状;新增 §5.6 **Characters** + §5.7 **Props** 两个 optional 跨镜注册表形状(仅 re-id 跑过且 HITL 审阅后 emit)。registry 是 pipeline-internal 草稿,非 canonical asset 数据形状,故不在此列(见 §1 schema 索引)。
 
 > **v1.2 (Phase 11):** 新增 §5.8 **Audio Semantic** + §5.9 **Speakers** 两个 optional 音频支路形状(仅 route-host round-trip 跑过且条件字段达标后 emit)。`speaker-edits` 是 HITL round-trip 工作产物,非 canonical asset 数据形状,故不在此列(见 §1 schema 索引)。这两个形状的字段保真度受 Phase-10 spike outcomes 限制(见 §10 **Fidelity Disclaimer**)— emotion=calibrated estimate、word-level=experimental、instruments=absent。
+
+> **v1.3 (Phase 18):** 新增 §5.10 **Round-trip**(optional — 仅 Phase 20/21 regen+scoring 往返后 emit)。verdict 的解释边界受 §10 v1.3 三层 Fidelity Disclaimer 约束 — accepted = 「h3 可复现」≠「prompt 完美」,rejected 是 hard negatives,attribution 是模型判断带 confidence(非 ground truth)。
 
 ### Shots
 
@@ -536,6 +554,63 @@ Reference schema: `spec/schemas/audio_semantic.schema.json`
 
 Reference schema: `spec/schemas/speakers.schema.json`
 
+### Round-trip (`1.3`)
+
+**Producer:** Phase 20(h3 复现客户端 — per-shot `regen` 条目 + `status` 失败记录,pending)+ Phase 21(scorer / verdict 合并 — `scores` 与 `verdict` 写入,pending)。Phase 18 仅锁契约,不写生产者。
+**Consumers:** Phase 22(gallery round-trip 审阅面板 — 原片段 vs 重生成并排 + 分数 + HITL accept/reject 按钮;dataset 导出。均 pending)。
+
+**顶层形状:** JSON 对象 — `schema_version` + `shots[]` **结果集**。`shots[]` 只收「有产物」的 shot:regen 成功的带 `regen` ref(可能已打分 / 未打分 — degrade 中间态合法,只有 score 没 verdict 也合法);regen 失败的收录为 `status{state: failed, error}`;**未尝试的 shot 不在数组里(缺席 = 未尝试)** — schema 是结果集不是任务队列,刻意无 pending/rendering 任务态。v1.0/v1.1/v1.2 资产缺省(`asset.json#data.roundtrip` absent),仍合法(graceful-degrade);无 roundtrip 输入跑导出 byte-identical-absent。阈值不进 schema(SCORE-03 的 accepted 双阈值 Phase 21 校准后才存在 — 见 §10)。
+
+| Field | Type | Required | Notes |
+|-------|------|----------|-------|
+| `schema_version` | string (`^(0\|[1-9]\d*)(\.(0\|[1-9]\d*))?$`) | ✓ | 与 `asset.json#schema_version` 同源;producer emit `"1.3"`,pattern 宽松兼容 `"1"`/`"1.1"`/`"1.2"` |
+| `shots[]` | array\<object\> | ✓ | Per-shot round-trip 条目,`shot_id` 交叉引用 `shots.json#id` |
+| `shots[].shot_id` | integer (≥1) | ✓ | 仅此字段 required — 其余 optional 支持 degrade 中间态(regen 成功未打分 / 有 score 无 verdict) |
+| `shots[].regen` | object | — (与 `status` 互斥) | 重生成视频 ref(REGEN-02 可复现可审计 tuple,mirror WR-04)。与 `status` 二选一:有产物用 `regen`,失败用 `status`(互斥由 producer 保证,schema 不做 if/then 硬约束) |
+| `shots[].regen.path` | string (`^(?!.*\.\.)([^/]+/)*roundtrip/…\.mp4$`) | ✓ (in `regen`) | 重生成 mp4 相对路径,相对 asset root(建议 canonical 布局 `roundtrip/shot_XXX.mp4`;anti-traversal,拒绝 `..`/绝对路径/Windows 保留字符) |
+| `shots[].regen.video_content_hash` | string (`^[0-9a-f]{16}$`) | ✓ (in `regen`) | 源视频内容 hash(sha256(首1MB+尾1MB+filesize) hex 前 16 位 — `analysis/call_shot_analysis.py` 同款;cache invalidation 级,非安全 hash) |
+| `shots[].regen.engine_name` / `engine_version` / `prompt_version` | string (≥1 char) | ✓ (in `regen`) | 复现引擎名(如 `MiniMaxH3ImageToVideo` / `h3-fl2va`)、引擎版本(ComfyUI workflow/模型版本标识)、prompt 生成器版本 |
+| `shots[].regen.duration_sec` / `width` / `height` | number (≥0) / integer (≥1) / integer (≥1) | — | 实际时长与实际分辨率(REGEN-04 降分辨率模式记录实际值)。帧率/总帧数/随机种子/完整 workflow 参数**不收**(h3 workflow 是 kst 外部资产,不契约化) |
+| `shots[].status.state` | enum `["failed"]` | ✓ (in `status`) | 刻意单值 enum — 不加任务态(结果集语义,CONTEXT 锁) |
+| `shots[].status.error` | string (1..2000) | ✓ (in `status`) | 失败原因(operator-facing;无凭据无 PII — mirror warnings 惯例。`maxLength: 2000` 是 T-18-02 长度上界:模型/引擎产出文本未来流入 Phase 22 HTML,先 bound) |
+| `shots[].scores` | object | — | 双信号打分(SCORE-01/02)。`midframe_sim` 与 `judge` 两个子对象**可独立缺席**(degrade 中间态) |
+| `shots[].scores.midframe_sim.score` | number (0..1) | ✓ (in `midframe_sim`) | 中段帧相似度(25%-75% 时窗 — 显式排除被 fl2va condition 的首尾帧;SCORE-01 帧 embedding 轨迹相似度) |
+| `shots[].scores.midframe_sim.model` | string (≥1 char) | ✓ (in `midframe_sim`) | similarity model 标识(如 `clip-vit-l14-336`)。**必带** — clip/siglip 变体不可跨模型比较,不标 model 名的分数不可审计 |
+| `shots[].scores.judge.attribution` | enum | ✓ (in `judge`) | 三分类 closed enum(逐字对齐 schema):`prompt_faithful` / `model_diverged` / `prompt_underspecified` — SCORE-02 自有分类学,enum 使 SCORE-03 rejected 占比机器可审计 |
+| `shots[].scores.judge.confidence` | number (0..1) | ✓ (in `judge`) | judge 置信度(模型自报,**非校准精度** — 见 §10 第③层) |
+| `shots[].scores.judge.reason` | string (1..2000) | ✓ (in `judge`) | 归因理由(模型产出 NL 文本;`maxLength: 2000` = T-18-02 长度上界) |
+| `shots[].verdict.decision` | enum `accepted` / `rejected` | ✓ (in `verdict`) | accepted = 「h3 可复现」≠「prompt 完美」(§10 第①层);rejected 永不删除(DATASET-01) |
+| `shots[].verdict.source` | enum `auto` / `human` | ✓ (in `verdict`) | auto = SCORE-03 校准后的自动判;**`human` = PRESENT-01 HITL 按钮覆盖**(DATASET-02 溯源可审计) |
+| `shots[].verdict.decided_at` | string (ISO-8601 UTC) | — | mirror `asset.generator.generated_at` 风格(纯 string + description,不加 `format` 关键字) |
+
+**最小片段**(摘自 `spec/fixtures/v1.3/roundtrip.json`,2-shot 简化样例 — shot 1 = full/auto-accept;shot 2 = degrade/human-reject,演示 optional 字段缺席与 `decided_at`):
+
+```json
+{
+  "schema_version": "1.3",
+  "shots": [
+    {"shot_id": 1,
+     "regen": {"path": "roundtrip/shot_001.mp4", "video_content_hash": "a1b2c3d4e5f60718",
+               "engine_name": "MiniMaxH3ImageToVideo", "engine_version": "h3-fl2va-v4",
+               "prompt_version": "prompts-0.3.0", "duration_sec": 4.8, "width": 832, "height": 480},
+     "scores": {"midframe_sim": {"score": 0.87, "model": "clip-vit-l14-336"},
+                "judge": {"attribution": "prompt_faithful", "confidence": 0.8,
+                          "reason": "中段帧主体运动与运镜方向同 prompt 描述一致，场景元素齐全"}},
+     "verdict": {"decision": "accepted", "source": "auto"}},
+    {"shot_id": 2,
+     "regen": {"path": "roundtrip/shot_002.mp4", "video_content_hash": "0f1e2d3c4b5a6978",
+               "engine_name": "MiniMaxH3ImageToVideo", "engine_version": "h3-fl2va-v4",
+               "prompt_version": "prompts-0.3.0", "duration_sec": 4.8},
+     "scores": {"midframe_sim": {"score": 0.42, "model": "clip-vit-l14-336"}},
+     "verdict": {"decision": "rejected", "source": "human", "decided_at": "2026-08-19T00:00:00Z"}}
+  ]
+}
+```
+
+Reference schema: `spec/schemas/roundtrip.schema.json`
+
+**渲染安全与 manifest 挂载说明:** `judge.reason` 与 `status.error` 是模型/引擎产出的自由文本 — Phase 22 HTML 渲染 **MUST** 先经 `_esc()` HTML 转义再插入 DOM(PRESENT-01 XSS 硬化义务预告;schema 层已先做 `maxLength: 2000` 长度上界,bound 而非 forbid)。manifest 侧:`asset.json#data.roundtrip` 是 **object** 挂载(v1.x 首个 object 值的 `data.*` 挂载)`{path: "roundtrip.json", accepted_count, rejected_count}` — `path` 指向本 sidecar,两个 count 是 `shots[].verdict.decision` 的计数统计(消费端不开 sidecar 即可渲染 round-trip 概览);per-shot 数据留在 `roundtrip.json`,**不内嵌** asset.json。producer(`scripts/export_asset.py`)仅在 roundtrip.json 存在且可解析时 emit(malformed → `[warn]` + OMIT,不持久化可疑统计 — mirror WR-05;不做挂载前 schema 校验,完整 gate 在 `spec/validate.py` V13 阶与 `verify_contract.py` producer mode)。accepted 判定阈值(midframe_sim + judge 双信号)由 Phase 21 ep01 ≤20 镜抽样校准后锁定 — **校准前本 SPEC 不给数值**(见 §10;two-tier authority:阈值是散文 + 校准报告,永不进 schema)。
+
 ---
 
 ## 6. Media References & Range-aware Serving (SPEC-03, D-03)
@@ -661,19 +736,21 @@ python3 spec/validate.py --strict-smoke
 
 ---
 
-## 10. Fidelity Disclaimer (`1.2` — AF-01/AF-02/AF-03 mitigation)
+## 10. Fidelity Disclaimer (`1.2` + `1.3` — AF-01/AF-02/AF-03 mitigation)
 
 > 本节是 v1.2 milestone 引入的 prose-layer 保真度声明。**它不是 schema field** — `fidelity_disclaimer` 在 schema 中只作为 `reproduction.{tts,music_gen,foley}.fidelity_disclaimer` 的 per-prompt machine-checkable string 字段出现(下游 UI 渲染给用户管理期望);本节是 producer/operator/consumer 必读的人读概览,属于 two-tier authority 的人读半边(schema 是机器真源,prose 与 schema 冲突时 schema 为准)。
 >
 > 消费端(Phase 17 画布 / Phase 16 HTML gallery)**MUST 在信任任何 v1.2 audio field 前读完本节**。emotion/word-level/instruments 三个字段的保真度边界由 Phase 10 spike outcomes 锁定(见 `.planning/research/audio-spike-report.md`),non-obvious to a reader who only reads the schemas。
+>
+> v1.3(Phase 18)追加 §10.5 round-trip verdict 三层声明 — 消费端(dataset 消费者 / Phase 22 gallery 审阅者)**在信任任何 `roundtrip.json` verdict 前同样必读**。
 
 ### 10.1 AF-01 — 复现 prompt 是 regeneration 友好的 NL 描述(explicit out-of-scope)
 
 **v1.2 复现 prompt(`audio_semantic.shots[].reproduction.{tts,music_gen,foley}`)是 regeneration 友好的 NL 描述,不是源音频的精确逆向。**
 
-任何承诺「绝对复现 / 完美重建 / 精确还原 / perfect clone / exact source match」之类绝对化语义的短语(中文或英文)— 在 `README.md` / `SPEC.md` / `html/*.html` 中 **FORBIDDEN**(AF-01 invariant)。这些短语对内容创作者构成虚假承诺 — TTS 复现的是「相似音色 + 相同情绪文本」的 regeneration 而非 source-voice 克隆;music-gen 复现的是「相似节奏 + 调性」的 regeneration 而非 source-audio 拷贝;foley 复现的是「同类音效描述」的 regeneration 而非 source-foley 还原。
+任何承诺绝对化复现语义的短语(中文或英文 — 典型如「完美/精确/绝对 + 复刻/复原/重建/复现」式中文组合与 perfect/exact + reconstruct/restore 式英文组合;完整禁用清单以 AF-01 invariant grep 守门为准)— 在 `README.md` / `SPEC.md` / `html/*.html` 中 **FORBIDDEN**(AF-01 invariant)。这些短语对内容创作者构成虚假承诺 — TTS 复现的是「相似音色 + 相同情绪文本」的 regeneration 而非 source-voice 克隆;music-gen 复现的是「相似节奏 + 调性」的 regeneration 而非 source-audio 拷贝;foley 复现的是「同类音效描述」的 regeneration 而非 source-foley 还原。
 
-> 本节用「绝对化复现措辞」作统称;具体禁用短语以 AF-01 invariant grep 守门(SPEC + README 中绝对化措辞必须 0 匹配)。
+> 本节用「绝对化复现措辞」作统称;具体禁用短语以 AF-01 invariant grep 守门(SPEC + README 中绝对化措辞必须 0 匹配 — 连本节列举式的「提及」也不豁免,grep 无法区分使用与提及)。
 
 所有复现 prompt 字段在 schema 层都带 `confidence` (0..1) + 可选 `fidelity_disclaimer` (per-prompt string,UI 渲染给用户);HTML/SPEC 的展示标签 MUST 显式「estimated」前缀(Phase 16 PRESENT-01)。
 
@@ -721,8 +798,21 @@ WhisperX wav2vec2 forced alignment 在 faster-whisper/openai-whisper 既有 segm
 
 Schema 与 SPEC 冲突时 **schema 为准**(本节 §1 Authority 已锁定)。本文档的任何与 schema 不一致都视为缺陷,必须修复。本节的存在 **不放松** schema 严格性(`additionalProperties:false` 全程开启),也不放松消费端的 graceful-degrade 运行时义务(§4)。
 
+### 10.5 v1.3 Round-trip verdict 三层保真度声明(Phases 18-22)
+
+v1.3 的 round-trip verdict(`roundtrip.json#shots[].verdict`)引入新的过度信任风险。消费端(dataset 消费者 / Phase 22 gallery 审阅者 / 未来贡献者)**MUST 在信任任何 verdict 前读完以下三层**:
+
+**第①层 — accepted = 「h3 可复现」≠「prompt 完美」。** `verdict.decision = accepted` 的判定对象是「MiniMax H3 fl2va 能否在给定首尾帧条件下重生成出与原片段中段相似的动态」,**不是**「prompt 完整刻画了原片段」。fl2va 是首尾帧条件渲染 — 首尾帧已被 condition 注入,相似度信号集中在中段(25%-75% 时窗);这带来**幸存者偏差**:prompt 中未被中段渲染体现的维度(音效、部分材质细节、画外信息、prompt 各 facet 的措辞差异)不可由此 verdict 证伪。把 accepted 读作「prompt 无懈可击」会系统性高估 prompt 质量 — accepted 的正确读法是「这条 prompt 在 h3 的能力范围内可复现到中段相似」。
+
+**第②层 — rejected 是 hard negatives + h3 能力边界测绘数据,非垃圾。** `verdict.decision = rejected` 的条目**必须保留**(DATASET-01;rejected 永不删除):它们是 rejection sampling 的 **hard negatives**(对训练「区分好 prompt 与欠约束 prompt」的判别有价值),同时是 h3 引擎**能力边界的测绘数据**(`judge.attribution = model_diverged` 的条目刻画「prompt 足够好但引擎做不到」的边界 — 这些边界样本本身是 h3 迭代的基准)。SCORE-03 的 rejected 占比审计依赖此语义;把 rejected 当垃圾丢弃会同时丢掉这两类价值,并让 accepted 占比失去解释基线。
+
+**第③层 — judge attribution 是模型判断带 confidence,不是 ground truth。** `scores.judge.attribution` 三分类(`prompt_faithful` / `model_diverged` / `prompt_underspecified`)是 SCORE-02 的**自有分类学**,由 VLM judge 产出 — 它是模型判断;配对的 `confidence` 是模型自报置信度,**未校准**(不是校准概率,数值只可序数比较、不可当概率使用)。三分类的边界本身是我们定义的分类学而非客观真值 — 任何把 attribution 当 ground truth 的下游流程(如直接按 `model_diverged` 过滤数据集而不抽查)都在过度信任一个未校准信号。
+
+**附 — accepted 双阈值由 Phase 21 校准后锁定(two-tier authority)。** accepted 的判定阈值(midframe_sim 相似度阈值 + judge 归因规则)**在校准前不存在**:Phase 21 将用 ep01 ≤20 镜抽样校准后锁定,校准报告是阈值的权威载体。本 SPEC 与 schema 在校准前**不给出任何阈值数值** — schema 只装结果(`score` / `attribution` / `confidence` / `decision`),阈值永远活在散文(本节)+ Phase 21 校准报告里,永不进 schema。
+
 ---
 
 *Created: 2026-07-20 (Phase 01 Plan 02 — initial publication of the human-readable ShotTimelineAsset contract).*
 * schema_version "1" — initial contract. See §4 Changelog for evolution rules.*
 * 2026-07-25 (Phase 11 Plan 03 — v1.2 additive extension: §4 Changelog `1.2` + §5.8 Audio Semantic + §5.9 Speakers + §10 Fidelity Disclaimer). schema_version "1.2".*
+* 2026-08-19 (Phase 18 Plan 03 — v1.3 additive extension: §4 Changelog `1.3` + §5.10 Round-trip + §10 v1.3 三层 Fidelity Disclaimer). schema_version "1.3".*
