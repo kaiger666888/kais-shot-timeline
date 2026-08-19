@@ -274,6 +274,9 @@ def main():
     warnings_sidecar = os.path.join(args.work_dir, "route_cache", "warnings.json")
     warnings: list[str] = []
     prompts: list[dict] = []
+    # route 命中计数（cache hit 或 live call 成功）—— 全零 = 整体 degrade，
+    # 写出守卫（step 6.5）据此判断是否允许覆盖既有 prompts.json。
+    route_hits = 0
 
     # 3. Preflight（非 offline 才探）—— 失败即标 route_down，短路剩余 shots
     route_down = args.offline
@@ -373,6 +376,8 @@ def main():
                     warnings.append(f"shot {sid}: offline/cache-miss → empty facets")
 
             # (d) 映射 → facets（route_shot is None → 全空，schema 仍合法）
+            if route_shot is not None:
+                route_hits += 1
             facets = compose_facets(route_shot)
 
             # (e) 组 prompts entry（prompt_text 留空 —— Phase 8 owns recomposition）
@@ -404,6 +409,34 @@ def main():
             f"prompts.json schema validation failed ({len(errors)} errors): "
             + "; ".join(f"{'/'.join(map(str, e.absolute_path))}: {e.message}"
                         for e in errors[:3]))
+
+    # 6.5 防破坏性覆盖守卫：route 整体 degrade（route_hits == 0）+ 磁盘上已有
+    # 富 prompts.json（任一 shot 的 prompt_text/subject 非空）→ 不写空壳覆盖，
+    # 保留既有产物。口径：graceful-degrade 可以产出降级输出，但绝不销毁既有
+    # 数据 —— ep02 重跑事故（2026-08-19）：cache miss + route down 把 07-20 的
+    # 富 prompts 清成空壳，仅因 prompt_parts/ 分片在场才可恢复。
+    if route_hits == 0 and os.path.exists(args.output):
+        existing_rich = False
+        existing_shots = 0
+        try:
+            with open(args.output, encoding="utf-8") as f:
+                existing = json.load(f)
+            if isinstance(existing, list):
+                existing_shots = len(existing)
+                existing_rich = any(
+                    (e.get("prompt_text") or e.get("subject"))
+                    for e in existing if isinstance(e, dict))
+        except (OSError, json.JSONDecodeError):
+            existing_rich = False   # 既有文件不可读 → 不拦，按原行为写出
+        if existing_rich:
+            warnings.append(
+                f"route fully degraded + existing prompts.json rich "
+                f"({existing_shots} shots) → overwrite SKIPPED, existing preserved")
+            with open(warnings_sidecar, "w", encoding="utf-8") as f:
+                json.dump({"warnings": warnings}, f, ensure_ascii=False, indent=2)
+            print(f"[semantic] warning: route 全 degrade 且既有 prompts.json 含富数据，"
+                  f"跳过覆盖保留原文件（{existing_shots} shots, {len(warnings)} warnings）")
+            return 0
 
     # 7. 原子写 prompts.json（temp + os.replace —— 防 partial-write 被下游读到）
     tmp = args.output + ".tmp"
