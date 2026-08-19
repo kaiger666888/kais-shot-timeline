@@ -23,8 +23,16 @@ question 版）；上游 observe() 本体（多图无问句）不复刻。
   4. Fallback（KAP down 时）：bash /opt/qwen-llm/kap-llm.sh start q3。
   5. health 轮询 ≤120s；Guard 2（轮询中）：server.log 自启动前 offset 起的
      新增内容出现 load 失败字样 → 立即放弃 (False, True)。
-  6. stop_if_owned() 只停**自己拉起的** server —— 预存在 lease（无论谁的）
-     绝不动（幂等，never raises）。
+  6. WR-03（19-REVIEW）：只要 3/4 实际发起过 start（无论 health 是否达标）
+     即 _owned=True —— 慢启动超时 / 加载失败的半启动 server 也归我们管，
+     stop_if_owned 一并停掉（防 13.4GB 无人管理泄漏）。预存在（health 探测
+     即命中、从未发起 start）绝不动。
+  7. stop_if_owned() 停 server + 配对释放 KAP lease：allocate 授予过才
+     POST :10588/api/production/llm/release（mirror allocate 的 caller 归因；
+     路由源 kais-aigc-platform src/routes/production/llm/index.ts:135 ——
+     release 同时解除 GPU 队列服务级占位。kap-llm.sh stop 只 pkill 进程、
+     不触碰 lease，脚本内无 release 调用，2026-08-20 核验）。幂等，
+     never raises。
 
 上游硬约束（必须遵守，违反 = 静默劣化）：
   1. **每图一条 user 消息**（llama.cpp 多图丢弃 bug）：单条 user 消息带 N 图
@@ -68,8 +76,9 @@ ENGINE_VERSION = "qwen3.8-27b-q3@c3949404"
 CALLER = "kst:vision_facets"
 """caller identity —— 流进 KAP allocate lease，做 GPU-scheduler 归因。"""
 
-# KAP allocate API（GpuScheduler 前端）。KAP down 时 fallback 直接跑脚本。
+# KAP allocate/release API（GpuScheduler 前端）。KAP down 时 fallback 直接跑脚本。
 KAP_ALLOCATE_URL = "http://127.0.0.1:10588/api/production/llm/allocate"
+KAP_RELEASE_URL = "http://127.0.0.1:10588/api/production/llm/release"
 LLM_API = "http://127.0.0.1:8125/v1/chat/completions"
 LLM_HEALTH = "http://127.0.0.1:8125/health"
 KAP_LLM_SH = "/opt/qwen-llm/kap-llm.sh"
@@ -95,7 +104,11 @@ class QwenEye:
 
     def __init__(self, caller: str = CALLER):
         self.caller = caller
-        self._owned = False  # True iff WE brought the server up
+        # True iff 我们发起过 start 尝试（WR-03：含 health 未达标的半启动 ——
+        # (False, True) 失败路径的 server 同样归我们停）。
+        self._owned = False
+        # True iff KAP allocate 授予过 lease —— stop_if_owned 时配对 release。
+        self._lease_granted = False
 
     # ── HTTP plumbing（staticmethod —— tests 可 monkeypatch 单一共享副本）──
 
@@ -165,6 +178,8 @@ class QwenEye:
 
         ``started_by_us`` 为 False 表示 server 在 allocate 前**已健康** ——
         调用方批次结束后绝不能 stop 它（用完即停只适用于自己拉起的）。
+        为 True 表示我们发起过 start 尝试 —— 含 health 未达标的慢启动 /
+        加载失败半启动（WR-03）：调用方必须 stop_if_owned() 收尾。
         Never raises。
 
         Fail-fast：模型加载 OOM 是硬不可用 —— allocate 前预检 VRAM，轮询中
@@ -193,6 +208,8 @@ class QwenEye:
             )
         except Exception:  # noqa: BLE001 — allocate 是 best-effort
             allocated = False
+        if allocated:
+            self._lease_granted = True   # WR-03：stop_if_owned 时配对 release
         if not allocated:
             # Fallback：直接跑脚本（幂等 start；脚本自身等 ready —— 我们用
             # 自己的 deadline 封顶）。
@@ -204,10 +221,16 @@ class QwenEye:
             except (subprocess.SubprocessError, OSError):
                 pass   # best-effort —— 下方 health 轮询给出最终裁决
 
+        # WR-03（19-REVIEW）：走到这里 = 我们已实际发起 start（KAP allocate
+        # 拉起/确认，或 fallback 脚本已跑）。无论 health 最终是否达标，server
+        # 都可能仍在加载 —— 提前置 _owned，使 (False, True) 的失败路径同样
+        # 被 stop_if_owned 覆盖（旧代码只在 health-OK 分支置位：慢启动超时后
+        # server 继续加载成 13.4GB 无人管理的泄漏）。
+        self._owned = True
+
         deadline = time.monotonic() + timeout_s
         while time.monotonic() < deadline:
             if self._health_ok():
-                self._owned = True
                 return True, True
             # Guard 2 —— launch 尝试死于模型加载：停止等待。
             if self._server_log_load_failed(log_offset):
@@ -218,9 +241,13 @@ class QwenEye:
         return False, True
 
     def stop_if_owned(self) -> None:
-        """只停**自己拉起的** server（幂等）。Never raises。
+        """只停**自己发起过 start 的** server（幂等）。Never raises。
 
         预存在 server（无论谁的 lease）绝不动 —— 见模块 docstring 生命周期。
+        WR-03：allocate 授予过的 KAP lease 在此配对显式释放（POST
+        /api/production/llm/release，mirror allocate 的 caller 归因）——
+        kap-llm.sh stop 只 pkill 进程、不触碰 lease。best-effort：release
+        失败（KAP down）只意味着 lease 由 KAP 侧 idle 超时兜底释放。
         """
         if not self._owned:
             return
@@ -232,6 +259,14 @@ class QwenEye:
             )
         except (subprocess.SubprocessError, OSError):
             pass   # best-effort；失败只意味着 VRAM 晚点释放
+        if self._lease_granted:
+            self._lease_granted = False
+            try:
+                self._http_json(KAP_RELEASE_URL,
+                                payload={"caller": self.caller},
+                                timeout=15.0)
+            except Exception:  # noqa: BLE001 — release 是 best-effort
+                pass
 
     # ── Chat 调用 ────────────────────────────────────────────────────────
 
