@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""h3 复现客户端（Phase 20 / REGEN-01/03）—— kst 直连 ComfyUI 原生 API，不经 subagent/KAP/kmc。
+"""h3 复现客户端（Phase 20 / REGEN-01/03/04）—— kst 直连 ComfyUI 原生 API，不经 subagent/KAP/kmc。
 
 背景
 ----
@@ -76,10 +76,21 @@ argv 用法
 ---------
     python3 analysis/roundtrip/h3_regen.py --work-dir output/<video-stem>/ \
         [--comfy-url http://127.0.0.1:8188] [--gpu-index 1] \
-        [--vram-wait-timeout 1800] [--force] [--shot-timeout 0]
+        [--vram-wait-timeout 1800] [--sample-shots 20] [--max-shot-sec 10] \
+        [--regen-resolution 896x512] [--force] [--shot-timeout 0]
 
-（--sample-shots/--max-shot-sec/--regen-resolution 等 sampling/降载 flag 在
-20-02 接入；本 plan 固定默认分辨率 1344x768 处理全部镜。）
+抽样与降载语义（REGEN-04，20-02）
+---------------------------------
+- --sample-shots N：均匀间隔抽样（确定性，无随机）：pos = {int(i*N/n)} 0-based
+  去重保序映射回升序全镜 ids；n≥N → 全镜。**抽样在 >10s 过滤之前做**（对全镜
+  列表等距——代表性不被过滤顺序扭曲；ep01 锚点：93 镜 N=20 → shot 70 落样后
+  被 max-shot-sec 跳过 → 实渲 19）。
+- --max-shot-sec（默认 10）：duration 超限镜跳过 + str warning + skipped.json
+  条目 {shot_id, reason, duration_sec}（route_cache/h3_regen/ 下，READ-merge
+  重跑替换同 shot_id；--force 清 cache 目录时一并清掉）。
+- --regen-resolution（默认 1344x768，降档 896x512 严格 7:4）：parse +
+  validate（%32 / 7:4 / ≤MAX_PIXELS）失败中文报错退出；分辨率冻进
+  engine_version —— 切分辨率 = 旧 cache 整体失效换渲染配置全集重渲（Q3 裁决）。
 """
 from __future__ import annotations
 
@@ -284,6 +295,44 @@ def resolve_source_video(work_dir: str) -> str:
         if os.path.isfile(cand):
             return cand
     sys.exit(f"{STEP_TAG} 找不到源视频：{work_dir}/h264.mp4 与 video.mp4 均不存在")
+
+
+# ─── 抽样 / 跳镜 / 降载（REGEN-04，20-02）──────────────────────────────────
+
+def uniform_sample(shot_ids: list[int], n: int) -> list[int]:
+    """均匀间隔抽样（确定性、无随机）：pos = {int(i*N/n) for i in range(n)}
+    （0-based 去重保序）→ 映射回升序 ids。n ≥ N 或 n ≤ 0 → 全镜。
+    ep01 锚点（RESEARCH 实算复现）：93 镜 n=20 →
+    [1,5,10,14,19,24,28,33,38,42,47,52,56,61,66,70,75,80,84,89]。"""
+    ids = sorted(shot_ids)
+    if n <= 0 or n >= len(ids):
+        return ids
+    pos = sorted({int(i * len(ids) / n) for i in range(n)})
+    return [ids[p] for p in pos]
+
+
+def _skipped_path(work_dir: str) -> str:
+    """>10s 跳镜清单路径（route_cache/h3_regen/skipped.json）。"""
+    return os.path.join(work_dir, "route_cache", "h3_regen", "skipped.json")
+
+
+def write_skipped_entry(work_dir: str, shot_id: int, reason: str,
+                        duration_sec: float) -> None:
+    """skipped 清单 READ-merge 写入：重跑替换同 shot_id 条目（幂等），
+    按 shot_id 排序原子写。--force 清 route_cache/h3_regen/ 时一并清掉。"""
+    try:
+        with open(_skipped_path(work_dir), encoding="utf-8") as f:
+            entries = json.load(f)
+        if not isinstance(entries, list):
+            entries = []
+    except (OSError, json.JSONDecodeError):
+        entries = []
+    entries = [e for e in entries
+               if not (isinstance(e, dict) and e.get("shot_id") == shot_id)]
+    entries.append({"shot_id": shot_id, "reason": reason,
+                    "duration_sec": duration_sec})
+    entries.sort(key=lambda e: e.get("shot_id", 0) if isinstance(e, dict) else 0)
+    _atomic_write_json(_skipped_path(work_dir), entries)
 
 
 # ─── 帧提取 / 上传 ──────────────────────────────────────────────────────────
@@ -511,9 +560,10 @@ def _file_sha256(path: str, chunk: int = 1024 * 1024) -> str:
     return h.hexdigest()
 
 
-def _atomic_write_json(path: str, data: dict) -> None:
+def _atomic_write_json(path: str, data: object) -> None:
     """tmp + os.replace 原子写（mirror vision_seq L333-338；indent=2
-    ensure_ascii=False repo 惯例）。"""
+    ensure_ascii=False repo 惯例）。data 为 dict（cache/warnings/sidecar）
+    或 list（skipped 清单）。"""
     os.makedirs(os.path.dirname(path), exist_ok=True)
     tmp = path + ".tmp"
     with open(tmp, "w", encoding="utf-8") as f:
@@ -817,6 +867,14 @@ def main() -> int:
                          f"comfyui-primary 所在 3090）")
     ap.add_argument("--vram-wait-timeout", type=int, default=1800,
                     help="批开始 eye 等待 / 每镜 foreign 等待的超时秒数（默认 1800）")
+    ap.add_argument("--sample-shots", type=int, default=0,
+                    help="均匀间隔抽样 N 镜（0=不抽样全量；抽样在 >10s 过滤之前做）")
+    ap.add_argument("--max-shot-sec", type=float, default=10.0,
+                    help="超限镜跳过阈值秒数（duration 超过则跳镜 + skipped.json；0=不过滤）")
+    ap.add_argument("--regen-resolution",
+                    default=f"{DEFAULT_WIDTH}x{DEFAULT_HEIGHT}",
+                    help="渲染分辨率 WxH（默认 1344x768；降档 896x512 严格 7:4——"
+                         "分辨率冻进 engine_version，切换即整体 cache 失效重渲）")
     args = ap.parse_args()
     signal.signal(signal.SIGINT, signal.default_int_handler)  # Ctrl-C 可中断批（断点续跑承接）
 
@@ -839,6 +897,41 @@ def main() -> int:
         if os.path.isfile(force_sidecar):
             os.unlink(force_sidecar)
         print(f"{STEP_TAG} [force] 已清除 {force_cache_dir} / {force_out_dir} / {force_sidecar}")
+
+    # 分辨率解析 + 校验（CLI fail-fast：非法值在任何 guard 动作/HTTP 之前退出）。
+    width, height = parse_resolution(args.regen_resolution)
+    if not validate_resolution(width, height):
+        sys.exit(f"{STEP_TAG} --regen-resolution {args.regen_resolution} 非法"
+                 f"（需 %32==0 + 严格 7:4 + 面积≤{MAX_PIXELS}；"
+                 f"如 {DEFAULT_WIDTH}x{DEFAULT_HEIGHT} / 896x512）")
+    engine_version = build_engine_version(width, height)
+
+    # 抽样 → 时长过滤（顺序锁定：先抽样后过滤——A6 语义：抽样代表性不被过滤
+    # 顺序扭曲；ep01 锚点 shot 70 落样后被 max-shot-sec 跳过 → 实渲 19）。
+    sampled_count = 0
+    if args.sample_shots > 0:
+        all_count = len(shots)
+        keep_ids = set(uniform_sample([s["id"] for s in shots],
+                                       args.sample_shots))
+        shots = [s for s in shots if s["id"] in keep_ids]
+        sampled_count = len(keep_ids)
+        print(f"{STEP_TAG} --sample-shots {args.sample_shots}: "
+              f"{sampled_count}/{all_count} 镜入样（均匀间隔，全镜列表上做）")
+    skipped_count = 0
+    if args.max_shot_sec > 0:
+        kept_shots: list[dict] = []
+        for s in shots:
+            if s.get("duration", 0.0) > args.max_shot_sec:
+                msg = (f"{STEP_TAG} shot {s['id']} skipped: "
+                       f"{s['duration']:.1f}s > max {args.max_shot_sec:.1f}s")
+                print(msg)
+                pending_warnings.append(msg)
+                write_skipped_entry(work_dir, s["id"], "duration_over_max",
+                                    s["duration"])
+                skipped_count += 1
+            else:
+                kept_shots.append(s)
+        shots = kept_shots
 
     # ComfyUI 可达性 gate（标准序第一位：ComfyUI down 时先降级退出，不白杀 TTS、
     # 不空轮 eye lease）→ batch_start_guard → 批循环（20-01 注释锁定的标准序）。
@@ -863,11 +956,8 @@ def main() -> int:
     # 每镜复查基线（guard 之后快照——此刻 GPU 上的 PID 全部属「已过 gate」态）。
     baseline_pids = baseline_pid_snapshot(args.gpu_index)
 
-    # 本 plan 固定默认分辨率（--regen-resolution flag 在 20-02 接入）。
-    width, height = DEFAULT_WIDTH, DEFAULT_HEIGHT
-    if not validate_resolution(width, height):
-        sys.exit(f"{STEP_TAG} 默认分辨率 {width}x{height} 非法（%32/7:4/MAX_PIXELS 校验失败）")
-    engine_version = build_engine_version(width, height)
+    # 分辨率已在 gate 前解析校验；engine_version 随 (w,h) 变化 → 切分辨率
+    # 即旧 cache 整体失效（Q3 裁决：换渲染配置全集重渲）。
     template = load_template()
 
     frames_dir = os.path.join(work_dir, "route_cache", "h3_regen", "frames")
@@ -960,14 +1050,14 @@ def main() -> int:
         if (done % 10) == 0:
             print(f"{STEP_TAG} {done}/{len(shots)} shots processed")
 
-    # 收尾 flush：本轮 str/dict warnings（跳镜 str 在 20-02 产生；本 plan 至少
-    # flush join 缺失/失败摘要）→ summary print。
+    # 收尾 flush：本轮 str/dict warnings（join 缺失 / 跳镜 str / 失败摘要 /
+    # guard 审计与拒绝记因）→ summary print。
     if failed:
         pending_warnings.append(f"{STEP_TAG} failed shots: {failed}")
     if pending_warnings:
         append_roundtrip_warnings(work_dir, pending_warnings)
     print(f"{STEP_TAG} 完成：rendered={rendered} cache-hit={cache_hits} "
-          f"failed={len(failed)}")
+          f"failed={len(failed)} sampled={sampled_count} skipped={skipped_count}")
     print(f"{STEP_TAG} 产物目录：{out_dir}")
     return 0
 
