@@ -433,16 +433,19 @@ def append_roundtrip_warnings(sidecar: str, new_entries: list[dict]):
 
 **其余关键断言均 [VERIFIED]（本机实测/源码精读）或 [CITED]（p11b/KAP/SKILL 文档）——不需要用户确认。**
 
-## Open Questions
+## Open Questions（3/3 RESOLVED —— plan 期已裁决，指针见各条）
 
-1. **每镜 VRAM 复查的实现口径**（Pitfall 1 的三个方案：PID 归因 / 基线 delta / 维持绝对值）
+1. **每镜 VRAM 复查的实现口径**（Pitfall 1 的三个方案：PID 归因 / 基线 delta / 维持绝对值）——(RESOLVED → 20-02 Task 1)
    - What we know: 绝对值复查在自身 cache 驻留下大概率自锁；PID 归因最稳。
    - What's unclear: --lowvram 下渲后驻留的真实水位（需首镜实测）。
    - Recommendation: 按 PID 归因实现 + smoke（--sample-shots 2）时顺带记录渲后 free 水位进 cache 元数据，为后续调参留数据。
-2. **roundtrip.json 的写入归属**：schema 描述 producer 为 "Phase 20/21"。
+   - **Resolution: 20-02 Task 1 按 PID 归因实现（compute-apps 差集 + 基线 ∪ comfyui-primary 容器主 PID，foreign Σused ≥4096MiB 才等待/终止）；渲后水位以 post_render_free_mib 字段留档进 cache 元数据。**
+2. **roundtrip.json 的写入归属**：schema 描述 producer 为 "Phase 20/21"。——(RESOLVED → 20-03 Task 1)
    - Recommendation: 本 phase 客户端批末写 regen 半边（shots[]{shot_id, regen} ∪ status{failed}，scores/verdict 缺席——schema 明文合法 degrade 中间态），READ-merge 已有条目（Phase 21 增量补 scores/verdict 时同模式）。这满足 SC1「Phase 18 契约是客户端的写入目标」且不给 Phase 21 留全量重写负担。
-3. **engine_version 字符串构成**（4-tuple 之一，影响 cache 失效粒度）
+   - **Resolution: 20-03 Task 1 write_roundtrip_sidecar——客户端批末写 regen 半边，READ-merge 保留 Phase 21 scores/verdict 字段，Draft202012Validator 写前自校验。**
+3. **engine_version 字符串构成**（4-tuple 之一，影响 cache 失效粒度）——(RESOLVED → 20-01 Task 1)
    - Recommendation: `"comfyui-0.30.0_fl2va-int8-convrot_euler-simple-15"`（把影响产物的参数冻进版本串：模型+sampler+scheduler+steps；分辨率/length/seed 不进——它们已按镜存 cache 元数据，且 --regen-resolution 切换时应整体重渲，可把分辨率并入 engine_version 或作为 cache 第 5 维，planner 定；推荐并入 engine_version，简单且语义即「换了渲染配置」）。
+   - **Resolution: 20-01 Task 1 冻结 ENGINE_VERSION_TEMPLATE="fl2va-int8/euler+simple/15/{width}x{height}"——model+sampler+scheduler+steps+resolution 全进版本串，cache 保持 4-tuple 不设第 5 维（--regen-resolution 切换即整体失效，20-02 Task 2 接入）。**
 
 ## Environment Availability
 
@@ -549,7 +552,7 @@ def append_roundtrip_warnings(sidecar: str, new_entries: list[dict]):
 - Standard stack: HIGH — 提交/轮询/回收链路端点级实测；零新依赖
 - Architecture: HIGH — 双源（KAP 源码 + live history）交叉的节点拓扑；cache/warnings 有 repo 内先例
 - Pitfalls: HIGH（P2/P3/P4/P5/P6/P7/P9 实证）/ MEDIUM（P1 批中 VRAM 行为——机制有 KAP 源码注释佐证，渲后水位未实测；P8 时长外推）
-- VRAM guard 设计: MEDIUM — 每镜复查口径需 plan 期定夺（Open Question 1）
+- VRAM guard 设计: MEDIUM — 每镜复查口径已于 plan 期裁决（Open Question 1 RESOLVED → 20-02 Task 1 PID 归因）
 
 **Research date:** 2026-08-20
 **Valid until:** 2026-09-19（ComfyUI 容器/TTS 状态是运行时实况，执行期应复核 :8188 存活与 GPU1 占用）
