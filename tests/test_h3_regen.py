@@ -1016,3 +1016,61 @@ def test_resegmentation_same_prompt_invalidates(tmp_path, monkeypatch, capsys):
     assert payload["prompt"]["20"]["inputs"]["length"] == 141       # 5.5s 网格值
     out = capsys.readouterr().out
     assert out.count("cache hit, skipping") == 1                    # 未变镜仍命中
+
+
+# ── WR-03：批级互斥锁 + PID 后缀 tmp（并发防护）────────────────────────────
+
+def test_atomic_write_tmp_pid_stamped(tmp_path, monkeypatch):
+    """WR-03(d)：原子写 tmp 名带 PID——并发写同一目标不共享 tmp，杜绝互相
+    replace 半截内容。"""
+    replaced = {}
+    real_replace = h3m.os.replace
+
+    def fake_replace(src, dst):
+        replaced["src"] = src
+        return real_replace(src, dst)
+
+    monkeypatch.setattr(h3m.os, "replace", fake_replace)
+    target = tmp_path / "x.json"
+    h3m._atomic_write_json(str(target), {"a": 1})
+    assert replaced["src"].endswith(f".tmp.{os.getpid()}")
+    assert json.loads(target.read_text(encoding="utf-8"))["a"] == 1
+    assert not any(p.name == f"x.json.tmp.{os.getpid()}"
+                   for p in tmp_path.iterdir())          # tmp 已消费
+
+
+def test_batch_lock_second_instance_degrades(tmp_path, monkeypatch, capsys):
+    """WR-03：另一实例持锁 → 本实例 str warning + rc=0 优雅退出——gate 已过、
+    guard 未跑（不白杀 TTS）、零提交。"""
+    import fcntl
+    work = make_workdir(tmp_path, n_shots=1)
+    lock_dir = work / "route_cache"
+    lock_dir.mkdir(parents=True)
+    lf = open(lock_dir / "h3_regen.lock", "w")
+    fcntl.flock(lf.fileno(), fcntl.LOCK_EX | fcntl.LOCK_NB)
+    try:
+        fake = FakeHTTP([(200, {"system": "ok"})])
+        calls = patch_pipeline(monkeypatch, fake)
+        assert run_main(work, ["--gpu-index", "1"]) == 0
+        assert sum(u.endswith("/prompt") for u, _ in fake.calls) == 0   # 零提交
+        assert not any(c and c[0] == "ss" for c in calls)               # guard 未执行
+        out = capsys.readouterr().out
+        assert "另一 h3_regen 实例" in out
+        warns = read_warnings(work)
+        assert any(isinstance(w, str) and "h3_regen.lock" in w
+                   and "实例" in w for w in warns)
+    finally:
+        fcntl.flock(lf.fileno(), fcntl.LOCK_UN)
+        lf.close()
+
+
+def test_batch_lock_released_after_run(tmp_path, monkeypatch):
+    """WR-03：main 结束后锁被释放（finally）——同进程顺序二跑（断点续跑
+    单元测试的形态）不被自己的残留锁卡死。"""
+    work = make_workdir(tmp_path, n_shots=1)
+    patch_pipeline(monkeypatch, FakeHTTP(ok_responses(1)))
+    assert run_main(work) == 0
+    # 锁已释放：再次 acquire 应成功
+    handle = h3m.acquire_batch_lock(str(work))
+    assert handle is not None
+    h3m.release_batch_lock(handle)

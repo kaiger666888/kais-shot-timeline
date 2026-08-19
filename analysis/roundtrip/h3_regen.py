@@ -16,14 +16,18 @@
    不空轮 eye lease，**更不执行 --force 破坏性清除**——CR-02：引擎确认可用
    之前 cache/产物/sidecar 一个字节都不动）；
 3. --force 时显式清单清除本 step 的 cache 与产物（gate 之后才执行）；
-4. 批开始 VRAM guard 五步固定序（kill TTS → /free → eye 等待 → /free → 严格
+4. 批级互斥锁（flock on route_cache/h3_regen.lock，WR-03：同 work_dir 并发
+   实例第二个起 str warning + exit 0 优雅退出，防双 guard/双批/read-merge
+   last-writer-wins）；
+5. 批开始 VRAM guard 五步固定序（kill TTS → /free → eye 等待 → /free → 严格
    gate，见下「VRAM guard 语义」）；
-5. 批循环逐镜：每镜提交前 PID 归因复查 → 4-tuple cache 预判 → miss 则 ffmpeg
+6. 批循环逐镜：每镜提交前 PID 归因复查 → 4-tuple cache 预判 → miss 则 ffmpeg
    全分辨率提取首/尾帧 → curl POST /upload/image ×2 → deepcopy
    workflow_fl2va.json 模板并注入节点参数（14/15 帧名、20 prompt/width/height/
    length、30 seed、50 prefix）→ POST /prompt → 轮询 /history/{prompt_id} →
-   /view 下载 mp4 → cache 写入（含渲后水位 post_render_free_mib）；
-6. 收尾：roundtrip.json regen 半边写入（Open Q2 裁决——READ-merge 保留
+   /view 下载 mp4（.part + os.replace 原子落位）→ cache 写入（含渲后水位
+   post_render_free_mib）；
+7. 收尾：roundtrip.json regen 半边写入（Open Q2 裁决——READ-merge 保留
    Phase 21 未来 scores/verdict 字段 + Draft202012Validator 写前自校验，
    cache-hit 镜从 cache meta 重建条目保证断点续跑后 sidecar 完整）→
    flush 本轮 warnings（跳镜 str / 失败摘要）+ summary print。
@@ -114,6 +118,7 @@ from __future__ import annotations
 
 import argparse
 import copy
+import fcntl
 import hashlib
 import importlib.util
 import json
@@ -616,9 +621,10 @@ def _file_sha256(path: str, chunk: int = 1024 * 1024) -> str:
 def _atomic_write_json(path: str, data: object) -> None:
     """tmp + os.replace 原子写（mirror vision_seq L333-338；indent=2
     ensure_ascii=False repo 惯例）。data 为 dict（cache/warnings/sidecar）
-    或 list（skipped 清单）。"""
+    或 list（skipped 清单）。tmp 名带 PID（WR-03：并发写同一目标不共享
+    tmp 文件，杜绝互相 replace 半截内容）。"""
     os.makedirs(os.path.dirname(path), exist_ok=True)
-    tmp = path + ".tmp"
+    tmp = f"{path}.tmp.{os.getpid()}"
     with open(tmp, "w", encoding="utf-8") as f:
         json.dump(data, f, ensure_ascii=False, indent=2)
     os.replace(tmp, path)
@@ -1045,6 +1051,44 @@ def per_shot_vram_ok(gpu_index: int, baseline: set[int],
         time.sleep(GUARD_POLL_SEC)
 
 
+# ─── 批级互斥锁（WR-03）─────────────────────────────────────────────────────
+# 同 work_dir 并发实例的互斥：flock LOCK_EX|LOCK_NB on route_cache/h3_regen.lock
+# （锁文件**不在** --force 的 rmtree 清单内——force 后锁语义仍连续；flock 随
+# 进程退出自动释放，无 stale lock）。抢不到锁 = 另一实例在跑 → str warning +
+# exit 0 优雅退出（graceful-degrade 姿态；str 形避开三码 closed enum）。
+
+def _batch_lock_path(work_dir: str) -> str:
+    return os.path.join(work_dir, "route_cache", "h3_regen.lock")
+
+
+def acquire_batch_lock(work_dir: str):
+    """尝试取批级互斥锁。成功返回持锁文件句柄（main 存活期内持有，批末
+    release）；已被其它实例占用返回 None（调用方降级退出——防双 guard 双杀
+    TTS / 双批提交 / read-merge-write last-writer-wins）。"""
+    os.makedirs(os.path.dirname(_batch_lock_path(work_dir)), exist_ok=True)
+    f = open(_batch_lock_path(work_dir), "w")
+    try:
+        fcntl.flock(f.fileno(), fcntl.LOCK_EX | fcntl.LOCK_NB)
+    except OSError:
+        f.close()
+        return None
+    return f
+
+
+def release_batch_lock(handle) -> None:
+    """释放批级互斥锁（best-effort：句柄无效/已关闭静默忽略）。"""
+    if handle is None:
+        return
+    try:
+        fcntl.flock(handle.fileno(), fcntl.LOCK_UN)
+    except OSError:
+        pass
+    try:
+        handle.close()
+    except OSError:
+        pass
+
+
 # ─── main ───────────────────────────────────────────────────────────────────
 
 def main() -> int:
@@ -1104,190 +1148,205 @@ def main() -> int:
         print(f"{STEP_TAG} ComfyUI 不可达（status={status}）—— graceful-degrade 退出")
         return 0
 
-    if args.force:
-        import shutil
-        force_cache_dir = os.path.join(work_dir, "route_cache", "h3_regen")
-        force_out_dir = os.path.join(work_dir, "roundtrip")
-        for p in (force_cache_dir, force_out_dir):
-            if os.path.isdir(p):
-                shutil.rmtree(p, ignore_errors=True)      # 显式清单，绝不 glob 父级（T-14-01/T-20-04）
-        # roundtrip.json 不整体删除（WR-01 红线：verdict rejected 永不删除）——
-        # 只剥 regen/status 半边，scores/verdict 保留给批末 READ-merge 回填。
-        kept_sidecar = strip_sidecar_regen_half(work_dir)
-        print(f"{STEP_TAG} [force] 已清除 {force_cache_dir} / {force_out_dir}"
-              f"；roundtrip.json 剥除 regen/status 半边"
-              f"（保留 {kept_sidecar} 条 scores/verdict 条目）")
-
-    # 抽样 → 时长过滤（顺序锁定：先抽样后过滤——A6 语义：抽样代表性不被过滤
-    # 顺序扭曲；ep01 锚点 shot 70 落样后被 max-shot-sec 跳过 → 实渲 19。
-    # 放在 --force 之后：force 清掉旧 skipped.json 后由本轮回写，清单始终
-    # 反映最新一轮的过滤决定）。
-    sampled_count = 0
-    if args.sample_shots > 0:
-        all_count = len(shots)
-        keep_ids = set(uniform_sample([s["id"] for s in shots],
-                                       args.sample_shots))
-        shots = [s for s in shots if s["id"] in keep_ids]
-        sampled_count = len(keep_ids)
-        print(f"{STEP_TAG} --sample-shots {args.sample_shots}: "
-              f"{sampled_count}/{all_count} 镜入样（均匀间隔，全镜列表上做）")
-    skipped_count = 0
-    if args.max_shot_sec > 0:
-        kept_shots: list[dict] = []
-        for s in shots:
-            if s.get("duration", 0.0) > args.max_shot_sec:
-                msg = (f"{STEP_TAG} shot {s['id']} skipped: "
-                       f"{s['duration']:.1f}s > max {args.max_shot_sec:.1f}s")
-                print(msg)
-                pending_warnings.append(msg)
-                write_skipped_entry(work_dir, s["id"], "duration_over_max",
-                                    s["duration"])
-                skipped_count += 1
-            else:
-                kept_shots.append(s)
-        shots = kept_shots
-
-    # 批开始 VRAM guard（五步固定序，见模块 docstring）。blocked → 优雅退出
-    # exit 0（graceful-degrade：vram_insufficient warning，cache 保留续跑语义）。
-    guard = batch_start_guard(args.comfy_url, args.gpu_index,
-                              args.vram_wait_timeout)
-    pending_warnings.extend(guard["warnings"])
-    if guard["blocked"]:
+    # 批级互斥锁（WR-03）：同 work_dir 并发实例第二个起优雅退出（str warning +
+    # exit 0）——防双 guard 双杀 TTS / 双批提交同一 ComfyUI 队列 / skipped/
+    # sidecar/warnings read-merge-write last-winner-wins。锁文件在 --force
+    # rmtree 清单之外（route_cache/h3_regen.lock），force 后锁语义仍连续。
+    lock_handle = acquire_batch_lock(work_dir)
+    if lock_handle is None:
+        msg = (f"{STEP_TAG} 另一 h3_regen 实例正在该 work-dir 运行"
+               f"（{_batch_lock_path(work_dir)} 被占用）—— 本实例 graceful-degrade 退出")
+        pending_warnings.append(msg)
         append_roundtrip_warnings(work_dir, pending_warnings)
-        print(f"{STEP_TAG} 批开始 guard 拒绝（reason={guard['reason']}）"
-              f"—— graceful-degrade 退出")
+        print(msg)
         return 0
-    # 每镜复查基线（guard 之后快照——此刻 GPU 上的 PID 全部属「已过 gate」态）。
-    baseline_pids = baseline_pid_snapshot(args.gpu_index)
+    try:
+        if args.force:
+            import shutil
+            force_cache_dir = os.path.join(work_dir, "route_cache", "h3_regen")
+            force_out_dir = os.path.join(work_dir, "roundtrip")
+            for p in (force_cache_dir, force_out_dir):
+                if os.path.isdir(p):
+                    shutil.rmtree(p, ignore_errors=True)  # 显式清单，绝不 glob 父级（T-14-01/T-20-04）
+            # roundtrip.json 不整体删除（WR-01 红线：verdict rejected 永不删除）——
+            # 只剥 regen/status 半边，scores/verdict 保留给批末 READ-merge 回填。
+            kept_sidecar = strip_sidecar_regen_half(work_dir)
+            print(f"{STEP_TAG} [force] 已清除 {force_cache_dir} / {force_out_dir}"
+                  f"；roundtrip.json 剥除 regen/status 半边"
+                  f"（保留 {kept_sidecar} 条 scores/verdict 条目）")
 
-    # 分辨率已在 gate 前解析校验；engine_version 随 (w,h) 变化 → 切分辨率
-    # 即旧 cache 整体失效（Q3 裁决：换渲染配置全集重渲）。
-    template = load_template()
+        # 抽样 → 时长过滤（顺序锁定：先抽样后过滤——A6 语义：抽样代表性不被过滤
+        # 顺序扭曲；ep01 锚点 shot 70 落样后被 max-shot-sec 跳过 → 实渲 19。
+        # 放在 --force 之后：force 清掉旧 skipped.json 后由本轮回写，清单始终
+        # 反映最新一轮的过滤决定）。
+        sampled_count = 0
+        if args.sample_shots > 0:
+            all_count = len(shots)
+            keep_ids = set(uniform_sample([s["id"] for s in shots],
+                                           args.sample_shots))
+            shots = [s for s in shots if s["id"] in keep_ids]
+            sampled_count = len(keep_ids)
+            print(f"{STEP_TAG} --sample-shots {args.sample_shots}: "
+                  f"{sampled_count}/{all_count} 镜入样（均匀间隔，全镜列表上做）")
+        skipped_count = 0
+        if args.max_shot_sec > 0:
+            kept_shots: list[dict] = []
+            for s in shots:
+                if s.get("duration", 0.0) > args.max_shot_sec:
+                    msg = (f"{STEP_TAG} shot {s['id']} skipped: "
+                           f"{s['duration']:.1f}s > max {args.max_shot_sec:.1f}s")
+                    print(msg)
+                    pending_warnings.append(msg)
+                    write_skipped_entry(work_dir, s["id"], "duration_over_max",
+                                        s["duration"])
+                    skipped_count += 1
+                else:
+                    kept_shots.append(s)
+            shots = kept_shots
 
-    frames_dir = os.path.join(work_dir, "route_cache", "h3_regen", "frames")
-    out_dir = os.path.join(work_dir, "roundtrip")
-    os.makedirs(out_dir, exist_ok=True)
+        # 批开始 VRAM guard（五步固定序，见模块 docstring）。blocked → 优雅退出
+        # exit 0（graceful-degrade：vram_insufficient warning，cache 保留续跑语义）。
+        guard = batch_start_guard(args.comfy_url, args.gpu_index,
+                                  args.vram_wait_timeout)
+        pending_warnings.extend(guard["warnings"])
+        if guard["blocked"]:
+            append_roundtrip_warnings(work_dir, pending_warnings)
+            print(f"{STEP_TAG} 批开始 guard 拒绝（reason={guard['reason']}）"
+                  f"—— graceful-degrade 退出")
+            return 0
+        # 每镜复查基线（guard 之后快照——此刻 GPU 上的 PID 全部属「已过 gate」态）。
+        baseline_pids = baseline_pid_snapshot(args.gpu_index)
 
-    rendered = 0
-    cache_hits = 0
-    failed: list[int] = []
-    failed_detail: dict[int, str] = {}
-    results: list[dict] = []          # sidecar results（rendered + cache-hit meta）
-    done = 0
-    for shot in shots:
-        done += 1
-        sid = shot["id"]
-        label = f"shot {sid}"
-        key4 = {
-            "video_content_hash": vch,
-            "engine_name": ENGINE_NAME,
-            "engine_version": engine_version,
-            "prompt_version": prompt_version_for(shot["prompt_text"]),
-        }
-        mp4 = _mp4_path(sid, work_dir)
-        # length 在 cache 预判**之前**算（WR-02：4-tuple 只钉视频不钉分割——
-        # 同源视频重分割后，存档 length 与当前 duration 网格值不一致即 miss
-        # 重渲，绝不复用旧边界首/尾帧的渲染）。
-        length = h3_frame_count(shot["duration"])
-        hit_meta = cache_read(sid, work_dir, key4)
-        if cache_is_hit(hit_meta, mp4, expected_length=length):
-            cache_hits += 1
-            # cache-hit 镜也进 sidecar results（从 cache meta 重建条目——
-            # 断点续跑后 roundtrip.json 完整性的关键）。
-            results.append(dict(hit_meta or {}, shot_id=sid, mp4=mp4))
-            print(f"{STEP_TAG} shot {sid}: cache hit, skipping")
-            continue
-        # 每镜提交前 PID 归因复查（Pitfall 1：基线内自身 cache 驻留不触发；
-        # foreign ≥4GB 且超时 → 优雅终止批，break 落到收尾 flush 后 return 0）。
-        if not per_shot_vram_ok(args.gpu_index, baseline_pids,
-                                args.vram_wait_timeout):
-            foreign = sorted(((p, u) for p, u in compute_apps(args.gpu_index)
-                              if p not in baseline_pids), key=lambda x: -x[1])
-            top = "; ".join(f"pid={p}({proc_name(p)})={u}MiB"
-                            for p, u in foreign[:3]) or "n/a"
-            mem = gpu_mem_mib(args.gpu_index)
-            free_s = f"{mem[1]}MiB" if mem else "n/a"
-            pending_warnings.append({
-                "code": "vram_insufficient",
-                "detail": f"镜 {sid} 提交前 foreign GPU 占用 ≥{FOREIGN_BLOCK_MIB}MiB"
-                          f"（top: {top}; free={free_s}）—— 优雅终止批，cache 保留续跑"})
-            print(f"{STEP_TAG} shot {sid}: foreign 占用超限 —— 优雅终止批"
-                  f"（cache 保留续跑）")
-            break
-        try:
-            seed = derive_seed(vch, sid)
-            ff_path, lf_path = extract_endpoint_frames(src_video, shot, vch, frames_dir)
-            ff_name = upload_image(ff_path, args.comfy_url)
-            lf_name = upload_image(lf_path, args.comfy_url)
-            prefix = f"kst_{vch}_shot{sid:03d}"
-            wf = build_workflow(template, ff_name, lf_name, shot["prompt_text"],
-                                width, height, length, seed, prefix)
-            prompt_id = submit_prompt(wf, args.comfy_url)
-            timeout_s = args.shot_timeout if args.shot_timeout > 0 else 900 + 3 * length
-            result = poll_and_fetch(prompt_id, args.comfy_url, timeout_s, label)
-            if not result or not result.get("ok"):
-                error = (result or {}).get("error") or "timeout"
-                print(f"{STEP_TAG} shot {sid}: 渲染失败（{str(error)[:300]}）")
-                failed.append(sid)
-                failed_detail[sid] = str(error)[:2000]
+        # 分辨率已在 gate 前解析校验；engine_version 随 (w,h) 变化 → 切分辨率
+        # 即旧 cache 整体失效（Q3 裁决：换渲染配置全集重渲）。
+        template = load_template()
+
+        frames_dir = os.path.join(work_dir, "route_cache", "h3_regen", "frames")
+        out_dir = os.path.join(work_dir, "roundtrip")
+        os.makedirs(out_dir, exist_ok=True)
+
+        rendered = 0
+        cache_hits = 0
+        failed: list[int] = []
+        failed_detail: dict[int, str] = {}
+        results: list[dict] = []      # sidecar results（rendered + cache-hit meta）
+        done = 0
+        for shot in shots:
+            done += 1
+            sid = shot["id"]
+            label = f"shot {sid}"
+            key4 = {
+                "video_content_hash": vch,
+                "engine_name": ENGINE_NAME,
+                "engine_version": engine_version,
+                "prompt_version": prompt_version_for(shot["prompt_text"]),
+            }
+            mp4 = _mp4_path(sid, work_dir)
+            # length 在 cache 预判**之前**算（WR-02：4-tuple 只钉视频不钉分割——
+            # 同源视频重分割后，存档 length 与当前 duration 网格值不一致即 miss
+            # 重渲，绝不复用旧边界首/尾帧的渲染）。
+            length = h3_frame_count(shot["duration"])
+            hit_meta = cache_read(sid, work_dir, key4)
+            if cache_is_hit(hit_meta, mp4, expected_length=length):
+                cache_hits += 1
+                # cache-hit 镜也进 sidecar results（从 cache meta 重建条目——
+                # 断点续跑后 roundtrip.json 完整性的关键）。
+                results.append(dict(hit_meta or {}, shot_id=sid, mp4=mp4))
+                print(f"{STEP_TAG} shot {sid}: cache hit, skipping")
                 continue
-            filename = result.get("filename", "")
-            if not sanitize_view_filename(filename):
-                print(f"{STEP_TAG} shot {sid}: 产物文件名非法（{filename!r}），拒绝下载")
+            # 每镜提交前 PID 归因复查（Pitfall 1：基线内自身 cache 驻留不触发；
+            # foreign ≥4GB 且超时 → 优雅终止批，break 落到收尾 flush 后 return 0）。
+            if not per_shot_vram_ok(args.gpu_index, baseline_pids,
+                                    args.vram_wait_timeout):
+                foreign = sorted(((p, u) for p, u in compute_apps(args.gpu_index)
+                                  if p not in baseline_pids), key=lambda x: -x[1])
+                top = "; ".join(f"pid={p}({proc_name(p)})={u}MiB"
+                                for p, u in foreign[:3]) or "n/a"
+                mem = gpu_mem_mib(args.gpu_index)
+                free_s = f"{mem[1]}MiB" if mem else "n/a"
+                pending_warnings.append({
+                    "code": "vram_insufficient",
+                    "detail": f"镜 {sid} 提交前 foreign GPU 占用 ≥{FOREIGN_BLOCK_MIB}MiB"
+                              f"（top: {top}; free={free_s}）—— 优雅终止批，cache 保留续跑"})
+                print(f"{STEP_TAG} shot {sid}: foreign 占用超限 —— 优雅终止批"
+                      f"（cache 保留续跑）")
+                break
+            try:
+                seed = derive_seed(vch, sid)
+                ff_path, lf_path = extract_endpoint_frames(src_video, shot, vch, frames_dir)
+                ff_name = upload_image(ff_path, args.comfy_url)
+                lf_name = upload_image(lf_path, args.comfy_url)
+                prefix = f"kst_{vch}_shot{sid:03d}"
+                wf = build_workflow(template, ff_name, lf_name, shot["prompt_text"],
+                                    width, height, length, seed, prefix)
+                prompt_id = submit_prompt(wf, args.comfy_url)
+                timeout_s = args.shot_timeout if args.shot_timeout > 0 else 900 + 3 * length
+                result = poll_and_fetch(prompt_id, args.comfy_url, timeout_s, label)
+                if not result or not result.get("ok"):
+                    error = (result or {}).get("error") or "timeout"
+                    print(f"{STEP_TAG} shot {sid}: 渲染失败（{str(error)[:300]}）")
+                    failed.append(sid)
+                    failed_detail[sid] = str(error)[:2000]
+                    continue
+                filename = result.get("filename", "")
+                if not sanitize_view_filename(filename):
+                    print(f"{STEP_TAG} shot {sid}: 产物文件名非法（{filename!r}），拒绝下载")
+                    failed.append(sid)
+                    failed_detail[sid] = f"产物文件名非法: {filename!r}"
+                    continue
+                _view_download(result, args.comfy_url, mp4)
+                if os.path.getsize(mp4) <= MIN_MP4_BYTES:
+                    print(f"{STEP_TAG} shot {sid}: 产物 <= {MIN_MP4_BYTES}B，判失败")
+                    failed.append(sid)
+                    failed_detail[sid] = f"下载产物 <= {MIN_MP4_BYTES}B"
+                    continue
+                meta = dict(key4)
+                meta.update({
+                    "prompt_id": prompt_id,
+                    "seed": seed,
+                    "length": length,
+                    "width": width,
+                    "height": height,
+                    "mp4_sha256": _file_sha256(mp4),
+                })
+                # 渲后水位留档（Open Q1 数据：--lowvram 下渲后自身 cache 驻留的实测
+                # 水位，为后续 guard 调参留证据；nvidia-smi 不可得记 None）。
+                mem_after = gpu_mem_mib(args.gpu_index)
+                meta["post_render_free_mib"] = mem_after[1] if mem_after else None
+                cache_write(sid, work_dir, meta)
+                results.append(dict(meta, shot_id=sid, mp4=mp4))
+                rendered += 1
+                print(f"{STEP_TAG} shot {sid}: rendered {os.path.basename(mp4)}")
+            except Exception as exc:                        # 单镜失败不阻塞批（vision_seq L660 形态）
+                print(f"{STEP_TAG} shot {sid}: 异常失败（{type(exc).__name__}: {str(exc)[:300]}）")
                 failed.append(sid)
-                failed_detail[sid] = f"产物文件名非法: {filename!r}"
+                failed_detail[sid] = f"{type(exc).__name__}: {str(exc)[:300]}"
                 continue
-            _view_download(result, args.comfy_url, mp4)
-            if os.path.getsize(mp4) <= MIN_MP4_BYTES:
-                print(f"{STEP_TAG} shot {sid}: 产物 <= {MIN_MP4_BYTES}B，判失败")
-                failed.append(sid)
-                failed_detail[sid] = f"下载产物 <= {MIN_MP4_BYTES}B"
-                continue
-            meta = dict(key4)
-            meta.update({
-                "prompt_id": prompt_id,
-                "seed": seed,
-                "length": length,
-                "width": width,
-                "height": height,
-                "mp4_sha256": _file_sha256(mp4),
-            })
-            # 渲后水位留档（Open Q1 数据：--lowvram 下渲后自身 cache 驻留的实测
-            # 水位，为后续 guard 调参留证据；nvidia-smi 不可得记 None）。
-            mem_after = gpu_mem_mib(args.gpu_index)
-            meta["post_render_free_mib"] = mem_after[1] if mem_after else None
-            cache_write(sid, work_dir, meta)
-            results.append(dict(meta, shot_id=sid, mp4=mp4))
-            rendered += 1
-            print(f"{STEP_TAG} shot {sid}: rendered {os.path.basename(mp4)}")
-        except Exception as exc:                            # 单镜失败不阻塞批（vision_seq L660 形态）
-            print(f"{STEP_TAG} shot {sid}: 异常失败（{type(exc).__name__}: {str(exc)[:300]}）")
-            failed.append(sid)
-            failed_detail[sid] = f"{type(exc).__name__}: {str(exc)[:300]}"
-            continue
-        if (done % 10) == 0:
-            print(f"{STEP_TAG} {done}/{len(shots)} shots processed")
+            if (done % 10) == 0:
+                print(f"{STEP_TAG} {done}/{len(shots)} shots processed")
 
-    # 收尾：roundtrip.json regen 半边（Open Q2）—— failed 镜转 status 条目后
-    # 与 rendered/cache-hit results 合并写入（schema 写前自校验 + READ-merge）。
-    # 早退路径（ComfyUI 不可达 / guard 拒绝）不写：本轮无新增产物，既有
-    # sidecar 原样保留（READ-merge 空集本就是恒等变换）。
-    results.extend({"shot_id": sid,
-                    "error": failed_detail.get(sid, "render failed")}
-                   for sid in failed)
-    write_roundtrip_sidecar(work_dir, build_sidecar_entries(
-        results, vch, width, height))
+        # 收尾：roundtrip.json regen 半边（Open Q2）—— failed 镜转 status 条目后
+        # 与 rendered/cache-hit results 合并写入（schema 写前自校验 + READ-merge）。
+        # 早退路径（ComfyUI 不可达 / guard 拒绝）不写：本轮无新增产物，既有
+        # sidecar 原样保留（READ-merge 空集本就是恒等变换）。
+        results.extend({"shot_id": sid,
+                        "error": failed_detail.get(sid, "render failed")}
+                       for sid in failed)
+        write_roundtrip_sidecar(work_dir, build_sidecar_entries(
+            results, vch, width, height))
 
-    # 收尾 flush：本轮 str/dict warnings（join 缺失 / 跳镜 str / 失败摘要 /
-    # guard 审计与拒绝记因）→ summary print。
-    if failed:
-        pending_warnings.append(f"{STEP_TAG} failed shots: {failed}")
-    if pending_warnings:
-        append_roundtrip_warnings(work_dir, pending_warnings)
-    print(f"{STEP_TAG} 完成：rendered={rendered} cache-hit={cache_hits} "
-          f"failed={len(failed)} sampled={sampled_count} skipped={skipped_count}")
-    print(f"{STEP_TAG} 产物目录：{out_dir}")
-    return 0
+        # 收尾 flush：本轮 str/dict warnings（join 缺失 / 跳镜 str / 失败摘要 /
+        # guard 审计与拒绝记因）→ summary print。
+        if failed:
+            pending_warnings.append(f"{STEP_TAG} failed shots: {failed}")
+        if pending_warnings:
+            append_roundtrip_warnings(work_dir, pending_warnings)
+        print(f"{STEP_TAG} 完成：rendered={rendered} cache-hit={cache_hits} "
+              f"failed={len(failed)} sampled={sampled_count} skipped={skipped_count}")
+        print(f"{STEP_TAG} 产物目录：{out_dir}")
+        return 0
+    finally:
+        release_batch_lock(lock_handle)
 
 
 if __name__ == "__main__":
