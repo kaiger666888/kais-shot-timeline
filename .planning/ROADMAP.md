@@ -68,7 +68,7 @@ Round-trip closes the loop the first three milestones opened: qwen-eye v2 watche
 
 - [x] **Phase 18: Contract v1.3** — `roundtrip.schema.json` sidecar + `SCHEMA_VERSION="1.3"` + fixture/validate gate + SPEC + graceful-degrade 契约层（mirror v1.2 三层门） (completed 2026-08-19)
 - [x] **Phase 19: qwen-eye v2 看片段** — 每镜 ≤8 帧逐帧 `observe_single` 问答升级 action/camera facet + audio_semantic ear 融合（合并策略 ep01 spike 后锁定） (completed 2026-08-19)
-- [ ] **Phase 20: h3 复现客户端** — kst 直连 ComfyUI 提交 MiniMax H3 fl2va workflow + per-shot 4-tuple cache + 断点续跑 + VRAM guard（TTS kill + `/free` + eye↔h3 串行编排）
+- [x] **Phase 20: h3 复现客户端** — kst 直连 ComfyUI 提交 MiniMax H3 fl2va workflow + per-shot 4-tuple cache + 断点续跑 + VRAM guard（TTS kill + `/free` + eye↔h3 串行编排） (completed 2026-08-20)
 - [ ] **Phase 21: Scorer + 阈值校准** — 中段帧 CLIP/SigLIP 轨迹相似度 + VLM judge 归因三分类 + ep01 ≤20 镜实测分布锁 accepted 双门槛 + verdict 写 `roundtrip.json`（rejected 永不删除）
 - [ ] **Phase 22: Dataset Export + Integration** — `step_roundtrip` 流水线集成 + ≥4 场景 smoke 回归 + gallery round-trip HITL 审阅面板 + accepted 子集独立 dataset 目录导出
 
@@ -155,7 +155,7 @@ Plans:
 
 **Wave 3** *(blocked on Wave 2 completion)*
 
-- [ ] 20-03-PLAN.md — roundtrip.json regen 半边写入（schema 合法 degrade 中间态，三层 parent 路径修正）+ ep01 真 ComfyUI smoke（--sample-shots 2 = shots 1/47，896×512，预期 10-30min）+ cache-hit 重跑实证 + 目视抽检 checkpoint *(Tasks 1-2 done 2026-08-20 @2d6d41a/9a5174b — smoke 10.5min 双镜真回收 + 重跑全 cache-hit 零新提交；Task 3 目视抽检 checkpoint awaiting Kai → 见 20-03-SUMMARY.md)*
+- [x] 20-03-PLAN.md — roundtrip.json regen 半边写入（schema 合法 degrade 中间态，三层 parent 路径修正）+ ep01 真 ComfyUI smoke（--sample-shots 2 = shots 1/47，896×512，预期 10-30min）+ cache-hit 重跑实证 + 目视抽检 checkpoint *(COMPLETE 2026-08-20 @2d6d41a/9a5174b/e93ed4c — smoke 10.5min 双镜真回收 + 重跑全 cache-hit 零新提交；Task 3 目视抽检 Kai approved 2026-08-20 → 见 20-03-SUMMARY.md)*
 
 ### Phase 21: Scorer + 阈值校准
 
@@ -215,6 +215,6 @@ v1.3 phases execute in numeric order: 18 → 19 → 20 → 21 → 22
 | 17. Canvas Consumer | v1.2 | 1/1 | Complete | 2026-07-26 |
 | 18. Contract v1.3 | v1.3 | 3/3 | Complete    | 2026-08-19 |
 | 19. qwen-eye v2 看片段 | v1.3 | 3/3 | Complete    | 2026-08-19 |
-| 20. h3 复现客户端 | v1.3 | 2/3 | In Progress|  |
+| 20. h3 复现客户端 | v1.3 | 3/3 | Complete   | 2026-08-20 |
 | 21. Scorer + 阈值校准 | v1.3 | 0/TBD | Not started | - |
 | 22. Dataset Export + Integration | v1.3 | 0/TBD | Not started | - |

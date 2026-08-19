@@ -30,10 +30,10 @@
 - [x] **VISION-02**: ear 融合 —— 读 `audio_semantic.json`，把对白/sfx/foley 语义修正进 scene/action facet（雨声→scene=雨天、脚步声→动作链补「走近」）；additive、可跳过（`--no-ear`）
 
 ### REGEN — h3 复现客户端（ComfyUI 直连）
-- [ ] **REGEN-01**: `analysis/roundtrip/` ComfyUI API 客户端 —— fl2va workflow 模板（MiniMaxH3ImageToVideo，shift_video=12.0/cfg=1.0/euler+simple/length 17k+5 对齐）+ 提交/轮询/产物回收（regen mp4 per-shot）；不经 subagent（p11b Pitfall 7）
-- [ ] **REGEN-02**: per-shot 4-tuple cache（video_content_hash + engine_name + engine_version + prompt_version，mirror WR-04）+ 断点续跑 + `--force` 清单扩展
-- [ ] **REGEN-03**: VRAM guard —— 提交前 TTS 服务器检测（VoiceDesign :5111 / IndexTTS :5110）+ `POST /free` + 剩余显存检查（<22GB 不提交）；qwen-eye 13.4GB lease 与 h3 批**串行编排**（eye 先跑完释放）
-- [ ] **REGEN-04**: 抽样与降载 —— `--sample-shots N`（首轮 ≤20 镜校准用）+ `--regen-resolution` 降分辨率验证模式 + >10s 长镜跳过策略（可配置）
+- [x] **REGEN-01**: `analysis/roundtrip/` ComfyUI API 客户端 —— fl2va workflow 模板（MiniMaxH3ImageToVideo，shift_video=12.0/cfg=1.0/euler+simple/length 17k+5 对齐）+ 提交/轮询/产物回收（regen mp4 per-shot）；不经 subagent（p11b Pitfall 7）
+- [x] **REGEN-02**: per-shot 4-tuple cache（video_content_hash + engine_name + engine_version + prompt_version，mirror WR-04）+ 断点续跑 + `--force` 清单扩展
+- [x] **REGEN-03**: VRAM guard —— 提交前 TTS 服务器检测（VoiceDesign :5111 / IndexTTS :5110）+ `POST /free` + 剩余显存检查（<22GB 不提交）；qwen-eye 13.4GB lease 与 h3 批**串行编排**（eye 先跑完释放）
+- [x] **REGEN-04**: 抽样与降载 —— `--sample-shots N`（首轮 ≤20 镜校准用）+ `--regen-resolution` 降分辨率验证模式 + >10s 长镜跳过策略（可配置）
 
 ### SCORE — 打分器
 - [ ] **SCORE-01**: 中段帧相似度 —— 原片段 vs 重生成片段在 25%-75% 时窗的 CLIP/SigLIP 帧 embedding 轨迹相似度；显式排除 t=0/t=end（被 condition，无信息量）
@@ -86,10 +86,10 @@ Each v1.3 REQ-ID maps to exactly one phase. Coverage: 19/19 (100%).
 | RT-05 | Phase 22 (Dataset Export + Integration) | Pending |
 | VISION-01 | Phase 19 (qwen-eye v2 看片段) | Complete |
 | VISION-02 | Phase 19 (qwen-eye v2 看片段) | Complete |
-| REGEN-01 | Phase 20 (h3 复现客户端) | Pending |
-| REGEN-02 | Phase 20 (h3 复现客户端) | Pending |
-| REGEN-03 | Phase 20 (h3 复现客户端) | Pending |
-| REGEN-04 | Phase 20 (h3 复现客户端) | Pending |
+| REGEN-01 | Phase 20 (h3 复现客户端) | Complete |
+| REGEN-02 | Phase 20 (h3 复现客户端) | Complete |
+| REGEN-03 | Phase 20 (h3 复现客户端) | Complete |
+| REGEN-04 | Phase 20 (h3 复现客户端) | Complete |
 | SCORE-01 | Phase 21 (Scorer + 阈值校准) | Pending |
 | SCORE-02 | Phase 21 (Scorer + 阈值校准) | Pending |
 | SCORE-03 | Phase 21 (Scorer + 阈值校准) | Pending |

@@ -42,36 +42,37 @@ key-files:
     - "output/<ep01>/roundtrip/_compare/{shot_001_orig,shot_047_orig}.mp4 + compare.html（Task 3 抽检素材）"
 
 key-decisions:
-  - "REGEN-01/02/04 保持未勾选 —— Task 3 目视抽检（blocking checkpoint）待 Kai approved 后由 continuation 勾选（mirror 20-01/20-02 先例）"
+  - "REGEN-01/02/04 随 Task 3 approved 勾选（Kai 2026-08-20；REGEN-03 由 20-02 实现 + 本 plan 真机 guard 行为共同满足——guard 五步真机过线 22539≥22528）；mirror 20-01/20-02 先例"
   - "早退路径（ComfyUI 不可达 / guard 拒绝）不写 sidecar：本轮无新增产物，READ-merge 空集本就是恒等变换，既有 roundtrip.json 原样保留"
   - "cache-hit 镜从 cache meta 重建 sidecar 条目（非仅本轮 rendered）——断点续跑后 roundtrip.json 完整性的关键"
   - "failed 明细 failed_detail[sid] 随四类失败点收集（超时/文件名非法/产物过小/异常），error 截 2000（schema T-18-02 上界）"
 
-requirements-completed: []   # Task 3 approved 后统一勾选 REGEN-01/02/04
+requirements-completed: [REGEN-01, REGEN-02, REGEN-03, REGEN-04]   # Task 3 approved 后统一勾选（REGEN-03 = 20-02 实现 + 本 plan 真机 smoke 共同满足）
 
 # Metrics
-duration: ~18min（至 checkpoint；Task 3 目视抽检另计）
-completed: 2026-08-20（Tasks 1-2；Task 3 pending）
+duration: ~20min（Tasks 1-2 ~18min 至 checkpoint + continuation 收尾；Task 3 目视抽检为 Kai 人工检查不计 executor 时长）
+completed: 2026-08-20（Tasks 1-2 凌晨；Task 3 同日 approved 收口）
 ---
 
 # Phase 20 Plan 03: sidecar + 真机 smoke + 目视抽检 Summary
 
 **roundtrip.json regen 半边写入（READ-merge + schema 写前自校验 + 单源版本）+ ep01 真 ComfyUI smoke 双镜真提交真回收 10.5min + 同命令重跑全 cache-hit 零新提交 + 渲后水位实测——Task 3 目视抽检 checkpoint 待 Kai**
 
-> **状态：CHECKPOINT（2/3 tasks complete）**——Task 3（blocking human-verify）已备好并排抽检素材，
-> 等 Kai 目视裁决。批准后 continuation 需做的收尾见文末「Continuation Steps (after approved)」。
+> **状态：COMPLETE（3/3 tasks complete）**——Task 3（blocking human-verify）**Kai approved（2026-08-20）**：
+> 2 镜 regen 目视抽检通过——① 首尾帧与原镜贴合 ② 主体与运动符合 prompt ③ 无爆裂/黑帧/时长异常。
+> Continuation Steps 已全部执行（REGEN-01..04 勾选 + state/roadmap 收口）。
 
 ## Performance
 
-- **Duration:** ~18 min（Tasks 1-2 至 checkpoint；2026-08-19T20:29Z–20:46Z）
-- **Tasks:** 2/3（Task 3 awaiting Kai）
+- **Duration:** ~20 min（Tasks 1-2 ~18min 至 checkpoint + continuation 收尾；Task 3 目视抽检为 Kai 人工检查另计）
+- **Tasks:** 3/3（Task 3 approved 2026-08-20）
 - **Files modified:** 2 代码/测试 + 1 deferred-items（output/ 产物 gitignored 不计）
 
 ## Task Commits
 
 1. **Task 1: write_roundtrip_sidecar（regen 半边 + READ-merge + schema 写前自校验）** - `2d6d41a` (feat)
 2. **Task 2: sidecar 单测 ×3 + ep01 真 ComfyUI smoke + cache-hit 重跑实证** - `9a5174b` (test)
-3. **Task 3: 目视抽检 checkpoint** — 素材已备（_compare/ 切段 + compare.html），无代码 commit，待 approved
+3. **Task 3: 目视抽检 checkpoint** — **approved（Kai, 2026-08-20）**：2 镜三点检查全过（首尾帧贴合 / 运动符合 prompt / 无爆裂黑帧）；无代码 commit（checkpoint 态文档 e93ed4c）
 
 ## Accomplishments
 
@@ -126,25 +127,27 @@ None - plan executed exactly as written（Task 2e 中断变体按 plan 标注 st
 - 真机重跑时批开始 eye 检查瞬时误读自身 cache（used=23255≥13721）→ 15s 等待一周期后 /free 驱逐生效自动放行（自愈、rc=0）。保守方向假阳性，fail-safe 语义内；详见 deferred-items D2。
 - poll 心跳日志渲染期间不可达（ComfyUI /history 只收录已完成 prompt）——cosmetic，正确性零影响；详见 deferred-items D1。
 
-## User Setup Required
+## Task 3 目视抽检 —— 裁决记录
 
-**Task 3 目视抽检（blocking checkpoint）——需要 Kai 看片裁决**：
+**approved（Kai, 2026-08-20）**：2 镜 regen（shot 1 / shot 47）三点检查全部通过——
 
-- 并排同播页（推荐， tailscale 可达）: `http://100.124.72.88:8765/_compare/compare.html`
-- 或逐个看（serve 根 = ep01 roundtrip/）:
-  - 原镜: `http://100.124.72.88:8765/_compare/shot_001_orig.mp4` / `shot_047_orig.mp4`
-  - regen: `http://100.124.72.88:8765/shot_001_regen.mp4` / `shot_047_regen.mp4`
+- ① 首尾帧与原镜首尾帧内容一致（condition 贴合，构图无偏移糊化）
+- ② 主体与运动方向大体符合该镜 prompt_text
+- ③ 无明显爆裂/黑帧/时长异常
+
+审阅素材（留档）：
+
+- 并排同播页（tailscale）: `http://100.124.72.88:8765/_compare/compare.html`
+- 原镜切段: `roundtrip/_compare/{shot_001,shot_047}_orig.mp4`；regen: `roundtrip/{shot_001,shot_047}_regen.mp4`
 - 本地路径: `output/虫虫武侠小故事《小江湖》第01话：爸爸去哪儿？（ 画面只是工具，情绪才是目的。/roundtrip/`
-- **三点检查**：① 首帧/尾帧与原镜首尾帧内容一致（condition 贴合，构图无偏移糊化）② 主体与运动方向大体符合该镜 prompt_text ③ 无明显爆裂/黑帧/时长异常（896×512 模式比内容不比清晰度；regen 因 17k+5 网格略长于原镜属预期）
-- **resume-signal**: 回复 "approved"（2 镜均贴合）或描述问题镜号与现象（如 "shot 47 首帧偏色"）
-- 静态服务进程: `python3 scripts/serve.py <roundtrip dir> 8765`（PID 见 /tmp/kst_serve_2003.log；看片后可 kill）
+- 静态服务进程: `python3 scripts/serve.py <roundtrip dir> 8765`（PID 见 /tmp/kst_serve_2003.log）
 
-## Continuation Steps (after approved)
+## Continuation Steps (after approved) — 已执行
 
-1. SUMMARY 本节补 approved 记录（或问题镜号进 deferred/learnings）；State Update: Self-Check 补验
-2. `gsd-sdk query requirements.mark-complete REGEN-01 REGEN-02 REGEN-04`（REGEN-03 已随 20-02+本 smoke 的 guard 真机行为满足——四项一并勾选前按 REQUIREMENTS 实际语义复核 REGEN-03 归属 20-02/20-03 共享）
-3. `gsd-sdk query state.advance-plan` + `state.update-progress` + `state.record-metric 20 3 <dur> 3 2` + ROADMAP 20-03 勾选（本次已按 checkpoint 态标注未勾）
-4. 视 Kai 反馈决定是否触发 Phase 21 前置 overnight uniform-20 批任务
+1. [x] SUMMARY 补 approved 记录 + Self-Check 补验（本节）
+2. [x] `requirements.mark-complete REGEN-01 REGEN-02 REGEN-03 REGEN-04`——REGEN-03 归属复核：guard 实现在 20-02（d22f03e 离线套）+ 本 plan 真机 smoke 五步真机过线（22539≥22528）共同满足，随本次一并勾选
+3. [x] `state.advance-plan` + `state.update-progress` + `state.record-metric 20 3 ~20min 3 2` + ROADMAP 20-03 勾选 + Phase 20 收口（3/3）
+4. [ ] Phase 21 前置 overnight uniform-20 批任务——Kai 批准时未要求立即启动，留待其指令（见 STATE Operator Next Steps）
 
 ## Self-Check: PASSED
 
@@ -153,6 +156,14 @@ None - plan executed exactly as written（Task 2e 中断变体按 plan 标注 st
 - Full suite: 103 passed（100 基线 + 3 新增，零回归）
 - Task 3 素材: _compare/ 2 切段（6.733s/3.200s 1920×1080 faststart）+ compare.html 200 可达（206 Range 验证过）
 
+**Continuation Self-Check（approved 收口后补验，2026-08-20）:**
+
+- 裁决已记录：Task 3 approved（Kai, 2026-08-20）载入本 SUMMARY（状态行 / Task Commits / 裁决记录节 / frontmatter requirements-completed）
+- REQUIREMENTS.md: REGEN-01/02/03/04 复选框已勾 + Traceability 表四行 Complete（`requirements.mark-complete` 实跑 updated:true）
+- STATE.md: advance-plan 命中 last-plan 边界（advanced:false / ready_for_verification）→ 手工收口 Current Position 为 Phase 20 COMPLETE(3/3)；record-metric `Phase 20 P03 ~20min 3 tasks 2 files` 落表；approved decision 入 Decisions；Session Continuity/Operator Next Steps 更新
+- ROADMAP.md: `roadmap.update-plan-progress 20` → 20-03 勾选 + Progress 表 3/3 Complete；Phase 20 milestone 行勾选（handler 写的 UTC 日期 2026-08-19 已校正为本地 2026-08-20，与 18/19 行日期口径一致）
+- 收口前 git status 仅 4 个 .planning/ 文件 modified，无未跟踪遗留
+
 ---
 *Phase: 20-h3-regen-client*
-*Tasks 1-2 completed: 2026-08-20；Task 3 checkpoint pending Kai*
+*Tasks 1-3 completed: 2026-08-20（Task 3 Kai approved）— Phase 20 收口 3/3*

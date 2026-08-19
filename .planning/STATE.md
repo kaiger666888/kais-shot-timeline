@@ -3,15 +3,15 @@ gsd_state_version: 1.0
 milestone: v1.3
 milestone_name: Round-trip Validation（逆推→复现→比对闭环数据集）
 status: executing
-stopped_at: 20-03 checkpoint（Tasks 1-2 done — sidecar + 真机 smoke 双镜 cache-hit 实证；Task 3 目视抽检 awaiting Kai）
-last_updated: "2026-08-19T20:49:43.007Z"
-last_activity: 2026-08-19
+stopped_at: "20-03 COMPLETE（Task 3 目视抽检 Kai approved 2026-08-20）— Phase 20 三 plan 收口，REGEN-01..04 全勾；next: /gsd:plan-phase 21（或 Kai 指令启动 overnight uniform-20 前置批）"
+last_updated: "2026-08-20"
+last_activity: 2026-08-20
 progress:
   total_phases: 5
-  completed_phases: 3
+  completed_phases: 4
   total_plans: 9
   completed_plans: 9
-  percent: 60
+  percent: 80
 ---
 
 # Project State
@@ -21,35 +21,33 @@ progress:
 See: .planning/PROJECT.md (updated 2026-08-19)
 
 **Core value:** 把成片解构成可导航、多轨道、带语义的分镜资产（分镜 + 分离音轨 + 对白 + 镜头语言/动作/场景 prompt + 跨镜角色/道具注册表 + 三模态音频语义），且形态可移植——能作为无限画布等下游消费者的「最终资产集合形态」被直接消费。
-**Current focus:** Phase 20 — h3 复现客户端
+**Current focus:** Phase 21 — Scorer + 阈值校准（Phase 20 已收口 2026-08-20）
 
 ## Current Position
 
-Phase: 20 (h3 复现客户端) — EXECUTING
-Plan: 3 of 3
-Status: Checkpoint — 20-03 Tasks 1-2 complete（sidecar + 真机 smoke + cache-hit 实证）；Task 3 目视抽检 awaiting Kai approved
+Phase: 20 (h3 复现客户端) — COMPLETE (3/3 plans)
+Plan: 3 of 3 (Task 3 目视抽检 Kai approved 2026-08-20)
+Status: Phase 20 收口 — REGEN-01..04 全勾；next = /gsd:plan-phase 21（Scorer + 阈值校准，0/TBD 未规划）
 Last activity: 2026-08-20
 
-Progress: [█████████░] 89%
+Progress: [██████████] 100%（已规划 plan 维度 9/9；milestone phase 维度 4/5）
 
 ## Performance Metrics
 
 **Velocity (cumulative historical):**
 
 - Total plans completed: 71 (v1.0: 7, v1.1: 16, v1.2: 20 — all archived)
-- v1.3 plans completed: 3
+- v1.3 plans completed: 9
 
 **By Phase (v1.3 — populates as plans complete):**
 
 | Phase | Plans | Total | Avg/Plan |
 |-------|-------|-------|----------|
-| 18. Contract v1.3 | 2/3 | 13m | 7m |
-| 19. qwen-eye v2 看片段 | 2/3 | ~1h48m | ~54m |
-| 20. h3 复现客户端 | 0/TBD | - | - |
+| 18. Contract v1.3 | 3/3 | 43m | ~14m |
+| 19. qwen-eye v2 看片段 | 3/3 | ~2h9m | ~43m |
+| 20. h3 复现客户端 | 3/3 | ~41min | ~14m |
 | 21. Scorer + 阈值校准 | 0/TBD | - | - |
 | 22. Dataset Export + Integration | 0/TBD | - | - |
-| 18 | 3 | - | - |
-| 19 | 3 | - | - |
 
 **Plan metrics (per executed plan):**
 
@@ -63,6 +61,7 @@ Progress: [█████████░] 89%
 | Phase 19 P03 | ~21m | 3 tasks | 5 files |
 | Phase 20 P01 | 9m | 3 tasks | 4 files |
 | Phase 20 P02 | ~12min | 3 tasks | 2 files |
+| Phase 20 P03 | ~20min | 3 tasks | 2 files |
 
 ## Accumulated Context
 
@@ -101,6 +100,7 @@ Carried (still load-bearing): contract-first minor bump（一个 milestone 一�
 - [Phase 20]: 20-02: 每镜复查只看外来进程 Σused≥4096MiB（PID 归因 diff vs baseline），绝不设绝对 free 下限 —— ComfyUI 自身 ~18GB cache 驻留在 baseline 内防 Pitfall 1 自锁；先抽样后过滤 + --regen-resolution 冻 engine_version 整 cache 失效
 - [Phase 20]: 20-03: roundtrip.json 写 regen 半边（Open Q2 落地）——READ-merge by shot_id 只替换 regen/status、Phase 21 scores/verdict 原样保留；schema_version 从 export_asset importlib 单源加载；早退路径不写 sidecar（空集 merge 是恒等变换）
 - [Phase 20]: 20-03 smoke 实测：渲后 free 水位 1321-22539MiB 波动一个数量级（post_render_free_mib 留档）——每镜复查必须 PID 归因、绝对 free 下限必自锁（Pitfall 1 一手证据）；紧接渲染批的重跑 eye 绝对值检查会瞬时误读自身 cache 后自愈（deferred-items D2）
+- [Phase 20]: 20-03: Task 3 目视抽检 approved（Kai, 2026-08-20，三点检查全过）— REGEN-01/02/03/04 随本 plan 勾选，Phase 20 三 plan 收口；REGEN-03 归属 = 20-02 实现 + 20-03 真机 guard 五步过线共同满足
 
 ### Pending Todos
 
@@ -139,11 +139,12 @@ Items acknowledged and carried forward (full history in archived milestone REQUI
 
 ## Session Continuity
 
-Last session: 2026-08-19T20:47:09.301Z
-Stopped at: 20-03 Tasks 1-2 done（2d6d41a/9a5174b；103 passed + ep01 真机 smoke 双镜 cache-hit 实证）；Task 3 目视抽检 checkpoint awaiting Kai —— http://100.124.72.88:8765/_compare/compare.html（reply "approved" 或问题镜号）
-Resume file: .planning/phases/20-h3-regen-client/20-03-SUMMARY.md（Continuation Steps 小节）
+Last session: 2026-08-20（continuation close-out）
+Stopped at: 20-03 COMPLETE — Task 3 目视抽检 Kai approved（2026-08-20，三点检查全过）；Phase 20 三 plan 收口、REGEN-01..04 全勾、ROADMAP/REQUIREMENTS 同步
+Resume file: None — Phase 20 已收口；下一动作见 Operator Next Steps
 
 ## Operator Next Steps
 
-- Kai 目视抽检 2 镜（compare.html 并排同播）→ 回复 "approved" 或问题镜号
-- approved 后 continuation：勾 REGEN-01/02/03/04 → state.advance-plan + update-progress + record-metric → ROADMAP 20-03 勾选 → 视反馈启动 Phase 21 前置 overnight uniform-20 批任务
+- `/gsd:plan-phase 21`（Scorer + 阈值校准）——v1.3 第四个 phase，依赖 18+20 均已就绪
+- 可选（Kai 指令触发）：Phase 21 前置 overnight uniform-20 批任务（20-03 SUMMARY「SC1 验证姿态」载明，为打分器备 19-20 镜 regen 素材；`--sample-shots 20` 全量 live 不在交互路径）
+- :8765 静态服务（Task 3 抽检用，PID 见 /tmp/kst_serve_2003.log）看片已结束，可由 orchestrator/用户 kill
