@@ -84,7 +84,12 @@ Round-trip closes the loop the first three milestones opened: qwen-eye v2 watche
   3. `validate.py` shape gate 扩展三层门（minimal / v1.2 / v1.3 fixture 全绿）+ `verify_contract.py` v1.2↔v1.3 bidirectional cross-version proof（forward 0 errors / backward 0 non-additive errors）
   4. roundtrip 数据缺席时导出照常 + `[roundtrip]` warnings sidecar 记因通道落地——ComfyUI 不可达 / VRAM 不足 / 打分模型缺席三种因由在 warnings 形状中可表达（RT-04 契约级 degrade）
   5. SPEC.md §4 changelog 1.2→1.3 + §5 roundtrip 形状文档 + fidelity disclaimer（accepted = 「h3 可复现」≠「prompt 完美」）一次人类审阅通过
-**Plans**: TBD
+**Plans**: 3 plans
+
+Plans:
+- [ ] 18-01-PLAN.md — roundtrip.schema.json + asset.schema.json 两处 delta（data.roundtrip object 挂载 + warnings items 加宽）+ export_asset.py（SCHEMA_VERSION "1.3" + 挂载统计 + warnings 装载加宽）
+- [ ] 18-02-PLAN.md — spec/fixtures/v1.3/ 13 文件 + validate.py 四阶 gate + verify_contract.py v1.2↔v1.3 双向证明（backward 过滤扩展 + 负测试 + EIGHT_SHAPES object 特判 + 一致性块）
+- [ ] 18-03-PLAN.md — SPEC.md §1/§4/§5/§10 + README v1.3（三层 fidelity disclaimer + AF-01 守门 + 人类审阅 checkpoint）
 
 ### Phase 19: qwen-eye v2 看片段
 **Goal**: prompts.json 的 action/camera facet 从「3 静帧脑补」升级为「≤8 帧序列逐帧实证」（llama.cpp 单图 bug 硬约束下的务实版），v1.2 `audio_semantic` 作为 ear 融进视觉 prompt——独立于 round-trip 闭环就提升 prompt 质量。
@@ -159,7 +164,7 @@ v1.3 phases execute in numeric order: 18 → 19 → 20 → 21 → 22
 | 15. Layered Reproduction Prompts | v1.2 | 2/2 | Complete | 2026-07-26 |
 | 16. HTML Gallery | v1.2 | 1/1 | Complete | 2026-07-26 |
 | 17. Canvas Consumer | v1.2 | 1/1 | Complete | 2026-07-26 |
-| 18. Contract v1.3 | v1.3 | 0/TBD | Not started | - |
+| 18. Contract v1.3 | v1.3 | 0/3 | Not started | - |
 | 19. qwen-eye v2 看片段 | v1.3 | 0/TBD | Not started | - |
 | 20. h3 复现客户端 | v1.3 | 0/TBD | Not started | - |
 | 21. Scorer + 阈值校准 | v1.3 | 0/TBD | Not started | - |
