@@ -798,6 +798,10 @@ def _fixture_consistency_check() -> tuple:
                         f"v1.3 roundtrip.json: shots is "
                         f"{type(rt_shots).__name__}, expected array")
                     rt_shots = []
+                # WR-03：顺带统计 verdict 计数（mirror export_asset.py 语义），
+                # 与 asset.json#data.roundtrip 挂载的 {accepted,rejected}_count
+                # 交叉核对 —— drifted fixture / stale re-export 不再全绿。
+                rt_acc = rt_rej = 0
                 for entry in rt_shots:
                     if not isinstance(entry, dict):
                         continue
@@ -806,6 +810,30 @@ def _fixture_consistency_check() -> tuple:
                             f"v1.3 roundtrip.json: shot_id "
                             f"{entry.get('shot_id')} unknown"
                         )
+                    verdict = entry.get("verdict")
+                    if isinstance(verdict, dict):
+                        if verdict.get("decision") == "accepted":
+                            rt_acc += 1
+                        elif verdict.get("decision") == "rejected":
+                            rt_rej += 1
+                # WR-03 count cross-check（挂载存在时才核对）
+                try:
+                    v13_asset = json.loads(
+                        (v13_fix_dir / "asset.json").read_text(encoding="utf-8"))
+                except (OSError, json.JSONDecodeError):
+                    v13_asset = None
+                v13_data = (v13_asset.get("data")
+                            if isinstance(v13_asset, dict) else None)
+                rt_mount = (v13_data.get("roundtrip")
+                            if isinstance(v13_data, dict) else None)
+                if isinstance(rt_mount, dict) and (
+                        rt_mount.get("accepted_count") != rt_acc
+                        or rt_mount.get("rejected_count") != rt_rej):
+                    failures.append(
+                        f"v1.3 asset.json data.roundtrip counts stale: "
+                        f"mount={rt_mount.get('accepted_count')}/"
+                        f"{rt_mount.get('rejected_count')} "
+                        f"sidecar={rt_acc}/{rt_rej}")
 
     if failures:
         return (
@@ -832,6 +860,11 @@ def _producer_registry_integrity(asset_dir: Path) -> list:
           + confirmed-only + non-null char_id resolves to confirmed characters.json
           + turn.shot_id ⊆ shots.json. Absent speakers.json → no-op (mirror
           v1.0/v1.1/route-down graceful-degrade; Pitfall 11 byte-identical-absent).
+      (g) Phase 18 (review WR-03) roundtrip.json checks (gated on existence;
+          mirror fixture-side v1.3 block): shots[].shot_id ⊆ shots.json IDs
+          + asset.json#data.roundtrip {accepted,rejected}_count 与 sidecar 实际
+          verdict 计数一致。Absent roundtrip.json → no-op (mirror v1.0-v1.2
+          graceful-degrade)。
 
     这是 producer-gate 的扩展（additive），不改既有 _fixture_consistency_check
     （fixture 自洽性）+ _cross_version_check（schema 双向兼容）。
@@ -1033,6 +1066,64 @@ def _producer_registry_integrity(asset_dir: Path) -> list:
                                 f"member shot_id {m.get('shot_id')} unknown")
         except json.JSONDecodeError as e:
             failures.append(f"registry.draft.json: invalid JSON: {e}")
+
+    # (g) Phase 18 (review WR-03): roundtrip.json cross-file integrity —— mirror
+    #     fixture-side v1.3 block（v1.2 speakers 先例：integrity gate 必须 fixture
+    #     与 producer 两端都有；本函数此前零 roundtrip 检查，post-Phase 20 真实
+    #     asset dir 的 dangling shot_id / stale mount 统计会全绿）。Gated on
+    #     roundtrip.json 存在（absent → no-op，mirror v1.0-v1.2 graceful-degrade）:
+    #       - shots[].shot_id ⊆ shots.json IDs（Pitfall 17 dangling-ref class ——
+    #         schema 校验看不到跨文件 ID 引用；抓 Phase 20 producer bug / 手改
+    #         drift，正是 speakers/characters 检查存在的 Pitfall-17 类）
+    #       - asset.json#data.roundtrip 挂载存在时，{accepted,rejected}_count 必须
+    #         与 sidecar 实际 verdict 计数一致（stale re-export / 手改 drift）
+    rt_path = asset_dir / "roundtrip.json"
+    if rt_path.is_file():
+        try:
+            rt_data = json.loads(rt_path.read_text(encoding="utf-8"))
+        except json.JSONDecodeError as e:
+            failures.append(f"roundtrip.json: invalid JSON: {e}")
+            rt_data = None
+        if isinstance(rt_data, dict):
+            rt_shots = rt_data.get("shots")
+            if not isinstance(rt_shots, list):
+                failures.append(
+                    f"roundtrip.json: shots is "
+                    f"{type(rt_shots).__name__}, expected array")
+            else:
+                rt_acc = rt_rej = 0
+                for entry in rt_shots:
+                    if not isinstance(entry, dict):
+                        continue
+                    if entry.get("shot_id") not in shot_ids:
+                        failures.append(
+                            f"roundtrip.json: shot_id "
+                            f"{entry.get('shot_id')} unknown")
+                    # verdict 计数 mirror export_asset.build_asset_dict 语义
+                    # （decision 非 accepted/rejected 不计 —— best-effort）
+                    verdict = entry.get("verdict")
+                    if isinstance(verdict, dict):
+                        if verdict.get("decision") == "accepted":
+                            rt_acc += 1
+                        elif verdict.get("decision") == "rejected":
+                            rt_rej += 1
+                try:
+                    manifest_rt = json.loads(
+                        (asset_dir / "asset.json").read_text(encoding="utf-8"))
+                except (OSError, json.JSONDecodeError):
+                    manifest_rt = None
+                m_data = (manifest_rt.get("data")
+                          if isinstance(manifest_rt, dict) else None)
+                rt_mount = (m_data.get("roundtrip")
+                            if isinstance(m_data, dict) else None)
+                if isinstance(rt_mount, dict) and (
+                        rt_mount.get("accepted_count") != rt_acc
+                        or rt_mount.get("rejected_count") != rt_rej):
+                    failures.append(
+                        f"asset.json data.roundtrip counts stale: "
+                        f"mount={rt_mount.get('accepted_count')}/"
+                        f"{rt_mount.get('rejected_count')} "
+                        f"sidecar={rt_acc}/{rt_rej}")
 
     return failures
 
