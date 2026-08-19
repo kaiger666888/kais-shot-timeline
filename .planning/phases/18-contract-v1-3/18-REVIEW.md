@@ -16,7 +16,21 @@ findings:
   warning: 6
   info: 3
   total: 9
-status: issues_found
+fix:
+  fixed_at: 2026-08-19T14:39:27Z
+  iteration: 1
+  in_scope: 6
+  fixed: 6
+  skipped: 0
+  report: 18-REVIEW-FIX.md
+  commits:
+    - b08d9d5 (WR-01)
+    - 2230076 (WR-02)
+    - f0a7cfd (WR-03)
+    - b9fd1c7 (WR-04)
+    - ad7305c (WR-05)
+    - 87ced5c (WR-06)
+status: fixed
 ---
 
 # Phase 18: Code Review Report
@@ -24,7 +38,7 @@ status: issues_found
 **Reviewed:** 2026-08-19T14:31:18Z
 **Depth:** standard
 **Files Reviewed:** 7
-**Status:** issues_found
+**Status:** fixed — all 6 Warning findings (WR-01..WR-06) fixed by gsd-code-fixer, iteration 1; see 18-REVIEW-FIX.md. Info findings (IN-01..IN-03) remain open (not in fix scope).
 
 ## Summary
 
