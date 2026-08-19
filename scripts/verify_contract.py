@@ -71,20 +71,24 @@ DEFAULT_E01_ASSET_DIR = (
     / "虫虫武侠小故事《小江湖》第01话：爸爸去哪儿？（ 画面只是工具，情绪才是目的。"
 )
 
-# v1.2 producer-mode recognized schema shapes (12 = v1.0 的 6 个 + v1.1 Phase 5 新增
+# v1.3 producer-mode recognized schema shapes (13 = v1.0 的 6 个 + v1.1 Phase 5 新增
 # characters/props/registry + Phase 7 registry-edits 隐式走 registry-edits.schema.json
 # 路径（不在 EIGHT_SHAPES 因 producer asset_dir 不 emit registry.edits.json —— 那是
-# HITL 审阅 round-trip 中间产物）+ Phase 11 v1.2 新增 audio_semantic/speakers)。
+# HITL 审阅 round-trip 中间产物）+ Phase 11 v1.2 新增 audio_semantic/speakers
+# + Phase 18 v1.3 新增 roundtrip)。
 # 名字保留 EIGHT_SHAPES（v1.0 历史叫法）以兼容既有 fail-loud self-test 文档引用；
-# 实际是 11 个元素。SIX_SHAPES 别名 = 前 6 个（v1.0 producer-only asset 始终是这 6 个
-# required 形状；characters/props/registry/audio_semantic/speakers 全是 optional ——
-# absent 不算失败，mirror graceful-degrade）。
+# 实际是 12 个元素。SIX_SHAPES 别名 = 前 6 个（v1.0 producer-only asset 始终是这 6 个
+# required 形状；characters/props/registry/audio_semantic/speakers/roundtrip 全是
+# optional —— absent 不算失败，mirror graceful-degrade）。
 EIGHT_SHAPES = [
     "asset", "shots", "audio_analysis", "transcript", "frames", "prompts",
     "characters", "props", "registry",
     # Phase 11 additive: audio_semantic + speakers (gated on data.<shape> existence,
     # mirror v1.1 characters/props pattern in validate_eight_shapes).
     "audio_semantic", "speakers",
+    # Phase 18 additive: roundtrip (gated on data.roundtrip existence; the value is
+    # an OBJECT mount —— validate_eight_shapes unwraps .path before the string check).
+    "roundtrip",
 ]
 SIX_SHAPES = EIGHT_SHAPES[:6]  # v1.0 backward-compat alias
 
@@ -251,13 +255,22 @@ def validate_eight_shapes(asset_dir: Path, manifest: dict) -> list:
             instance = manifest
         else:
             rel = data_field.get(shape)
+            # Phase 18 特判：data.roundtrip 是 v1.x 首个 object 值挂载（file ref +
+            # accepted/rejected 统计）—— object 值取 .path 再走文件加载。必须与
+            # EIGHT_SHAPES 追加 "roundtrip" 同 plan 成对落地（Pitfall 2：勿只做
+            # 一半 —— Phase 20 producer 挂载 object 时若无此特判会误报
+            # "data.roundtrip is not a string"）。
+            rel_label = f"data.{shape}"
+            if isinstance(rel, dict):
+                rel = rel.get("path")
+                rel_label = f"data.{shape}.path"
             if not isinstance(rel, str):
                 # data.<shape> 缺失：由 asset-shape iter 报 "data is required"，
                 # 不重复记录；只有「键存在但值非字符串」（schema 抓不到）才 flag。
                 # v1.1 optional shapes（characters/props）absent 时走这里 continue。
                 if shape not in data_field:
                     continue
-                failures.append(f"{shape}: data.{shape} is not a string: {rel!r}")
+                failures.append(f"{shape}: {rel_label} is not a string: {rel!r}")
                 continue
             instance_path = asset_dir / rel
             try:
@@ -362,6 +375,58 @@ def _recover_v11_schema(shape: str):
         data_props = stripped.get("properties", {}).get("data", {}).get("properties", {})
         for k in ("audio_semantic", "speakers"):
             data_props.pop(k, None)
+    return stripped
+
+
+def _recover_v12_schema(shape: str):
+    """恢复 v1.2 schema 用于 backward cross-version check v1.3→v1.2 (Phase 18)。
+
+    Primary: ``git show v1.2:spec/schemas/<shape>.schema.json`` —— v1.2 git tag
+    的 immutable truth。Fallback（tag 缺失 / git 不可用，e.g. CI shallow clone）:
+    程序化剥离 v1.3 deltas —— deep-copy 当前（v1.3-extended）schema，删除/还原
+    Phase 18 已知的 delta，得到等价的 v1.2 schema。两路径任一成功即返回 dict；
+    都失败返回 None（caller 记 failure）。
+
+    已知 v1.3 deltas（Wrinkle 1 —— v1.x 首个含非 property-delta 的 bump）:
+      asset:    data.properties.roundtrip（新增 optional object 挂载）
+                + generator.properties.warnings.items 还原为 {"type": "string"}
+                （items 类型加宽是 v1.x 首例非 property-delta —— strip fallback
+                 必须一并还原，否则 fallback 产出被 v1.3 污染的假 v1.2 schema，
+                 backward 证明会假绿；T-18-08）
+
+    与 _recover_v1/_v11_schema 的关系：v1 recover 剥 v1.1 additions、v1.1 recover
+    剥 v1.2 additions（纯 pop）；v1.2 recover 除 pop 外还要 RESTORE warnings items
+    —— 第一个需要"还原"而非仅"删除"的 recover。
+    """
+    # Primary: git show v1.2 tag
+    try:
+        r = subprocess.run(
+            ["git", "-C", str(REPO), "show", f"v1.2:spec/schemas/{shape}.schema.json"],
+            capture_output=True, text=True, timeout=5,
+        )
+        if r.returncode == 0 and r.stdout.strip():
+            return json.loads(r.stdout)
+    except (subprocess.SubprocessError, json.JSONDecodeError, OSError):
+        pass
+    # Fallback: programmatic strip of v1.3 deltas from current schema
+    import copy
+    try:
+        stripped = copy.deepcopy(
+            json.loads((SCHEMAS_DIR / f"{shape}.schema.json").read_text(encoding="utf-8"))
+        )
+    except (FileNotFoundError, json.JSONDecodeError):
+        return None
+    if shape == "asset":
+        data_props = stripped.get("properties", {}).get("data", {}).get("properties", {})
+        data_props.pop("roundtrip", None)
+        # Wrinkle 1 连锁 3：warnings items 加宽必须一并还原（非 property-delta，
+        # 仅 pop data.roundtrip 会留下被加宽的 items —— 假 v1.2 schema）。
+        warnings_schema = (
+            stripped.get("properties", {}).get("generator", {})
+            .get("properties", {}).get("warnings")
+        )
+        if isinstance(warnings_schema, dict):
+            warnings_schema["items"] = {"type": "string"}
     return stripped
 
 
@@ -471,12 +536,73 @@ def _cross_version_check() -> tuple:
                 f"error(s) (shared fields drifted); first: {non_addprop[0].message}"
             )
 
+    # (e) Phase 18 FORWARD v1.2→v1.3: v1.2 fixture × current (v1.3-extended) schema → 0 errors
+    # Only asset — roundtrip is a NEW shape with no v1.2 instance to test.
+    # v1.2 fixture's string-only warnings remain legal against the widened anyOf items
+    # (items widening is additive to old data by construction).
+    for shape in ("asset",):
+        try:
+            schema = json.loads((SCHEMAS_DIR / f"{shape}.schema.json").read_text(encoding="utf-8"))
+            instance = json.loads((v12_dir / f"{shape}.json").read_text(encoding="utf-8"))
+        except (FileNotFoundError, json.JSONDecodeError) as e:
+            failures.append(f"forward v1.2→v1.3 {shape}: load failed: {e}")
+            continue
+        errs = list(Draft202012Validator(schema).iter_errors(instance))
+        if errs:
+            failures.append(
+                f"forward v1.2→v1.3 {shape}: v1.2 fixture rejected by v1.3 schema "
+                f"with {len(errs)} error(s); first: {errs[0].message}"
+            )
+
+    # (f) Phase 18 BACKWARD v1.3→v1.2: v1.3 fixture × recovered-v1.2 schema → ONLY the
+    # two documented v1.3 deltas. Filter extension (Wrinkle 1 / T-18-07): the warnings
+    # items widening is v1.x's first NON-property delta — it produces type/anyOf errors
+    # under ("generator", "warnings"), NOT additionalProperties. Exempt exactly:
+    #   e.validator == "additionalProperties"                        (data.roundtrip new key)
+    #   e.validator in ("type", "anyOf") AND
+    #   tuple(e.absolute_path[:2]) == ("generator", "warnings")      (items widening)
+    # ANY other error = shared-field drift (breaking change). The A3 negative test
+    # (inject asset_type:"other" — a const violation — into the v1.3 fixture) proves
+    # this filter is not blind.
+    v13_dir = REPO / "spec" / "fixtures" / "v1.3"
+    for shape in ("asset",):
+        v12_schema = _recover_v12_schema(shape)
+        if v12_schema is None:
+            failures.append(
+                f"backward v1.3→v1.2 {shape}: could not recover v1.2 schema "
+                f"(git show v1.2 + programmatic strip both failed)"
+            )
+            continue
+        try:
+            instance = json.loads((v13_dir / f"{shape}.json").read_text(encoding="utf-8"))
+        except (FileNotFoundError, json.JSONDecodeError) as e:
+            failures.append(f"backward v1.3→v1.2 {shape}: load failed: {e}")
+            continue
+        errs = list(Draft202012Validator(v12_schema).iter_errors(instance))
+        non_exempt = [
+            e for e in errs
+            if not (
+                e.validator == "additionalProperties"
+                or (
+                    e.validator in ("type", "anyOf")
+                    # absolute_path 是 deque（不支持切片）—— 先 tuple 再 [:2]。
+                    and tuple(e.absolute_path)[:2] == ("generator", "warnings")
+                )
+            )
+        ]
+        if non_exempt:
+            failures.append(
+                f"backward v1.3→v1.2 {shape}: {len(non_exempt)} non-additive "
+                f"error(s) (shared fields drifted); first: {non_exempt[0].message}"
+            )
+
     if failures:
-        return (False, "v1.0↔v1.1↔v1.2 cross-version drift: " + "; ".join(failures))
+        return (False, "v1.0↔v1.1↔v1.2↔v1.3 cross-version drift: " + "; ".join(failures))
     return (
         True,
-        "v1.0↔v1.1↔v1.2 cross-version bidirectional compat proven "
-        "(forward 0 errors; backward 0 non-additive errors)",
+        "v1.0↔v1.1↔v1.2↔v1.3 cross-version bidirectional compat proven "
+        "(forward 0 errors; backward 0 non-additive errors, "
+        "excluding documented v1.3 deltas: data.roundtrip + warnings items widening)",
     )
 
 
@@ -631,12 +757,46 @@ def _fixture_consistency_check() -> tuple:
                                 f"{turn.get('shot_id')} unknown"
                             )
 
+    # Phase 18 v1.3 fixture consistency: roundtrip.shots[].shot_id ⊆ shots.json#id
+    # (mirror the v1.2 speakers block shape; gated on v1.3 fixture dir existence).
+    # Source-of-truth = v1.3 目录自己的 shots.json（WR-01 lesson —— 勿复用 v1.2/v1.1
+    # 的 ids；v1.3 substrate 虽是 byte-copy，source-of-truth 仍取本目录文件，
+    # 目录漂移时不会假绿/假红）。roundtrip.json absent → skip（dormant gate，
+    # mirror v1.0-v1.2 graceful-degrade）。
+    v13_fix_dir = REPO / "spec" / "fixtures" / "v1.3"
+    if v13_fix_dir.is_dir():
+        rt_path = v13_fix_dir / "roundtrip.json"
+        if rt_path.is_file():
+            try:
+                rt_data = json.loads(rt_path.read_text(encoding="utf-8"))
+            except json.JSONDecodeError as e:
+                failures.append(f"v1.3 roundtrip.json: invalid JSON: {e}")
+                rt_data = None
+            if isinstance(rt_data, dict):
+                shots_v13_path = v13_fix_dir / "shots.json"
+                shots_v13_ids = set()
+                if shots_v13_path.is_file():
+                    try:
+                        for s in json.loads(shots_v13_path.read_text(encoding="utf-8")):
+                            if isinstance(s, dict):
+                                shots_v13_ids.add(s.get("id"))
+                    except (json.JSONDecodeError, TypeError):
+                        pass
+                for entry in rt_data.get("shots", []) or []:
+                    if not isinstance(entry, dict):
+                        continue
+                    if entry.get("shot_id") not in shots_v13_ids:
+                        failures.append(
+                            f"v1.3 roundtrip.json: shot_id "
+                            f"{entry.get('shot_id')} unknown"
+                        )
+
     if failures:
         return (
             False,
             f"{len(failures)} fixture-consistency issue(s); first: {failures[0]}",
         )
-    return (True, "v1.1 + v1.2 fixture set cross-file IDs consistent (0 dangling)")
+    return (True, "v1.1 + v1.2 + v1.3 fixture set cross-file IDs consistent (0 dangling)")
 
 
 # === producer-side registry integrity (Phase 7) ========================
