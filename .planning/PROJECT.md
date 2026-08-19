@@ -70,6 +70,8 @@
 
 _v1.3 requirements defined in `.planning/REQUIREMENTS.md` (categories: CONTRACT / VISION / REGEN / SCORE / DATASET / PIPELINE / PRESENT)._
 
+- ✓ **Phase 18 (Contract v1.3) DELIVERED** — RT-01..04：roundtrip.schema.json（14th schema）+ asset.schema data.roundtrip 首个 object 挂载 + warnings items 加宽 string|{code,detail} + SCHEMA_VERSION "1.3" 单源 + 13-file fixture + validate 四阶 gate + v1.2↔v1.3 bidirectional proof（A3 负测试防盲过滤）+ SPEC §4/§5.10/§10.5 三层 fidelity disclaimer（人类审阅通过 2026-08-19）。代码评审 6 warnings 全修 + 复审 clean。
+
 ### Known Deferred (v1.1 → post-merge / v2)
 
 Cross-repo dependencies out of this repo's control; producer/contract side complete + graceful-degrade proven for each:
@@ -160,4 +162,4 @@ This document evolves at phase transitions and milestone boundaries.
 4. Update Context with current state
 
 ---
-*Last updated: 2026-08-19 — started milestone **v1.3 Round-trip Validation** (qwen-eye v2 看片段逆推 → h3 fl2va 复现 → 中段帧打分 + 归因 → accepted 数据集导出; schema 1.2→1.3). v1.2 音频语义深化 SHIPPED (8 phases, 20 plans, 33/33 reqs).*
+*Last updated: 2026-08-19 — Phase 18 (Contract v1.3) complete; v1.3 contract locked ahead of round-trip producers (Phases 19-22)**v1.3 Round-trip Validation** (qwen-eye v2 看片段逆推 → h3 fl2va 复现 → 中段帧打分 + 归因 → accepted 数据集导出; schema 1.2→1.3). v1.2 音频语义深化 SHIPPED (8 phases, 20 plans, 33/33 reqs).*
