@@ -4,13 +4,13 @@ milestone: v1.3
 milestone_name: Round-trip Validation（逆推→复现→比对闭环数据集）
 status: executing
 stopped_at: 20-03 COMPLETE — Task 3 目视抽检 Kai approved（2026-08-20，三点检查全过）；Phase 20 三 plan 收口、REGEN-01..04 全勾、ROADMAP/REQUIREMENTS 同步
-last_updated: "2026-08-19T22:29:21.682Z"
+last_updated: "2026-08-19T23:00:21.201Z"
 last_activity: 2026-08-19
 progress:
   total_phases: 5
   completed_phases: 3
   total_plans: 12
-  completed_plans: 10
+  completed_plans: 11
   percent: 60
 ---
 
@@ -26,11 +26,11 @@ See: .planning/PROJECT.md (updated 2026-08-19)
 ## Current Position
 
 Phase: 21 (Scorer + 阈值校准) — EXECUTING
-Plan: 2 of 3
+Plan: 3 of 3
 Status: Ready to execute
 Last activity: 2026-08-19
 
-Progress: [████████░░] 83%
+Progress: [█████████░] 92%
 
 ## Performance Metrics
 
@@ -64,6 +64,7 @@ Progress: [████████░░] 83%
 | Phase 20 P02 | ~12min | 3 tasks | 2 files |
 | Phase 20 P03 | ~20min | 3 tasks | 2 files |
 | Phase 21 P01 | 15m | 3 tasks | 4 files |
+| Phase 21 P02 | ~40m | 2 tasks | 8 files |
 
 ## Accumulated Context
 
@@ -105,6 +106,9 @@ Carried (still load-bearing): contract-first minor bump（一个 milestone 一�
 - [Phase 20]: 20-03: Task 3 目视抽检 approved（Kai, 2026-08-20，三点检查全过）— REGEN-01/02/03/04 随本 plan 勾选，Phase 20 三 plan 收口；REGEN-03 归属 = 20-02 实现 + 20-03 真机 guard 五步过线共同满足
 - [Phase 21]: 21-01: SCORE-01/02/DATASET-01 保持未勾选 —— 离线代码半边（scorer/judge/38 替身用例）已交付，GPU smoke（21-02）与校准批（21-03）共享同 requirement IDs（mirror 18-01/19-01/20-01 先例）
 - [Phase 21]: 21-01: parse_judge_answer 显式排除 bool confidence（JSON true 是 int 子类会穿探针 isinstance 后被 schema number 拒——Rule 2 补漏）；score 钳 [0,1] 后 round 而 per-position 原始 cos 不钳（审计纯度）；硬合取无置信门
+- [Phase 21]: 21-02: GPU smoke 走既有 896×512 regen 先行验证全链（shot 1 sim=0.9309 / shot 47 sim=0.8396，双镜 prompt_faithful conf=0.95，schema 0 errors，157 pytest 零回归，模块零修复）——cache key 含 regen 身份，1344×768 批后自然 miss 重打分
+- [Phase 21]: 21-02: overnight 批以 python3 -u 启动（stdout 块缓冲会让 nohup 审计日志滞后小时级——ComfyUI 0.30 /history 不含运行中 prompt，poll 的 continue 全跳过 elapsed 打印）；批 @1344×768 后台运行，pidfile/log 交接块在 21-02-SUMMARY
+- [Phase 21]: 21-02: SCORE-01/SCORE-02 保持未勾选 —— live 证据半边已交付（2 镜真机双信号），≤20 镜校准集打分与 τ 锁定在 21-03 共享同 requirement IDs（mirror 18-01/19-01/20-01/21-01 先例）
 
 ### Pending Todos
 
@@ -143,7 +147,7 @@ Items acknowledged and carried forward (full history in archived milestone REQUI
 
 ## Session Continuity
 
-Last session: 2026-08-19T22:29:18.296Z
+Last session: 2026-08-19T22:57:58.256Z
 Stopped at: 20-03 COMPLETE — Task 3 目视抽检 Kai approved（2026-08-20，三点检查全过）；Phase 20 三 plan 收口、REGEN-01..04 全勾、ROADMAP/REQUIREMENTS 同步
 Resume file: None
 

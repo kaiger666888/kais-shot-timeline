@@ -179,7 +179,7 @@ Plans:
 
 **Wave 2** *(blocked on 21-01)*
 
-- [ ] 21-02-PLAN.md — 既有 2 镜 896×512 regen 真 GPU smoke（scorer+judge 真跑 + sidecar schema gate）+ uniform-20 @1344×768 overnight 批 nohup 启动（guard 过线即收口，不等批完成）
+- [x] 21-02-PLAN.md — 既有 2 镜 896×512 regen 真 GPU smoke（scorer+judge 真跑 + sidecar schema gate）+ uniform-20 @1344×768 overnight 批 nohup 启动（guard 过线即收口，不等批完成）
 
 **Wave 3** *(blocked on 21-02)*
 
@@ -229,5 +229,5 @@ v1.3 phases execute in numeric order: 18 → 19 → 20 → 21 → 22
 | 18. Contract v1.3 | v1.3 | 3/3 | Complete    | 2026-08-19 |
 | 19. qwen-eye v2 看片段 | v1.3 | 3/3 | Complete    | 2026-08-19 |
 | 20. h3 复现客户端 | v1.3 | 3/3 | Complete    | 2026-08-19 |
-| 21. Scorer + 阈值校准 | v1.3 | 1/3 | In Progress|  |
+| 21. Scorer + 阈值校准 | v1.3 | 2/3 | In Progress|  |
 | 22. Dataset Export + Integration | v1.3 | 0/TBD | Not started | - |
