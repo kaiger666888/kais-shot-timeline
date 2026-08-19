@@ -420,17 +420,17 @@ def test_cache_hit_second_run_zero_engine_calls(tmp_path, monkeypatch):
 | A4 | 相邻帧对问两条 user 消息两张图都能被模型看到（上游 observe() 同 shape 已在别处使用） | Pattern 3 | 若对问失效（模型只见一图），camera 退化为逐帧单帧问——spike 盲评会暴露（camera 答案无帧间语义时 B/A 均无运镜信息） |
 | A5 | 客户端本地扩展方法属「Claude's discretion/实现细节」而非违反「不修改引擎本体」 | Pitfall 2 | 若用户视为越界，改为 vision_seq_facets 内构造消息 + 引擎暴露受控入口——需确认 |
 
-## Open Questions
+## Open Questions (RESOLVED — all three closed at plan level; A2/A5 confirmations folded into the 19-02 Task 3 checkpoint)
 
-1. **SC1 与「只填空缺」锁定的字面冲突如何收口？**
+1. **SC1 与「只填空缺」锁定的字面冲突如何收口？** [RESOLVED → CONTEXT 锁定决策（Area 3 Q2, 2026-08-19）：只填空缺、永不覆盖；SC1 证据走 sandbox + live sha 不变]
    - What we know: 全部现存集 action/camera 0 空缺；CONTEXT 锁定永不覆盖、更短替换 deferred；roadmap SC1 仍写「只填空缺/更短」。
    - What's unclear: Kai 是否期望 live ep01 prompts.json 在本 phase 被升级（即临时授权抽样镜覆盖）。
    - Recommendation: 默认 sandbox 实证 + live 文件 sha 不变（研究强烈建议——与守卫精神一致）；plan 里作为一个显式 checkpoint 让 Kai 确认。
-2. **spike 的 GPU 执行时机与操作员在场性**
+2. **spike 的 GPU 执行时机与操作员在场性** [RESOLVED → 19-02 Task 2：tmux 后台 + cache 断点续跑，独立 GPU 任务]
    - What we know: 引擎当前 down（:8125 无响应）；GPU1 free 22.5GB ≥ 14GB 门槛可拉起；spike 1-3h [ASSUMED]。
    - What's unclear: 交互路径内跑还是后台 tmux 跑；ComfyUI/TTS 若同卡抢占的现场处理。
    - Recommendation: plan 把「spike 双跑（A/B 原始证据 + ear on/off）」列为独立 GPU 任务，tmux 后台 + cache 断点续跑，不阻塞其他 task。
-3. **盲评材料的呈现载体**
+3. **盲评材料的呈现载体** [RESOLVED → 19-02 Task 2：markdown 甲/乙/丙 盲评表（mirror audio-spike-report 先例）]
    - What we know: 结论落 markdown spike report；盲评要「并排打分」。
    - What's unclear: 纯 markdown 表格够不够（vs 小 HTML）。
    - Recommendation: markdown 表格 + 帧图相对路径引用（repo .html 被 gitignore，md 更可归档）；mirror audio-spike-report 先例。
