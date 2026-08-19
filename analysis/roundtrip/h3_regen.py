@@ -22,7 +22,10 @@
    workflow_fl2va.json 模板并注入节点参数（14/15 帧名、20 prompt/width/height/
    length、30 seed、50 prefix）→ POST /prompt → 轮询 /history/{prompt_id} →
    /view 下载 mp4 → cache 写入（含渲后水位 post_render_free_mib）；
-6. 收尾 flush 本轮 warnings（跳镜 str / 失败摘要）+ summary print。
+6. 收尾：roundtrip.json regen 半边写入（Open Q2 裁决——READ-merge 保留
+   Phase 21 未来 scores/verdict 字段 + Draft202012Validator 写前自校验，
+   cache-hit 镜从 cache meta 重建条目保证断点续跑后 sidecar 完整）→
+   flush 本轮 warnings（跳镜 str / 失败摘要）+ summary print。
 
 graceful-degrade 语义
 ---------------------
@@ -72,6 +75,18 @@ code ∈ comfyui_unreachable/vram_insufficient/scorer_model_missing）。本模�
 本模块写入的 dict 条目会被 strip。这不是数据丢失边界（[roundtrip] 条目本就按
 「上一轮」语义每次 strip 重写），但 operator 应知道该交互存在。
 
+roundtrip.json sidecar（20-03 / Open Q2 裁决）
+----------------------------------------------
+批末写 regen 半边（Phase 18 契约的运行时兑现）：rendered 镜 → {shot_id,
+regen{path, video_content_hash, engine_name, engine_version, prompt_version,
+duration_sec, width, height}}；failed 镜 → {shot_id, status{state:"failed",
+error}}；未尝试（抽样外/跳过）→ 条目缺席（schema 是结果集不是任务队列）。
+scores/verdict 本 phase 不写——schema 明文合法 degrade 中间态，Phase 21
+增量补齐。READ-merge 按 shot_id 只替换 regen/status 半边，既有条目的其它
+键原样保留（不给 Phase 21 留全量重写负担）；写前 Draft202012Validator
+全量自校验，有错 sys.exit 不落盘。schema_version 从 scripts/export_asset.py
+importlib 加载单源（绝不复制字面量）。
+
 argv 用法
 ---------
     python3 analysis/roundtrip/h3_regen.py --work-dir output/<video-stem>/ \
@@ -97,6 +112,7 @@ from __future__ import annotations
 import argparse
 import copy
 import hashlib
+import importlib.util
 import json
 import os
 import re
@@ -159,6 +175,17 @@ NODE_SAVE = "50"       # SaveVideo（filename_prefix）
 
 # 模板数据文件（与本模块同目录；数据与代码分离）。
 TEMPLATE_PATH = Path(__file__).resolve().parent / "workflow_fl2va.json"
+
+# roundtrip.json 写前自校验目标 schema（Phase 18 契约）。**三层 parent**：本模块
+# 在 analysis/roundtrip/ 下，比 analysis/vision_seq_facets.py 深一层——repo root
+# 必须 parent.parent.parent（off-by-one 陷阱，PATTERNS §F 已标）。
+SCHEMA_PATH = (Path(__file__).resolve().parent.parent.parent
+               / "spec" / "schemas" / "roundtrip.schema.json")
+
+# SCHEMA_VERSION 单源位置（scripts/export_asset.py:SCHEMA_VERSION）——importlib
+# 加载取属性，绝不在本模块复制字面量（STATE 载明单源纪律）。
+_SCHEMA_VERSION_SOURCE = (Path(__file__).resolve().parent.parent.parent
+                          / "scripts" / "export_asset.py")
 
 # 轮询节奏（kmc v4 crash-safe 骨架：sleep 15s + 瞬态异常 continue）。
 POLL_INTERVAL_SEC = 15
@@ -607,6 +634,117 @@ def append_roundtrip_warnings(work_dir: str, new_entries: list) -> None:
     _atomic_write_json(sidecar, {"warnings": kept + list(new_entries)})
 
 
+# ─── roundtrip.json sidecar（20-03 / Open Q2：regen 半边 + READ-merge）───────
+
+def _load_schema_version() -> str:
+    """importlib 加载 scripts/export_asset.py 取 SCHEMA_VERSION 属性（单源——
+    版本号只活在 export_asset.py 一处，勿复制字面量）。加载失败/属性缺席
+    sys.exit 中文报错：版本不明绝不落盘 sidecar。"""
+    spec = importlib.util.spec_from_file_location(
+        "export_asset_version", _SCHEMA_VERSION_SOURCE)
+    if spec is None or spec.loader is None:
+        sys.exit(f"{STEP_TAG} 无法定位 SCHEMA_VERSION 单源：{_SCHEMA_VERSION_SOURCE}")
+    module = importlib.util.module_from_spec(spec)
+    try:
+        spec.loader.exec_module(module)
+    except Exception as exc:                            # noqa: BLE001 — 任何加载失败都不静默兜版本
+        sys.exit(f"{STEP_TAG} 加载 SCHEMA_VERSION 单源失败"
+                 f"（{type(exc).__name__}: {str(exc)[:200]}）")
+    version = getattr(module, "SCHEMA_VERSION", None)
+    if not isinstance(version, str) or not version:
+        sys.exit(f"{STEP_TAG} {_SCHEMA_VERSION_SOURCE} 缺 SCHEMA_VERSION 属性")
+    return version
+
+
+def probe_duration_sec(path: str) -> float:
+    """ffprobe 探 mp4 时长（秒）。失败返回 0.0（repo probe_duration 吞错先例：
+    duration 是 sidecar 观测字段，不构成批成败判据——损坏由 Phase 21 scorer
+    自然暴露）。"""
+    try:
+        proc = subprocess.run(
+            ["ffprobe", "-v", "quiet", "-show_entries", "format=duration",
+             "-of", "csv=p=0", path],
+            capture_output=True, text=True, timeout=30)
+        return float(proc.stdout.strip())
+    except (ValueError, AttributeError, subprocess.SubprocessError, OSError):
+        return 0.0
+
+
+def build_sidecar_entries(results: list, vch: str, width: int,
+                          height: int) -> list[dict]:
+    """results → roundtrip.json 条目半边。results 元素两种形态：
+    rendered/cache-hit 镜 = cache meta + shot_id + mp4 绝对路径（cache-hit 镜
+    从 cache meta 重建——断点续跑后 sidecar 完整性的关键）；failed 用例 =
+    {shot_id, error}（error 截 2000，schema T-18-02 长度上界）。
+    regen.path 由 shot_id 确定性构造（roundtrip/shot_{NNN:03d}_regen.mp4，
+    相对 asset root——Phase 18 契约约定）。"""
+    entries: list[dict] = []
+    for r in results:
+        if not isinstance(r, dict) or not isinstance(r.get("shot_id"), int):
+            continue
+        sid = int(r["shot_id"])
+        if "error" in r:
+            entries.append({"shot_id": sid,
+                            "status": {"state": "failed",
+                                       "error": str(r["error"])[:2000]}})
+            continue
+        entries.append({"shot_id": sid, "regen": {
+            "path": f"roundtrip/shot_{sid:03d}_regen.mp4",
+            "video_content_hash": str(r.get("video_content_hash") or vch),
+            "engine_name": str(r.get("engine_name") or ENGINE_NAME),
+            "engine_version": str(r.get("engine_version")
+                                  or build_engine_version(width, height)),
+            "prompt_version": str(r.get("prompt_version") or ""),
+            "duration_sec": probe_duration_sec(str(r.get("mp4") or "")),
+            "width": int(r.get("width") or width),
+            "height": int(r.get("height") or height),
+        }})
+    return entries
+
+
+def write_roundtrip_sidecar(work_dir: str, entries: list[dict]) -> None:
+    """roundtrip.json 写入（Open Q2：客户端批末写 regen 半边）。
+    READ-merge：既有同 shot_id 条目只替换 regen/status 半边，scores/verdict
+    等 Phase 21 未来字段**原样保留**；JSON 损坏/缺席视为空重建（Phase 18
+    决策：挂载前仅 JSON-parse）。写前 Draft202012Validator 全量 iter_errors
+    （错误前 3 条 sys.exit 不落盘——vision_seq L705-713 先例）→ tmp +
+    os.replace 原子写。schema_version 从 export_asset 单源加载。"""
+    sidecar_path = os.path.join(work_dir, "roundtrip.json")
+    try:
+        with open(sidecar_path, encoding="utf-8") as f:
+            existing = json.load(f)
+    except (OSError, json.JSONDecodeError):
+        existing = None
+    if not isinstance(existing, dict) or not isinstance(existing.get("shots"), list):
+        existing = {"shots": []}
+    merged: dict[int, dict] = {}
+    for s in existing["shots"]:
+        if isinstance(s, dict) and isinstance(s.get("shot_id"), int):
+            merged[int(s["shot_id"])] = s
+    for e in entries:
+        if not isinstance(e, dict) or not isinstance(e.get("shot_id"), int):
+            continue
+        sid = int(e["shot_id"])
+        kept = {k: v for k, v in merged.get(sid, {}).items()
+                if k not in ("regen", "status")}
+        kept.update(e)                          # 新 regen/status 半边落位
+        merged[sid] = kept
+    payload = {"schema_version": _load_schema_version(),
+               "shots": [merged[k] for k in sorted(merged)]}
+    from jsonschema import Draft202012Validator
+    with open(SCHEMA_PATH, encoding="utf-8") as f:
+        schema = json.load(f)
+    errors = list(Draft202012Validator(schema).iter_errors(payload))
+    if errors:
+        detail = "; ".join(f"{'/'.join(map(str, e.absolute_path))}: {e.message}"
+                           for e in errors[:3])
+        sys.exit(f"{STEP_TAG} roundtrip.json schema 校验失败"
+                 f"（{len(errors)} 错误，拒绝落盘）: {detail}")
+    _atomic_write_json(sidecar_path, payload)
+    print(f"{STEP_TAG} roundtrip.json 已写入（{len(payload['shots'])} shots，"
+          f"schema {payload['schema_version']} 校验通过）")
+
+
 # ─── VRAM guard / GPU 编排（REGEN-03，20-02）────────────────────────────────
 # 全部读数 fail-open（qwen _vram_free_mib 先例）：nvidia-smi/ss/docker 异常返回
 # None/[] 不阻塞调用方——guard 判定本身保守（有读数即严判，T-20-06）。
@@ -967,6 +1105,8 @@ def main() -> int:
     rendered = 0
     cache_hits = 0
     failed: list[int] = []
+    failed_detail: dict[int, str] = {}
+    results: list[dict] = []          # sidecar results（rendered + cache-hit meta）
     done = 0
     for shot in shots:
         done += 1
@@ -979,8 +1119,12 @@ def main() -> int:
             "prompt_version": prompt_version_for(shot["prompt_text"]),
         }
         mp4 = _mp4_path(sid, work_dir)
-        if cache_is_hit(cache_read(sid, work_dir, key4), mp4):
+        hit_meta = cache_read(sid, work_dir, key4)
+        if cache_is_hit(hit_meta, mp4):
             cache_hits += 1
+            # cache-hit 镜也进 sidecar results（从 cache meta 重建条目——
+            # 断点续跑后 roundtrip.json 完整性的关键）。
+            results.append(dict(hit_meta or {}, shot_id=sid, mp4=mp4))
             print(f"{STEP_TAG} shot {sid}: cache hit, skipping")
             continue
         # 每镜提交前 PID 归因复查（Pitfall 1：基线内自身 cache 驻留不触发；
@@ -1016,16 +1160,19 @@ def main() -> int:
                 error = (result or {}).get("error") or "timeout"
                 print(f"{STEP_TAG} shot {sid}: 渲染失败（{str(error)[:300]}）")
                 failed.append(sid)
+                failed_detail[sid] = str(error)[:2000]
                 continue
             filename = result.get("filename", "")
             if not sanitize_view_filename(filename):
                 print(f"{STEP_TAG} shot {sid}: 产物文件名非法（{filename!r}），拒绝下载")
                 failed.append(sid)
+                failed_detail[sid] = f"产物文件名非法: {filename!r}"
                 continue
             _view_download(result, args.comfy_url, mp4)
             if os.path.getsize(mp4) <= MIN_MP4_BYTES:
                 print(f"{STEP_TAG} shot {sid}: 产物 <= {MIN_MP4_BYTES}B，判失败")
                 failed.append(sid)
+                failed_detail[sid] = f"下载产物 <= {MIN_MP4_BYTES}B"
                 continue
             meta = dict(key4)
             meta.update({
@@ -1041,14 +1188,26 @@ def main() -> int:
             mem_after = gpu_mem_mib(args.gpu_index)
             meta["post_render_free_mib"] = mem_after[1] if mem_after else None
             cache_write(sid, work_dir, meta)
+            results.append(dict(meta, shot_id=sid, mp4=mp4))
             rendered += 1
             print(f"{STEP_TAG} shot {sid}: rendered {os.path.basename(mp4)}")
         except Exception as exc:                            # 单镜失败不阻塞批（vision_seq L660 形态）
             print(f"{STEP_TAG} shot {sid}: 异常失败（{type(exc).__name__}: {str(exc)[:300]}）")
             failed.append(sid)
+            failed_detail[sid] = f"{type(exc).__name__}: {str(exc)[:300]}"
             continue
         if (done % 10) == 0:
             print(f"{STEP_TAG} {done}/{len(shots)} shots processed")
+
+    # 收尾：roundtrip.json regen 半边（Open Q2）—— failed 镜转 status 条目后
+    # 与 rendered/cache-hit results 合并写入（schema 写前自校验 + READ-merge）。
+    # 早退路径（ComfyUI 不可达 / guard 拒绝）不写：本轮无新增产物，既有
+    # sidecar 原样保留（READ-merge 空集本就是恒等变换）。
+    results.extend({"shot_id": sid,
+                    "error": failed_detail.get(sid, "render failed")}
+                   for sid in failed)
+    write_roundtrip_sidecar(work_dir, build_sidecar_entries(
+        results, vch, width, height))
 
     # 收尾 flush：本轮 str/dict warnings（join 缺失 / 跳镜 str / 失败摘要 /
     # guard 审计与拒绝记因）→ summary print。
