@@ -399,3 +399,248 @@ def _view_download(item: dict, comfy_url: str, dest: str) -> None:
     with urllib.request.urlopen(f"{comfy_url}/view?{q}", timeout=300) as resp, \
             open(dest, "wb") as f:
         f.write(resp.read())
+
+
+# ─── 4-tuple cache（REGEN-02）───────────────────────────────────────────────
+
+def prompt_version_for(prompt_text: str) -> str:
+    """per-shot prompt hash：sha256(prompt_text)[:8]。该镜 prompt_text 改一字
+    即变 → 只重渲该镜（CONTEXT 锁定；与 vision_seq 的全局版本串不同）。"""
+    return hashlib.sha256(prompt_text.encode("utf-8")).hexdigest()[:8]
+
+
+def _cache_meta_path(shot_id: int, work_dir: str) -> str:
+    """cache 元数据路径（与 mp4 实体分离——cache 清了产物可独立校验）。"""
+    return os.path.join(work_dir, "route_cache", "h3_regen", f"shot_{shot_id:03d}.json")
+
+
+def _mp4_path(shot_id: int, work_dir: str) -> str:
+    """产物路径（Phase 18 契约：regen.path 相对 asset root = roundtrip/shot_XXX_regen.mp4）。"""
+    return os.path.join(work_dir, "roundtrip", f"shot_{shot_id:03d}_regen.mp4")
+
+
+# cache 4-tuple 字段名（mirror WR-04 / vision_seq _cache_key 形状）。
+_CACHE_KEY_FIELDS = ("video_content_hash", "engine_name", "engine_version", "prompt_version")
+
+
+def cache_read(shot_id: int, work_dir: str, key4: dict) -> dict | None:
+    """读 cache 元数据：4-tuple 全等才返回 meta，否则 None（miss 即全新，
+    绝不部分复用）。文件缺席/损坏同样 miss。"""
+    try:
+        with open(_cache_meta_path(shot_id, work_dir), encoding="utf-8") as f:
+            meta = json.load(f)
+    except (OSError, json.JSONDecodeError):
+        return None
+    if not isinstance(meta, dict):
+        return None
+    for field in _CACHE_KEY_FIELDS:
+        if meta.get(field) != key4.get(field):
+            return None
+    return meta
+
+
+def cache_is_hit(meta: dict | None, mp4_path: str) -> bool:
+    """hit = meta 非 None 且 mp4 实体存在且 size>MIN_MP4_BYTES。
+    不做 ffprobe 深检（CONTEXT 锁定——损坏由 Phase 21 scorer 自然暴露）。"""
+    if not isinstance(meta, dict):
+        return False
+    if not os.path.isfile(mp4_path):
+        return False
+    return os.path.getsize(mp4_path) > MIN_MP4_BYTES
+
+
+def _file_sha256(path: str, chunk: int = 1024 * 1024) -> str:
+    """分块读产物算 sha256（cache 元数据留档，供产物/cache 分离后独立校验）。"""
+    h = hashlib.sha256()
+    with open(path, "rb") as f:
+        while True:
+            block = f.read(chunk)
+            if not block:
+                break
+            h.update(block)
+    return h.hexdigest()
+
+
+def _atomic_write_json(path: str, data: dict) -> None:
+    """tmp + os.replace 原子写（mirror vision_seq L333-338；indent=2
+    ensure_ascii=False repo 惯例）。"""
+    os.makedirs(os.path.dirname(path), exist_ok=True)
+    tmp = path + ".tmp"
+    with open(tmp, "w", encoding="utf-8") as f:
+        json.dump(data, f, ensure_ascii=False, indent=2)
+    os.replace(tmp, path)
+
+
+def cache_write(shot_id: int, work_dir: str, meta: dict) -> None:
+    """写 cache 元数据（含 4-tuple + prompt_id/seed/length/width/height/
+    mp4_sha256 + rendered_at 写入时刻 ISO）。原子写。"""
+    payload = dict(meta)
+    payload["rendered_at"] = time.strftime("%Y-%m-%dT%H:%M:%S")
+    _atomic_write_json(_cache_meta_path(shot_id, work_dir), payload)
+
+
+# ─── warnings 双形 merge（Pitfall 6）────────────────────────────────────────
+
+def _is_roundtrip_warning(w: object) -> bool:
+    """识别「本 step 上一轮」的条目：dict 且 code ∈ 三码 enum（[roundtrip]
+    degrade 记因专用码——其它 step 不产 dict 形），或 str 以 [roundtrip] 开头
+    （事件性说明）。[vision-seq] 等陌生 str 条目不匹配 → 原样保留。"""
+    if isinstance(w, dict) and w.get("code") in _ROUNDTRIP_WARNING_CODES:
+        return True
+    return isinstance(w, str) and w.startswith(STEP_TAG)
+
+
+def append_roundtrip_warnings(work_dir: str, new_entries: list) -> None:
+    """READ route_cache/warnings.json → strip 本 step 上一轮条目 → 追加
+    new_entries（str 与 dict 双形都收）→ 原子写回 {"warnings": merged}。
+    绝不照抄 vision_seq 的 isinstance(w, str) 过滤（Pitfall 6 会丢 dict 条目）。"""
+    sidecar = os.path.join(work_dir, "route_cache", "warnings.json")
+    existing: list = []
+    try:
+        with open(sidecar, encoding="utf-8") as f:
+            data = json.load(f)
+        if isinstance(data, dict) and isinstance(data.get("warnings"), list):
+            existing = list(data["warnings"])
+    except (OSError, json.JSONDecodeError):
+        existing = []
+    kept = [w for w in existing if not _is_roundtrip_warning(w)]
+    _atomic_write_json(sidecar, {"warnings": kept + list(new_entries)})
+
+
+# ─── main ───────────────────────────────────────────────────────────────────
+
+def main() -> int:
+    ap = argparse.ArgumentParser(
+        description="h3 fl2va 复现客户端 —— ComfyUI 直连提交/轮询/回收 + per-shot cache")
+    ap.add_argument("--work-dir", required=True,
+                    help="资产根目录（output/<video-stem>/）—— cache 与产物写在其下")
+    ap.add_argument("--comfy-url", default=COMFY_URL_DEFAULT,
+                    help=f"ComfyUI API 基址（默认 {COMFY_URL_DEFAULT}）")
+    ap.add_argument("--force", action="store_true",
+                    help="清掉本 step 的 cache（route_cache/h3_regen/）与产物"
+                         "（roundtrip/ + roundtrip.json）后重渲")
+    ap.add_argument("--shot-timeout", type=int, default=0,
+                    help="单镜渲染超时秒数（0=自动 900+3*length，按帧数缩放防长镜误判）")
+    args = ap.parse_args()
+    signal.signal(signal.SIGINT, signal.default_int_handler)  # Ctrl-C 可中断批（断点续跑承接）
+
+    work_dir = args.work_dir
+    src_video = resolve_source_video(work_dir)
+    vch = video_content_hash(src_video)
+    shots, join_warnings = load_shot_prompts(work_dir)
+    print(f"{STEP_TAG} 源={os.path.basename(src_video)} vch={vch} "
+          f"待处理镜数={len(shots)}（缺 prompt_text 跳过 {len(join_warnings)} 镜）")
+    pending_warnings: list = list(join_warnings)
+
+    if args.force:
+        import shutil
+        force_cache_dir = os.path.join(work_dir, "route_cache", "h3_regen")
+        force_out_dir = os.path.join(work_dir, "roundtrip")
+        force_sidecar = os.path.join(work_dir, "roundtrip.json")
+        for p in (force_cache_dir, force_out_dir):
+            if os.path.isdir(p):
+                shutil.rmtree(p, ignore_errors=True)      # 显式清单，绝不 glob 父级（T-14-01/T-20-04）
+        if os.path.isfile(force_sidecar):
+            os.unlink(force_sidecar)
+        print(f"{STEP_TAG} [force] 已清除 {force_cache_dir} / {force_out_dir} / {force_sidecar}")
+
+    # ComfyUI 可达性 gate（标准序第一位；20-02 的 VRAM guard 序列插在此 gate 之后：
+    # ComfyUI down 时直接降级退出，不白杀 TTS、不空轮 eye lease）。
+    status, _body = _http_json(f"{args.comfy_url}/system_stats")
+    if status != 200:
+        pending_warnings.append({"code": "comfyui_unreachable",
+                                 "detail": f"system_stats status={status}"})
+        append_roundtrip_warnings(work_dir, pending_warnings)
+        print(f"{STEP_TAG} ComfyUI 不可达（status={status}）—— graceful-degrade 退出")
+        return 0
+
+    # 本 plan 固定默认分辨率（--regen-resolution flag 在 20-02 接入）。
+    width, height = DEFAULT_WIDTH, DEFAULT_HEIGHT
+    if not validate_resolution(width, height):
+        sys.exit(f"{STEP_TAG} 默认分辨率 {width}x{height} 非法（%32/7:4/MAX_PIXELS 校验失败）")
+    engine_version = build_engine_version(width, height)
+    template = load_template()
+
+    frames_dir = os.path.join(work_dir, "route_cache", "h3_regen", "frames")
+    out_dir = os.path.join(work_dir, "roundtrip")
+    os.makedirs(out_dir, exist_ok=True)
+
+    rendered = 0
+    cache_hits = 0
+    failed: list[int] = []
+    done = 0
+    for shot in shots:
+        done += 1
+        sid = shot["id"]
+        label = f"shot {sid}"
+        key4 = {
+            "video_content_hash": vch,
+            "engine_name": ENGINE_NAME,
+            "engine_version": engine_version,
+            "prompt_version": prompt_version_for(shot["prompt_text"]),
+        }
+        mp4 = _mp4_path(sid, work_dir)
+        if cache_is_hit(cache_read(sid, work_dir, key4), mp4):
+            cache_hits += 1
+            print(f"{STEP_TAG} shot {sid}: cache hit, skipping")
+            continue
+        try:
+            length = h3_frame_count(shot["duration"])
+            seed = derive_seed(vch, sid)
+            ff_path, lf_path = extract_endpoint_frames(src_video, shot, vch, frames_dir)
+            ff_name = upload_image(ff_path, args.comfy_url)
+            lf_name = upload_image(lf_path, args.comfy_url)
+            prefix = f"kst_{vch}_shot{sid:03d}"
+            wf = build_workflow(template, ff_name, lf_name, shot["prompt_text"],
+                                width, height, length, seed, prefix)
+            prompt_id = submit_prompt(wf, args.comfy_url)
+            timeout_s = args.shot_timeout if args.shot_timeout > 0 else 900 + 3 * length
+            result = poll_and_fetch(prompt_id, args.comfy_url, timeout_s, label)
+            if not result or not result.get("ok"):
+                error = (result or {}).get("error") or "timeout"
+                print(f"{STEP_TAG} shot {sid}: 渲染失败（{str(error)[:300]}）")
+                failed.append(sid)
+                continue
+            filename = result.get("filename", "")
+            if not sanitize_view_filename(filename):
+                print(f"{STEP_TAG} shot {sid}: 产物文件名非法（{filename!r}），拒绝下载")
+                failed.append(sid)
+                continue
+            _view_download(result, args.comfy_url, mp4)
+            if os.path.getsize(mp4) <= MIN_MP4_BYTES:
+                print(f"{STEP_TAG} shot {sid}: 产物 <= {MIN_MP4_BYTES}B，判失败")
+                failed.append(sid)
+                continue
+            meta = dict(key4)
+            meta.update({
+                "prompt_id": prompt_id,
+                "seed": seed,
+                "length": length,
+                "width": width,
+                "height": height,
+                "mp4_sha256": _file_sha256(mp4),
+            })
+            cache_write(sid, work_dir, meta)
+            rendered += 1
+            print(f"{STEP_TAG} shot {sid}: rendered {os.path.basename(mp4)}")
+        except Exception as exc:                            # 单镜失败不阻塞批（vision_seq L660 形态）
+            print(f"{STEP_TAG} shot {sid}: 异常失败（{type(exc).__name__}: {str(exc)[:300]}）")
+            failed.append(sid)
+            continue
+        if (done % 10) == 0:
+            print(f"{STEP_TAG} {done}/{len(shots)} shots processed")
+
+    # 收尾 flush：本轮 str/dict warnings（跳镜 str 在 20-02 产生；本 plan 至少
+    # flush join 缺失/失败摘要）→ summary print。
+    if failed:
+        pending_warnings.append(f"{STEP_TAG} failed shots: {failed}")
+    if pending_warnings:
+        append_roundtrip_warnings(work_dir, pending_warnings)
+    print(f"{STEP_TAG} 完成：rendered={rendered} cache-hit={cache_hits} "
+          f"failed={len(failed)}")
+    print(f"{STEP_TAG} 产物目录：{out_dir}")
+    return 0
+
+
+if __name__ == "__main__":
+    sys.exit(main())
