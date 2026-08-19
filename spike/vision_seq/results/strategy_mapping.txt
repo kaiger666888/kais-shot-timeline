@@ -1,0 +1,5 @@
+# 甲/乙/丙 ↔ 策略映射（seed=20260819，盲评裁决前勿看）
+甲 = temporal
+乙 = longest
+丙 = llm
+v1 = live ep01 prompts.json 现行值（route 产物，参照列）

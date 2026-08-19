@@ -1,0 +1,43 @@
+[vision-seq] run_spike 启动 steps=['a', 'b', 'c', 'd'] (2026-08-20T01:55:48+0800)
+[vision-seq] === step a: sandbox no-ear RAW 烧（6 镜 × ~15 calls）===
+[vision-seq] $ /usr/bin/python3 /data/workspace/kais-shot-timeline/analysis/vision_seq_facets.py --shots /data/workspace/kais-shot-timeline/spike/vision_seq/sandbox/shots.json --frames-dir /data/workspace/kais-shot-timeline/spike/vision_seq/sandbox/frames_5fps --work-dir /data/workspace/kais-shot-timeline/spike/vision_seq/sandbox --output /data/workspace/kais-shot-timeline/spike/vision_seq/sandbox/prompts.json --video /data/workspace/kais-shot-timeline/spike/vision_seq/sandbox/video.mp4 --no-ear
+  [vision-seq] 10/93 shots processed
+  [vision-seq] 20/93 shots processed
+  [vision-seq] 30/93 shots processed
+  [vision-seq] 40/93 shots processed
+  [vision-seq] 50/93 shots processed
+  [vision-seq] 60/93 shots processed
+  [vision-seq] 70/93 shots processed
+  [vision-seq] 80/93 shots processed
+  [vision-seq] 90/93 shots processed
+  [vision-seq] wrote /data/workspace/kais-shot-timeline/spike/vision_seq/sandbox/prompts.json (action filled: 6, camera filled: 6, strategy: temporal, ear: off, 0 new warnings)
+[vision-seq] === step b: sandbox_ear ear=true 烧（3 镜 × ~15 calls）===
+[vision-seq] $ /usr/bin/python3 /data/workspace/kais-shot-timeline/analysis/vision_seq_facets.py --shots /data/workspace/kais-shot-timeline/spike/vision_seq/sandbox_ear/shots.json --frames-dir /data/workspace/kais-shot-timeline/spike/vision_seq/sandbox_ear/frames_5fps --work-dir /data/workspace/kais-shot-timeline/spike/vision_seq/sandbox_ear --output /data/workspace/kais-shot-timeline/spike/vision_seq/sandbox_ear/prompts.json --video /data/workspace/kais-shot-timeline/spike/vision_seq/sandbox_ear/video.mp4 --audio-semantic /data/workspace/kais-shot-timeline/spike/vision_seq/sandbox_ear/audio_semantic.json
+  [vision-seq] 10/93 shots processed
+  [vision-seq] 20/93 shots processed
+  [vision-seq] 30/93 shots processed
+  [vision-seq] 40/93 shots processed
+  [vision-seq] 50/93 shots processed
+  [vision-seq] 60/93 shots processed
+  [vision-seq] 70/93 shots processed
+  [vision-seq] 80/93 shots processed
+  [vision-seq] 90/93 shots processed
+  [vision-seq] wrote /data/workspace/kais-shot-timeline/spike/vision_seq/sandbox_ear/prompts.json (action filled: 3, camera filled: 3, strategy: temporal, ear: on, 0 new warnings)
+[vision-seq] === step c: 重置 sandbox → llm 合并（2 ask_text/镜）===
+[vision-seq] $ /usr/bin/python3 /data/workspace/kais-shot-timeline/spike/vision_seq/build_sandbox.py --reset --target sandbox
+  [spike-build] reset: ['sandbox'] (spike shots=[1, 46, 66, 70, 88, 91], ear subset=[1, 88, 91])
+  [spike-build] done（live ep01 全程零写入）
+[vision-seq] $ /usr/bin/python3 /data/workspace/kais-shot-timeline/analysis/vision_seq_facets.py --shots /data/workspace/kais-shot-timeline/spike/vision_seq/sandbox/shots.json --frames-dir /data/workspace/kais-shot-timeline/spike/vision_seq/sandbox/frames_5fps --work-dir /data/workspace/kais-shot-timeline/spike/vision_seq/sandbox --output /data/workspace/kais-shot-timeline/spike/vision_seq/sandbox/prompts.json --video /data/workspace/kais-shot-timeline/spike/vision_seq/sandbox/video.mp4 --no-ear --merge-strategy llm
+  [vision-seq] 10/93 shots processed
+  [vision-seq] 20/93 shots processed
+  [vision-seq] 30/93 shots processed
+  [vision-seq] 40/93 shots processed
+  [vision-seq] 50/93 shots processed
+  [vision-seq] 60/93 shots processed
+  [vision-seq] 70/93 shots processed
+  [vision-seq] 80/93 shots processed
+  [vision-seq] 90/93 shots processed
+  [vision-seq] wrote /data/workspace/kais-shot-timeline/spike/vision_seq/sandbox/prompts.json (action filled: 6, camera filled: 6, strategy: llm, ear: off, 0 new warnings)
+[vision-seq] === step d: 产物导出（零 GPU，纯 cache 归约）===
+[vision-seq] step d 导出: ['shot_001.md', 'shot_046.md', 'shot_066.md', 'shot_070.md', 'shot_088.md', 'shot_091.md'] + ear_diff.md + blind_review.md + strategy_mapping.txt + metrics.json
+[vision-seq] 全部完成 steps=['a', 'b', 'c', 'd']
