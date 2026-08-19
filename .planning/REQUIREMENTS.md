@@ -1,147 +1,111 @@
-# Milestone v1.2 Requirements — 音频语义深化 (Audio Semantic Deepening)
+# Milestone v1.3 Requirements — Round-trip Validation（逆推→复现→比对闭环数据集）
 
-**Goal:** 把音频从「能量/频谱启发式」升级为带对白情绪+说话人、BGM 乐器/调性/氛围/出现时间、音效描述的三模态语义资产，并产出分层复现 prompt（TTS / music-gen / foley）——镜像 v1.1 `step_semantic` 的「thin 客户端 → kais-aigc-platform 路由」模式。
+**Goal:** 用「qwen-eye 看片段逆推 prompt → h3 fl2va 首尾帧复现 → 中段帧打分 + VLM judge 归因」的闭环，把 prompts.json 从「看起来合理」升级为「经复现验证的可信真值」，产出 (首帧, 尾帧, prompt) 高价值数据集——rejection sampling 造 SFT 真值。
 
-**Locked decisions (user-approved):**
-1. 引擎放 kais-aigc-platform（路由式，shot-timeline 零 ML 依赖）
-2. 三模态一起（对白/音乐/音效）
-3. 分层复现 prompt（TTS / music-gen / foley）
-4. schema 1.1→1.2 additive optional（byte-identical-absent）
-5. SPEAKER-01 进 scope
-6. spike gen_audio_prompts.py 退役为 --offline fallback
-7. 复现 prompt = **model-agnostic NL**（不内嵌 NC 权重；用户拿 prompt 喂自选生成器）—— dissolves license BLOCKER
-8. **CUDA 12.8 升级 + WhisperX**（词级时间戳进 scope，Phase 1 drift 阈值决定 ship/defer）
+**Locked decisions (user-approved, proposal + /gsd-new-milestone 2026-08-19):**
+1. v1.3 = Round-trip Validation；MUS-04 乐器识别 / DIA-06 继续 defer（不捎带）
+2. qwen-eye v2 走务实版：每镜 8 帧序列**逐帧** `observe_single` 问答（llama.cpp 单图 bug 硬约束）；vLLM + Qwen3-VL-8B 视频原生留升级位，本 milestone 不动
+3. ear = 复用 v1.2 `audio_semantic` 融合进视觉 prompt（不新引音频理解引擎）
+4. 打分只看**中段帧**（首尾帧被 fl2va condition 无信息量）；verdict **必须归因**；**rejected 保留**
+5. h3 客户端 = kst 直连 ComfyUI API（自有客户端，不经 kmc/hermes runtime）；mirror route-client 先例 + p11b VRAM pitfalls
+6. dataset 导出 = 独立目录（首帧/尾帧/prompt.json/manifest），非 asset.json 内嵌 subset
+7. 音频侧 round-trip 对比（h3 自带环境音 vs Demucs stems）defer v1.4
+8. 首轮抽样 ≤20 镜校准打分阈值，全量是校准后的 overnight 批任务（8-13h/集），不进交互路径
 
-**Reference:** `.planning/research/SUMMARY.md` (+ STACK/FEATURES/ARCHITECTURE/PITFALLS).
+**Reference:** `.planning/research/SUMMARY.md` + `.planning/research/v1.3-roundtrip-validation-proposal.md`（基础设施盘点 + pitfalls）。
 
 ---
 
-## v1.2 Requirements
+## v1.3 Requirements
 
-### CONTRACT — 契约层（schema 1.1→1.2，纯增量）
-- [x] **CONTRACT-01**: `audio_semantic.json` sidecar schema — per-shot 三模态 (dialogue/music/sfx) + reproduction prompts；additive optional；`audio_analysis.json`/`transcript.json`/`prompts.json` **一字节不动**（byte-identical-absent 红线）
-- [x] **CONTRACT-02**: `speakers.json` sidecar schema (`spk_NNN → char_NNN|null`, `review_state`) + `speaker-edits.schema.json` (HITL round-trip, mirror registry-edits)
-- [x] **CONTRACT-03**: `SCHEMA_VERSION = "1.2"` producer-locked 单源；`validate.py` 三阶 shape gate (MINIMAL/V11/V12)；`verify_contract.py` v1.1↔v1.2 bidirectional cross-version + fixture-consistency
-- [x] **CONTRACT-04**: SPEC §4 (changelog 1.1→1.2) + §5 新增 audio_semantic / speakers 形状 + `fidelity_disclaimer` 文档
-- [x] **CONTRACT-05**: graceful-degrade —— 路由不可达/条件字段模型不达标 → sidecar 缺省（与 v1.0/v1.1 byte-identical）/ 字段 nullable；资产仍导出；`generator.warnings` 记原因
+### RT — 契约层（schema 1.2→1.3，纯增量）
+- [ ] **RT-01**: `roundtrip.schema.json` sidecar — per-shot {regen video ref, scores{midframe_sim, judge}, verdict{accepted/rejected}, attribution, reason}；additive optional；v1.2 及以前全部数据文件 **byte-identical-absent 红线**
+- [ ] **RT-02**: `SCHEMA_VERSION = "1.3"` producer-locked 单源；`validate.py` shape gate 扩展；fixture + v1.2↔v1.3 bidirectional cross-version proof
+- [ ] **RT-03**: SPEC §4 changelog 1.2→1.3 + §5 roundtrip 形状文档 + fidelity disclaimer（accepted = 「h3 可复现」≠「prompt 完美」）
+- [ ] **RT-04**: graceful-degrade —— ComfyUI 不可达 / VRAM 不足 / 打分模型缺席 → roundtrip sidecar 缺省（byte-identical-absent）、资产照常导出、`[roundtrip]` warnings sidecar 记因
+- [ ] **RT-05**: accepted 子集独立 dataset 目录导出 —— `dataset/<video-stem>/`（per-shot 首帧/尾帧 jpg + prompt.json + manifest 含 scores/attribution）；消费端不依赖 asset 契约
 
-### ROUTE — kais-aigc-platform 引擎（跨仓库）
-- [x] **ROUTE-01**: `audio-analysis` 路由 stub（envelope 镜像 shot-analysis `{"code":200,"data":{...}}`）—— 让 producer 客户端有 target URL + envelope，即使模型未加载也能集成测试
-- [x] **ROUTE-02**: 路由托管 SenseVoice (SER+events) + WhisperX (transcribe+align+diarize) + MERT/librosa/PANNs (MIR)；**CUDA 12.8 升级是 Phase 1 前置**（WhisperX 硬需）
-- [x] **ROUTE-03**: 路由 request/response 契约文档化（per-shot 输入：vocals→SER/diarize，drums+bass+other→MIR；输出：dialogue/music/sfx 子对象）
+### VISION — qwen-eye v2 看片段（升级 action/camera facet）
+- [ ] **VISION-01**: 帧序列逐帧问答升级 action/camera facet —— 每镜 ≤8 帧（frames_5fps 复用）逐帧 `observe_single` 问「这帧在做什么/镜头怎么动」→ 合并成完整动作链/运镜描述；合并策略（最长回答 vs 时序拼接）在 ep01 小样本上 spike 验证后锁定；只升级空缺/更短 facet（不覆盖 route/人工产物，mirror local_vision 边界）
+- [ ] **VISION-02**: ear 融合 —— 读 `audio_semantic.json`，把对白/sfx/foley 语义修正进 scene/action facet（雨声→scene=雨天、脚步声→动作链补「走近」）；additive、可跳过（`--no-ear`）
 
-### DIALOGUE — 对白支路
-- [x] **DIA-01**: 段级对白（shot 对齐，enrich 现有 transcript 语义层）— *table-stakes*
-- [x] **DIA-02**: 说话人分离（pyannote via WhisperX integrated diarize）→ 每段 `spk_NNN` — *table-stakes*
-- [x] **DIA-03**: `speaker_id → character_id` HITL 映射（见 SPEAKER）— *table-stakes*
-- [x] **DIA-04**: 对白情绪（SenseVoice 7 emotions + VA）— *CONDITIONAL：Phase 1 SER macro-F1 ≥50% ship / <40% defer v1.3 / 40-50% ship nullable+confidence* — **Phase 10 resolved → ship-nullable+confidence** (PROJECT.md Key Decisions Row 3; implementation pending Phase 15)
-- [x] **DIA-05**: 词级时间戳（WhisperX wav2vec2 align）— *CONDITIONAL：Phase 1 <200ms drift on ≥80% segments ship experimental / 否则段级 only（用户已选 WhisperX 路线）* — **Phase 10 resolved → ship-experimental** (PROJECT.md Key Decisions Row 5; implementation pending Phase 15)
+### REGEN — h3 复现客户端（ComfyUI 直连）
+- [ ] **REGEN-01**: `analysis/roundtrip/` ComfyUI API 客户端 —— fl2va workflow 模板（MiniMaxH3ImageToVideo，shift_video=12.0/cfg=1.0/euler+simple/length 17k+5 对齐）+ 提交/轮询/产物回收（regen mp4 per-shot）；不经 subagent（p11b Pitfall 7）
+- [ ] **REGEN-02**: per-shot 4-tuple cache（video_content_hash + engine_name + engine_version + prompt_version，mirror WR-04）+ 断点续跑 + `--force` 清单扩展
+- [ ] **REGEN-03**: VRAM guard —— 提交前 TTS 服务器检测（VoiceDesign :5111 / IndexTTS :5110）+ `POST /free` + 剩余显存检查（<22GB 不提交）；qwen-eye 13.4GB lease 与 h3 批**串行编排**（eye 先跑完释放）
+- [ ] **REGEN-04**: 抽样与降载 —— `--sample-shots N`（首轮 ≤20 镜校准用）+ `--regen-resolution` 降分辨率验证模式 + >10s 长镜跳过策略（可配置）
 
-### SPEAKER — 说话人↔角色（关闭 v1.1 SPEAKER-01 deferral）
-- [x] **SPEAKER-01**: 新 `^spk_[0-9]{3}$` 声学 ID 空间（**不**复用 `^char_[0-9]{3}$`，避免身份信号混淆）；`speakers.json` canonical sidecar；`char_id` nullable（旁白/群杂）
-- [x] **SPEAKER-02**: HITL review HTML (`html/gen_speaker_review.py`) + confirmed-only 硬门 apply (`registry/link_speakers.py`，镜像 `apply_edits.py`，idempotent)；拒绝全自动映射（AF-05）
-- [x] **SPEAKER-03**: producer registry integrity assert 扩展 speakers（镜像 v1.1 `_producer_registry_integrity`，additive + gated on file existence）
+### SCORE — 打分器
+- [ ] **SCORE-01**: 中段帧相似度 —— 原片段 vs 重生成片段在 25%-75% 时窗的 CLIP/SigLIP 帧 embedding 轨迹相似度；显式排除 t=0/t=end（被 condition，无信息量）
+- [ ] **SCORE-02**: VLM judge 归因 —— qwen-eye 看原片段 vs 重生成片段采样帧并排，产 schema 化 verdict：`prompt_faithful`（prompt 描述了X且渲染出X）/ `model_diverged`（描述了X渲染成Y，prompt 好）/ `prompt_underspecified`（欠约束，h3 自行脑补）；结构化输出（可复用 glm-structured-output 模式）
+- [ ] **SCORE-03**: 阈值校准 spike —— ep01 抽样 ≤20 镜实测双信号分布（midframe_sim + judge）→ 锁 accepted 双门槛；rejected 占比记录且可审计（防数据集静默偏向简单动作）
 
-### MUSIC — 音乐/BGM 支路
-- [x] **MUS-01**: BGM 出现/消失分段（in/out/fade）— *table-stakes*
-- [x] **MUS-02**: BGM tempo (BPM) — *table-stakes*
-- [x] **MUS-03**: BGM 离散 mood 标签 — *table-stakes*
-- [x] **MUS-04**: 多标签乐器识别（含民族：erhu/pipa/guzheng/dizi）— *CONDITIONAL：Phase 1 mAP ≥0.30 ship / <0.20 defer / 0.20-0.30 ship nullable+confidence；MERT vs PANNs 对决 defer 到 Phase 1* — **Phase 10 resolved → DEFER to v1.3** (PROJECT.md Key Decisions Row 4; instruments field omitted from v1.2 schema)
-- [x] **MUS-05**: BGM 调性 (key) — *differentiator*
-- [x] **MUS-06**: VA 情绪回归（arousal ship，valence experimental）— *differentiator*
+### DATASET — verdict 与数据集
+- [ ] **DATASET-01**: verdict 合并写 `roundtrip.json` —— accepted/rejected + attribution + reason + scores；rejected **永不删除**（hard negatives + h3 能力边界测绘）
+- [ ] **DATASET-02**: dataset manifest + hard-negative 索引 —— accepted/rejected 分清单，含 prompt 快照与引擎版本（可复现、可审计）
 
-### SFX — 音效支路
-- [x] **SFX-01**: per-shot foley/sfx 描述（含 SenseVoice 8 audio-event tags）— *table-stakes*
-- [x] **SFX-02**: foley 时间戳 + AudioSet taxonomy (PANNs) — *differentiator*
-- [x] **SFX-03**: foley 复合事件序列 — *differentiator*
+### PIPE — 流水线集成
+- [ ] **PIPE-01**: `step_roundtrip` 流水线 slot（timeline/export 前后，精确位置 Phase 22 定）+ CLI flags（`--skip-roundtrip`/`--comfyui-url`/`--sample-shots`/`--regen-resolution` 等）+ banner 重编号 + `--force` 缓存清单扩展
+- [ ] **PIPE-02**: smoke 回归 harness —— ≥4 场景（ComfyUI down / cache-hit 断点续跑 / 抽样模式 / VRAM-guard 拒提交），mirror v1.2 Phase 14 模式
 
-### PROMPT — 分层复现 prompt
-- [x] **PROMPT-01**: per-shot 分层复现 prompt `reproduction.{tts, music_gen, foley}`，**model-agnostic NL**，in-place 在 `audio_semantic.json#shots[].reproduction` — *table-stakes*
-- [x] **PROMPT-02**: 每 prompt 字段 `nullable + confidence` + `fidelity_disclaimer`（AF-01 缓解：复现 ≠ 复原，TTS~70%/music~60-75%/foley~80%）— *table-stakes*
-- [x] **PROMPT-03**: spike `audio/gen_audio_prompts.py` 晋升为 pipeline producer（输入 audio_semantic.json，输出 in-place reproduction），`--offline` fallback（路由不可达降级为启发式）— *table-stakes；retires spike per locked decision #6*
-
-### PIPELINE — 流水线集成
-- [x] **PIPE-01**: `step_audio_semantic` 流水线 slot 7（step_reid 与 step_timeline 之间）；`[N/8]→[N/9]` 重编号（17 banner instances）；CLI flags (`--skip-audio-semantic`/`--audio-url`/`--audio-timeout`/`--offline`)；`--force` 缓存清单扩展
-- [x] **PIPE-02**: per-shot cache（4-tuple key: video_content_hash/route_name/route_version/+shot_id 隐含于文件名）+ poisoned-cache invalidation + read-merge-write `[audio]` warnings sidecar
-- [x] **PIPE-03**: `scripts/verify_phase_audio_smoke.py` 5-scenario 回归（route-up/down/cache-hit-offline/条件字段-defer/stub-only）
-
-### PRESENT — shot-timeline HTML 展示
-- [x] **PRESENT-01**: `gen_timeline_html.py` 扩展 `--audio-semantic`/`--speakers`；per-shot 对白/音乐/音效 chips + speaker→character chip + 复现 prompt 面板（"estimated" 标签）+ XSS `_esc()` hardening（layered-prompt HTML 是新 attack surface）
-
-### CONSUMER — canvas 消费者（跨仓库，可 defer）
-- [x] **CONSUMER-01**: `@kais/infinite-canvas` 识别 `schema_version:"1.2"`；§7 post-process 每 shot emit 1 dialogue + 1 music + 1 sfx `type:"asset"` 子节点；typeIcons cosmetic（💬/🎵/🔊）；**无 custom renderer / 无 Zod bump**（跨仓库 kais-aigc-platform `feat/canvas-asset-collection`）；3-mode verify_contract.py v1.2 GREEN
+### PRESENT — 审阅呈现
+- [ ] **PRESENT-01**: gallery round-trip 审阅面板 —— 原片段 vs 重生成片段并排 + 双分数 + 归因标签 + accept/reject 按钮（HITL 复核导出，mirror registry/speaker review 先例）+ XSS `_esc()` hardening（verdict/reason 是模型产出文本 = 新 attack surface）
 
 ---
 
 ## Future Requirements (deferred)
 
-- **DIA-06**: face-voice 自动 speaker→character 启发式（v1.3 differentiator；v1.2 永远 HITL 兜底）
-- **MUS-07**: BGM staff/MIDI 转写（AF-10 边界，未来）
-- **full V/A regression**：valence 成熟后从 experimental 升 SLA（v1.3）
-- **cross-video audio continuity**：同一 BGM 主题/同说话人跨片识别（v2，类比 cross-video character continuity）
+- **VISION-03**: vLLM + Qwen3-VL-8B 视频原生输入（升级位，模型已在盘 `/data/models/comfyui/LLM/Qwen-VL/`）
+- **AUDIO-CMP-01**: 音频侧 round-trip（h3 联合生成的环境音 vs Demucs stems 能量 profile）— v1.4（白拿但等打分器成熟）
+- **CANVAS-RT-01**: canvas roundtrip 消费节点 — 后续 milestone
+- **MUS-04**: 多标签乐器识别 — PANNs zenodo-blocked 未解，继续 defer（v1.2 遗留）
+- **DIA-06**: face-voice 自动 speaker→character — 继续 defer（v1.2 Future 遗留）
 
 ## Out of Scope
 
-- **AF-01 完美复刻原音频** — 复现 prompt ≠ 精确复原（TTS~70%/music~60-75%/foley~80%）；README/SPEC 不得出现 "perfectly reconstruct"/"exact restoration"；每字段带 confidence + fidelity_disclaimer
-- **AF-02 强制每镜都有情绪** / **AF-03 强制每镜都有乐器** — 模型不达标时 nullable，不伪造
-- **AF-05 全自动 speaker→character 映射** — 必须 HITL（吸取 v1.1 re-id 教训）
-- **AF-06 producer 内本地 ML fallback** — shot-timeline 保持零 ML 依赖；路由不可达走 sidecar-absent degrade，不在 producer 内跑模型（spike 启发式仅作 reproduction 的 --offline 文本降级，非分析降级）
-- **AF-07 重训模型** / **AF-08 精确同步复现** / **AF-09 词级 <50ms 保证** — 不现实承诺
-- **画布内原生音频渲染器**（波形/stem 播放引擎）— 仍是后续 milestone；v1.2 只加语义数据 + 结构化 asset 节点
-- **内嵌 NC 权重生成器**（Stable Audio Open/AudioLDM2/F5-TTS）— v1.2 只产 model-agnostic NL prompt，不绑死/不分发 NC 权重（locked decision #7）
+- **训练任何模型** — 纯数据生产；SFT 消费是下游别的事
+- **改 h3 引擎/workflow 本体** — ComfyUI workflow 只消费不修改；模型量化/节点不动
+- **全自动 accepted 无 HITL** — 面板复核是硬门（吸取 v1.1 re-id / v1.2 speaker 教训：全自动映射不可信）
+- **音频 round-trip 对比** — v1.4（locked decision #7）
+- **跨视频 round-trip 一致性** — 类比 cross-video character continuity，v2
+- **全量 GPU 跑进交互路径** — 8-13h/集是 overnight 批任务；交互路径只走抽样校准
+- **修改分镜检测/转录/分离基线** — v1.0 约束延续
 
 ---
 
 ## Traceability
 
-Each v1.2 REQ-ID maps to exactly one phase. Coverage: 33/33 (100%).
+Each v1.3 REQ-ID maps to exactly one phase. Coverage: 19/19 (100%).
 
 | REQ-ID | Phase | Status |
 |--------|-------|--------|
-| CONTRACT-01 | Phase 11 (Contract v1.2) | Complete |
-| CONTRACT-02 | Phase 11 (Contract v1.2) | Complete |
-| CONTRACT-03 | Phase 11 (Contract v1.2) | Complete |
-| CONTRACT-04 | Phase 11 (Contract v1.2) | Complete |
-| CONTRACT-05 | Phase 11 (Contract v1.2) | Complete |
-| ROUTE-01 | Phase 10 (Risk-Validation Spike + Route Stub) | Complete |
-| ROUTE-02 | Phase 12 (Producer Route Client) | Complete |
-| ROUTE-03 | Phase 12 (Producer Route Client) | Complete |
-| DIA-01 | Phase 15 (Layered Reproduction Prompts) | Complete |
-| DIA-02 | Phase 13 (SPEAKER-01 Linkage HITL) | Complete |
-| DIA-03 | Phase 13 (SPEAKER-01 Linkage HITL) | Complete |
-| DIA-04 | Phase 15 (Layered Reproduction Prompts) — *CONDITIONAL on Phase 10 SER macro-F1* | Phase 10 resolved (ship-nullable+confidence); Phase 15 implementation pending |
-| DIA-05 | Phase 15 (Layered Reproduction Prompts) — *CONDITIONAL on Phase 10 WhisperX drift* | Phase 10 resolved (ship-experimental); Phase 15 implementation pending |
-| SPEAKER-01 | Phase 13 (SPEAKER-01 Linkage HITL) | Complete |
-| SPEAKER-02 | Phase 13 (SPEAKER-01 Linkage HITL) | Complete |
-| SPEAKER-03 | Phase 13 (SPEAKER-01 Linkage HITL) | Complete |
-| MUS-01 | Phase 15 (Layered Reproduction Prompts) | Complete |
-| MUS-02 | Phase 15 (Layered Reproduction Prompts) | Complete |
-| MUS-03 | Phase 15 (Layered Reproduction Prompts) | Complete |
-| MUS-04 | Phase 15 (Layered Reproduction Prompts) — *CONDITIONAL on Phase 10 mAP* | Phase 10 resolved (DEFER v1.3); instruments field omitted from v1.2 schema |
-| MUS-05 | Phase 15 (Layered Reproduction Prompts) | Complete |
-| MUS-06 | Phase 15 (Layered Reproduction Prompts) | Complete |
-| SFX-01 | Phase 15 (Layered Reproduction Prompts) | Complete |
-| SFX-02 | Phase 15 (Layered Reproduction Prompts) | Complete |
-| SFX-03 | Phase 15 (Layered Reproduction Prompts) | Complete |
-| PROMPT-01 | Phase 15 (Layered Reproduction Prompts) | Complete |
-| PROMPT-02 | Phase 15 (Layered Reproduction Prompts) | Complete |
-| PROMPT-03 | Phase 15 (Layered Reproduction Prompts) | Complete |
-| PIPE-01 | Phase 14 (Pipeline Integration) | Complete |
-| PIPE-02 | Phase 12 (Producer Route Client) | Complete |
-| PIPE-03 | Phase 14 (Pipeline Integration) | Complete |
-| PRESENT-01 | Phase 16 (HTML Gallery) | Complete |
-| CONSUMER-01 | Phase 17 (Canvas Consumer) | Complete |
+| RT-01 | Phase 18 (Contract v1.3) | Pending |
+| RT-02 | Phase 18 (Contract v1.3) | Pending |
+| RT-03 | Phase 18 (Contract v1.3) | Pending |
+| RT-04 | Phase 18 (Contract v1.3) | Pending |
+| RT-05 | Phase 22 (Dataset Export + Integration) | Pending |
+| VISION-01 | Phase 19 (qwen-eye v2 看片段) | Pending |
+| VISION-02 | Phase 19 (qwen-eye v2 看片段) | Pending |
+| REGEN-01 | Phase 20 (h3 复现客户端) | Pending |
+| REGEN-02 | Phase 20 (h3 复现客户端) | Pending |
+| REGEN-03 | Phase 20 (h3 复现客户端) | Pending |
+| REGEN-04 | Phase 20 (h3 复现客户端) | Pending |
+| SCORE-01 | Phase 21 (Scorer + 阈值校准) | Pending |
+| SCORE-02 | Phase 21 (Scorer + 阈值校准) | Pending |
+| SCORE-03 | Phase 21 (Scorer + 阈值校准) | Pending |
+| DATASET-01 | Phase 21 (Scorer + 阈值校准) | Pending |
+| DATASET-02 | Phase 22 (Dataset Export + Integration) | Pending |
+| PIPE-01 | Phase 22 (Dataset Export + Integration) | Pending |
+| PIPE-02 | Phase 22 (Dataset Export + Integration) | Pending |
+| PRESENT-01 | Phase 22 (Dataset Export + Integration) | Pending |
 
 **Phase coverage summary:**
 
 | Phase | Requirements | Count |
 |-------|--------------|-------|
-| 10. Risk-Validation Spike + Route Stub | ROUTE-01 (+ de-risks DIA-04/DIA-05/MUS-04) | 1 |
-| 11. Contract v1.2 | CONTRACT-01..05 | 5 |
-| 12. Producer Route Client | ROUTE-02, ROUTE-03, PIPE-02 | 3 |
-| 13. SPEAKER-01 Linkage HITL | SPEAKER-01..03, DIA-02, DIA-03 | 5 |
-| 14. Pipeline Integration | PIPE-01, PIPE-03 | 2 |
-| 15. Layered Reproduction Prompts | PROMPT-01..03, DIA-01, DIA-04, DIA-05, MUS-01..06, SFX-01..03 | 15 |
-| 16. HTML Gallery | PRESENT-01 | 1 |
-| 17. Canvas Consumer | CONSUMER-01 | 1 |
-| **Total** | | **33** |
+| 18. Contract v1.3 | RT-01..04 | 4 |
+| 19. qwen-eye v2 看片段 | VISION-01..02 | 2 |
+| 20. h3 复现客户端 | REGEN-01..04 | 4 |
+| 21. Scorer + 阈值校准 | SCORE-01..03, DATASET-01 | 4 |
+| 22. Dataset Export + Integration | RT-05, DATASET-02, PIPE-01..02, PRESENT-01 | 5 |
+| **Total** | | **19** |
