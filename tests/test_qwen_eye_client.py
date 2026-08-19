@@ -163,6 +163,83 @@ def test_observe_single_request_shape(tmp_path, monkeypatch):
     assert parts[1] == {"type": "text", "text": "描述场景"}
 
 
+def test_observe_pair_request_shape(tmp_path, monkeypatch):
+    """observe_pair：恰两条 user 消息（每图一条，规避 llama.cpp 多图丢弃
+    bug）、每条恰 1 个 image_url part + 1 个 text part、问句只在第 2 条、
+    第 1 条 text 含「前一帧」标记、两图 base64 互不相同且对应 a/b。"""
+    img_a = tmp_path / "f000001.jpg"
+    img_a.write_bytes(b"\xff\xd8fake-jpeg-A")
+    img_b = tmp_path / "f000002.jpg"
+    img_b.write_bytes(b"\xff\xd8fake-jpeg-B")
+
+    captured = {}
+
+    def fake_call_llm(self, messages, max_tokens):
+        captured["messages"] = messages
+        captured["max_tokens"] = max_tokens
+        return "答"
+
+    monkeypatch.setattr(QwenEye, "_call_llm", fake_call_llm)
+    eye = QwenEye()
+    out = eye.observe_pair(img_a, img_b, "镜头怎么运动了", max_tokens=1500)
+    assert out == "答"
+    assert captured["max_tokens"] == 1500
+
+    messages = captured["messages"]
+    assert len(messages) == 2                          # 恰两条消息
+    assert all(m["role"] == "user" for m in messages)  # 都是 user（硬约束 1）
+
+    urls = []
+    for m in messages:                                # 每条恰 1 图 + 1 文本
+        parts = m["content"]
+        img_parts = [p for p in parts if p["type"] == "image_url"]
+        txt_parts = [p for p in parts if p["type"] == "text"]
+        assert len(parts) == 2
+        assert len(img_parts) == 1
+        assert len(txt_parts) == 1
+        urls.append(img_parts[0]["image_url"]["url"])
+    # 两图 base64 互不相同且顺序对应 a → b
+    prefix = "data:image/jpeg;base64,"
+    assert all(u.startswith(prefix) for u in urls)
+    import base64 as _b64
+    assert _b64.b64decode(urls[0].removeprefix(prefix)) == b"\xff\xd8fake-jpeg-A"
+    assert _b64.b64decode(urls[1].removeprefix(prefix)) == b"\xff\xd8fake-jpeg-B"
+    assert urls[0] != urls[1]
+
+    texts = [p["text"] for m in messages for p in m["content"] if p["type"] == "text"]
+    assert "镜头怎么运动了" not in texts[0]      # 问句只在第 2 条
+    assert "镜头怎么运动了" in texts[1]
+    assert "前一帧" in texts[0]                  # 第 1 条含前一帧标记
+    assert "当前帧" in texts[1]
+
+
+def test_ask_text_request_shape(monkeypatch):
+    """ask_text：单条 user 消息、纯 text part、零 image_url part
+    （无图 = 豁免多图丢弃 bug，策略 B 纯文本合并入口）。"""
+    captured = {}
+
+    def fake_call_llm(self, messages, max_tokens):
+        captured["messages"] = messages
+        captured["max_tokens"] = max_tokens
+        return "合并答"
+
+    monkeypatch.setattr(QwenEye, "_call_llm", fake_call_llm)
+    eye = QwenEye()
+    out = eye.ask_text("把逐帧答案合并成一句", max_tokens=900)
+    assert out == "合并答"
+    assert captured["max_tokens"] == 900
+
+    messages = captured["messages"]
+    assert len(messages) == 1
+    assert messages[0]["role"] == "user"
+    parts = messages[0]["content"]
+    assert not isinstance(parts, str)          # 必须是 part list
+    assert len(parts) == 1
+    assert parts[0]["type"] == "text"
+    assert parts[0]["text"] == "把逐帧答案合并成一句"
+    assert all(p["type"] != "image_url" for p in parts)   # 零图
+
+
 def test_call_llm_always_disables_thinking(monkeypatch):
     """硬约束 2：请求体恒带 chat_template_kwargs.enable_thinking=False。"""
     bodies = []
