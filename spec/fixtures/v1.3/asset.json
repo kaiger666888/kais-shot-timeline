@@ -1,0 +1,79 @@
+{
+  "schema_version": "1.3",
+  "asset_type": "shottimeline",
+  "source": {
+    "video_filename": "sample.mp4",
+    "duration_sec": 3.0
+  },
+  "generator": {
+    "tool": "kais-shot-timeline",
+    "version": "0.3.0-spec-fixture-v1.3",
+    "generated_at": "2026-07-24T00:00:00Z",
+    "warnings": [
+      "preflight route unreachable: ConnectError: [Errno 111] Connection refused",
+      {
+        "code": "comfyui_unreachable",
+        "detail": "roundtrip regen: ComfyUI API preflight unreachable: ConnectError: [Errno 111] Connection refused (:8188)"
+      },
+      {
+        "code": "vram_insufficient",
+        "detail": "roundtrip regen: VRAM guard refused submit: 18.4GB free < 22GB minimum (REGEN-03)"
+      }
+    ],
+    "registry_snapshot": {
+      "characters": [
+        {
+          "id": "char_001",
+          "name": "少女",
+          "representative_image": "characters/char_001.png",
+          "appearance_shots": [1, 2]
+        },
+        {
+          "id": "char_002",
+          "name": "路人",
+          "representative_image": "characters/char_002.png",
+          "appearance_shots": [1]
+        }
+      ],
+      "props": [
+        {
+          "id": "prop_001",
+          "name": "落叶",
+          "representative_image": "props/prop_001.png",
+          "appearance_shots": [2]
+        }
+      ]
+    }
+  },
+  "data": {
+    "shots": "shots.json",
+    "audio_analysis": "audio_analysis.json",
+    "transcript": "transcript.json",
+    "frames": "frames.json",
+    "prompts": "prompts.json",
+    "characters": "characters.json",
+    "props": "props.json",
+    "audio_semantic": "audio_semantic.json",
+    "speakers": "speakers.json",
+    "roundtrip": {
+      "path": "roundtrip.json",
+      "accepted_count": 1,
+      "rejected_count": 1
+    }
+  },
+  "media": {
+    "video": "video.mp4",
+    "stems": {
+      "vocals": "stems/vocals.wav",
+      "drums": "stems/drums.wav",
+      "other": "stems/other.wav"
+    },
+    "characters": [
+      "characters/char_001.png",
+      "characters/char_002.png"
+    ],
+    "props": [
+      "props/prop_001.png"
+    ]
+  }
+}

@@ -1,0 +1,36 @@
+{
+  "generated_at": "2026-07-24T00:00:00Z",
+  "model": "facebook/dinov2-base",
+  "tau": 0.30,
+  "clusters": [
+    {
+      "cluster_id": "char_001",
+      "review_state": "proposed",
+      "tier": "auto_merge",
+      "mean_cosine": 0.92,
+      "members": [
+        {"shot_id": 1, "frame_pos": "first", "mask_quality": "high"},
+        {"shot_id": 1, "frame_pos": "last", "mask_quality": "high"},
+        {"shot_id": 2, "frame_pos": "first", "mask_quality": "medium"}
+      ]
+    },
+    {
+      "cluster_id": "char_002",
+      "review_state": "proposed",
+      "tier": "review",
+      "mean_cosine": 0.72,
+      "members": [
+        {"shot_id": 1, "frame_pos": "first", "mask_quality": "medium"}
+      ]
+    },
+    {
+      "cluster_id": "prop_001",
+      "review_state": "proposed",
+      "tier": "auto_distinct",
+      "mean_cosine": 0.45,
+      "members": [
+        {"shot_id": 2, "frame_pos": "50%", "mask_quality": "low"}
+      ]
+    }
+  ]
+}

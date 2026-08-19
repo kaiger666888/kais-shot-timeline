@@ -1,0 +1,21 @@
+[
+  {
+    "id": "prop_001",
+    "name": "落叶",
+    "representative_image": "props/prop_001.png",
+    "appearance_shots": [2],
+    "review_state": "confirmed",
+    "states": [
+      {
+        "label": "完好",
+        "image_ref": "props/prop_001.png",
+        "appearance_shots": [2]
+      },
+      {
+        "label": "破碎",
+        "image_ref": "props/prop_001_broken.png",
+        "appearance_shots": []
+      }
+    ]
+  }
+]

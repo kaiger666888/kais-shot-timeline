@@ -1,0 +1,55 @@
+{
+  "schema_version": "1.3",
+  "shots": [
+    {
+      "shot_id": 1,
+      "regen": {
+        "path": "roundtrip/shot_001.mp4",
+        "video_content_hash": "a1b2c3d4e5f60718",
+        "engine_name": "MiniMaxH3ImageToVideo",
+        "engine_version": "h3-fl2va-v4",
+        "prompt_version": "prompts-0.3.0",
+        "duration_sec": 4.8,
+        "width": 832,
+        "height": 480
+      },
+      "scores": {
+        "midframe_sim": {
+          "score": 0.87,
+          "model": "clip-vit-l14-336"
+        },
+        "judge": {
+          "attribution": "prompt_faithful",
+          "confidence": 0.8,
+          "reason": "中段帧主体运动与运镜方向同 prompt 描述一致，场景元素齐全"
+        }
+      },
+      "verdict": {
+        "decision": "accepted",
+        "source": "auto"
+      }
+    },
+    {
+      "shot_id": 2,
+      "regen": {
+        "path": "roundtrip/shot_002.mp4",
+        "video_content_hash": "0f1e2d3c4b5a6978",
+        "engine_name": "MiniMaxH3ImageToVideo",
+        "engine_version": "h3-fl2va-v4",
+        "prompt_version": "prompts-0.3.0",
+        "duration_sec": 4.8
+      },
+      "scores": {
+        "midframe_sim": {
+          "score": 0.42,
+          "model": "clip-vit-l14-336"
+        }
+      },
+      "verdict": {
+        "decision": "rejected",
+        "source": "human",
+        "decided_at": "2026-08-19T00:00:00Z"
+      }
+    }
+  ]
+}

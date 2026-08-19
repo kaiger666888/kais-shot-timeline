@@ -1,0 +1,28 @@
+[
+  {
+    "id": "char_001",
+    "name": "少女",
+    "representative_image": "characters/char_001.png",
+    "appearance_shots": [1, 2],
+    "review_state": "confirmed",
+    "looks": [
+      {
+        "label": "默认造型",
+        "image_ref": "characters/char_001.png",
+        "appearance_shots": [1, 2]
+      },
+      {
+        "label": "回忆杀",
+        "image_ref": "characters/char_001_memory.png",
+        "appearance_shots": [2]
+      }
+    ]
+  },
+  {
+    "id": "char_002",
+    "name": "路人",
+    "representative_image": "characters/char_002.png",
+    "appearance_shots": [1],
+    "review_state": "confirmed"
+  }
+]
