@@ -92,7 +92,7 @@ Round-trip closes the loop the first three milestones opened: qwen-eye v2 watche
 Plans:
 **Wave 1**
 
-- [ ] 18-01-PLAN.md — roundtrip.schema.json + asset.schema.json 两处 delta（data.roundtrip object 挂载 + warnings items 加宽）+ export_asset.py（SCHEMA_VERSION "1.3" + 挂载统计 + warnings 装载加宽）
+- [x] 18-01-PLAN.md — roundtrip.schema.json + asset.schema.json 两处 delta（data.roundtrip object 挂载 + warnings items 加宽）+ export_asset.py（SCHEMA_VERSION "1.3" + 挂载统计 + warnings 装载加宽）
 
 **Wave 2** *(blocked on Wave 1 completion)*
 
@@ -187,7 +187,7 @@ v1.3 phases execute in numeric order: 18 → 19 → 20 → 21 → 22
 | 15. Layered Reproduction Prompts | v1.2 | 2/2 | Complete | 2026-07-26 |
 | 16. HTML Gallery | v1.2 | 1/1 | Complete | 2026-07-26 |
 | 17. Canvas Consumer | v1.2 | 1/1 | Complete | 2026-07-26 |
-| 18. Contract v1.3 | v1.3 | 0/3 | Not started | - |
+| 18. Contract v1.3 | v1.3 | 1/3 | In Progress|  |
 | 19. qwen-eye v2 看片段 | v1.3 | 0/TBD | Not started | - |
 | 20. h3 复现客户端 | v1.3 | 0/TBD | Not started | - |
 | 21. Scorer + 阈值校准 | v1.3 | 0/TBD | Not started | - |

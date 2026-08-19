@@ -3,15 +3,15 @@ gsd_state_version: 1.0
 milestone: v1.3
 milestone_name: Round-trip Validation（逆推→复现→比对闭环数据集）
 status: executing
-stopped_at: ""v1.3 roadmap created — Phases 18-22, 19/19 requirements mapped (RT-01..05 / VISION-01..02 / REGEN-01..04 / SCORE-01..03 / DATASET-01..02 / PIPE-01..02 / PRESENT-01). Dependencies: 契约先行（18 无依赖）→ 19 与 18 并行安全 → 20 依赖 18 → 21 依赖 18+20 → 22 依赖 18+20+21。Next: `/gsd:plan-phase 18`（Contract v1.3）。""
-last_updated: "2026-08-19T13:26:54.101Z"
-last_activity: 2026-08-19 -- Phase 18 planning complete
+stopped_at: "Completed 18-01-PLAN.md (contract schemas + producer emission; next: 18-02 fixtures/gates/proof)"
+last_updated: "2026-08-19T13:37:01.973Z"
+last_activity: 2026-08-19
 progress:
   total_phases: 5
   completed_phases: 0
   total_plans: 3
-  completed_plans: 0
-  percent: 0
+  completed_plans: 1
+  percent: 33
 ---
 
 # Project State
@@ -21,33 +21,39 @@ progress:
 See: .planning/PROJECT.md (updated 2026-08-19)
 
 **Core value:** 把成片解构成可导航、多轨道、带语义的分镜资产（分镜 + 分离音轨 + 对白 + 镜头语言/动作/场景 prompt + 跨镜角色/道具注册表 + 三模态音频语义），且形态可移植——能作为无限画布等下游消费者的「最终资产集合形态」被直接消费。
-**Current focus:** v1.3 Phase 18 — Contract v1.3（契约先行，再开 round-trip 闭环）
+**Current focus:** Phase 18 — Contract v1.3
 
 ## Current Position
 
-Phase: 18 of 22 overall — 1st of 5 v1.3 phases (Contract v1.3)
-Plan: — (not yet planned)
+Phase: 18 (Contract v1.3) — EXECUTING
+Plan: 2 of 3
 Status: Ready to execute
-Last activity: 2026-08-19 -- Phase 18 planning complete
+Last activity: 2026-08-19
 
-Progress: [░░░░░░░░░░] 0%
+Progress: [███░░░░░░░] 33%
 
 ## Performance Metrics
 
 **Velocity (cumulative historical):**
 
 - Total plans completed: 65 (v1.0: 7, v1.1: 16, v1.2: 20 — all archived)
-- v1.3 plans completed: 0
+- v1.3 plans completed: 1
 
 **By Phase (v1.3 — populates as plans complete):**
 
 | Phase | Plans | Total | Avg/Plan |
 |-------|-------|-------|----------|
-| 18. Contract v1.3 | 0/TBD | - | - |
+| 18. Contract v1.3 | 1/3 | 5m | 5m |
 | 19. qwen-eye v2 看片段 | 0/TBD | - | - |
 | 20. h3 复现客户端 | 0/TBD | - | - |
 | 21. Scorer + 阈值校准 | 0/TBD | - | - |
 | 22. Dataset Export + Integration | 0/TBD | - | - |
+
+**Plan metrics (per executed plan):**
+
+| Plan | Duration | Tasks | Files |
+|------|----------|-------|-------|
+| Phase 18 P01 | 5m | 3 tasks | 3 files |
 
 ## Accumulated Context
 
@@ -66,6 +72,9 @@ Locked decisions entering v1.3 (proposal + /gsd:new-milestone, 2026-08-19):
 8. 首轮抽样 ≤20 镜校准打分阈值；全量 = 校准后的 overnight 批任务（8-13h/集），不进交互路径
 
 Carried (still load-bearing): contract-first minor bump（一个 milestone 一个 minor）；byte-identical-absent 红线；`SCHEMA_VERSION` 单源（export_asset.py，勿复制字面量）；conditional fields nullable+confidence；HITL 硬门先例（registry + speaker review）；v1.x fixture 前向/后向 cross-version proof 模式。
+
+- [Phase 18]: 18-01: roundtrip.json 挂载前不做 schema 校验（仅 JSON-parse + verdict 计数；完整 gate 留在 validate.py V13 / verify_contract producer mode — Open Q3 锁定）
+- [Phase 18]: 18-01: RT-01/RT-02/RT-04 保持未勾选 — 本 plan 只交付 schema/single-source/channel 半边，fixture+gate+proof 半边在 18-02（同 requirement IDs）
 
 ### Pending Todos
 
@@ -104,8 +113,8 @@ Items acknowledged and carried forward (full history in archived milestone REQUI
 
 ## Session Continuity
 
-Last session: 2026-08-19
-Stopped at: "v1.3 roadmap created — Phases 18-22, 19/19 requirements mapped (RT-01..05 / VISION-01..02 / REGEN-01..04 / SCORE-01..03 / DATASET-01..02 / PIPE-01..02 / PRESENT-01). Dependencies: 契约先行（18 无依赖）→ 19 与 18 并行安全 → 20 依赖 18 → 21 依赖 18+20 → 22 依赖 18+20+21。Next: `/gsd:plan-phase 18`（Contract v1.3）。"
+Last session: 2026-08-19T13:37:01.965Z
+Stopped at: Completed 18-01-PLAN.md (contract schemas + producer emission; next: 18-02 fixtures/gates/proof)
 Resume file: None
 
 ## Operator Next Steps
