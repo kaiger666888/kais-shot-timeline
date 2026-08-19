@@ -147,7 +147,7 @@ Plans:
 Plans:
 **Wave 1**
 
-- [ ] 20-01-PLAN.md — workflow_fl2va.json 模板 + h3_regen.py 提交/轮询/下载全链路（17k+5 length + 确定性 seed）+ 4-tuple cache/断点续跑 + warnings 双形 merge + run_pipeline --force 扩展 + 离线单测
+- [x] 20-01-PLAN.md — workflow_fl2va.json 模板 + h3_regen.py 提交/轮询/下载全链路（17k+5 length + 确定性 seed）+ 4-tuple cache/断点续跑 + warnings 双形 merge + run_pipeline --force 扩展 + 离线单测
 
 **Wave 2** *(blocked on Wave 1 completion)*
 
@@ -215,6 +215,6 @@ v1.3 phases execute in numeric order: 18 → 19 → 20 → 21 → 22
 | 17. Canvas Consumer | v1.2 | 1/1 | Complete | 2026-07-26 |
 | 18. Contract v1.3 | v1.3 | 3/3 | Complete    | 2026-08-19 |
 | 19. qwen-eye v2 看片段 | v1.3 | 3/3 | Complete    | 2026-08-19 |
-| 20. h3 复现客户端 | v1.3 | 0/TBD | Not started | - |
+| 20. h3 复现客户端 | v1.3 | 1/3 | In Progress|  |
 | 21. Scorer + 阈值校准 | v1.3 | 0/TBD | Not started | - |
 | 22. Dataset Export + Integration | v1.3 | 0/TBD | Not started | - |

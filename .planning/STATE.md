@@ -3,14 +3,14 @@ gsd_state_version: 1.0
 milestone: v1.3
 milestone_name: Round-trip Validation（逆推→复现→比对闭环数据集）
 status: executing
-stopped_at: Completed 19-02-PLAN.md (Phase 19 2/3 — Kai 盲评锁定甲=temporal，spike report FINAL)
-last_updated: "2026-08-19T19:58:01.776Z"
-last_activity: 2026-08-19 -- Phase 20 planning complete
+stopped_at: Completed 20-01-PLAN.md (Phase 20 1/3 — h3 复现客户端渲染链 + 4-tuple cache + 断点续跑，88 passed)
+last_updated: "2026-08-19T20:11:12.535Z"
+last_activity: 2026-08-19
 progress:
   total_phases: 5
   completed_phases: 2
   total_plans: 9
-  completed_plans: 6
+  completed_plans: 7
   percent: 40
 ---
 
@@ -25,12 +25,12 @@ See: .planning/PROJECT.md (updated 2026-08-19)
 
 ## Current Position
 
-Phase: 20
-Plan: Not started
+Phase: 20 (h3 复现客户端) — EXECUTING
+Plan: 2 of 3
 Status: Ready to execute
-Last activity: 2026-08-19 -- Phase 20 planning complete
+Last activity: 2026-08-19
 
-Progress: [██████████] 100%
+Progress: [████████░░] 78%
 
 ## Performance Metrics
 
@@ -61,6 +61,7 @@ Progress: [██████████] 100%
 | Phase 19 P01 | 13m | 3 tasks | 5 files |
 | Phase 19 P02 | ~1h35m | 3 tasks | 12 files |
 | Phase 19 P03 | ~21m | 3 tasks | 5 files |
+| Phase 20 P01 | 9m | 3 tasks | 4 files |
 
 ## Accumulated Context
 
@@ -92,6 +93,8 @@ Carried (still load-bearing): contract-first minor bump（一个 milestone 一�
 - [Phase 19]: 19-02: spike 实测 147 calls ≈15.5min（A1 估 1-3h 高估一个量级）；live sha256 不变 + SC4 秒级重跑在案；盲评映射 seed=20260819 只落 strategy_mapping.txt（裁决后回写报告）
 - [Phase 19]: 19-02: Kai 盲评锁定甲 = temporal（2026-08-20）→ MERGE_STRATEGY_DEFAULT 本就一致零代码变更；SC3 ear diff 同 checkpoint 复核无异议；SC2 收口
 - [Phase 19]: 19-03: run_pipeline 5.6 无编号 pre-step 落地（--vision-seq/--no-vision-seq/--no-ear）；SC1/SC4 wiring 形态收口（sandbox temporal 填充 diff 可见 + live sha256 前后等值 + 0.968s/0.939s 零引擎重跑）；VISION-01/02 随本 plan 勾选
+- [Phase 20]: 20-01: REGEN-01/02 保持未勾选 —— 离线代码半边已交付，VRAM guard+抽样（20-02）与真机 smoke（20-03）共享同 requirement IDs（mirror 18-01/19-01 先例）
+- [Phase 20]: 20-01: derive_seed=sha256(vch:shot_id)[:8] 跨进程确定（kmc hash() 随机化是 Pitfall 2 实锤）；engine_version 冻结 model+sampler+scheduler+steps+resolution 五参数进版本串
 
 ### Pending Todos
 
@@ -130,10 +133,10 @@ Items acknowledged and carried forward (full history in archived milestone REQUI
 
 ## Session Continuity
 
-Last session: 2026-08-19T18:31:47.828Z
-Stopped at: Completed 19-02-PLAN.md (Phase 19 2/3 — Kai 盲评锁定甲=temporal，spike report FINAL)
+Last session: 2026-08-19T20:11:12.528Z
+Stopped at: Completed 20-01-PLAN.md (Phase 20 1/3 — h3 复现客户端渲染链 + 4-tuple cache + 断点续跑，88 passed)
 Resume file: None
 
 ## Operator Next Steps
 
-- `/gsd:plan-phase 18` — Contract v1.3（或并行规划 Phase 19）
+- `/gsd:execute-phase 20` — 继续 Phase 20（20-02 VRAM guard + 抽样 CLI）
