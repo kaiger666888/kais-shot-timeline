@@ -411,15 +411,15 @@ proc = subprocess.run(
 
 ## Open Questions (RESOLVED)
 
-1. **verdict 应用器放哪个模块**
+1. **verdict 应用器放哪个模块** — [RESOLVED → 21-01-T2: judge.py --apply-verdict --tau-sim 落地]
    - What we know: CONTEXT 锁两模块（scorer.py + judge.py）；verdict 应用需要双信号齐备 + τ_sim。
    - What's unclear: 逻辑归属（judge 的 attribution 是 verdict 半边信号 → 放 judge.py `--apply-verdict --tau-sim` 最顺）。
    - Recommendation: judge.py 承载（本研究的结构图按此画）；planner 可改为 scorer.py 或独立小脚本，不破坏 SC。
-2. **19 镜分数区分度不足时怎么办**
+2. **19 镜分数区分度不足时怎么办** — [RESOLVED → 21-03-T2 blocking checkpoint 回 Kai 裁决，禁静默调参]
    - What we know: SigLIP 窄带（Pitfall 5）+ 19 镜小样本。
    - What's unclear: 分布实测前无法预知。
    - Recommendation: 校准报告必含 per-position 分布与分位数全表；区分度不足 → checkpoint 回 Kai 裁决（选项：调 N、调窗口、换特征层），不静默自调。
-3. **`_judge_grids/` 目录位置**
+3. **`_judge_grids/` 目录位置** — [RESOLVED → 校准材料含 _judge_grids/，21-03-T2 抽检用]
    - What we know: grid 图是 SC3 抽检素材，须留档；roundtrip/ 下已有 `_compare/` 先例（20-03 目视抽检）。
    - What's unclear: 无——`roundtrip/_judge_grids/` 与 `_compare/` 对齐即可，此处只是确认。
    - Recommendation: `output/<ep01>/roundtrip/_judge_grids/shot_XXX.jpg`。
