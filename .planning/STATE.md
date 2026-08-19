@@ -4,13 +4,13 @@ milestone: v1.3
 milestone_name: Round-trip Validation（逆推→复现→比对闭环数据集）
 status: executing
 stopped_at: Completed 18-03-PLAN.md (Phase 18 3/3 — RT-03 human review approved, contract v1.3 fully closed)
-last_updated: "2026-08-19T17:35:30.365Z"
-last_activity: 2026-08-19 -- Phase 19 planning complete
+last_updated: "2026-08-19T17:48:47.545Z"
+last_activity: 2026-08-19
 progress:
   total_phases: 5
   completed_phases: 1
   total_plans: 6
-  completed_plans: 3
+  completed_plans: 4
   percent: 20
 ---
 
@@ -21,16 +21,16 @@ progress:
 See: .planning/PROJECT.md (updated 2026-08-19)
 
 **Core value:** 把成片解构成可导航、多轨道、带语义的分镜资产（分镜 + 分离音轨 + 对白 + 镜头语言/动作/场景 prompt + 跨镜角色/道具注册表 + 三模态音频语义），且形态可移植——能作为无限画布等下游消费者的「最终资产集合形态」被直接消费。
-**Current focus:** Phase 19 — qwen eye v2 看片段
+**Current focus:** Phase 19 — qwen-eye v2 看片段
 
 ## Current Position
 
-Phase: 19
-Plan: Not started
+Phase: 19 (qwen-eye v2 看片段) — EXECUTING
+Plan: 2 of 3
 Status: Ready to execute
-Last activity: 2026-08-19 -- Phase 19 planning complete
+Last activity: 2026-08-19
 
-Progress: [██████████] 100%
+Progress: [███████░░░] 67%
 
 ## Performance Metrics
 
@@ -57,6 +57,7 @@ Progress: [██████████] 100%
 | Phase 18 P01 | 5m | 3 tasks | 3 files |
 | Phase 18 P02 | 8m | 3 tasks | 15 files |
 | Phase 18 P03 | ~30m | 3 tasks | 2 files |
+| Phase 19 P01 | 13m | 3 tasks | 5 files |
 
 ## Accumulated Context
 
@@ -83,6 +84,8 @@ Carried (still load-bearing): contract-first minor bump（一个 milestone 一�
 - [Phase 18]: 18-03: SPEC/README 单源位置引用 grep 实测行号 export_asset.py:59 — v1.2 小节 stale 'line 55' 预警命中，两处新散文均引实测值
 - [Phase 18]: 18-03: AF-01 枚举句改写为 pattern-composition 描述（Rule 1）— 禁词 grep 是纯字面机器门，mention-not-use 不可区分；SPEC §10.1 + README v1.2 小节两处
 - [Phase 18]: 18-03: RT-03 人类审阅 approved（Kai, 2026-08-19，无 wording issues）— Phase 18 契约层四 requirement 收口
+- [Phase 19]: 19-01: merged_B 按 facet 分键存 dict（{action,camera}）；RAW 答案键存在即已问（空答案落 cache 空串防重问死循环）；facet 产出要求 RAW 证据完整
+- [Phase 19]: 19-01: VISION-01/02 保持未勾选 —— 模块+单测半边已交付，spike（19-02）与 wiring（19-03）共享同 requirement IDs（mirror 18-01 先例）
 
 ### Pending Todos
 
@@ -121,7 +124,7 @@ Items acknowledged and carried forward (full history in archived milestone REQUI
 
 ## Session Continuity
 
-Last session: 2026-08-19T14:24:14.371Z
+Last session: 2026-08-19T17:48:47.537Z
 Stopped at: Completed 18-03-PLAN.md (Phase 18 3/3 — RT-03 human review approved, contract v1.3 fully closed)
 Resume file: None
 

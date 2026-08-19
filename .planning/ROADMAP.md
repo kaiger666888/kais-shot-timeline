@@ -119,7 +119,7 @@ Plans:
 Plans:
 **Wave 1**
 
-- [ ] 19-01-PLAN.md — qwen_eye_client 扩展（observe_pair/ask_text + shape 测试）+ `analysis/vision_seq_facets.py` v2 模块（均匀 ≤8 帧/相邻帧对问/RAW-answer 双信封 cache/ear 白名单注入/只填空缺）+ 离线单测矩阵（全离线零 GPU）
+- [x] 19-01-PLAN.md — qwen_eye_client 扩展（observe_pair/ask_text + shape 测试）+ `analysis/vision_seq_facets.py` v2 模块（均匀 ≤8 帧/相邻帧对问/RAW-answer 双信封 cache/ear 白名单注入/只填空缺）+ 离线单测矩阵（全离线零 GPU）
 
 **Wave 2** *(blocked on 19-01)*
 
@@ -201,7 +201,7 @@ v1.3 phases execute in numeric order: 18 → 19 → 20 → 21 → 22
 | 16. HTML Gallery | v1.2 | 1/1 | Complete | 2026-07-26 |
 | 17. Canvas Consumer | v1.2 | 1/1 | Complete | 2026-07-26 |
 | 18. Contract v1.3 | v1.3 | 3/3 | Complete    | 2026-08-19 |
-| 19. qwen-eye v2 看片段 | v1.3 | 0/TBD | Not started | - |
+| 19. qwen-eye v2 看片段 | v1.3 | 1/3 | In Progress|  |
 | 20. h3 复现客户端 | v1.3 | 0/TBD | Not started | - |
 | 21. Scorer + 阈值校准 | v1.3 | 0/TBD | Not started | - |
 | 22. Dataset Export + Integration | v1.3 | 0/TBD | Not started | - |
