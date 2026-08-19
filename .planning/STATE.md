@@ -1,12 +1,12 @@
 ---
 gsd_state_version: 1.0
 milestone: v1.3
-milestone_name: Round-trip Validation（逆推→复现→比对闭环）
+milestone_name: Round-trip Validation（逆推→复现→比对闭环数据集）
 status: planning
-last_updated: "2026-08-19T10:01:53.672Z"
+last_updated: "2026-08-19T18:30:00.000Z"
 last_activity: 2026-08-19
 progress:
-  total_phases: 0
+  total_phases: 5
   completed_phases: 0
   total_plans: 0
   completed_plans: 0
@@ -17,139 +17,96 @@ progress:
 
 ## Project Reference
 
-See: .planning/PROJECT.md (updated 2026-07-25)
+See: .planning/PROJECT.md (updated 2026-08-19)
 
-**Core value:** 把成片解构成可导航、多轨道、带语义的分镜资产（分镜 + 分离音轨 + 对白 + 镜头语言 prompt + 跨镜可复用角色/道具注册表 + 三模态音频语义），且形态可移植——能作为下游 `@kais/infinite-canvas` 的「最终资产集合形态」被直接消费。
-**Current focus:** Milestone complete
+**Core value:** 把成片解构成可导航、多轨道、带语义的分镜资产（分镜 + 分离音轨 + 对白 + 镜头语言/动作/场景 prompt + 跨镜角色/道具注册表 + 三模态音频语义），且形态可移植——能作为无限画布等下游消费者的「最终资产集合形态」被直接消费。
+**Current focus:** v1.3 Phase 18 — Contract v1.3（契约先行，再开 round-trip 闭环）
 
 ## Current Position
 
-Phase: Not started (defining requirements)
-Plan: —
-Status: Defining requirements
-Last activity: 2026-08-19 — Milestone v1.3 started
+Phase: 18 of 22 overall — 1st of 5 v1.3 phases (Contract v1.3)
+Plan: — (not yet planned)
+Status: Ready to plan
+Last activity: 2026-08-19 — v1.3 roadmap created (Phases 18-22, 19/19 requirements mapped, granularity standard)
+
+Progress: [░░░░░░░░░░] 0%
 
 ## Performance Metrics
 
-**Velocity (cumulative v1.0 + v1.1 historical):**
+**Velocity (cumulative historical):**
 
-- Total plans completed: 45 (v1.0: 7, v1.1: 16 — archived)
-- v1.2 plans completed: 0
+- Total plans completed: 65 (v1.0: 7, v1.1: 16, v1.2: 20 — all archived)
+- v1.3 plans completed: 0
 
-**By Phase (v1.2 — populates as plans complete):**
+**By Phase (v1.3 — populates as plans complete):**
 
 | Phase | Plans | Total | Avg/Plan |
 |-------|-------|-------|----------|
-| 10. Risk-Validation Spike + Route Stub | 0/? | - | - |
-| 11. Contract v1.2 | 0/? | - | - |
-| 12. Producer Route Client | 0/? | - | - |
-| 13. SPEAKER-01 Linkage HITL | 0/? | - | - |
-| 14. Pipeline Integration | 0/? | - | - |
-| 15. Layered Reproduction Prompts | 0/? | - | - |
-| 16. HTML Gallery | 0/? | - | - |
-| 17. Canvas Consumer | 0/? | - | - |
-| 10 | 6 | - | - |
-| 11 | 3 | - | - |
-| 12 | 2 | - | - |
-| 13 | 3 | - | - |
-| 14 | 2 | - | - |
-| 15 | 2 | - | - |
-| 16 | 1 | - | - |
-| 17 | 1 | - | - |
-
-*v1.2 metrics populate as plans complete*
-| Phase 10 P01 | 7m20s | 3 tasks | 7 files |
-| Phase 10 P02 | 38 | 2 tasks | 3 files |
-| Phase 10 P06 | ~25min | 3 tasks (1 checkpoint pre-resolved) | 4 files |
-| Phase 10 P06 | 25min | 3 tasks | 4 files |
+| 18. Contract v1.3 | 0/TBD | - | - |
+| 19. qwen-eye v2 看片段 | 0/TBD | - | - |
+| 20. h3 复现客户端 | 0/TBD | - | - |
+| 21. Scorer + 阈值校准 | 0/TBD | - | - |
+| 22. Dataset Export + Integration | 0/TBD | - | - |
 
 ## Accumulated Context
 
 ### Decisions
 
 Decisions are logged in PROJECT.md Key Decisions table.
-Locked decisions entering v1.2 (from /gsd:new-milestone):
+Locked decisions entering v1.3 (proposal + /gsd:new-milestone, 2026-08-19):
 
-- **v1.2 engine location**: kais-aigc-platform route-based (NOT local ML in producer) — continues v1.0/v1.1 loose coupling; shot-timeline takes zero new ML deps; reuses v1.1 `step_semantic` httpx+graceful-degrade pattern.
-- **v1.2 three modalities together**: dialogue + music + sfx in one milestone (user needs all 3 to support "audio reproduction"); per-modality models but one milestone.
-- **v1.2 layered reproduction prompts**: TTS / music-gen / foley (NOT single NL prompt) — different generators need different recipes.
-- **v1.2 schema bump**: `1.1 → 1.2` (minor, pure-additive, byte-identical-absent) — NOT `"2"`, reserve major for future breaking change.
-- **v1.2 SPEAKER-01 IN scope** (closes v1.1 SPEAKER-01 deferral via new `^spk_[0-9]{3}$` ID space + HITL linking; v1.1 had it as Out of Scope due to "大 lift", v1.2 reduces lift via pyannote route).
-- **v1.2 spike retirement**: `audio/gen_audio_prompts.py` (quick task 260725-afz) promoted to pipeline producer; `--offline` fallback replaces spike.
-- **v1.2 reproduction prompt = model-agnostic NL** (NOT NC-licensed weight embedding) — dissolves BLOCKER 2 license trap.
-- **v1.2 CUDA 12.8 + WhisperX**: word-level timestamps in scope; Phase 10 spike drift threshold decides DIA-05 ship/defer.
-- **v1.2 phase sequencing**: risk-validation-first (Phase 10 spike BEFORE Phase 11 contract lock) — mirrors v1.1 Phase 7 DINOv2 τ spike ("先证模型、再立契约"). Non-negotiable.
+1. v1.3 = Round-trip Validation；MUS-04 乐器识别 / DIA-06 继续 defer（不捎带）
+2. qwen-eye v2 务实版：每镜 ≤8 帧逐帧 `observe_single`（llama.cpp 单图 bug 硬约束）；vLLM + Qwen3-VL-8B 视频原生留升级位（VISION-03），本 milestone 不动
+3. ear = 复用 v1.2 `audio_semantic` 融进视觉 prompt（不新引音频理解引擎）
+4. 打分只看中段帧 25%-75% 时窗；verdict 必须归因；rejected 保留
+5. h3 客户端 = kst 直连 ComfyUI API（自有客户端，不经 kmc/hermes runtime）；mirror route-client 先例 + p11b VRAM pitfalls
+6. dataset 导出 = 独立目录 `dataset/<video-stem>/`（非 asset.json 内嵌 subset）
+7. 音频侧 round-trip 对比 defer v1.4
+8. 首轮抽样 ≤20 镜校准打分阈值；全量 = 校准后的 overnight 批任务（8-13h/集），不进交互路径
 
-Carried from v1.0/v1.1 (still load-bearing):
-
-- shot-timeline is authoritative spec owner / external producer (loose coupling)
-- Canvas uses structural parent node (zone/phase pattern) — reuses 5 renderers, no contract bump
-- Canvas work happens on branch `feat/canvas-asset-collection` in `kais-aigc-platform`
-- Two-tier authority: schemas machine-checkable truth, SPEC.md human overview; on conflict schema wins
-- schema_version pattern `^(0|[1-9]\d*)(\.(0|[1-9]\d*))?$` (semver-lite); entire milestone shares ONE minor bump
-- v1.x+1 fixture stays green under v1.x+2 schema (forward compat); v1.x+2 fixture under recovered-v1.x+1 schema yields only additionalProperties errors (backward compat proof)
-- Conditional fields use `nullable + confidence` pattern; never fabricate signal when model degrades
-- [Phase 10]: Plan 10-01 Wave 0 foundation complete: 7 files under spike/audio/ (common.py + 4 smoke files + aggregate_report.py scaffold + README). stratified_sample uses ceil(n/4) per bucket + dedupe (Rule 1 fix vs. plan body's n//4 which capped at 28 < 30). — Plans 03/04/05/06 can now import common.py; route_stub_smoke.sh is Plan 02's verify target.
-- [Phase ?]: Plan 10-02 ROUTE-01: audio-analysis stub branched from feat/shot-analysis-route (NOT develop); mount at /api/production/audio-analysis (NO /v1/); envelope byte-identical to shot-analysis; full curl round-trip proven.
-- [Phase 10]: Phase 10 spike: DIA-04 ship-nullable+confidence (SenseVoice self_consistency=100% proxy, no rigorous macro-F1) — Calibrated estimate + qualitative sanity coherent; rigorous macro-F1 deferred Phase 12+
-- [Phase 10]: Phase 10 spike: MUS-04 defer to v1.3 (MERT no classifier head, PANNs zenodo-blocked) — MERT K-means clusters correlate with shot duration, NOT instruments; route host needs REAL MIR classifier
-- [Phase 10]: Phase 10 spike: DIA-05 ship-experimental (boundary drift median=101.5ms<200ms; per-word aggregate low but metric-definition artifact) — Drift=word_start-segment_start inflates for interior words; refine metric Phase 12
-- [Phase 10]: Phase 10 spike: CUDA path STAY-ON-12.4 (WhisperX runs cleanly on cu124 force-pin; BLOCKER 1 RESOLVED) — WhisperX 3.8.6 metadata declares torch~=2.8.0 but works on 2.6.0+cu124; not a forcing function for CUDA 12.8
+Carried (still load-bearing): contract-first minor bump（一个 milestone 一个 minor）；byte-identical-absent 红线；`SCHEMA_VERSION` 单源（export_asset.py，勿复制字面量）；conditional fields nullable+confidence；HITL 硬门先例（registry + speaker review）；v1.x fixture 前向/后向 cross-version proof 模式。
 
 ### Pending Todos
 
-- ✅ **Phase 10 spike report DONE** — `.planning/research/audio-spike-report.md` (254 lines, 4 sections + methodology + recommendations + reproducibility) covers Chinese SER (DIA-04), MIR head-to-head (MUS-04), WhisperX drift (DIA-05), CUDA path. 4 outcomes locked in PROJECT.md Key Decisions (lines 122-126).
-- CONTRACT-03 `SCHEMA_VERSION="1.2"` single-source must remain producer-locked (export_asset.py:55) — do not duplicate literal.
+None yet.
 
-### Blockers/Concerns
+### Blockers/Concerns (v1.3 top risks — from `.planning/research/SUMMARY.md`)
 
-- ✅ **BLOCKER 1 — CUDA 12.8 upgrade (route host): RESOLVED stay-on-12.4** (Phase 10 Plan 06). WhisperX 3.8.6 metadata declares `torch~=2.8.0` but runs cleanly on force-pinned cu124 stack (torch 2.6.0+cu124) in an isolated venv; A1 CPU mode + full cuda:0 run both OK; system torch uncontaminated (3-point canary). Route host stays at cu124; WhisperX runs in isolated venv with cu124 force-pin (Plan 10-05 pattern becomes production); CUDA 12.8 upgrade deferred indefinitely. Evidence: `.planning/research/audio-spike-report.md#section-3-whisperx-drift--dia-05-evidence--cuda-path`.
-- **BLOCKER 2 — Commercial-use license (dissolved)**: no open-weights commercial music-gen/sfx model exists mid-2026. Dissolved by locked decision #7 (model-agnostic NL prompts).
-- ✅ **Chinese SER cross-domain risk: RESOLVED → ship-nullable+confidence** (Phase 10 Plan 06). SenseVoice self_consistency_pct=100.0 (label-stability proxy, NOT accuracy); qualitative sanity coherent; no rigorous macro-F1 (annotation deferred). `emotion` field NULLABLE + confidence populated + fidelity_disclaimer. Evidence: `.planning/research/audio-spike-report.md#section-1-ser-sensevoice--dia-04-evidence`.
-- ✅ **Polyphonic instrument recognition on Chinese folk: RESOLVED → defer MUS-04 to v1.3** (Phase 10 Plan 06). MERT-v1-95M has NO instrument classifier head — only K-means embedding clusters (5) correlating with shot DURATION, NOT instruments. PANNs Cnn14 BLOCKED (zenodo.org download stalled; hf-mirror `.pth` conversion deferred). NO instrument predictions produced. `instruments` field omitted in v1.2 schema. Evidence: `.planning/research/audio-spike-report.md#section-2-mir-head-to-head-mert-vs-panns--mus-04-evidence`.
-- **Cross-repo branch merge**: kais-aigc-platform branches `feat/shot-geometry-nodes` + `feat/shot-analysis-route` still unmerged from v1.1; Phase 12 end-to-end and Phase 17 consumer work blocked until v1.1 routes land (graceful-degrade-must-be-proven stays the contract).
-- **Cross-repo coordination cost (Phase 17)**: ~30% overhead measured in v1.0/v1.1 for consumer-side work in kais-aigc-platform `feat/canvas-asset-collection` worktree at `/data/workspace/kst-canvas-consumer`.
-- **`audio-analysis` route does not yet exist (as live ML)**: ROUTE-01 stub landed Plan 10-02 (envelope byte-identical to shot-analysis); live ML (SenseVoice/WhisperX/MERT/PANNs loaded behind the route) deferred to post-merge smoke check (mirror v1.1 Phase 7 CAST-01..04/08 deferred pattern).
+- **verdict 混淆 prompt 质量与 h3 能力**：不归因则数据集系统性偏向简单动作 → Phase 21 judge 归因三分类 + rejected 占比记录可审计（验收硬性要求）
+- **h3 渲染时长 / VRAM 竞争**：8-13h/集；TTS（:5110/:5111）与 ComfyUI 同卡；qwen-eye 13.4GB lease 与 h3 互斥 → Phase 20 per-shot cache + 断点续跑 + VRAM guard（kill TTS + `POST /free` + <22GB 拒提交）+ eye→h3 串行编排
+- **Q3 27B 帧序列问答动作描述质量未验证**：llama.cpp 单图 bug 只能逐帧问 → Phase 19 首个 plan 必含 ep01 小样本校验 + 合并策略 spike
+- Cross-repo route branches（shot-analysis / audio-analysis）仍 unmerged — **不阻塞 v1.3**（round-trip 走 kst 本地 ComfyUI 直连，无 route 依赖），只影响 v1.1/v1.2 deferred 的 live round-trip 验证
 
 ### Quick Tasks Completed
 
 | # | Description | Date | Commit | Directory |
 |---|-------------|------|--------|-----------|
-| 260725-afz | 音频 prompt 反推 spike — per-shot audio-gen NL prompt（本地启发式 Demucs+Whisper+onset-tempo, sidecar `audio_prompts.json`, 合约零改动）; concept validated on 3 episodes → 晋升 v1.2 Phase 15 pipeline producer input | 2026-07-25 | 3a85a56 | [260725-afz-prompt-spike-audio-gen-nl-prompt-demucs-](./quick/260725-afz-prompt-spike-audio-gen-nl-prompt-demucs-/) |
+| 260725-afz | 音频 prompt 反推 spike → 晋升 v1.2 Phase 15 | 2026-07-25 | 3a85a56 | [dir](./quick/260725-afz-prompt-spike-audio-gen-nl-prompt-demucs/) |
 | 260819-aw2-fast | semantic 防覆盖守卫（route degrade 不销毁富 prompts.json）+ 3 pytest | 2026-08-19 | fast | ✅ |
-| 9077e55 | local_reid 直产 schema 合规 draft + GLM sidecar（--shots 必填、tier 三档、4 pytest、ep02 复验）；删未跟踪 v1 turnaround | 2026-08-19 | 9077e55 | ✅ |
-| 260819-aw2 | 画布自动导入 — scripts/canvas_import.py（urllib 查/建 kap 项目 → POST import-from-dir）+ run_pipeline step_export 后可选钩子（graceful-degrade，[N/9] banner 不变）+ 6 pytest | 2026-08-19 | 0e1feb9 | [260819-aw2-canvas-auto-import](./quick/260819-aw2-canvas-auto-import/) |
+| 9077e55 | local_reid 直产 schema 合规 draft + GLM sidecar | 2026-08-19 | 9077e55 | ✅ |
+| 260819-aw2 | 画布自动导入 scripts/canvas_import.py + step_export 后钩子 + 6 pytest | 2026-08-19 | 0e1feb9 | [dir](./quick/260819-aw2-canvas-auto-import/) |
 
 ## Deferred Items
 
-Items acknowledged and carried forward from v1.0 + v1.1 Out-of-Scope + v1.2 planning:
+Items acknowledged and carried forward (full history in archived milestone REQUIREMENTS.md):
 
 | Category | Item | Status | Deferred At |
 |----------|------|--------|-------------|
-| v1.0 (Out of Scope) | NATIVE-01/02: canvas native timeline renderer + native Range media service | Deferred — next milestone | 2026-07-20 |
-| v1.0 (Out of Scope) | ORCH-01: shot-timeline as canvas orchestration skill (tight-coupling alt) | Deferred — evaluate post-v1.0 | 2026-07-20 |
-| v1.0 (Accepted) | WR-01/WR-04: save-v2 secondary-path latent bugs | Consumer-repo backlog | 2026-07-21 |
-| v1.1 (v2) | REID-01: InsightFace `antelopev2`/`buffalo_l` face fusion signal | Deferred — non-commercial license | 2026-07-24 |
-| v1.1 (v2) | PROMPT-DIALECT-01: prompt_text dialect switch (paragraph vs keyword) | Deferred — v2 | 2026-07-24 |
-| v1.1 (v2) | CROSSVIDEO-01: cross-video character continuity | Deferred — v2 | 2026-07-24 |
-| v1.1 (v2) | BBOX-01/CANVAS-EDGE-01/TURNAROUND-01: display enhancements | Deferred — v2 | 2026-07-24 |
-| v1.1 (Phase 6/7/9) | Live `shot-analysis` / `character-reid` route round-trip + τ calibration + e2e backend verify | Deferred — kais-aigc-platform branches unmerged; graceful-degrade proven | 2026-07-25 |
-| v1.2 (Future) | DIA-06: face-voice auto speaker→character heuristic | Deferred — v1.3 differentiator; v1.2 always HITL | 2026-07-25 |
-| v1.2 (Future) | MUS-07: BGM staff/MIDI transcription | Deferred — AF-10 boundary | 2026-07-25 |
-| v1.2 (Future) | full V/A regression (valence mature from experimental) | Deferred — v1.3 | 2026-07-25 |
-| v1.2 (Future) | cross-video audio continuity (same BGM theme / same speaker across videos) | Deferred — v2 | 2026-07-25 |
-| v1.2 (CONDITIONAL) | DIA-04 dialogue emotion / DIA-05 word-level / MUS-04 instruments | Phase 10 spike resolved: DIA-04 ship-nullable+confidence; DIA-05 ship-experimental; MUS-04 defer to v1.3 | 2026-07-25 |
-| v1.2 (Phase 10 spike) | MUS-04 instruments field in `audio_semantic.json` schema | Deferred — MERT has no classifier head; PANNs Cnn14 zenodo-blocked at spike time; route host needs REAL MIR classifier (Phase 12+ / v1.3) | 2026-07-25 |
-| v1.2 (Phase 10 spike) | Rigorous DIA-04 macro-F1 (developer-annotated 30-segment ground truth) | Deferred — methodology_b ~1hr labor deferred; ship on calibrated estimate (self-consistency + qualitative sanity) Phase 12+ | 2026-07-25 |
-| v1.2 (Phase 10 spike) | WhisperX drift metric refinement (boundary drift, not per-word-from-segment-start) + multi-episode validation | Deferred — Phase 12 once route host is up | 2026-07-25 |
-| v1.2 (Phase 10 spike) | PANNs Cnn14 head-to-head vs MERT (zenodo `Cnn14_mAP=0.431.pth` download) | Deferred — Phase 12+ route-host selection; hf-mirror `nicofarr/panns_Cnn14` safetensors→pth conversion non-trivial | 2026-07-25 |
+| v1.3 (Future) | VISION-03: vLLM + Qwen3-VL-8B 视频原生输入（模型已在盘） | Deferred — 升级位 | 2026-08-19 |
+| v1.3 (Future) | AUDIO-CMP-01: 音频侧 round-trip（h3 环境音 vs Demucs stems） | Deferred — v1.4 | 2026-08-19 |
+| v1.3 (Future) | CANVAS-RT-01: canvas roundtrip 消费节点 | Deferred — 后续 milestone | 2026-08-19 |
+| v1.2 遗留 | MUS-04 多标签乐器识别 | Continue defer — PANNs zenodo-blocked 未解 | 2026-08-19 |
+| v1.2 遗留 | DIA-06 face-voice 自动 speaker→character | Continue defer | 2026-08-19 |
+| v1.1/v1.2 | Live `shot-analysis` / `character-reid` / `audio-analysis` route round-trip + e2e backend verify | Deferred — kais-aigc-platform 分支 unmerged；graceful-degrade 已证 | 2026-07-25 |
+| v1.2 (spike) | DIA-04 rigorous macro-F1 / WhisperX drift metric refinement / PANNs Cnn14 head-to-head | Deferred — route host up 后 | 2026-07-25 |
+| v1.1 (v2) | 跨视频角色/音频连续性、prompt dialect、display enhancements | Deferred — v2 | 2026-07-24 |
 
 ## Session Continuity
 
-Last session: 2026-07-25T13:38:23.121Z
-Stopped at: "Phase 10 spike complete — 4 locked outcomes in PROJECT.md Key Decisions (lines 122-126: models_used per modality / CUDA stay-on-12.4 / DIA-04 ship-nullable+confidence / MUS-04 defer-v1.3 / DIA-05 ship-experimental). Spike report at `.planning/research/audio-spike-report.md` (254 lines). BLOCKER 1 RESOLVED stay-on-12.4. Phase 10 plans 01-06 all done. Ready for /gsd:verify-work then /gsd:plan-phase 11 (Contract v1.2 lock)."
+Last session: 2026-08-19
+Stopped at: "v1.3 roadmap created — Phases 18-22, 19/19 requirements mapped (RT-01..05 / VISION-01..02 / REGEN-01..04 / SCORE-01..03 / DATASET-01..02 / PIPE-01..02 / PRESENT-01). Dependencies: 契约先行（18 无依赖）→ 19 与 18 并行安全 → 20 依赖 18 → 21 依赖 18+20 → 22 依赖 18+20+21。Next: `/gsd:plan-phase 18`（Contract v1.3）。"
 Resume file: None
 
 ## Operator Next Steps
 
-- Start the next milestone with /gsd-new-milestone
+- `/gsd:plan-phase 18` — Contract v1.3（或并行规划 Phase 19）
