@@ -142,7 +142,20 @@ Plans:
   4. per-shot 4-tuple cache（video_content_hash + engine_name + engine_version + prompt_version，mirror WR-04）：prompt_version 变化后旧 cache 失效重渲；`--force` 清单扩展清 regen cache
   5. >10s 长镜按配置跳过（跳过清单可查）+ `--regen-resolution` 降分辨率验证模式可用
 
-**Plans**: TBD
+**Plans**: 3 plans
+
+Plans:
+**Wave 1**
+
+- [ ] 20-01-PLAN.md — workflow_fl2va.json 模板 + h3_regen.py 提交/轮询/下载全链路（17k+5 length + 确定性 seed）+ 4-tuple cache/断点续跑 + warnings 双形 merge + run_pipeline --force 扩展 + 离线单测
+
+**Wave 2** *(blocked on Wave 1 completion)*
+
+- [ ] 20-02-PLAN.md — VRAM guard（TTS 端口→PID kill + 双 /free + 批开始严格 22GB + 每镜 PID 归因复查——Pitfall 1 反自锁）+ eye 串行编排 + --sample-shots/--max-shot-sec/--regen-resolution CLI + 离线单测
+
+**Wave 3** *(blocked on Wave 2 completion)*
+
+- [ ] 20-03-PLAN.md — roundtrip.json regen 半边写入（schema 合法 degrade 中间态，三层 parent 路径修正）+ ep01 真 ComfyUI smoke（--sample-shots 2 = shots 1/47，896×512，预期 10-30min）+ cache-hit 重跑实证 + 目视抽检 checkpoint
 
 ### Phase 21: Scorer + 阈值校准
 
