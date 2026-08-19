@@ -4,13 +4,13 @@ milestone: v1.3
 milestone_name: Round-trip Validation（逆推→复现→比对闭环数据集）
 status: executing
 stopped_at: Completed 18-03-PLAN.md (Phase 18 3/3 — RT-03 human review approved, contract v1.3 fully closed)
-last_updated: "2026-08-19T17:48:47.545Z"
+last_updated: "2026-08-19T18:18:54.024Z"
 last_activity: 2026-08-19
 progress:
   total_phases: 5
   completed_phases: 1
   total_plans: 6
-  completed_plans: 4
+  completed_plans: 5
   percent: 20
 ---
 
@@ -86,6 +86,7 @@ Carried (still load-bearing): contract-first minor bump（一个 milestone 一�
 - [Phase 18]: 18-03: RT-03 人类审阅 approved（Kai, 2026-08-19，无 wording issues）— Phase 18 契约层四 requirement 收口
 - [Phase 19]: 19-01: merged_B 按 facet 分键存 dict（{action,camera}）；RAW 答案键存在即已问（空答案落 cache 空串防重问死循环）；facet 产出要求 RAW 证据完整
 - [Phase 19]: 19-01: VISION-01/02 保持未勾选 —— 模块+单测半边已交付，spike（19-02）与 wiring（19-03）共享同 requirement IDs（mirror 18-01 先例）
+- [Phase 19]: 19-02: spike 实测 147 calls ≈15.5min（A1 估 1-3h 高估一个量级）；live sha256 不变 + SC4 秒级重跑在案 — 合并策略待 Kai 盲评锁定（Task 3 blocking，报告 DRAFT）；盲评映射 seed=20260819 只落 strategy_mapping.txt
 
 ### Pending Todos
 
@@ -124,7 +125,7 @@ Items acknowledged and carried forward (full history in archived milestone REQUI
 
 ## Session Continuity
 
-Last session: 2026-08-19T17:48:47.537Z
+Last session: 2026-08-19T18:18:28.613Z
 Stopped at: Completed 18-03-PLAN.md (Phase 18 3/3 — RT-03 human review approved, contract v1.3 fully closed)
 Resume file: None
 
