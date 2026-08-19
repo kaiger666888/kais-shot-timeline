@@ -1,11 +1,10 @@
 # Phase 19 Vision-Seq Spike Report — 三策略盲评 + ear 双跑实证（SC2/SC1/SC3/SC4）
 
-> **Deliverable status:** DRAFT（Plan 19-02 Task 2）。盲评 checkpoint（Task 3）后去 DRAFT 定稿、
-> 回写甲/乙/丙映射与锁定结论。**盲评时请先只看 §Recommendations 的盲评表**（甲/乙/丙匿名）；
-> §Evidence 各节带策略名，留作裁决后核对；`spike/vision_seq/results/strategy_mapping.txt`
-> 裁决前勿看。
+> **Deliverable status:** FINAL（Plan 19-02 Task 3 收口）。Kai 盲评裁决：**锁定甲**（2026-08-20）；
+> 甲 = **temporal**（时序拼接）——映射与裁决理由见 §Recommendations 锁定结论。ear on/off diff（SC3）
+> 在同一 checkpoint 一并复核、无异议（confirmed）。
 
-- **Generated at (UTC):** 2026-08-19T18:15Z（DRAFT；烧录 2026-08-19T17:55:48Z–18:11Z UTC）
+- **Generated at (UTC):** 2026-08-19T18:15Z（烧录 2026-08-19T17:55:48Z–18:11Z UTC；FINAL 定稿 2026-08-20）
 - **Repo HEAD (short):** `9a6624c`（spike 脚手架 commit；报告数据在该状态烧录）
 - **Fixture:** ep01 — `output/虫虫武侠小故事《小江湖》第01话：爸爸去哪儿？（ 画面只是工具，情绪才是目的。`
   （目录名含全角括号与中文冒号；全程只读，见 Reproducibility sha256 证明）
@@ -204,12 +203,29 @@ action 更高），**不构成排序结论——按反循环论证声明，以�
 「等待对方逗它开心」类修正而非走近动作）——demo 级 sfx 与真实音轨的差距如实记录。
 另注意 ear 产品存在纯音频推断风险（#91 末帧螳螂「似乎在倾听或呼唤」无视觉证据支撑）。
 
-## Recommendations（DRAFT —— 待盲评）
+## Recommendations（FINAL —— 盲评已锁定）
 
 **判据提醒：** 动作链完整性、运镜描述准确性、有无幻觉/啰嗦。v1 参照列是 route 富产物
 （规范角色名 + 人工级凝练），并非 ground truth——评判三策略之间的相对优劣。
 
-<!-- 盲评映射（甲/乙/丙 ↔ 策略）在 Task 3 裁决后回写 -->
+### 锁定结论（SC2 收口）
+
+- **裁决：** Kai 盲评 **锁定甲**（裁决时间 2026-08-20，Task 3 blocking checkpoint resume-signal
+  「锁定甲」）。ear on/off diff（SC3）在同一 checkpoint 一并复核，**无异议（confirmed）**。
+- **映射回写：** 甲 = **temporal**（时序拼接）/ 乙 = longest（最长参照）/ 丙 = llm（LLM 二次合并）。
+  盲评期间映射匿名存放于 `spike/vision_seq/results/strategy_mapping.txt`（seed=20260819），
+  裁决后此处回写（T-19-07 可追溯性 mitigate 落实）。
+- **模块默认值：** `analysis/vision_seq_facets.py` `MERGE_STRATEGY_DEFAULT = "temporal"`（:111）
+  ——与锁定值**本就一致，零代码变更**。19-03 wiring 起生产路径直接以 temporal 为默认合并策略。
+- **证据指针**（盲评材料内可核验的客观对应面，非裁决的替代）：
+  - §Evidence 12 组 facet 产物：temporal 恒为最长（200-360 字）且保完整时序证据链；longest
+    恒为单帧答案（30-67 字，丢动作链）；llm 比 temporal 短 40-55%（二次合并有信息压缩/改写面）。
+  - §Methodology 反循环论证声明：锁定以人工盲评为主判据，指标仅参考——本裁决即该主判据的行使。
+  - §机器可见观察 #4：检测合并镜含子场景时 temporal 会把跨场景内容串成链——该特征随裁决一并
+    接受为默认行为（如后续需要，由 19-03+ 的消费侧或人工抽检消化，不在本 phase 收口范围）。
+- **降级方案未触发：** 三策略均不合格的降级裁决（如 temporal + 人工抽检）未发生。
+
+### 盲评映射（裁决后回写）
 
 ### 盲评表
 
@@ -321,14 +337,13 @@ action 更高），**不构成排序结论——按反循环论证声明，以�
 | 乙 | 镜头向后拉远，景别由近景变为中景，画面左侧露出更多树干与蕨类植物，主体小怪物在画面中的占比变小 |
 | 丙 | 镜头首先略微下移，露出画面底部更多的前景苔藓与角色手部细节；随后持续向后拉远，景别由近景过渡至中景，主体在画面中的占比逐渐变小，画面左侧随之露出更多树干与蕨类植物；接着镜头继续拉远，景别由中景变为全景，画面右侧新纳入一个绿色螳螂角色，下方露出更多地面落叶，最终主体及画面中的角色在整体构图中的占比进一步缩小 |
 
-### 裁决请求（Task 3 checkpoint）
+### 裁决记录（Task 3 checkpoint —— 已收口）
 
-1. 逐镜对比上表甲/乙/丙与 v1 现行值（动作链完整性 / 运镜描述准确性 / 幻觉与啰嗦）。
-2. 看 §ear on/off diff 确认 #1/#88/#91 的 ear 版体现音频修正。
-3. 看 §Reproducibility 确认 live sha256 前后一致与 SC4 秒级重跑实测。
-4. **裁决话术：回复「锁定 <甲/乙/丙 或 策略名>」或描述需补跑/修正的问题**（甲/乙/丙 ↔ 策略
-   映射在 `spike/vision_seq/results/strategy_mapping.txt`，裁决后再看）。如三策略均不合格，
-   裁决降级方案（如 temporal + 人工抽检）。
+1. 逐镜对比上表甲/乙/丙与 v1 现行值（动作链完整性 / 运镜描述准确性 / 幻觉与啰嗦）——已由
+   Kai 完成。
+2. §ear on/off diff 确认 #1/#88/#91 的 ear 版体现音频修正——同一 checkpoint 复核通过（confirmed）。
+3. §Reproducibility 确认 live sha256 前后一致与 SC4 秒级重跑实测——随 checkpoint 一并通过。
+4. **裁决：锁定甲（= temporal，映射见上节）**，2026-08-20。降级方案（三策略均不合格时）未触发。
 
 ## Reproducibility
 
