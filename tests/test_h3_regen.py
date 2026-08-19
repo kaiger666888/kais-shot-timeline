@@ -921,6 +921,62 @@ def test_sidecar_refuses_invalid_path(tmp_path, monkeypatch):
     assert not (tmp_path / "roundtrip.json").exists()        # 拒绝落盘
 
 
+# ── WR-04：预存坏条目不阻塞批末落盘（防重试死锁）──────────────────────────
+
+def test_sidecar_preexisting_bad_entry_skipped_not_deadlocked(tmp_path, monkeypatch):
+    """WR-04：预存坏条目（hand-edit / 未来 schema 演进产物）不再整批
+    sys.exit 卡死重试——per-shot str warning + 剔除 + 原文件 .bak 备份；
+    本批结果与合法预存条目照常落盘。"""
+    monkeypatch.setattr(h3m, "probe_duration_sec", lambda p: 2.0)
+    pre = {"schema_version": "1.3", "shots": [
+        {"shot_id": 5, "regen": {
+            "path": "roundtrip/../../evil.mp4",        # schema pattern 拒
+            "video_content_hash": "a" * 16, "engine_name": "e",
+            "engine_version": "v", "prompt_version": "p"}},
+        {"shot_id": 6, "scores": {"judge": {
+            "attribution": "prompt_faithful", "confidence": 0.8,
+            "reason": "运动贴合"}}}]}
+    (tmp_path / "roundtrip.json").write_text(
+        json.dumps(pre, ensure_ascii=False), encoding="utf-8")
+    mp4 = tmp_path / "roundtrip" / "shot_001_regen.mp4"
+    mp4.parent.mkdir()
+    mp4.write_bytes(b"x" * 2048)
+    entries = h3m.build_sidecar_entries([sidecar_result(1, str(mp4))],
+                                        VCH_EP01, 896, 512)
+    warns = h3m.write_roundtrip_sidecar(str(tmp_path), entries)
+    data = read_sidecar(tmp_path)
+    assert validate_sidecar(data) == []
+    by = {s["shot_id"]: s for s in data["shots"]}
+    assert set(by) == {1, 6}                          # 坏条目 5 剔除，其余保留
+    assert by[6]["scores"] == pre["shots"][1]["scores"]
+    assert any("shot 5" in w and "剔除" in w for w in warns)
+    baks = list(tmp_path.glob("roundtrip.json.bak-*"))
+    assert len(baks) == 1                             # 原文件已备份（可找回）
+    assert json.loads(baks[0].read_text(encoding="utf-8")) == pre
+
+
+def test_sidecar_bad_preexisting_entry_e2e_warning_flush(tmp_path, monkeypatch):
+    """WR-04 e2e：run 2 只处理 shot 1（抽样），shot 2 预存条目坏 → 批不
+    sys.exit、正常完成、剔除说明进 warnings.json、原文件有 .bak。"""
+    work = make_workdir(tmp_path, n_shots=2)
+    patch_pipeline(monkeypatch, FakeHTTP(ok_responses(2)))
+    assert run_main(work) == 0
+    sc = read_sidecar(work)
+    sc["shots"][1]["regen"]["path"] = "roundtrip/../../evil.mp4"   # shot 2 弄坏
+    (work / "roundtrip.json").write_text(
+        json.dumps(sc, ensure_ascii=False, indent=2), encoding="utf-8")
+    fake2 = FakeHTTP([(200, {"system": "ok"}), *GUARD_FREES])
+    patch_pipeline(monkeypatch, fake2)
+    assert run_main(work, ["--sample-shots", "1"]) == 0    # 只 shot 1（cache hit）
+    data = read_sidecar(work)
+    assert [s["shot_id"] for s in data["shots"]] == [1]    # 坏条目已剔除
+    assert validate_sidecar(data) == []
+    warns = read_warnings(work)
+    assert any(isinstance(w, str) and "shot 2" in w and "剔除" in w
+               for w in warns)
+    assert list(work.glob("roundtrip.json.bak-*"))
+
+
 # ── CR-01：下载原子性 + stale meta/截断产物的 cache-hit 拦截 ────────────────
 
 def test_view_download_atomic_on_mid_transfer_failure(tmp_path, monkeypatch):

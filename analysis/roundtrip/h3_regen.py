@@ -28,7 +28,8 @@
    /view 下载 mp4（.part + os.replace 原子落位）→ cache 写入（含渲后水位
    post_render_free_mib）；
 7. 收尾：roundtrip.json regen 半边写入（Open Q2 裁决——READ-merge 保留
-   Phase 21 未来 scores/verdict 字段 + Draft202012Validator 写前自校验，
+   Phase 21 未来 scores/verdict 字段 + 写前两层自校验：本批坏 fail-loud；
+   预存坏条目 per-shot str warning + 剔除 + 备份不阻塞（WR-04 防重试死锁），
    cache-hit 镜从 cache meta 重建条目保证断点续跑后 sidecar 完整）→
    flush 本轮 warnings（跳镜 str / 失败摘要）+ summary print。
 
@@ -90,9 +91,11 @@ duration_sec, width, height}}；failed 镜 → {shot_id, status{state:"failed",
 error}}；未尝试（抽样外/跳过）→ 条目缺席（schema 是结果集不是任务队列）。
 scores/verdict 本 phase 不写——schema 明文合法 degrade 中间态，Phase 21
 增量补齐。READ-merge 按 shot_id 只替换 regen/status 半边，既有条目的其它
-键原样保留（不给 Phase 21 留全量重写负担）；写前 Draft202012Validator
-全量自校验，有错 sys.exit 不落盘。schema_version 从 scripts/export_asset.py
-importlib 加载单源（绝不复制字面量）。
+键原样保留（不给 Phase 21 留全量重写负担）；写前两层自校验（WR-04）：
+本批条目坏 → sys.exit 不落盘（fail-loud）；预存条目坏（hand-edit / 未来
+schema 演进）→ per-shot str warning + 剔除 + 原文件备份 .bak-<ts>，其余
+照常落盘（防「整批渲完卡在别人脏数据上」的重试死锁）。schema_version 从
+scripts/export_asset.py importlib 加载单源（绝不复制字面量）。
 
 argv 用法
 ---------
@@ -734,13 +737,32 @@ def build_sidecar_entries(results: list, vch: str, width: int,
     return entries
 
 
-def write_roundtrip_sidecar(work_dir: str, entries: list[dict]) -> None:
+def _iter_sidecar_errors(payload: dict) -> list:
+    """Draft202012Validator 全量 iter_errors（schema 单源加载；错误对象原样
+    返回，调用方取 absolute_path/message）。"""
+    from jsonschema import Draft202012Validator
+    with open(SCHEMA_PATH, encoding="utf-8") as f:
+        schema = json.load(f)
+    return list(Draft202012Validator(schema).iter_errors(payload))
+
+
+def write_roundtrip_sidecar(work_dir: str, entries: list[dict]) -> list[str]:
     """roundtrip.json 写入（Open Q2：客户端批末写 regen 半边）。
     READ-merge：既有同 shot_id 条目只替换 regen/status 半边，scores/verdict
     等 Phase 21 未来字段**原样保留**；JSON 损坏/缺席视为空重建（Phase 18
-    决策：挂载前仅 JSON-parse）。写前 Draft202012Validator 全量 iter_errors
-    （错误前 3 条 sys.exit 不落盘——vision_seq L705-713 先例）→ tmp +
-    os.replace 原子写。schema_version 从 export_asset 单源加载。"""
+    决策：挂载前仅 JSON-parse）。schema_version 从 export_asset 单源加载。
+
+    写前校验分两层（WR-04，防重试死锁）：
+    ① 本批 entries 单独校验——有错 sys.exit 不落盘（fail-loud：本批数据坏
+       是本客户端自己的问题，重试前必须修）；
+    ② 合并 payload 校验——有错说明是**预存条目**违反当前 schema（hand-edit /
+       未来 Phase 在更新 schema 下的产物——恰是 READ-merge 要兼容的前向演进）：
+       按 error absolute_path 归因 shot_id → 逐条 str warning + 从 merged 剔除
+       该条目 + 原文件先备份 roundtrip.json.bak-<ts>（人工数据不销毁）→ 写
+       其余。剔除后复验仍有错（不应发生）→ 仍 sys.exit fail-loud。
+    返回追加的 per-shot warnings（main 统一并入 pending_warnings flush——
+    本函数不直接写 warnings.json，避免被随后 append_roundtrip_warnings 的
+    「上一轮 strip」语义吞掉）。"""
     sidecar_path = os.path.join(work_dir, "roundtrip.json")
     try:
         with open(sidecar_path, encoding="utf-8") as f:
@@ -749,6 +771,15 @@ def write_roundtrip_sidecar(work_dir: str, entries: list[dict]) -> None:
         existing = None
     if not isinstance(existing, dict) or not isinstance(existing.get("shots"), list):
         existing = {"shots": []}
+    schema_version = _load_schema_version()
+    # ① 本批条目独立校验（fail-loud）
+    own_errors = _iter_sidecar_errors({"schema_version": schema_version,
+                                       "shots": entries})
+    if own_errors:
+        detail = "; ".join(f"{'/'.join(map(str, e.absolute_path))}: {e.message}"
+                           for e in own_errors[:3])
+        sys.exit(f"{STEP_TAG} roundtrip.json 本批条目 schema 校验失败"
+                 f"（{len(own_errors)} 错误，拒绝落盘）: {detail}")
     merged: dict[int, dict] = {}
     for s in existing["shots"]:
         if isinstance(s, dict) and isinstance(s.get("shot_id"), int):
@@ -761,20 +792,49 @@ def write_roundtrip_sidecar(work_dir: str, entries: list[dict]) -> None:
                 if k not in ("regen", "status")}
         kept.update(e)                          # 新 regen/status 半边落位
         merged[sid] = kept
-    payload = {"schema_version": _load_schema_version(),
+    payload = {"schema_version": schema_version,
                "shots": [merged[k] for k in sorted(merged)]}
-    from jsonschema import Draft202012Validator
-    with open(SCHEMA_PATH, encoding="utf-8") as f:
-        schema = json.load(f)
-    errors = list(Draft202012Validator(schema).iter_errors(payload))
+    # ② 合并校验：预存坏条目归因 → warning + 剔除 + 备份
+    warnings: list[str] = []
+    errors = _iter_sidecar_errors(payload)
     if errors:
-        detail = "; ".join(f"{'/'.join(map(str, e.absolute_path))}: {e.message}"
-                           for e in errors[:3])
-        sys.exit(f"{STEP_TAG} roundtrip.json schema 校验失败"
-                 f"（{len(errors)} 错误，拒绝落盘）: {detail}")
+        bad_ids: set[int] = set()
+        for err in errors:
+            parts = list(err.absolute_path)
+            if (len(parts) >= 2 and parts[0] == "shots"
+                    and isinstance(parts[1], int)
+                    and 0 <= parts[1] < len(payload["shots"])):
+                shot = payload["shots"][parts[1]]
+                if isinstance(shot, dict) and isinstance(shot.get("shot_id"), int):
+                    bad_ids.add(int(shot["shot_id"]))
+        if not bad_ids:
+            # 归因不到条目级（如顶层 schema_version 错）——只能 fail-loud
+            detail = "; ".join(f"{'/'.join(map(str, e.absolute_path))}: {e.message}"
+                               for e in errors[:3])
+            sys.exit(f"{STEP_TAG} roundtrip.json schema 校验失败"
+                     f"（{len(errors)} 错误，且无法归因到预存条目，拒绝落盘）: {detail}")
+        import shutil
+        bak = f"{sidecar_path}.bak-{int(time.time())}"
+        if os.path.isfile(sidecar_path):
+            shutil.copy2(sidecar_path, bak)     # 被剔除条目的人工数据可找回
+        for sid in sorted(bad_ids):
+            warnings.append(
+                f"{STEP_TAG} roundtrip.json 预存条目 shot {sid} 违反当前 schema"
+                f"——本次写入已剔除该条目（原文件备份 {os.path.basename(bak)}，"
+                f"人工数据未销毁）")
+            merged.pop(sid, None)
+        payload = {"schema_version": schema_version,
+                   "shots": [merged[k] for k in sorted(merged)]}
+        errors = _iter_sidecar_errors(payload)
+        if errors:
+            detail = "; ".join(f"{'/'.join(map(str, e.absolute_path))}: {e.message}"
+                               for e in errors[:3])
+            sys.exit(f"{STEP_TAG} roundtrip.json 剔除预存坏条目后仍校验失败"
+                     f"（{len(errors)} 错误，拒绝落盘）: {detail}")
     _atomic_write_json(sidecar_path, payload)
     print(f"{STEP_TAG} roundtrip.json 已写入（{len(payload['shots'])} shots，"
           f"schema {payload['schema_version']} 校验通过）")
+    return warnings
 
 
 def strip_sidecar_regen_half(work_dir: str) -> int:
@@ -1332,11 +1392,12 @@ def main() -> int:
         results.extend({"shot_id": sid,
                         "error": failed_detail.get(sid, "render failed")}
                        for sid in failed)
-        write_roundtrip_sidecar(work_dir, build_sidecar_entries(
+        sidecar_warnings = write_roundtrip_sidecar(work_dir, build_sidecar_entries(
             results, vch, width, height))
+        pending_warnings.extend(sidecar_warnings)      # WR-04 预存坏条目 per-shot
 
         # 收尾 flush：本轮 str/dict warnings（join 缺失 / 跳镜 str / 失败摘要 /
-        # guard 审计与拒绝记因）→ summary print。
+        # guard 审计与拒绝记因 / sidecar 预存坏条目剔除说明）→ summary print。
         if failed:
             pending_warnings.append(f"{STEP_TAG} failed shots: {failed}")
         if pending_warnings:
