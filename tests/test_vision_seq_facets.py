@@ -220,6 +220,45 @@ def test_select_uniform_frames_fractional_window():
             f"f{i:06d}.jpg" for i in range(6, 12)]
 
 
+def test_select_uniform_frames_frame_fps_param():
+    """WR-02 回归：fps 参数参与时窗→帧号换算 —— [1.0, 1.7]@10fps → 帧
+    11..18（lo=ceil(10)+1、hi=floor(17)+1），与 5fps 的 [1.0,2.0]→帧 6..11
+    完全不同；分数窗下界在非默认 fps 下同样取 ceil。"""
+    import tempfile
+    with tempfile.TemporaryDirectory() as td:
+        fd = Path(td)
+        for i in range(1, 31):                 # t = 0.0 .. 2.9s @10fps
+            (fd / f"f{i:06d}.jpg").write_bytes(b"x")
+        assert [p.name for p in vsf.select_uniform_frames(str(fd), 1.0, 1.7,
+                                                          fps=10.0)] == [
+            f"f{i:06d}.jpg" for i in range(11, 19)]
+        # [1.0, 2.0]@10fps → 窗 11..21（11 帧 > 8；帧 21 t=2.0 ≤ 2.0 含端点）
+        # → 均匀 8 帧首尾恒在列
+        picks = vsf.select_uniform_frames(str(fd), 1.0, 2.0, fps=10.0)
+        assert len(picks) == 8
+        assert picks[0].name == "f000011.jpg"
+        assert picks[-1].name == "f000021.jpg"
+        # 分数窗 @10fps：[0.55, 1.45] → lo=ceil(5.5)+1=7（帧 6 t=0.5<0.55 排除）
+        picks = vsf.select_uniform_frames(str(fd), 0.55, 1.45, fps=10.0)
+        assert picks[0].name == "f000007.jpg"
+        assert picks[-1].name == "f000015.jpg"   # hi=floor(14.5)+1=15（t=1.4≤1.45）
+
+
+def test_frame_fps_mismatch_misses_cache(tmp_path, monkeypatch):
+    """WR-02 回归：fps 是 window 契约一维 —— 5fps 烧的 cache 在 --frame-fps
+    10 下必然 miss 重拉（帧号↔时窗映射已变，旧答案服务新映射 = 静默错窗）。"""
+    work, shots, pp = make_workdir(tmp_path)
+    patch_engine(monkeypatch, FakeEngine("五帧率答"))
+    run_main(work, pp)                        # 默认 5fps 烧 cache
+    reset_facets(pp)
+    fake2 = FakeEngine("十帧率答")
+    patch_engine(monkeypatch, fake2)
+    run_main(work, pp, extra_args=["--frame-fps", "10"])
+    assert fake2.calls > 0                    # fps 变化 → 信封 miss 重烧
+    out = json.loads(pp.read_text(encoding="utf-8"))
+    assert out[0]["action"].startswith("十帧率答")
+
+
 def test_existing_facet_not_overwritten(tmp_path, monkeypatch):
     """已有值的 action/camera（路由/人工产物）不被覆盖 —— 只填空缺语义。"""
     work, shots, pp = make_workdir(

@@ -855,7 +855,11 @@ def main():
                     "--work-dir", work_dir,
                     "--output", prompts_json,
                     "--video", video,
-                    "--audio-semantic", audio_semantic_json]
+                    "--audio-semantic", audio_semantic_json,
+                    # WR-02（19-REVIEW）：抽帧率直通 —— 子模块的时窗→帧号换算
+                    # 必须与 step 2 实际写 frames_5fps 的 --sample-fps 一致，
+                    # 否则问的是镜头的错误半段；fps 进 window 契约参与 cache 匹配。
+                    "--frame-fps", str(args.sample_fps)]
         if args.no_ear:
             cmd_vseq += ["--no-ear"]
         # Banner label 故意不带 numeric 前缀 —— 与 5.5 / attach_refs 同款 plain label。

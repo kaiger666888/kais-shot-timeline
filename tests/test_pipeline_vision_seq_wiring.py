@@ -86,6 +86,11 @@ def test_pre_step_wiring_static():
                          idx_vseq)
     assert idx_vseq < idx_asem < idx_reid, \
         "--audio-semantic 必须在 vision_seq 调用构造内（引用 step 7 产物路径变量）"
+    # WR-02（19-REVIEW）：--sample-fps 直通子模块 --frame-fps（时窗→帧号换算
+    # 与实际抽帧率一致），同样必须在 5.6 调用构造内。
+    idx_ffps = src.index('"--frame-fps", str(args.sample_fps)', idx_vseq)
+    assert idx_vseq < idx_ffps < idx_reid, \
+        "--frame-fps 直通必须在 vision_seq 调用构造内"
     # banner 是 plain label（不带 [N/M] numeric 前缀）—— mirror 5.5 / attach_refs
     assert '"vision seq facets (qwen-eye v2 pre-step)"' in src
 

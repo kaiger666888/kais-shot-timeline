@@ -49,8 +49,9 @@ QwenEye 并 try/finally 包 ensure_ready…stop_if_owned；全 cache 命中时
 cache（mirror WR-04 4-tuple 惯例 + ear 第 5 维）：_cache_key =
 {video_content_hash, engine_name, engine_version, prompt_version, ear}
 —— 任一不匹配即 miss 重拉；信封另持久化 window 采样契约（start/end/
-n_frames/needed，WR-01）——窗口漂移（shots 重检测）即整体 miss，合并只
-消费当前窗口所需索引；查找只读本 ear 信封，写入 read-merge-write
+fps/n_frames/needed，WR-01/02）——窗口漂移（shots 重检测）或抽帧率变化
+即整体 miss，合并只消费当前窗口所需索引；查找只读本 ear 信封，写入
+read-merge-write
 只更新本 ear 信封（ear on/off 双跑证据共存，切换不丢数据）。
 
 输出：
@@ -69,7 +70,7 @@ n_frames/needed，WR-01）——窗口漂移（shots 重检测）即整体 miss�
       --output output/<video-stem>/prompts.json \
       --video /abs/path/to/video.mp4 \
       [--audio-semantic /abs/path/to/audio_semantic.json] [--no-ear] \
-      [--merge-strategy {temporal,llm,longest}]
+      [--merge-strategy {temporal,llm,longest}] [--frame-fps N]
 """
 from __future__ import annotations
 
@@ -100,7 +101,9 @@ CACHE_NAME = "vision_seq"
 # —— bump 使全部 cache miss 重烧（设计行为；spike 实录约 15min/集）。
 PROMPT_VERSION = "vision-seq-v2"
 
-# frames_5fps 抽帧频率（run_pipeline --sample-fps 默认 5.0；detect_v3b 同值）。
+# frames 抽帧频率默认值（run_pipeline --sample-fps 默认 5.0；detect_v3b 同值）。
+# WR-02：实际频率经 --frame-fps 传入（run_pipeline 直通 args.sample_fps）并
+# 进 window 契约参与 cache 匹配 —— 非默认采样率下旧信封自动 miss。
 # 帧文件名 f%06d.jpg 从 1 起编号：f000001.jpg ≈ t=0s，f000N.jpg ≈ (N-1)/fps。
 FRAME_SAMPLING_FPS = 5.0
 
@@ -165,14 +168,17 @@ def _frame_number(path: Path) -> int:
 
 
 def select_uniform_frames(frames_dir: str, start_sec: float, end_sec: float,
-                          max_frames: int = MAX_SEQ_FRAMES_PER_SHOT) -> list[Path]:
+                          max_frames: int = MAX_SEQ_FRAMES_PER_SHOT,
+                          fps: float = FRAME_SAMPLING_FPS) -> list[Path]:
     """取该镜时窗 [start_sec, end_sec] 内均匀间隔的 ≤max_frames 帧。
 
-    frames_5fps 的命名是 f%06d.jpg、编号从 1 起（detect_v3b.sample_frames），
-    第 N 帧的时间戳 ≈ (N-1)/FRAME_SAMPLING_FPS。窗口内帧数 ≤ max_frames
-    全取；否则均匀索引 round(i*(len-1)/(max_frames-1)) —— 首尾帧恒在列
-    （时序覆盖完整）。0 帧 → 空列表（调用方 degrade）。忽略 `*_ds1280.jpg`
-    变体帧（dissolve 扫描的旁路产物，非等间隔采样序列）。
+    fps 是 frames 目录的实际抽帧率（WR-02：run_pipeline --sample-fps 直通
+    --frame-fps，默认 5.0）—— 时窗→帧号换算必须与抽帧率一致，否则问的是
+    镜头的错误半段。帧命名 f%06d.jpg、编号从 1 起（detect_v3b.sample_frames），
+    第 N 帧的时间戳 ≈ (N-1)/fps。窗口内帧数 ≤ max_frames 全取；否则均匀
+    索引 round(i*(len-1)/(max_frames-1)) —— 首尾帧恒在列（时序覆盖完整）。
+    0 帧 → 空列表（调用方 degrade）。忽略 `*_ds1280.jpg` 变体帧（dissolve
+    扫描的旁路产物，非等间隔采样序列）。
     """
     all_frames = sorted(
         p for p in Path(frames_dir).glob("f[0-9]*.jpg")
@@ -182,8 +188,8 @@ def select_uniform_frames(frames_dir: str, start_sec: float, end_sec: float,
     # ceil(start*fps)+1 —— int() floor 会把 start*fps 非整数时窗前的最后一帧
     # （通常是上一镜的硬切尾帧）拉进证据链。ceil 对网格对齐边界（整数
     # start*fps）与旧行为完全一致。hi 用 floor 不变（inclusive-safe 侧）。
-    lo = math.ceil(start_sec * FRAME_SAMPLING_FPS) + 1   # 首个 t≥start 的帧号
-    hi = int(end_sec * FRAME_SAMPLING_FPS) + 1       # 最后一个 ≤ end 的帧号上界
+    lo = math.ceil(start_sec * fps) + 1     # 首个 t≥start 的帧号
+    hi = int(end_sec * fps) + 1             # 最后一个 ≤ end 的帧号上界
     window = [p for p in all_frames
               if lo <= _frame_number(p) <= hi]
     if not window:
@@ -487,7 +493,14 @@ def main():
                     default=MERGE_STRATEGY_DEFAULT,
                     help="RAW 答案合并策略（默认 temporal —— 零 GPU 安全默认；"
                          "llm 需引擎纯文本二次合并；longest 为 baseline 参照）")
+    ap.add_argument("--frame-fps", type=float, default=FRAME_SAMPLING_FPS,
+                    help="frames 目录实际抽帧率（默认 5.0；run_pipeline 直通 "
+                         "--sample-fps）—— 时窗→帧号换算必须与抽帧率一致；"
+                         "进 window 契约参与 cache 匹配（WR-02）")
     args = ap.parse_args()
+
+    if args.frame_fps <= 0:
+        sys.exit(f"{STEP_TAG} --frame-fps must be > 0 (got {args.frame_fps})")
 
     warnings: list[str] = []
 
@@ -543,7 +556,8 @@ def main():
         if meta is None:
             continue
         frames = select_uniform_frames(args.frames_dir,
-                                       meta["start_sec"], meta["end_sec"])
+                                       meta["start_sec"], meta["end_sec"],
+                                       fps=args.frame_fps)
         if not frames:
             warnings.append(
                 f"{STEP_TAG} shot {sid}: no frames in window "
@@ -551,9 +565,10 @@ def main():
                 f"facets left as-is")
             continue
         # WR-01：采样契约随信封持久化并参与匹配 —— shots 重检测/参数变化产生
-        # 的窗口漂移使旧信封整体 miss，而非旧键静默服务新窗口。
+        # 的窗口漂移使旧信封整体 miss，而非旧键静默服务新窗口。fps 是契约
+        # 一维（WR-02）：抽帧率变化 → 帧号↔时窗映射变化 → 必然 miss 重烧。
         window = {"start_sec": meta["start_sec"], "end_sec": meta["end_sec"],
-                  "n_frames": len(frames),
+                  "fps": args.frame_fps, "n_frames": len(frames),
                   "needed": {"action": _needed_count("action", len(frames)),
                              "camera": _needed_count("camera", len(frames))}}
         cache_file = os.path.join(cache_dir, f"shot_{sid:03d}.json")
