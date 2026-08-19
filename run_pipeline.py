@@ -766,13 +766,14 @@ def main():
         # Phase 19：下方 route_cache 整目录 rmtree 已天然覆盖 route_cache/vision_seq/
         # 子目录（5.6 pre-step 的 RAW 证据 cache）—— 无需单列进清单。
         # Phase 20：route_cache 整目录 rmtree 已天然覆盖 route_cache/h3_regen/
-        # 子目录（h3 复现元数据 cache）—— 无需单列进清单。
+        # 子目录（h3 复现元数据 cache）—— 无需单列进清单。roundtrip/（h3 复现
+        # 产物目录）与 roundtrip.json（RT 契约 sidecar）**不清**（20-REVIEW WR-01
+        # 收紧）：管线自身不生产 roundtrip 数据（h3_regen 是独立 CLI，非
+        # pipeline step），删了无法由管线找回；sidecar 内 scores/verdict 是
+        # Phase 21 人工数据，红线「rejected 永不删除」。
         import shutil
         route_cache_dir = os.path.join(work_dir, "route_cache")
         audio_analysis_cache_dir = os.path.join(route_cache_dir, "audio_analysis")
-        # Phase 20：roundtrip/（h3 复现产物目录）+ roundtrip.json（RT 契约 sidecar）。
-        roundtrip_dir = os.path.join(work_dir, "roundtrip")
-        roundtrip_json = os.path.join(work_dir, "roundtrip.json")
         for p in (shots_json, frames_json, audio_json, transcript, out_html,
                   asset_json, asset_json + ".video-stamp",
                   prompts_json,                                      # Phase 6
@@ -784,9 +785,7 @@ def main():
                   audio_semantic_json + ".video-stamp",              # Phase 14 WR-01
                   speakers_json,                                     # Phase 14
                   route_cache_dir,                                   # Phase 6+7
-                  audio_analysis_cache_dir,                         # Phase 14
-                  roundtrip_dir,                                     # Phase 20
-                  roundtrip_json):                                   # Phase 20
+                  audio_analysis_cache_dir):                         # Phase 14
             if os.path.isdir(p):
                 shutil.rmtree(p, ignore_errors=True)
             elif os.path.exists(p):

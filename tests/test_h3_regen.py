@@ -535,6 +535,45 @@ def test_force_with_engine_down_preserves_everything(tmp_path, monkeypatch, caps
     assert (work / "roundtrip.json").is_file()
 
 
+def test_force_preserves_verdicts_in_sidecar(tmp_path, monkeypatch, capsys):
+    """WR-01 红线：--force 绝不整体删除 roundtrip.json——只剥 regen/status
+    半边，scores/verdict（含 rejected）原样保留；批末 READ-merge 回填新 regen。"""
+    work = make_workdir(tmp_path, n_shots=1)
+    patch_pipeline(monkeypatch, FakeHTTP(ok_responses(1)))
+    assert run_main(work) == 0
+    sc = read_sidecar(work)
+    sc["shots"][0]["scores"] = {"midframe_sim": {"score": 0.9, "model": "clip"}}
+    sc["shots"][0]["verdict"] = {"decision": "rejected", "source": "human"}
+    (work / "roundtrip.json").write_text(
+        json.dumps(sc, ensure_ascii=False, indent=2), encoding="utf-8")
+    fake2 = FakeHTTP(ok_responses(1))
+    patch_pipeline(monkeypatch, fake2)
+    assert run_main(work, ["--force"]) == 0
+    sc2 = read_sidecar(work)
+    by = {s["shot_id"]: s for s in sc2["shots"]}
+    assert by[1]["verdict"]["decision"] == "rejected"        # 人工 verdict 保留
+    assert by[1]["scores"]["midframe_sim"]["score"] == 0.9
+    assert by[1]["regen"]["engine_version"] == "fl2va-int8/euler+simple/15/1344x768"
+    assert validate_sidecar(sc2) == []
+    out = capsys.readouterr().out
+    assert "cache hit" not in out and "rendered=1" in out
+    assert "保留 1 条" in out
+
+
+def test_force_strip_removes_file_when_no_human_data(tmp_path):
+    """全 regen/status-only 条目（无 scores/verdict）→ strip 后文件整体移除
+    （与旧 unlink 语义等价，但仅在确认无人工数据可保留时发生）。"""
+    (tmp_path / "roundtrip.json").write_text(json.dumps(
+        {"schema_version": "1.3", "shots": [
+            {"shot_id": 1, "regen": {"path": "roundtrip/shot_001_regen.mp4"}},
+            {"shot_id": 2, "status": {"state": "failed", "error": "x"}}]},
+        ensure_ascii=False), encoding="utf-8")
+    assert h3m.strip_sidecar_regen_half(str(tmp_path)) == 0
+    assert not (tmp_path / "roundtrip.json").exists()
+    # 无文件 → no-op 返回 0
+    assert h3m.strip_sidecar_regen_half(str(tmp_path)) == 0
+
+
 # ── warnings 双形 merge ─────────────────────────────────────────────────────
 
 def test_warnings_dual_shape_merge(tmp_path):

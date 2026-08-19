@@ -764,6 +764,39 @@ def write_roundtrip_sidecar(work_dir: str, entries: list[dict]) -> None:
           f"schema {payload['schema_version']} 校验通过）")
 
 
+def strip_sidecar_regen_half(work_dir: str) -> int:
+    """--force 时 roundtrip.json 的处理（WR-01 红线：verdict rejected 永不删除）：
+    **绝不整体 unlink**——逐镜剥掉 regen/status 半边（本 run 将重渲重建），
+    scores/verdict 等 Phase 21 人工/下游字段原样保留，等批末 READ-merge 回填。
+    剥空（只剩 shot_id、无任何人工字段）的条目移除；全部剥空或文件缺席/损坏
+    → 文件移除（等价旧的「全新重建」语义，但只在确认无人工数据可保留时发生）。
+    返回保留条目数。"""
+    sidecar_path = os.path.join(work_dir, "roundtrip.json")
+    try:
+        with open(sidecar_path, encoding="utf-8") as f:
+            data = json.load(f)
+    except (OSError, json.JSONDecodeError):
+        return 0
+    if not isinstance(data, dict) or not isinstance(data.get("shots"), list):
+        return 0
+    kept: list[dict] = []
+    for s in data["shots"]:
+        if not isinstance(s, dict) or not isinstance(s.get("shot_id"), int):
+            continue
+        stripped = {k: v for k, v in s.items() if k not in ("regen", "status")}
+        if len(stripped) >= 2:               # shot_id 之外仍有 scores/verdict 等
+            kept.append(stripped)
+    if not kept:
+        if os.path.isfile(sidecar_path):
+            os.unlink(sidecar_path)
+        return 0
+    payload = {"schema_version": data.get("schema_version")
+               or _load_schema_version(),
+               "shots": sorted(kept, key=lambda e: int(e["shot_id"]))}
+    _atomic_write_json(sidecar_path, payload)
+    return len(kept)
+
+
 # ─── VRAM guard / GPU 编排（REGEN-03，20-02）────────────────────────────────
 # 全部读数 fail-open（qwen _vram_free_mib 先例）：nvidia-smi/ss/docker 异常返回
 # None/[] 不阻塞调用方——guard 判定本身保守（有读数即严判，T-20-06）。
@@ -1016,7 +1049,8 @@ def main() -> int:
                     help=f"ComfyUI API 基址（默认 {COMFY_URL_DEFAULT}）")
     ap.add_argument("--force", action="store_true",
                     help="清掉本 step 的 cache（route_cache/h3_regen/）与产物"
-                         "（roundtrip/ + roundtrip.json）后重渲")
+                         "（roundtrip/）后重渲；roundtrip.json 只剥 regen/status"
+                         " 半边——scores/verdict（含 rejected）永不删除")
     ap.add_argument("--shot-timeout", type=int, default=0,
                     help="单镜渲染超时秒数（0=自动 900+3*length，按帧数缩放防长镜误判）")
     ap.add_argument("--gpu-index", type=int, default=VRAM_GPU_INDEX_DEFAULT,
@@ -1067,13 +1101,15 @@ def main() -> int:
         import shutil
         force_cache_dir = os.path.join(work_dir, "route_cache", "h3_regen")
         force_out_dir = os.path.join(work_dir, "roundtrip")
-        force_sidecar = os.path.join(work_dir, "roundtrip.json")
         for p in (force_cache_dir, force_out_dir):
             if os.path.isdir(p):
                 shutil.rmtree(p, ignore_errors=True)      # 显式清单，绝不 glob 父级（T-14-01/T-20-04）
-        if os.path.isfile(force_sidecar):
-            os.unlink(force_sidecar)
-        print(f"{STEP_TAG} [force] 已清除 {force_cache_dir} / {force_out_dir} / {force_sidecar}")
+        # roundtrip.json 不整体删除（WR-01 红线：verdict rejected 永不删除）——
+        # 只剥 regen/status 半边，scores/verdict 保留给批末 READ-merge 回填。
+        kept_sidecar = strip_sidecar_regen_half(work_dir)
+        print(f"{STEP_TAG} [force] 已清除 {force_cache_dir} / {force_out_dir}"
+              f"；roundtrip.json 剥除 regen/status 半边"
+              f"（保留 {kept_sidecar} 条 scores/verdict 条目）")
 
     # 抽样 → 时长过滤（顺序锁定：先抽样后过滤——A6 语义：抽样代表性不被过滤
     # 顺序扭曲；ep01 锚点 shot 70 落样后被 max-shot-sec 跳过 → 实渲 19。
