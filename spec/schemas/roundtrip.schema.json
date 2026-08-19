@@ -1,0 +1,107 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://kais.shot-timeline/spec/schemas/roundtrip.schema.json",
+  "draft": "2020-12",
+  "title": "Round-trip 验证（per-shot 复现 ref + 双信号打分 + verdict）",
+  "description": "Canonical v1.3 round-trip sidecar —— per-shot h3 重生成视频 ref + scores{midframe_sim, judge} + verdict{accepted/rejected}。Producer (Phase 20/21) 在 regen+scoring 往返后写 roundtrip.json；consumer (Phase 22 gallery 审阅面板 / dataset 导出) 读它渲染并排审阅与数据集导出。严格遵守 v1.0 的 strict-schema × lenient-consumer 原则：schema 校验时 additionalProperties:false 全程生效（runnable consumer 必须在 runtime 容忍未知字段，仅警告不崩溃）。v1.3 additive：缺席 on v1.0/v1.1/v1.2 assets（byte-identical-absent；asset.schema.json#data.roundtrip 是 OPTIONAL）。阈值不进 schema（SCORE-03 Phase 21 校准后才存在；two-tier authority —— 阈值放 SPEC §5 散文 + Phase 21 校准报告）。",
+  "$comment": "v1.3 决策溯源：(1) attribution 是 closed enum {prompt_faithful, model_diverged, prompt_underspecified} —— SCORE-02 三分类是自有分类学（非未校准外部模型输出），enum 使 SCORE-03 rejected 占比机器可审计；与 v1.2 emotion free-string 先例不矛盾（那是未校准的模型标签）。(2) midframe_sim 必带 model 标识 —— clip/siglip 变体不可跨模型比较，不标 model 名的分数不可审计。(3) judge 无连续分（分类器非回归器，连续分是伪精度），只有 attribution + confidence + reason 三件套。(4) shots[] 只收「有产物」的 shot；regen 失败收录为 status{state:failed}；未尝试 = 缺席（schema 是结果集不是任务队列，不加任务态）。(5) 帧率/总帧数/随机种子/完整 workflow 参数不收 —— h3 workflow 是 kst 外部资产，不契约化。安全约束（T-18-02）：judge.reason 与 status.error 是未来模型产出文本、会流入 Phase 22 HTML 渲染，此处 maxLength:2000 做长度上界（bound but not forbid；实际输出编码 _esc() 属 Phase 22 PRESENT-01）。",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schema_version", "shots"],
+  "properties": {
+    "schema_version": {
+      "type": "string",
+      "pattern": "^(0|[1-9]\\d*)(\\.(0|[1-9]\\d*))?$",
+      "description": "Asset contract 版本 semver-lite (major[.minor])，与 asset.json#schema_version 同源。Producer emit '1.3'；pattern 宽松兼容 '1'/'1.1'/'1.2'。"
+    },
+    "shots": {
+      "type": "array",
+      "description": "Per-shot round-trip 条目，shot_id 交叉引用 shots.json#id。仅 shot_id required。",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["shot_id"],
+        "properties": {
+          "shot_id": {
+            "type": "integer",
+            "minimum": 1,
+            "description": "Shot ID（交叉引用 shots.json#id）。仅此字段 required —— 其余 optional 支持 degrade 中间态（regen 成功未打分 / 有 score 无 verdict）。"
+          },
+          "regen": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["path", "video_content_hash", "engine_name", "engine_version", "prompt_version"],
+            "description": "重生成视频 ref（REGEN-02 4-tuple cache 进契约，mirror WR-04 —— 可复现可审计）。与 status 互斥（一 shot 有产物或记失败，二选一；互斥由 producer 保证，schema 不做 if/then 硬约束）。path 相对 asset root。",
+            "properties": {
+              "path": {
+                "type": "string",
+                "pattern": "^(?!.*\\.\\.)([^/]+/)*roundtrip/[^:*?\"<>|]+\\.mp4$",
+                "description": "重生成 mp4 相对路径（建议 canonical 布局 roundtrip/shot_XXX.mp4；anti-traversal mirror asset.schema 媒体惯例）。实际目录 Phase 20 定，pattern 只锁 mp4 + 防 traversal。"
+              },
+              "video_content_hash": {
+                "type": "string",
+                "pattern": "^[0-9a-f]{16}$",
+                "description": "源视频内容 hash（sha256(首1MB+尾1MB+filesize) hex 前 16 位 —— analysis/call_shot_analysis.py:video_content_hash 同款，cache invalidation 级非安全 hash）。"
+              },
+              "engine_name": {"type": "string", "minLength": 1, "description": "复现引擎名（如 'MiniMaxH3ImageToVideo' / 'h3-fl2va'）。"},
+              "engine_version": {"type": "string", "minLength": 1, "description": "引擎版本（ComfyUI workflow/模型版本标识）。"},
+              "prompt_version": {"type": "string", "minLength": 1, "description": "prompt 生成器版本（prompts.json 产出方版本）。"},
+              "duration_sec": {"type": "number", "minimum": 0, "description": "重生成视频时长（秒）。"},
+              "width": {"type": "integer", "minimum": 1, "description": "实际渲染宽（REGEN-04 降分辨率模式记录实际值）。"},
+              "height": {"type": "integer", "minimum": 1, "description": "实际渲染高。"}
+            }
+          },
+          "status": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["state", "error"],
+            "description": "regen 失败记录（regen 的互斥对位 —— 有产物用 regen，失败用 status，未尝试缺席）。",
+            "properties": {
+              "state": {"enum": ["failed"], "description": "失败态。刻意单值 enum —— 不加任务态（schema 是结果集不是任务队列）。"},
+              "error": {"type": "string", "minLength": 1, "maxLength": 2000, "description": "失败原因（operator-facing；无凭据无 PII —— mirror warnings 惯例。maxLength 2000 是 T-18-02 长度上界：未来流入 Phase 22 HTML 渲染的模型/异常文本先 bound）。"}
+            }
+          },
+          "scores": {
+            "type": "object",
+            "additionalProperties": false,
+            "description": "双信号打分（SCORE-01/02）。各子对象可独立缺席（degrade 中间态）。",
+            "properties": {
+              "midframe_sim": {
+                "type": "object",
+                "additionalProperties": false,
+                "required": ["score", "model"],
+                "description": "中段帧相似度（25%-75% 时窗，显式排除被 condition 的首尾帧）。",
+                "properties": {
+                  "score": {"type": "number", "minimum": 0, "maximum": 1, "description": "相似度 [0,1]（帧 embedding 轨迹相似度，SCORE-01 定义）。"},
+                  "model": {"type": "string", "minLength": 1, "description": "similarity model 标识（clip/siglip 变体不可跨模型比较 —— 不标 model 的分数不可审计）。"}
+                }
+              },
+              "judge": {
+                "type": "object",
+                "additionalProperties": false,
+                "required": ["attribution", "confidence", "reason"],
+                "description": "VLM judge 归因三件套（SCORE-02）。无连续分 —— judge 是分类器非回归器。",
+                "properties": {
+                  "attribution": {"enum": ["prompt_faithful", "model_diverged", "prompt_underspecified"], "description": "归因三分类（自有分类学，closed enum 可审计）。"},
+                  "confidence": {"type": "number", "minimum": 0, "maximum": 1, "description": "judge 置信度 [0,1]（模型自报，非校准精度 —— 见 SPEC fidelity disclaimer 第③层）。"},
+                  "reason": {"type": "string", "minLength": 1, "maxLength": 2000, "description": "归因理由（模型产出 NL 文本；maxLength 2000 是 T-18-02 长度上界，bound but not forbid）。"}
+                }
+              }
+            }
+          },
+          "verdict": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["decision", "source"],
+            "description": "终审（DATASET-01 合并写；rejected 永不删除）。",
+            "properties": {
+              "decision": {"enum": ["accepted", "rejected"], "description": "accepted = 「h3 可复现」≠「prompt 完美」（SPEC fidelity disclaimer 第①层）。"},
+              "source": {"enum": ["auto", "human"], "description": "auto = SCORE-03 校准后的自动判；human = PRESENT-01 HITL 按钮覆盖（DATASET-02 溯源可审计）。"},
+              "decided_at": {"type": "string", "description": "ISO-8601 UTC（mirror asset.generator.generated_at 风格 —— 纯 string + description，不加 format 关键字）。"}
+            }
+          }
+        }
+      }
+    }
+  }
+}
