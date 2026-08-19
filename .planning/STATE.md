@@ -117,6 +117,7 @@ Carried from v1.0/v1.1 (still load-bearing):
 | # | Description | Date | Commit | Directory |
 |---|-------------|------|--------|-----------|
 | 260725-afz | 音频 prompt 反推 spike — per-shot audio-gen NL prompt（本地启发式 Demucs+Whisper+onset-tempo, sidecar `audio_prompts.json`, 合约零改动）; concept validated on 3 episodes → 晋升 v1.2 Phase 15 pipeline producer input | 2026-07-25 | 3a85a56 | [260725-afz-prompt-spike-audio-gen-nl-prompt-demucs-](./quick/260725-afz-prompt-spike-audio-gen-nl-prompt-demucs-/) |
+| 260819-aw2-fast | semantic 防覆盖守卫（route degrade 不销毁富 prompts.json）+ 3 pytest | 2026-08-19 | fast | ✅ |
 | 260819-aw2 | 画布自动导入 — scripts/canvas_import.py（urllib 查/建 kap 项目 → POST import-from-dir）+ run_pipeline step_export 后可选钩子（graceful-degrade，[N/9] banner 不变）+ 6 pytest | 2026-08-19 | 0e1feb9 | [260819-aw2-canvas-auto-import](./quick/260819-aw2-canvas-auto-import/) |
 
 ## Deferred Items
