@@ -97,6 +97,29 @@ V12_ORDER = [
     "audio_semantic", "speakers",
 ]
 
+# v1.3 fixture set (Phase 18 additive) —— 13 shapes. minimal + v1.1 + v1.2 + v1.3
+# 四阶 gate（Phase 18 additive 第四阶）。复用 v1.2 的 12 个 substrate 文件名
+# （其中 11 个非 asset 文件 byte-copied；asset.json 被编辑过）+ 新增 roundtrip。
+V13_FIXTURE_DIR = SPEC_DIR / "fixtures" / "v1.3"
+V13_FIXTURE_MAP = {
+    # 12 v1.2 entries verbatim (v1.3 fixture reuses the same substrate filenames):
+    "asset": "asset.json",
+    "shots": "shots.json",
+    "audio_analysis": "audio_analysis.json",
+    "transcript": "transcript.json",
+    "frames": "frames.json",
+    "prompts": "prompts.json",
+    "characters": "characters.json",
+    "props": "props.json",
+    "registry": "registry.draft.json",
+    "registry-edits": "registry.edits.json",
+    "audio_semantic": "audio_semantic.json",
+    "speakers": "speakers.json",
+    # 1 NEW v1.3 shape:
+    "roundtrip": "roundtrip.json",
+}
+V13_ORDER = V12_ORDER + ["roundtrip"]
+
 
 def load_validator(shape: str) -> Draft202012Validator:
     """根据形状名加载对应的 Draft202012Validator。"""
@@ -214,6 +237,42 @@ def validate_v12() -> int:
     return failures
 
 
+def validate_v13() -> int:
+    """对 spec/fixtures/v1.3/ 下的 13 个 v1.3 fixture 跑 schema 校验,返回失败数。
+
+    v1.3 fixture set(Phase 18)= v1.2 的 12 形状(其中 11 个非 asset 文件
+    byte-copied substrate)+ roundtrip 一个 Phase 18 新形状。asset.json 在
+    v1.3 中被编辑过(schema_version=1.3 + data.roundtrip object 挂载 +
+    warnings 双形并存 —— 1 条 legacy string + 2 条结构化 {code,detail});
+    其余 11 个 v1.2 substrate 文件 byte-identical。复用 load_validator
+    + _format_errors,不复制。
+    """
+    failures = 0
+    for shape in V13_ORDER:
+        fixture_path = V13_FIXTURE_DIR / V13_FIXTURE_MAP[shape]
+        try:
+            with open(fixture_path, encoding="utf-8") as f:
+                instance = json.load(f)
+        except FileNotFoundError:
+            print(f"[FAIL-v13] {shape}: fixture missing at {fixture_path}")
+            failures += 1
+            continue
+        except json.JSONDecodeError as e:
+            print(f"[FAIL-v13] {shape}: invalid JSON in fixture: {e}")
+            failures += 1
+            continue
+
+        validator = load_validator(shape)
+        errors = sorted(validator.iter_errors(instance), key=lambda e: list(e.absolute_path))
+        if errors:
+            print(f"[FAIL-v13] {shape}: {len(errors)} error(s)")
+            print(_format_errors(errors))
+            failures += 1
+        else:
+            print(f"[valid-v13] {shape}")
+    return failures
+
+
 def discover_producer_fixture() -> Optional[Path]:
     """扫描 REPO_ROOT/output/,返回第一个含 shots.json 的子目录;没有则返回 None。"""
     output_root = REPO_ROOT / "output"
@@ -279,6 +338,9 @@ def main() -> None:
     print(f"[validate] v1.2 fixture = {V12_FIXTURE_DIR}")
     v12_failures = validate_v12()
 
+    print(f"[validate] v1.3 fixture = {V13_FIXTURE_DIR}")
+    v13_failures = validate_v13()
+
     producer_dir = discover_producer_fixture()
     smoke_failures = 0
     if producer_dir is None:
@@ -287,10 +349,11 @@ def main() -> None:
         print(f"[validate] producer fixture (smoke) = {producer_dir}")
         smoke_failures = validate_smoke(producer_dir)
 
-    # 决定退出码:minimal 仍 gate(CONTRACT-09 回归),v1.1 + v1.2 失败也计入
+    # 决定退出码:minimal 仍 gate(CONTRACT-09 回归),v1.1 + v1.2 + v1.3 失败也计入
     # (Plan 01 schemas 必须接受 Plan 03 fixtures —— 否则 contract 本身破裂;
-    # Phase 11 v1.2 fixture 必须由 Plan 11-01 schemas 接受 —— 否则 v1.2 contract 破裂)。
-    total_strict_failures = minimal_failures + v11_failures + v12_failures
+    # Phase 11 v1.2 fixture 必须由 Plan 11-01 schemas 接受 —— 否则 v1.2 contract 破裂;
+    # Phase 18 v1.3 fixture 必须由 Plan 18-01 schemas 接受 —— 否则 v1.3 contract 破裂)。
+    total_strict_failures = minimal_failures + v11_failures + v12_failures + v13_failures
     if args.strict_smoke:
         total_strict_failures += smoke_failures
 
@@ -299,6 +362,7 @@ def main() -> None:
         f"[validate] minimal failures={minimal_failures}, "
         f"v1.1 failures={v11_failures}, "
         f"v1.2 failures={v12_failures}, "
+        f"v1.3 failures={v13_failures}, "
         f"smoke failures={smoke_failures} "
         f"(strict-smoke={'on' if args.strict_smoke else 'off'})"
     )
