@@ -123,7 +123,7 @@ Plans:
 
 **Wave 2** *(blocked on 19-01)*
 
-- [ ] 19-02-PLAN.md — ep01 spike：sandbox 置空副本双跑（no-ear 6 镜 + ear 3 镜，tmux 后台 + cache 断点续跑）→ 三策略产物 + 客观指标 + ear diff → spike report DRAFT → Kai 盲评 checkpoint 锁合并策略 + 定稿
+- [x] 19-02-PLAN.md — ep01 spike：sandbox 置空副本双跑（no-ear 6 镜 + ear 3 镜，tmux 后台 + cache 断点续跑）→ 三策略产物 + 客观指标 + ear diff → spike report DRAFT → Kai 盲评 checkpoint 锁合并策略 + 定稿
 
 **Wave 3** *(blocked on 19-01 + 19-02)*
 
@@ -201,7 +201,7 @@ v1.3 phases execute in numeric order: 18 → 19 → 20 → 21 → 22
 | 16. HTML Gallery | v1.2 | 1/1 | Complete | 2026-07-26 |
 | 17. Canvas Consumer | v1.2 | 1/1 | Complete | 2026-07-26 |
 | 18. Contract v1.3 | v1.3 | 3/3 | Complete    | 2026-08-19 |
-| 19. qwen-eye v2 看片段 | v1.3 | 1/3 | In Progress|  |
+| 19. qwen-eye v2 看片段 | v1.3 | 2/3 | In Progress|  |
 | 20. h3 复现客户端 | v1.3 | 0/TBD | Not started | - |
 | 21. Scorer + 阈值校准 | v1.3 | 0/TBD | Not started | - |
 | 22. Dataset Export + Integration | v1.3 | 0/TBD | Not started | - |
