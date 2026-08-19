@@ -375,6 +375,15 @@ def write_skipped_entry(work_dir: str, shot_id: int, reason: str,
 
 # ─── 帧提取 / 上传 ──────────────────────────────────────────────────────────
 
+def _stderr_snip(proc, limit: int = 200) -> str:
+    """subprocess 结果的 stderr 片段（bytes/str/属性缺席通吃，截 limit——
+    WR-05 fail-loud 异常的 error detail 诊断信息）。"""
+    raw = getattr(proc, "stderr", None) or ""
+    if isinstance(raw, bytes):
+        raw = raw.decode(errors="replace")
+    return raw[:limit]
+
+
 def extract_endpoint_frames(src_video: str, shot: dict, vch: str,
                             frames_dir: str) -> tuple[str, str]:
     """ffmpeg 提取该镜首/尾帧（全分辨率，绝不带 -vf/scale——Pitfall 4：现有
@@ -382,6 +391,8 @@ def extract_endpoint_frames(src_video: str, shot: dict, vch: str,
     ts=max(start_sec, end_sec-LAST_FRAME_GUARD_SEC)（前移防越界）。
     落盘确定性名 frames_dir/kst_{vch}_shot{NNN:03d}_ff.jpg 与 _lf.jpg
     （+ overwrite 语义由 ffmpeg -y 承担，防帧目录无限膨胀）。
+    WR-05 fail-loud：提取前先删旧 dest（失败绝不残留上一轮字节被当新帧上传）；
+    rc 非零 / dest 未产出 / 空文件 → RuntimeError 附 stderr 片段。
     subprocess 全 list-form（security：-ss 数值来自自家 shots.json，无 shell 拼接）。"""
     os.makedirs(frames_dir, exist_ok=True)
     sid = int(shot["id"])
@@ -391,10 +402,17 @@ def extract_endpoint_frames(src_video: str, shot: dict, vch: str,
     dests = []
     for ts, suffix in ((start_sec, "ff"), (lf_ts, "lf")):
         dest = os.path.join(frames_dir, f"kst_{vch}_shot{sid:03d}_{suffix}.jpg")
-        subprocess.run(
+        if os.path.isfile(dest):
+            os.unlink(dest)    # 先删旧帧——绝无「失败残留旧帧被上传」（WR-05）
+        proc = subprocess.run(
             ["ffmpeg", "-y", "-ss", f"{ts:.3f}", "-i", src_video,
              "-frames:v", "1", "-q:v", "2", dest, "-loglevel", "error"],
             capture_output=True, timeout=60)
+        if (proc.returncode != 0 or not os.path.isfile(dest)
+                or os.path.getsize(dest) == 0):
+            raise RuntimeError(
+                f"ffmpeg 帧提取失败 rc={proc.returncode} dest={dest} "
+                f"stderr={_stderr_snip(proc)}")
         dests.append(dest)
     return dests[0], dests[1]
 
@@ -402,13 +420,25 @@ def extract_endpoint_frames(src_video: str, shot: dict, vch: str,
 def upload_image(path: str, comfy_url: str) -> str:
     """curl multipart 上传帧图 → 返回 ComfyUI input 目录内的确切文件名。
     Pitfall 5：(a) requests 传大图偶发 ConnectionResetError（p11b 实锤），
-    用系统 curl；(b) GET /upload/image 返回 404 属正常（该路由只注册 POST）。"""
+    用系统 curl；(b) GET /upload/image 返回 404 属正常（该路由只注册 POST）。
+    WR-05 fail-loud：rc 非零 / 响应非 JSON / 响应无 name（服务器 error body）
+    → RuntimeError 附 stderr/stdout 片段——不再以裸 JSONDecodeError/
+    KeyError 的面目吞掉真实原因。"""
     proc = subprocess.run(
         ["curl", "-s", "-X", "POST", f"{comfy_url}/upload/image",
          "-F", f"image=@{path}", "-F", "type=input", "-F", "overwrite=true"],
         capture_output=True, text=True, timeout=120)
-    info = json.loads(proc.stdout)
-    return info["name"]
+    if proc.returncode != 0:
+        raise RuntimeError(f"curl 上传失败 rc={proc.returncode} "
+                           f"stderr={_stderr_snip(proc)}")
+    try:
+        info = json.loads(proc.stdout or "{}")
+    except json.JSONDecodeError as exc:
+        raise RuntimeError(f"上传响应非 JSON（{exc}）: "
+                           f"stdout={str(proc.stdout)[:200]}") from None
+    if not isinstance(info, dict) or "name" not in info:
+        raise RuntimeError(f"上传响应异常（无 name 字段）: {str(info)[:200]}")
+    return str(info["name"])
 
 
 # ─── HTTP plumbing（module-level —— 测试单一 monkeypatch 点）────────────────

@@ -144,6 +144,8 @@ if "name" not in info:
 ```
 Also delete `dest` before invoking ffmpeg so stale bytes cannot survive a failed extraction.
 
+**Outcome (fix):** FIXED — `extract_endpoint_frames` now unlinks `dest` before each ffmpeg invocation (stale bytes can never survive a failed extraction) and raises `RuntimeError(f"ffmpeg 帧提取失败 rc=… dest=… stderr=…")` on non-zero rc / missing / empty dest. `upload_image` raises on curl rc≠0 (stderr in detail), on non-JSON stdout (stdout snippet in detail), and on a JSON body without `name` (server error body surfaced instead of `KeyError`). New `_stderr_snip` helper tolerates bytes/str/absent stderr. Both raise paths land in the per-shot handler → `failed_detail` → sidecar `status.error` + failed-summary warning. Regression anchors: `test_ffmpeg_failure_no_stale_frame_survives`, `test_ffmpeg_empty_dest_fails`, `test_upload_failures_fail_loud` (3 cases), `test_ffmpeg_failure_e2e_shot_failed_with_detail`.
+
 ## Info
 
 ### IN-01: No-op SIGINT handler

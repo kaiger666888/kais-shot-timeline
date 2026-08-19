@@ -96,9 +96,10 @@ class FakeClock:
 
 
 class _FakeProc:
-    def __init__(self, stdout="", returncode=0):
+    def __init__(self, stdout="", returncode=0, stderr=""):
         self.stdout = stdout
         self.returncode = returncode
+        self.stderr = stderr
 
 
 def history_success(prompt_id: str, filename: str) -> dict:
@@ -975,6 +976,87 @@ def test_sidecar_bad_preexisting_entry_e2e_warning_flush(tmp_path, monkeypatch):
     assert any(isinstance(w, str) and "shot 2" in w and "剔除" in w
                for w in warns)
     assert list(work.glob("roundtrip.json.bak-*"))
+
+
+# ── WR-05：ffmpeg/curl 返回码 fail-loud（stderr 进 error detail）───────────
+
+def test_ffmpeg_failure_no_stale_frame_survives(tmp_path, monkeypatch):
+    """WR-05：ffmpeg rc!=0 → RuntimeError 附 rc/dest/stderr；提取前旧 dest
+    已删——失败后无残留旧帧可被误当新帧上传。"""
+    frames_dir = tmp_path / "frames"
+    frames_dir.mkdir()
+    stale = frames_dir / "kst_ab12cd34ef567890_shot003_ff.jpg"
+    stale.write_bytes(b"stale-old-frame")
+
+    def fake_run(cmd, **kw):
+        return _FakeProc("", returncode=1, stderr=b"ffmpeg decode error boom")
+
+    monkeypatch.setattr(h3m.subprocess, "run", fake_run)
+    shot = {"id": 3, "start_sec": 1.0, "end_sec": 2.5, "duration": 1.5}
+    with pytest.raises(RuntimeError) as ei:
+        h3m.extract_endpoint_frames("/src/h264.mp4", shot,
+                                    "ab12cd34ef567890", str(frames_dir))
+    msg = str(ei.value)
+    assert "ffmpeg 帧提取失败" in msg and "rc=1" in msg
+    assert "ffmpeg decode error boom" in msg            # stderr 进 detail
+    assert not stale.exists()                           # 旧帧已删，无残留
+
+
+def test_ffmpeg_empty_dest_fails(tmp_path, monkeypatch):
+    """WR-05：rc==0 但 dest 未产出（或空文件）同样 fail-loud。"""
+    frames_dir = tmp_path / "frames"
+    frames_dir.mkdir()
+    monkeypatch.setattr(h3m.subprocess, "run",
+                        lambda cmd, **kw: _FakeProc("", returncode=0))
+    shot = {"id": 1, "start_sec": 0.0, "end_sec": 1.0, "duration": 1.0}
+    with pytest.raises(RuntimeError):
+        h3m.extract_endpoint_frames("/src/h264.mp4", shot,
+                                    "ab12cd34ef567890", str(frames_dir))
+
+
+def test_upload_failures_fail_loud(tmp_path, monkeypatch):
+    """WR-05：curl rc!=0（stderr 进 detail）/ 响应非 JSON / 响应无 name
+    （服务器 error body 原文进 detail）三种失败都 RuntimeError，不再以
+    裸 JSONDecodeError / KeyError 面目出现。"""
+    img = tmp_path / "frame.jpg"
+    img.write_bytes(b"jpg")
+    cases = [
+        (_FakeProc("", returncode=7, stderr="curl: connection refused"),
+         "rc=7", "connection refused"),
+        (_FakeProc("not-json-at-all", returncode=0),
+         "非 JSON", "not-json-at-all"),
+        (_FakeProc(json.dumps({"error": "disk full"}), returncode=0),
+         "无 name", "disk full"),
+    ]
+    for proc, *needles in cases:
+        monkeypatch.setattr(h3m.subprocess, "run", lambda cmd, **kw: proc)
+        with pytest.raises(RuntimeError) as ei:
+            h3m.upload_image(str(img), "http://127.0.0.1:8188")
+        for needle in needles:
+            assert needle in str(ei.value), (needle, str(ei.value))
+
+
+def test_ffmpeg_failure_e2e_shot_failed_with_detail(tmp_path, monkeypatch, capsys):
+    """WR-05 e2e：批中 ffmpeg 失败 → 单镜 failed（不崩批）、sidecar
+    status.error 含 ffmpeg stderr 片段、无 cache 写入。"""
+    work = make_workdir(tmp_path, n_shots=1)
+    fake = FakeHTTP([(200, {"system": "ok"}), *GUARD_FREES])
+    patch_pipeline(monkeypatch, fake)
+    patched_run = h3m.subprocess.run
+
+    def failing_ffmpeg(cmd, **kw):
+        if cmd[0] == "ffmpeg":
+            return _FakeProc("", returncode=1, stderr=b"Invalid data found")
+        return patched_run(cmd, **kw)
+
+    monkeypatch.setattr(h3m.subprocess, "run", failing_ffmpeg)
+    assert run_main(work, ["--gpu-index", "1"]) == 0
+    out = capsys.readouterr().out
+    assert "failed=1" in out and "rendered=0" in out
+    sc = read_sidecar(work)
+    assert sc["shots"][0]["status"]["state"] == "failed"
+    assert "Invalid data found" in sc["shots"][0]["status"]["error"]
+    assert not (work / "route_cache" / "h3_regen" / "shot_001.json").exists()
 
 
 # ── CR-01：下载原子性 + stale meta/截断产物的 cache-hit 拦截 ────────────────
