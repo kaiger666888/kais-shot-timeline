@@ -6,8 +6,9 @@
   同步约定：引擎行为变更（端口/生命周期/请求 shape/硬约束）时**手工同步**本文件
   并更新头部 commit —— KST 是独立仓库，不 import 上游（松耦合，R7）。
 
-本文件相对上游的裁剪：去掉 logging（KST 惯例 print("[stage] ...")）、去掉
-observe() 多图入口（local_vision_facets 只用 observe_single 单图问答）。
+本文件相对上游的裁剪：去掉 logging（KST 惯例 print("[stage] ...")）。
+本地扩展 observe_pair/ask_text（mirror 上游 observe() 多 user 消息 shape，
+question 版）；上游 observe() 本体（多图无问句）不复刻。
 生命周期 + HTTP call shape + fail-fast guards 与上游逐行等价。
 
 生命周期（按需 LLM 政策，完整保留）：
@@ -40,6 +41,9 @@ observe() 多图入口（local_vision_facets 只用 observe_single 单图问答�
   try:
       if healthy:
           answer = eye.observe_single(Path("frame.jpg"), "描述场景")
+          pair = eye.observe_pair(Path("f000001.jpg"), Path("f000002.jpg"),
+                                 "相对前一帧镜头怎么运动了")
+          merged = eye.ask_text("把逐帧答案合并成一句连贯描述")
   finally:
       eye.stop_if_owned()   # 只停自己拉起的；崩溃也不泄漏 13.4GB
 """
@@ -277,3 +281,34 @@ class QwenEye:
             {"type": "text", "text": question},
         ]}]
         return self._call_llm(messages, max_tokens=max_tokens)
+
+    def observe_pair(self, img_a: Path, img_b: Path, question: str,
+                     max_tokens: int = 2000) -> str:
+        """相邻两帧对问一次调用作答（v2 camera 运镜用）。
+
+        恰两条 user 消息、每条各带一图（硬约束 1：llama.cpp「单条 user 带
+        N 图只算 ceil(N/2) 张」丢弃 bug 的规避 —— 拆成连续多条 user 消息，
+        上游 observe() 同 shape）。img_a 为前一帧、img_b 为当前帧；question
+        拼在第 2 条（当前帧）消息的 text part。
+        """
+        messages = [
+            {"role": "user", "content": [
+                {"type": "image_url",
+                 "image_url": {"url": "data:image/jpeg;base64," + self._b64(img_a)}},
+                {"type": "text", "text": "(第1帧/前一帧)"}]},
+            {"role": "user", "content": [
+                {"type": "image_url",
+                 "image_url": {"url": "data:image/jpeg;base64," + self._b64(img_b)}},
+                {"type": "text", "text": "(第2帧/当前帧)" + question}]},
+        ]
+        return self._call_llm(messages, max_tokens=max_tokens)
+
+    def ask_text(self, question: str, max_tokens: int = 2000) -> str:
+        """纯文本调用（策略 B 合并用）—— 无图 = 豁免多图丢弃 bug。
+
+        单条 user 消息纯 text part；仍走 _call_llm（继承
+        enable_thinking:false 恒传与超时/重试语义）。
+        """
+        return self._call_llm(
+            [{"role": "user", "content": [{"type": "text", "text": question}]}],
+            max_tokens=max_tokens)
