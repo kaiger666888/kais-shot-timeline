@@ -170,7 +170,20 @@ Plans:
   4. ep01 ≤20 镜双信号分布实测 → accepted 双门槛锁定 + 决策记录进 PROJECT.md Key Decisions；rejected 占比被记录且可审计（防数据集静默偏向简单动作，research Pitfall 5）
   5. verdict 合并幂等：重跑不丢 rejected（hard negatives + h3 能力边界测绘数据永续保留）
 
-**Plans**: TBD
+**Plans**: 3 plans
+
+Plans:
+**Wave 1**
+
+- [ ] 21-01-PLAN.md — scorer.py + judge.py（含 --apply-verdict 冻结应用器 + --summarize）+ 全离线单测（FakeSigLIP/FakeEye/帧窗数学/解析容错矩阵/冻结幂等）——零 GPU
+
+**Wave 2** *(blocked on 21-01)*
+
+- [ ] 21-02-PLAN.md — 既有 2 镜 896×512 regen 真 GPU smoke（scorer+judge 真跑 + sidecar schema gate）+ uniform-20 @1344×768 overnight 批 nohup 启动（guard 过线即收口，不等批完成）
+
+**Wave 3** *(blocked on 21-02)*
+
+- [ ] 21-03-PLAN.md — 批后 19 镜全量双信号 → 分布材料（分位数/三桶/τ 预演）+ 校准报告草稿 → Kai τ_sim 裁决 + 抽检 5 镜 checkpoint → --apply-verdict + PROJECT.md Key Decisions + rejected 分桶审计 + 幂等证明
 
 ### Phase 22: Dataset Export + Integration
 
