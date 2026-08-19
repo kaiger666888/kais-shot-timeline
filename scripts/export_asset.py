@@ -9,7 +9,7 @@ frames / prompts）+ 原始视频 + 3 个 canonical stems（vocals / drums / oth
 
 行为：
   * 读取 transcript.json 中的 `source` / `duration` 字段，回退到 ffprobe 兜底。
-  * 写入 asset.json（schema_version=SCHEMA_VERSION（当前 "1.1"），asset_type="shottimeline"，generator
+  * 写入 asset.json（schema_version=SCHEMA_VERSION（当前 "1.3"），asset_type="shottimeline"，generator
     含 tool / version(git SHA) / generated_at(ISO-8601 UTC)）。
   * 建立 4 个 canonical symlinks：
       - video.mp4             → 原始视频的绝对路径（含 audio 流，非 h264.mp4）
@@ -50,10 +50,45 @@ PROPS_SCHEMA = REPO / "spec" / "schemas" / "props.schema.json"
 
 # ShotTimelineAsset 契约版本（单一真源）。schema_version pattern 在 spec/schemas/
 # asset.schema.json 里保持宽松（接受 "1"/"1.1"/"2.0"），但实际 emit 的字面量在这里锁死。
-# v1.2 = 纯增量（新增 optional audio_semantic/speakers 数据文件；emotion/word-level/events
-# 字段在 audio_semantic.schema.json）。改这里即改全资产 emit；Pitfall 12（schema 变更后
-# 忘 bump 版本号）因此结构上不可能。
-SCHEMA_VERSION = "1.2"
+# v1.3 = 增量（新增 optional roundtrip 数据文件 + roundtrip.schema.json 第 14 个 schema）。
+# 诚实记录两处非纯 property-delta（对旧数据 additive）：① generator.warnings.items
+# 加宽为 string | {code, detail}（v1.x 首个 items 类型加宽；旧 string 条目仍合法）；
+# ② data.roundtrip 是首个 object 值 data.* 挂载（file ref + accepted/rejected 统计，
+# roundtrip.json 缺席时字段 OMIT，byte-identical-absent）。
+# 改这里即改全资产 emit；Pitfall 12（schema 变更后忘 bump 版本号）因此结构上不可能。
+SCHEMA_VERSION = "1.3"
+
+# RT-04：[roundtrip] degrade 记因的结构化 warnings code closed enum（与
+# asset.schema.json#generator.warnings.items 的 anyOf object 分支逐字对齐）。
+_ROUNDTRIP_WARNING_CODES = (
+    "comfyui_unreachable",
+    "vram_insufficient",
+    "scorer_model_missing",
+)
+
+
+def _valid_warnings_list(candidate: object):
+    """校验 warnings sidecar 候选值；合规返回原 list，否则 None（silent fallback）。
+
+    RT-04 degrade 记因通道（v1.3 加宽）：接受 list[str | {code, detail}] ——
+    元素是 str（v1.1/v1.2 legacy 纯文本）或 dict 且 keys ⊆ {code, detail}、
+    code 在 _ROUNDTRIP_WARNING_CODES closed enum 内、detail 缺席或为 str。
+    任何不合规（非 list / 元素形状错 / code 越界 / detail 非 str / 夹带未知键）
+    → 整体回退 None（不持久化可疑条目，mirror 既有 silent-fallback 语义）。
+    [] → None（缺省，不 emit —— 空列表与 None 同义，collapse 在此完成）。
+    """
+    if not isinstance(candidate, list):
+        return None
+    for w in candidate:
+        if isinstance(w, str):
+            continue
+        if (isinstance(w, dict)
+                and set(w.keys()) <= {"code", "detail"}
+                and w.get("code") in _ROUNDTRIP_WARNING_CODES
+                and ("detail" not in w or isinstance(w["detail"], str))):
+            continue
+        return None
+    return candidate or None  # [] → None（缺省，不 emit）
 
 
 def _probe_duration(path: str) -> float:
@@ -249,7 +284,7 @@ def build_asset_dict(work_dir: str, video_path: str,
     """从现有 pipeline 产物组装 asset.json dict。
 
     字段 sourcing（全部对照 output/《小江湖》第03话…/ 实际产物验证过）：
-      * schema_version: SCHEMA_VERSION 常量（当前 "1.1"；v1.0 minimal fixture 仍是 "1"，producer emit 的真实资产从此为 "1.1"）
+      * schema_version: SCHEMA_VERSION 常量（当前 "1.3"；v1.0 minimal fixture 仍是 "1"，producer emit 的真实资产从此为 "1.3"）
       * asset_type: const "shottimeline"
       * source.video_filename: basename(video_path)；与 transcript.source 交叉
         校验（不一致仅 warn，不 fail）
@@ -327,6 +362,38 @@ def build_asset_dict(work_dir: str, video_path: str,
         data_block["audio_semantic"] = "audio_semantic.json"
     if os.path.isfile(speakers_path):
         data_block["speakers"] = "speakers.json"
+
+    # Phase 18: CONDITIONAL data.roundtrip object mount (RT-01/RT-02)。mirror Phase 11
+    # 条件发射模式，但值是 object（v1.x 首个）：file ref + verdict 统计。仅当
+    # roundtrip.json 存在且可 JSON 解析（top-level 为 dict）才 emit —— 未跑 round-trip
+    # 的 degrade 保持 byte-identical-absent（字段 OMITTED；schema optional）。
+    # malformed / 非 dict → [warn] + OMIT（mirror _build_registry_snapshot WR-05
+    # 「不持久化可疑统计」）。此处只做 JSON-parse + verdict 计数，不做完整 schema
+    # 校验（Open Q3 锁定：schema gate 在 validate.py V13 / verify_contract producer
+    # mode，export 内重复校验收益低）。verdict 缺席或 decision 非_accepted/_rejected
+    # 的 shot 不计入（best-effort 计数）。
+    roundtrip_path = os.path.join(work_dir, "roundtrip.json")
+    if os.path.isfile(roundtrip_path):
+        try:
+            with open(roundtrip_path, encoding="utf-8") as f:
+                rt = json.load(f)
+            if not isinstance(rt, dict):
+                raise ValueError(
+                    f"top-level is {type(rt).__name__}, expected object")
+            counts = {"accepted": 0, "rejected": 0}
+            for s in rt.get("shots") or []:
+                if not isinstance(s, dict):
+                    continue  # 非法条目不计（计数是 best-effort）
+                verdict = s.get("verdict")
+                if isinstance(verdict, dict) and verdict.get("decision") in counts:
+                    counts[verdict["decision"]] += 1
+            data_block["roundtrip"] = {
+                "path": "roundtrip.json",
+                "accepted_count": counts["accepted"],
+                "rejected_count": counts["rejected"],
+            }
+        except (OSError, json.JSONDecodeError, ValueError) as e:
+            print(f"[warn] roundtrip.json malformed → data.roundtrip will be OMITTED: {e}")
 
     # media.characters[]/media.props[] —— 枚举实际存在的 PNG（canonical 命名）。
     # glob 只返回存在的文件，所以 list 内不会有 dangling path。Pre-write assert
@@ -493,10 +560,11 @@ def main():
                 loaded = json.load(f)
             if isinstance(loaded, dict):
                 candidate = loaded.get("warnings")
-                # 仅接受 list[str]；其它形状（dict / None / 非 str 元素）回退 None。
-                if (isinstance(candidate, list)
-                        and all(isinstance(w, str) for w in candidate)):
-                    warnings = candidate or None  # [] → None（缺省，不 emit）
+                # v1.3 加宽（RT-04 degrade 记因通道）：接受 list[str | {code, detail}]
+                # （结构化条目来自 Phase 20 regen 客户端）；非合规形状整体回退 None
+                # （silent-fallback 语义不变）。[] → None 的空列表 collapse 在
+                # _valid_warnings_list 内完成（缺省，不 emit）。
+                warnings = _valid_warnings_list(candidate)
         except (OSError, json.JSONDecodeError) as e:
             print(f"[warn] route_cache/warnings.json malformed → ignoring: {e}")
 
