@@ -691,6 +691,18 @@ def main():
     ap.add_argument("--no-subject", action="store_true",
                     help="本地 VL 只填 scene、跳过 subject facet（subject 外观描述可选；"
                          "仅 --local-vision 时生效）")
+    # Phase 19：帧序列逐帧问答 v2（action/camera 升级 —— 5.5 之后的无编号
+    # pre-step 5.6）。dest+store_false 双 flag 惯例 mirror 上方 local-vision 组。
+    ap.add_argument("--vision-seq", dest="vision_seq",
+                    action="store_true", default=True,
+                    help="启用帧序列逐帧问答升级 action/camera facets"
+                         "（默认启用；5.5 之后的无编号 pre-step）")
+    ap.add_argument("--no-vision-seq", dest="vision_seq",
+                    action="store_false",
+                    help="禁用帧序列 v2（action/camera 保持现有值）")
+    ap.add_argument("--no-ear", action="store_true", default=False,
+                    help="禁用 vision-seq 的 audio_semantic ear 融合"
+                         "（audio_semantic.json 存在时默认开）")
     ap.add_argument("--sample-fps", type=float, default=5.0,
                     help="V3b Pass2 HistCorr 抽帧频率（默认 5）")
     ap.add_argument("--demucs-model", default="htdemucs",
@@ -751,6 +763,8 @@ def main():
         # T-14-01 mitigation：EXPLICIT LIST，NEVER glob/rmtree 父级 route_cache。
         # route_cache 是目录 → shutil.rmtree(ignore_errors=True)（partial corrupt
         # cache 不应阻塞 forced rerun）；audio_analysis 子目录同理 rmtree。
+        # Phase 19：下方 route_cache 整目录 rmtree 已天然覆盖 route_cache/vision_seq/
+        # 子目录（5.6 pre-step 的 RAW 证据 cache）—— 无需单列进清单。
         import shutil
         route_cache_dir = os.path.join(work_dir, "route_cache")
         audio_analysis_cache_dir = os.path.join(route_cache_dir, "audio_analysis")
@@ -820,6 +834,32 @@ def main():
         cmd_vision += ["--video", video]
         # Banner label 故意不带 numeric 前缀 —— 与 attach_refs 同款 plain label。
         run_step(cmd_vision, "local vision facets (qwen-eye pre-step)")
+
+    # 5.6 帧序列逐帧问答（qwen-eye v2 pre-step —— 无编号，mirror 5.5 local_vision
+    # 先例；不 bump step counter，保持 grep count 不变）。5.5 填完 scene/subject
+    # （3 静帧）后：对 action/camera 为空的镜，用 ≤8 帧均匀采样逐帧/相邻帧对问
+    # 升级两 facet（时序证据链）。graceful-degrade 由子模块自带（引擎不可用 →
+    # facet 保持 "" + [vision-seq] warning + exit 0，管线继续）。
+    # ear 时序后果（RESEARCH Pitfall 5）：本步在 step 7（audio_semantic 产出）
+    # 之前 —— 全新跑 audio_semantic.json 必然缺席 → 模块自动关 ear 且零 warning；
+    # step 7 产出后的第二次管线跑 ear 才激活（ear 进 cache key，激活即重烧一次；
+    # 想跳过重烧保持 --no-ear）。--no-vision-seq 整段跳过；--audio-semantic 的
+    # 文件存在性由子模块自判。
+    if (args.vision_seq and not args.skip_semantic
+            and os.path.exists(prompts_json)
+            and os.path.isdir(frames_dir)):
+        cmd_vseq = [sys.executable,
+                    str(HERE / "analysis" / "vision_seq_facets.py"),
+                    "--shots", shots,
+                    "--frames-dir", frames_dir,
+                    "--work-dir", work_dir,
+                    "--output", prompts_json,
+                    "--video", video,
+                    "--audio-semantic", audio_semantic_json]
+        if args.no_ear:
+            cmd_vseq += ["--no-ear"]
+        # Banner label 故意不带 numeric 前缀 —— 与 5.5 / attach_refs 同款 plain label。
+        run_step(cmd_vseq, "vision seq facets (qwen-eye v2 pre-step)")
 
     # 6. 跨镜 re-id（character-reid 路由 —— DEFERRED；graceful-degrade）
     # 非阻塞：产 registry.draft.json + 自动调 gen_registry_review 产 HITL HTML；
