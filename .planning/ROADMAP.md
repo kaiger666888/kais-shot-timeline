@@ -67,7 +67,7 @@ Route-based audio semantic deepening: a third sibling of the v1.1 route-pattern 
 Round-trip closes the loop the first three milestones opened: qwen-eye v2 watches shot frame-sequences to upgrade action/camera facets (v1.2 `audio_semantic` as ear), a new ComfyUI-direct client regenerates each shot from (首帧, 尾帧, prompt) via MiniMax H3 fl2va, a dual-signal scorer (mid-frame CLIP/SigLIP trajectory + VLM judge attribution) validates the round-trip on an ep01 ≤20-shot sample, and accepted triples export as an independent SFT-grade dataset directory. Schema bump `1.2 → 1.3` pure-additive. Ordering constraints from research: **契约先行** (contract before any round-trip code writes), **抽样先行** (≤20 shots calibrate thresholds before overnight 8-13h full runs), **VRAM 串行编排** (qwen-eye 13.4GB lease and h3 batch never co-resident on the 3090).
 
 - [x] **Phase 18: Contract v1.3** — `roundtrip.schema.json` sidecar + `SCHEMA_VERSION="1.3"` + fixture/validate gate + SPEC + graceful-degrade 契约层（mirror v1.2 三层门） (completed 2026-08-19)
-- [ ] **Phase 19: qwen-eye v2 看片段** — 每镜 ≤8 帧逐帧 `observe_single` 问答升级 action/camera facet + audio_semantic ear 融合（合并策略 ep01 spike 后锁定）
+- [x] **Phase 19: qwen-eye v2 看片段** — 每镜 ≤8 帧逐帧 `observe_single` 问答升级 action/camera facet + audio_semantic ear 融合（合并策略 ep01 spike 后锁定） (completed 2026-08-19)
 - [ ] **Phase 20: h3 复现客户端** — kst 直连 ComfyUI 提交 MiniMax H3 fl2va workflow + per-shot 4-tuple cache + 断点续跑 + VRAM guard（TTS kill + `/free` + eye↔h3 串行编排）
 - [ ] **Phase 21: Scorer + 阈值校准** — 中段帧 CLIP/SigLIP 轨迹相似度 + VLM judge 归因三分类 + ep01 ≤20 镜实测分布锁 accepted 双门槛 + verdict 写 `roundtrip.json`（rejected 永不删除）
 - [ ] **Phase 22: Dataset Export + Integration** — `step_roundtrip` 流水线集成 + ≥4 场景 smoke 回归 + gallery round-trip HITL 审阅面板 + accepted 子集独立 dataset 目录导出
@@ -127,7 +127,7 @@ Plans:
 
 **Wave 3** *(blocked on 19-01 + 19-02)*
 
-- [ ] 19-03-PLAN.md — run_pipeline 无编号 pre-step 5.6 挂载（--vision-seq/--no-vision-seq/--no-ear，plain-label banner）+ wiring 四件套测试 + SC1/SC4 集成证据（sandbox 填充 diff + live prompts.json sha 不变负测试 + 秒级重跑实测）
+- [x] 19-03-PLAN.md — run_pipeline 无编号 pre-step 5.6 挂载（--vision-seq/--no-vision-seq/--no-ear，plain-label banner）+ wiring 四件套测试 + SC1/SC4 集成证据（sandbox 填充 diff + live prompts.json sha 不变负测试 + 秒级重跑实测）
 
 ### Phase 20: h3 复现客户端
 
@@ -201,7 +201,7 @@ v1.3 phases execute in numeric order: 18 → 19 → 20 → 21 → 22
 | 16. HTML Gallery | v1.2 | 1/1 | Complete | 2026-07-26 |
 | 17. Canvas Consumer | v1.2 | 1/1 | Complete | 2026-07-26 |
 | 18. Contract v1.3 | v1.3 | 3/3 | Complete    | 2026-08-19 |
-| 19. qwen-eye v2 看片段 | v1.3 | 2/3 | In Progress|  |
+| 19. qwen-eye v2 看片段 | v1.3 | 3/3 | Complete   | 2026-08-19 |
 | 20. h3 复现客户端 | v1.3 | 0/TBD | Not started | - |
 | 21. Scorer + 阈值校准 | v1.3 | 0/TBD | Not started | - |
 | 22. Dataset Export + Integration | v1.3 | 0/TBD | Not started | - |

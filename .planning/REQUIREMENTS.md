@@ -26,8 +26,8 @@
 - [ ] **RT-05**: accepted 子集独立 dataset 目录导出 —— `dataset/<video-stem>/`（per-shot 首帧/尾帧 jpg + prompt.json + manifest 含 scores/attribution）；消费端不依赖 asset 契约
 
 ### VISION — qwen-eye v2 看片段（升级 action/camera facet）
-- [ ] **VISION-01**: 帧序列逐帧问答升级 action/camera facet —— 每镜 ≤8 帧（frames_5fps 复用）逐帧 `observe_single` 问「这帧在做什么/镜头怎么动」→ 合并成完整动作链/运镜描述；合并策略（最长回答 vs 时序拼接）在 ep01 小样本上 spike 验证后锁定；只升级空缺/更短 facet（不覆盖 route/人工产物，mirror local_vision 边界）
-- [ ] **VISION-02**: ear 融合 —— 读 `audio_semantic.json`，把对白/sfx/foley 语义修正进 scene/action facet（雨声→scene=雨天、脚步声→动作链补「走近」）；additive、可跳过（`--no-ear`）
+- [x] **VISION-01**: 帧序列逐帧问答升级 action/camera facet —— 每镜 ≤8 帧（frames_5fps 复用）逐帧 `observe_single` 问「这帧在做什么/镜头怎么动」→ 合并成完整动作链/运镜描述；合并策略（最长回答 vs 时序拼接）在 ep01 小样本上 spike 验证后锁定；只升级空缺/更短 facet（不覆盖 route/人工产物，mirror local_vision 边界）
+- [x] **VISION-02**: ear 融合 —— 读 `audio_semantic.json`，把对白/sfx/foley 语义修正进 scene/action facet（雨声→scene=雨天、脚步声→动作链补「走近」）；additive、可跳过（`--no-ear`）
 
 ### REGEN — h3 复现客户端（ComfyUI 直连）
 - [ ] **REGEN-01**: `analysis/roundtrip/` ComfyUI API 客户端 —— fl2va workflow 模板（MiniMaxH3ImageToVideo，shift_video=12.0/cfg=1.0/euler+simple/length 17k+5 对齐）+ 提交/轮询/产物回收（regen mp4 per-shot）；不经 subagent（p11b Pitfall 7）
@@ -84,8 +84,8 @@ Each v1.3 REQ-ID maps to exactly one phase. Coverage: 19/19 (100%).
 | RT-03 | Phase 18 (Contract v1.3) | Complete |
 | RT-04 | Phase 18 (Contract v1.3) | Complete |
 | RT-05 | Phase 22 (Dataset Export + Integration) | Pending |
-| VISION-01 | Phase 19 (qwen-eye v2 看片段) | Pending |
-| VISION-02 | Phase 19 (qwen-eye v2 看片段) | Pending |
+| VISION-01 | Phase 19 (qwen-eye v2 看片段) | Complete |
+| VISION-02 | Phase 19 (qwen-eye v2 看片段) | Complete |
 | REGEN-01 | Phase 20 (h3 复现客户端) | Pending |
 | REGEN-02 | Phase 20 (h3 复现客户端) | Pending |
 | REGEN-03 | Phase 20 (h3 复现客户端) | Pending |
