@@ -70,6 +70,8 @@
 
 _v1.3 requirements defined in `.planning/REQUIREMENTS.md` (categories: CONTRACT / VISION / REGEN / SCORE / DATASET / PIPELINE / PRESENT)._
 
+- ✓ **Phase 20 (h3 复现客户端) DELIVERED** — REGEN-01..04：analysis/roundtrip/ ComfyUI 直连客户端（fl2va 13 节点模板 + 17k+5 length 下发 + 确定性 seed + /prompt 提交 + /history 轮询 + /view 原子下载 + sha 校验 hit）；4-tuple cache 断点续跑（真机实证 cache-hit 零重渲）；VRAM guard 五步（TTS 端口→PID kill + /free + eye 串行等待 + 22GB gate + 每镜 PID 归因）；roundtrip.json regen 半边写入；真机 smoke 2 镜 + 目视 approved。评审 2C+5W 全修（--force 不再毁 verdict 红线）。uniform-20 全量 = Phase 21 前置 overnight 批。
+
 - ✓ **Phase 19 (qwen-eye v2) DELIVERED** — VISION-01/02：action/camera facet 升级 ≤8 帧序列逐帧实证（均匀采样 + 相邻帧对问运镜）+ ear 融合（audio_semantic 白名单注入，--no-ear 可跳过）；合并策略盲评锁定 temporal（spike report FINAL）；只填空缺永不覆盖；per-shot RAW cache（window 协定 + ear 指纹，vision-seq-v2）；pipeline pre-step 5.6 挂载。CR-01 采样 off-by-one 评审修复（ceil + cache 版本升级）。
 
 - ✓ **Phase 18 (Contract v1.3) DELIVERED** — RT-01..04：roundtrip.schema.json（14th schema）+ asset.schema data.roundtrip 首个 object 挂载 + warnings items 加宽 string|{code,detail} + SCHEMA_VERSION "1.3" 单源 + 13-file fixture + validate 四阶 gate + v1.2↔v1.3 bidirectional proof（A3 负测试防盲过滤）+ SPEC §4/§5.10/§10.5 三层 fidelity disclaimer（人类审阅通过 2026-08-19）。代码评审 6 warnings 全修 + 复审 clean。
@@ -164,4 +166,4 @@ This document evolves at phase transitions and milestone boundaries.
 4. Update Context with current state
 
 ---
-*Last updated: 2026-08-20 — Phase 19 (qwen-eye v2) complete; prompts 质量升级独立于 round-trip 闭环**v1.3 Round-trip Validation** (qwen-eye v2 看片段逆推 → h3 fl2va 复现 → 中段帧打分 + 归因 → accepted 数据集导出; schema 1.2→1.3). v1.2 音频语义深化 SHIPPED (8 phases, 20 plans, 33/33 reqs).*
+*Last updated: 2026-08-20 — Phase 20 (h3 复现客户端) complete; round-trip regen 链路通，Scorer 就绪**v1.3 Round-trip Validation** (qwen-eye v2 看片段逆推 → h3 fl2va 复现 → 中段帧打分 + 归因 → accepted 数据集导出; schema 1.2→1.3). v1.2 音频语义深化 SHIPPED (8 phases, 20 plans, 33/33 reqs).*
