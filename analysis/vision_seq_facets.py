@@ -48,7 +48,9 @@ QwenEye 并 try/finally 包 ensure_ready…stop_if_owned；全 cache 命中时
 
 cache（mirror WR-04 4-tuple 惯例 + ear 第 5 维）：_cache_key =
 {video_content_hash, engine_name, engine_version, prompt_version, ear}
-—— 任一不匹配即 miss 重拉；查找只读本 ear 信封，写入 read-merge-write
+—— 任一不匹配即 miss 重拉；信封另持久化 window 采样契约（start/end/
+n_frames/needed，WR-01）——窗口漂移（shots 重检测）即整体 miss，合并只
+消费当前窗口所需索引；查找只读本 ear 信封，写入 read-merge-write
 只更新本 ear 信封（ear on/off 双跑证据共存，切换不丢数据）。
 
 输出：
@@ -232,15 +234,17 @@ def _envelope_name(ear: bool) -> str:
     return "ear_on" if ear else "ear_off"
 
 
-def _fresh_envelope(key: dict) -> dict:
-    return {"_cache_key": key, "answers": {}}
+def _fresh_envelope(key: dict, window: dict) -> dict:
+    return {"_cache_key": key, "window": window, "answers": {}}
 
 
-def _load_cache_envelope(cache_file: str, ear: bool, key: dict) -> dict:
+def _load_cache_envelope(cache_file: str, ear: bool, key: dict,
+                         window: dict) -> dict:
     """读本 ear 信封。文件缺失 / 损坏 / 文件非 dict / 信封缺席 /
-    _cache_key 任一字段不匹配 → 全新空信封（miss 重拉）。
+    _cache_key 任一字段不匹配 / window 采样契约不匹配（shots 重检测、窗口
+    或帧数漂移）→ 全新空信封（miss 重拉）。
     他 ear 信封绝不被本函数触碰。"""
-    miss = _fresh_envelope(key)
+    miss = _fresh_envelope(key, window)
     if not os.path.exists(cache_file):
         return miss
     try:
@@ -253,17 +257,21 @@ def _load_cache_envelope(cache_file: str, ear: bool, key: dict) -> dict:
     env = data.get(_envelope_name(ear))
     if not isinstance(env, dict) or env.get("_cache_key") != key:
         return miss
+    if env.get("window") != window:
+        return miss   # WR-01：旧窗口（更密/偏移采样）的键绝不服务新窗口
     if not isinstance(env.get("answers"), dict):
         env["answers"] = {}
     return env
 
 
-def _save_cache_envelope(cache_file: str, ear: bool, key: dict,
+def _save_cache_envelope(cache_file: str, ear: bool, key: dict, window: dict,
                          new_answers: dict | None = None,
                          merged_b: dict | None = None) -> None:
     """read-merge-write 只更新本 ear 信封（他 ear 信封原样保留 —— ear on/off
     双跑证据共存，切换不丢数据）。cache 目录懒创建（零写入时连目录都不留）。
-    best-effort：写失败不阻塞，下次重拉即可。"""
+    best-effort：写失败不阻塞，下次重拉即可。
+    WR-01：window 采样契约随信封持久化并参与匹配；new_answers 落盘时同步
+    失效受影响 facet 的 merged_B（旧合并产物不再反映 RAW 证据）。"""
     data: dict = {}
     if os.path.exists(cache_file):
         try:
@@ -275,11 +283,24 @@ def _save_cache_envelope(cache_file: str, ear: bool, key: dict,
             data = {}
     name = _envelope_name(ear)
     env = data.get(name)
-    if not isinstance(env, dict) or env.get("_cache_key") != key:
-        env = _fresh_envelope(key)
+    if not isinstance(env, dict) or env.get("_cache_key") != key \
+            or env.get("window") != window:
+        env = _fresh_envelope(key, window)
     answers = env.get("answers") if isinstance(env.get("answers"), dict) else {}
     if new_answers:
         answers.update(new_answers)
+        # WR-01：该 facet 有新 RAW 答案 → 旧 merged_B 失效（重合并），绝不留
+        # 不再反映证据的合并产物让 llm 策略「已缓存零 GPU」短路。
+        affected = set()
+        for k in new_answers:
+            if k.startswith("action_frame_"):
+                affected.add("action")
+            elif k.startswith("camera_pair_"):
+                affected.add("camera")
+        mb = env.get("merged_B")
+        if isinstance(mb, dict):
+            for facet in affected:
+                mb.pop(facet, None)
     env["answers"] = answers
     if merged_b:
         mb = env.get("merged_B") if isinstance(env.get("merged_B"), dict) else {}
@@ -342,8 +363,11 @@ def _needed_count(facet: str, n_frames: int) -> int:
     return n_frames if facet == "action" else n_frames - 1
 
 
-def _facet_answer_values(env: dict, facet: str) -> list[str]:
-    """从信封 answers 提取该 facet 的非空 RAW 答案，按帧序/对序排序。"""
+def _facet_answer_values(env: dict, facet: str,
+                         needed: int | None = None) -> list[str]:
+    """从信封 answers 提取该 facet 的非空 RAW 答案，按帧序/对序排序。
+    WR-01：needed 给定时只收当前窗口所需索引 1..needed —— 旧窗口残留的
+    超窗键（如更密采样的 action_frame_7/8）绝不进合并。"""
     prefix = "action_frame_" if facet == "action" else "camera_pair_"
     answers = env.get("answers") if isinstance(env.get("answers"), dict) else {}
     items: list[tuple[int, str]] = []
@@ -355,6 +379,8 @@ def _facet_answer_values(env: dict, facet: str) -> list[str]:
         try:
             idx = int(k[len(prefix):])
         except ValueError:
+            continue
+        if needed is not None and idx > needed:
             continue
         items.append((idx, v))
     items.sort()
@@ -394,7 +420,7 @@ def _ask_raw_answers(engine, item: dict, audio_ctx: str) -> tuple[dict, str | No
         k = _facet_key(facet, i)
         fresh[k] = ans
         _save_cache_envelope(item["cache_file"], item["ear"], item["key"],
-                             new_answers={k: ans})
+                             item["window"], new_answers={k: ans})
     return fresh, None
 
 
@@ -421,7 +447,8 @@ def _merge_llm_pass(engine, work: list[dict], warnings: list[str]) -> None:
         mb = item["env"].get("merged_B")
         if isinstance(mb, dict) and mb.get(item["facet"]):
             continue   # 已缓存 —— 零 GPU
-        values = _facet_answer_values(item["env"], item["facet"])
+        values = _facet_answer_values(item["env"], item["facet"],
+                                      item["needed"])
         if not values:
             continue
         merged, err = _ask_merge_b(engine, values)
@@ -430,6 +457,7 @@ def _merge_llm_pass(engine, work: list[dict], warnings: list[str]) -> None:
                             f"{item['facet']}: {err}")
             continue
         _save_cache_envelope(item["cache_file"], item["ear"], item["key"],
+                             item["window"],
                              merged_b={item["facet"]: merged})
         item["env"].setdefault("merged_B", {})[item["facet"]] = merged
 
@@ -522,8 +550,14 @@ def main():
                 f"[{meta['start_sec']:.2f}, {meta['end_sec']:.2f}] — "
                 f"facets left as-is")
             continue
+        # WR-01：采样契约随信封持久化并参与匹配 —— shots 重检测/参数变化产生
+        # 的窗口漂移使旧信封整体 miss，而非旧键静默服务新窗口。
+        window = {"start_sec": meta["start_sec"], "end_sec": meta["end_sec"],
+                  "n_frames": len(frames),
+                  "needed": {"action": _needed_count("action", len(frames)),
+                             "camera": _needed_count("camera", len(frames))}}
         cache_file = os.path.join(cache_dir, f"shot_{sid:03d}.json")
-        env = _load_cache_envelope(cache_file, ear, key)
+        env = _load_cache_envelope(cache_file, ear, key, window)
         for facet in ("action", "camera"):
             if p.get(facet):
                 continue   # 已有值（route/人工产物）—— 不覆盖，永不替换
@@ -537,7 +571,8 @@ def main():
                        if _facet_key(facet, i) not in env["answers"]]
             work.append({"p": p, "sid": sid, "facet": facet, "frames": frames,
                          "cache_file": cache_file, "env": env, "ear": ear,
-                         "key": key, "missing": missing, "error": False})
+                         "key": key, "window": window, "needed": needed,
+                         "missing": missing, "error": False})
             if missing:
                 needs_engine = True
         done += 1
@@ -576,6 +611,11 @@ def main():
                     fresh, err = _ask_raw_answers(engine, item, audio_ctx)
                     if fresh:
                         item["env"].setdefault("answers", {}).update(fresh)
+                        # WR-01：内存信封同步失效 merged_B（与 _save_cache_envelope
+                        # 的落盘失效一致 —— 防 llm 策略读到陈旧内存合并产物）。
+                        mb = item["env"].get("merged_B")
+                        if isinstance(mb, dict):
+                            mb.pop(item["facet"], None)
                         item["missing"] = [i for i in item["missing"]
                                            if _facet_key(item["facet"], i) not in fresh]
                     if err:
@@ -595,11 +635,21 @@ def main():
     for item in work:
         if item["error"] or item["missing"]:
             continue   # RAW 证据不完整（degrade / 中断）—— 本轮不产出
-        values = _facet_answer_values(item["env"], item["facet"])
+        values = _facet_answer_values(item["env"], item["facet"],
+                                      item["needed"])
         if not values:
             warnings.append(f"{STEP_TAG} shot {item['sid']}: {item['facet']}: "
                             f"engine returned empty answers for all frames/pairs")
             continue
+        # WR-01：needed 键在位但清答为 ""（引擎空答被缓存为已答）→ 显式
+        # warning，部分证据合并不再静默。
+        empty_cnt = sum(
+            1 for i in range(1, item["needed"] + 1)
+            if not item["env"]["answers"].get(_facet_key(item["facet"], i)))
+        if empty_cnt:
+            warnings.append(f"{STEP_TAG} shot {item['sid']}: "
+                            f"{item['facet']}: {empty_cnt}/{item['needed']} "
+                            f"RAW answers empty — merging partial evidence")
         if args.merge_strategy == "llm":
             mb = item["env"].get("merged_B")
             value = mb.get(item["facet"]) if isinstance(mb, dict) else ""

@@ -284,6 +284,96 @@ def test_stale_cache_key_miss_refetches(tmp_path, monkeypatch):
     assert out[0]["action"].startswith("new-answer")
 
 
+def test_window_contract_mismatch_misses(tmp_path, monkeypatch):
+    """WR-01 回归：信封 window 采样契约不匹配（模拟 shots 重检测后窗口
+    漂移）→ 整体 miss 重拉，旧窗口键绝不服务新窗口。"""
+    work, shots, pp = make_workdir(tmp_path)
+    patch_engine(monkeypatch, FakeEngine("旧窗答"))
+    run_main(work, pp)
+    # 篡改 window（模拟 shots.json 重检测：窗口漂移）
+    cache_file = work / "route_cache" / "vision_seq" / "shot_001.json"
+    cache = json.loads(cache_file.read_text(encoding="utf-8"))
+    cache["ear_off"]["window"]["end_sec"] = 1.5
+    cache["ear_off"]["window"]["n_frames"] = 8
+    cache_file.write_text(json.dumps(cache, ensure_ascii=False), encoding="utf-8")
+    reset_facets(pp)
+    fake2 = FakeEngine("新窗答")
+    patch_engine(monkeypatch, fake2)
+    run_main(work, pp)
+    assert fake2.calls > 0
+    out = json.loads(pp.read_text(encoding="utf-8"))
+    assert out[0]["action"].startswith("新窗答")
+
+
+def test_merge_bounds_to_current_window(tmp_path, monkeypatch):
+    """WR-01 回归：信封残留超窗键（旧更密采样的 action_frame_7/8）绝不进
+    合并 —— facet 恰由当前窗口 needed 数条答案组成。"""
+    work, shots, pp = make_workdir(tmp_path)
+    patch_engine(monkeypatch, FakeEngine("窗内答"))
+    run_main(work, pp)                        # shot1 action needed = 6
+    cache_file = work / "route_cache" / "vision_seq" / "shot_001.json"
+    cache = json.loads(cache_file.read_text(encoding="utf-8"))
+    cache["ear_off"]["answers"]["action_frame_7"] = "超窗旧答"
+    cache["ear_off"]["answers"]["action_frame_8"] = "超窗旧答"
+    cache_file.write_text(json.dumps(cache, ensure_ascii=False), encoding="utf-8")
+    reset_facets(pp)
+    fake2 = FakeEngine("不该重烧")            # needed 键全在 → 零引擎调用
+    patch_engine(monkeypatch, fake2)
+    run_main(work, pp)
+    assert fake2.calls == 0
+    out = json.loads(pp.read_text(encoding="utf-8"))
+    assert out[0]["action"] == "→".join(["窗内答"] * 6)   # 恰 6 条，无超窗串
+    assert "超窗旧答" not in out[0]["action"]
+
+
+def test_merged_b_invalidated_on_new_raw(tmp_path, monkeypatch):
+    """WR-01 回归：RAW 证据补烧后旧 merged_B 失效 —— llm 策略重合并而非
+    「已缓存零 GPU」短路服务陈旧合并产物。"""
+    work, shots, pp = make_workdir(tmp_path)
+    fake1 = FakeEngine("帧答", merge_answer="旧合并")
+    patch_engine(monkeypatch, fake1)
+    run_main(work, pp, extra_args=["--merge-strategy", "llm"])
+    cache_file = work / "route_cache" / "vision_seq" / "shot_001.json"
+    cache = json.loads(cache_file.read_text(encoding="utf-8"))
+    assert cache["ear_off"]["merged_B"]["action"] == "旧合并"
+    # 挖掉两个 RAW 键（模拟部分证据缺失需补烧）
+    del cache["ear_off"]["answers"]["action_frame_3"]
+    del cache["ear_off"]["answers"]["action_frame_4"]
+    cache_file.write_text(json.dumps(cache, ensure_ascii=False), encoding="utf-8")
+    reset_facets(pp)
+    fake2 = FakeEngine("补烧答", merge_answer="新合并")
+    patch_engine(monkeypatch, fake2)
+    run_main(work, pp, extra_args=["--merge-strategy", "llm"])
+    assert fake2.calls == 2                   # 恰补烧缺失的 frame 3/4
+    assert fake2.text_calls == 1              # action 重合并；camera merged_B 未失效
+    out = json.loads(pp.read_text(encoding="utf-8"))
+    assert out[0]["action"] == "新合并"       # 陈旧「旧合并」绝不出货
+    cache = json.loads(cache_file.read_text(encoding="utf-8"))
+    assert cache["ear_off"]["merged_B"]["action"] == "新合并"
+
+
+def test_empty_cached_answer_warns_partial_merge(tmp_path, monkeypatch):
+    """WR-01 回归：引擎空答被缓存为 ""（键在位 = 已答）→ 部分证据合并时
+    显式 [vision-seq] warning，不再静默。"""
+    work, shots, pp = make_workdir(tmp_path)
+    patch_engine(monkeypatch, FakeEngine("有效答"))
+    run_main(work, pp)
+    cache_file = work / "route_cache" / "vision_seq" / "shot_001.json"
+    cache = json.loads(cache_file.read_text(encoding="utf-8"))
+    cache["ear_off"]["answers"]["action_frame_2"] = ""   # 模拟清答被缓存
+    cache_file.write_text(json.dumps(cache, ensure_ascii=False), encoding="utf-8")
+    reset_facets(pp)
+    fake2 = FakeEngine("不该重烧")            # 键全在位 → 零引擎调用
+    patch_engine(monkeypatch, fake2)
+    run_main(work, pp)
+    assert fake2.calls == 0
+    out = json.loads(pp.read_text(encoding="utf-8"))
+    assert out[0]["action"] == "→".join(["有效答"] * 5)   # 空答被剔出合并
+    warnings = json.loads((work / "route_cache" / "warnings.json")
+                          .read_text(encoding="utf-8"))["warnings"]
+    assert any("RAW answers empty" in w and "1/6" in w for w in warnings)
+
+
 def test_ear_envelope_isolation_dual_coexistence(tmp_path, monkeypatch):
     """ear_on 信封不服务 ear_off 运行（miss 重拉）；双信封共存（切换不丢数据）。"""
     work, shots, pp = make_workdir(tmp_path)
