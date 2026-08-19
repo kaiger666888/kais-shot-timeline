@@ -537,15 +537,18 @@ if os.path.isfile(roundtrip_path):
 | A9 | regen.path canonical 前缀 `roundtrip/`（pattern 只锁 mp4 + anti-traversal） | Code Ex. A | 低 —— 实际目录 Phase 20 定；pattern 过严会逼 Phase 20 改 schema |
 | A10 | v1.3 fixture asset.json 保留 1 条 legacy string warning + 增结构化条目（双形并存证明） | Wrinkle 1 / Open Q1 | 低 —— fixture 数值属 discretion；但结构化条目必须在 fixture 中出现（SC#4「可表达」的证明载体） |
 
-## Open Questions
+## Open Questions (RESOLVED — all three closed at plan level; adopted answers marked inline)
 
 1. **fixture 全字段覆盖 vs 2-shot 上限**
    - What we know: v1.2 fixture shots.json 只有 id {1,2}（substrate 必须 byte-copy）；CONTEXT 要求 fixture「覆盖全字段但取小值」；roundtrip 的状态空间 = full / regen-only / scored-no-verdict / failed-status / accepted-auto / rejected-human。
    - What's unclear: 2 个 shot 条目装不下全部状态×字段组合。
    - Recommendation: fixture 内 2 条覆盖主路径（shot 1 = full: regen+双 score+verdict{accepted,auto}；shot 2 = degrade+human: regen+midframe_sim+verdict{rejected,human,decided_at}）；**其余形状**（status.failed、judge 缺席、width/height 等 optional 字段）用 VERIFICATION 里的 direct-validator 实例检查覆盖（mirror Phase 11「all 12 fixtures validated via direct Draft202012Validator」的加强版）—— 一段 python -c 构造全字段实例过 schema。planner 可改为在 fixture 中安排 3 条 shot_id ∈{1,2} —— 不推荐（一 shot 一条目的结果集语义）。
+   - **[RESOLVED → 18-02 Task 1]** Adopted the recommendation as-is: 2-shot fixture (shot 1 full/auto-accept, shot 2 degrade+human-reject) + all remaining shapes via direct-validator instances inside Task 1's automated verify (status.failed entry, all 3 attribution values, optional-field absences, all 3 warning codes as solo structured entries).
 2. **EIGHT_SHAPES 归属（本 phase vs Phase 20）** — 见 A5；两案皆可，勿做一半。
+   - **[RESOLVED → 18-02 Task 3]** EIGHT_SHAPES gains `"roundtrip"` THIS phase, paired in the SAME task with the `validate_eight_shapes` object 特判 (`rel.get("path")` before the string check) — the 勿做一半 rule is satisfied by same-plan pairing, with an in-code Pitfall 2 pairing comment mandated.
 3. **roundtrip.json 挂载前是否 schema-validate**（registry_snapshot 先例 validate；audio_semantic 挂载先例不 validate）
    - Recommendation: 本 phase 只做 JSON 可解析 + 计数（Code Ex. D）；完整 schema gate 在 validate.py V13/producer 侧已有，export 内重复校验收益低。若 verifier 想加，mirror `_validate_registry_for_snapshot` fail-soft 模式。
+   - **[RESOLVED → 18-01 Task 3]** No pre-mount schema validation in export_asset.py: JSON-parse + verdict-count only, encoded as an explicit DO NOT in 18-01 Task 3's action; the full schema gate stays in validate.py V13 (18-02 Task 2) / verify_contract producer mode.
 
 ## Environment Availability
 
