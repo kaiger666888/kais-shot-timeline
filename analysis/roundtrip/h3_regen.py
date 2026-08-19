@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""h3 复现客户端（Phase 20 / REGEN-01）—— kst 直连 ComfyUI 原生 API，不经 subagent/KAP/kmc。
+"""h3 复现客户端（Phase 20 / REGEN-01/03）—— kst 直连 ComfyUI 原生 API，不经 subagent/KAP/kmc。
 
 背景
 ----
@@ -13,17 +13,45 @@
 1. 载入 shots.json（分割权威镜列表）+ prompts.json（按 shot_id join prompt_text）；
 2. --force 时显式清单清除本 step 的 cache 与产物；
 3. ComfyUI 可达性 gate（GET /system_stats 非 200 → 结构化 warning + exit 0，
-   graceful-degrade；20-02 的 VRAM guard 序列插在此 gate 之后）；
-4. 批循环逐镜：4-tuple cache 预判 → miss 则 ffmpeg 全分辨率提取首/尾帧 →
-   curl POST /upload/image ×2 → deepcopy workflow_fl2va.json 模板并注入
-   节点参数（14/15 帧名、20 prompt/width/height/length、30 seed、50 prefix）→
-   POST /prompt → 轮询 /history/{prompt_id} → /view 下载 mp4 → cache 写入；
-5. 收尾 flush 本轮 warnings（跳镜 str / 失败摘要）+ summary print。
+   graceful-degrade）——标准序第一位（ComfyUI down 时先降级退出，不白杀 TTS、
+   不空轮 eye lease）；
+4. 批开始 VRAM guard 五步固定序（kill TTS → /free → eye 等待 → /free → 严格
+   gate，见下「VRAM guard 语义」）；
+5. 批循环逐镜：每镜提交前 PID 归因复查 → 4-tuple cache 预判 → miss 则 ffmpeg
+   全分辨率提取首/尾帧 → curl POST /upload/image ×2 → deepcopy
+   workflow_fl2va.json 模板并注入节点参数（14/15 帧名、20 prompt/width/height/
+   length、30 seed、50 prefix）→ POST /prompt → 轮询 /history/{prompt_id} →
+   /view 下载 mp4 → cache 写入（含渲后水位 post_render_free_mib）；
+6. 收尾 flush 本轮 warnings（跳镜 str / 失败摘要）+ summary print。
 
 graceful-degrade 语义
 ---------------------
 ComfyUI 不可达 / 单镜渲染失败 / 单镜超时都不阻塞：引擎级降级 exit 0（资产照常，
 [warnings] 记 {code: "comfyui_unreachable"}）；单镜级失败进 failed 清单后 continue。
+
+VRAM guard 语义（REGEN-03，20-02）
+---------------------------------
+批开始五步固定序（CONTEXT 字面，顺序不可换）：
+  ① ss -tlnp 端口→PID 归因找 TTS 监听（:5110 IndexTTS / :5111 VoiceDesign），
+     有则 os.kill(SIGTERM) 定向 kill（绝不宽 pattern pkill；ss 探测失败才回退
+     pkill -f 两个精确脚本名），kill 前后各一条审计 warning
+     （code=vram_insufficient——三码 closed enum 约束下的事件记因，detail 含
+     pid/端口/进程名）；确认无监听则不 kill、仍记 after 审计 warning（no-op 安全）；
+  ② POST /free（kill 后第一次）；
+  ③ eye 串行等待：used=total-free ≥13721MiB 视为 qwen-eye lease 在跑 → 15s
+     轮询至 --vram-wait-timeout（超时 → vram_insufficient + exit 0）；
+  ④ POST /free（批开始前第二次——「kill 后与批开始前各一次」）；
+  ⑤ 严格 gate：free < 22528MiB（22GB）→ vram_insufficient warning（detail 含
+     当前 free + compute-apps top 占用者 pid/进程名/MiB）+ exit 0。
+music3 常驻 676MiB 属正常态——kill 后实测 free≈22539，22.5GB 仍过线（Pitfall 9）。
+
+每镜提交前复查走 PID 归因（Pitfall 1 反自锁）：基线 = guard 完成后
+compute-apps 全部 PID ∪ comfyui-primary 容器主 PID（docker inspect，
+best-effort 失败忽略）；当前 compute-apps 中不在基线的 foreign PID Σused
+≥4096MiB 才等待/终止——ComfyUI 自身渲后 cache 驻留（可达 ~18GB）在基线内，
+永不自锁；渲后水位以 post_render_free_mib 留档进 cache 元数据（Open Q1 数据）。
+全部读数 fail-open（qwen 先例）：nvidia-smi/ss 不可得时不阻塞，但 gate 判定
+本身保守——有读数即严判。
 
 cache 惯例
 ----------
@@ -47,7 +75,8 @@ code ∈ comfyui_unreachable/vram_insufficient/scorer_model_missing）。本模�
 argv 用法
 ---------
     python3 analysis/roundtrip/h3_regen.py --work-dir output/<video-stem>/ \
-        [--comfy-url http://127.0.0.1:8188] [--force] [--shot-timeout 0]
+        [--comfy-url http://127.0.0.1:8188] [--gpu-index 1] \
+        [--vram-wait-timeout 1800] [--force] [--shot-timeout 0]
 
 （--sample-shots/--max-shot-sec/--regen-resolution 等 sampling/降载 flag 在
 20-02 接入；本 plan 固定默认分辨率 1344x768 处理全部镜。）
@@ -59,6 +88,7 @@ import copy
 import hashlib
 import json
 import os
+import re
 import signal
 import subprocess
 import sys
@@ -122,6 +152,26 @@ TEMPLATE_PATH = Path(__file__).resolve().parent / "workflow_fl2va.json"
 # 轮询节奏（kmc v4 crash-safe 骨架：sleep 15s + 瞬态异常 continue）。
 POLL_INTERVAL_SEC = 15
 POLL_LOG_EVERY_SEC = 60
+
+# ─── VRAM guard / GPU 编排常量（20-02 / REGEN-03）──────────────────────────
+# GPU index 可配（默认 1 = comfyui-primary 所在 3090；NVIDIA_VISIBLE_DEVICES=1 实证）。
+VRAM_GPU_INDEX_DEFAULT = 1
+# 批开始严格 gate：kill TTS + 双 /free 之后 free < 22528MiB（22GB）拒整批。
+# 实测锚点：kill 后 free≈22539——music3 常驻 676MiB 属正常态，22.5GB 仍过线（Pitfall 9）。
+BATCH_MIN_FREE_MIB = 22528
+# qwen-eye lease 显存水位（13.4GB，qwen_eye_client 注释实证）：批开始 used ≥ 此值
+# 视为 eye lease 在跑 → 轮询等待而非提交（「显存探测即编排信号」，CONTEXT 锁定）。
+EYE_LEASE_MIB = 13721
+# 每镜复查 foreign 阻塞阈值：不在基线的 PID 合计占用 ≥ 4GB 才等待/终止。
+FOREIGN_BLOCK_MIB = 4096
+# guard 轮询节奏（秒）。
+GUARD_POLL_SEC = 15
+# TTS 监听端口（IndexTTS :5110 / VoiceDesign :5111，p11b validated）。
+TTS_PORTS = (5110, 5111)
+# ss 探测失败时的 pkill 回退 pattern——精确到两个脚本名，绝不宽 pattern（T-20-05）。
+TTS_FALLBACK_PATTERNS = ("voicedesign_server.py", "indextts25-server.py")
+# ComfyUI 容器名（docker inspect 取主 PID 并进每镜复查基线）。
+COMFY_CONTAINER = "comfyui-primary"
 
 
 # ─── 基础 hash / 模板 ───────────────────────────────────────────────────────
@@ -507,6 +557,247 @@ def append_roundtrip_warnings(work_dir: str, new_entries: list) -> None:
     _atomic_write_json(sidecar, {"warnings": kept + list(new_entries)})
 
 
+# ─── VRAM guard / GPU 编排（REGEN-03，20-02）────────────────────────────────
+# 全部读数 fail-open（qwen _vram_free_mib 先例）：nvidia-smi/ss/docker 异常返回
+# None/[] 不阻塞调用方——guard 判定本身保守（有读数即严判，T-20-06）。
+
+def proc_name(pid: int) -> str:
+    """/proc/{pid}/cmdline 读进程名（\\0 → 空格，截 120 字符）——warning detail
+    的 top 占用者审计用。不可读返回 ''（best-effort，不抛）。"""
+    try:
+        with open(f"/proc/{pid}/cmdline", "rb") as f:
+            raw = f.read().replace(b"\x00", b" ").decode(errors="replace").strip()
+        return raw[:120]
+    except OSError:
+        return ""
+
+
+def gpu_mem_mib(gpu_index: int) -> tuple[int, int] | None:
+    """一次查询 GPU total/free（MiB）→ (total, free)；不可得返回 None
+    （fail-open）。--query-gpu 查询式（qwen _vram_free_mib 同款调用形状）。"""
+    try:
+        proc = subprocess.run(
+            ["nvidia-smi", "--query-gpu=memory.total,memory.free",
+             "--format=csv,noheader,nounits", "-i", str(gpu_index)],
+            capture_output=True, text=True, timeout=10)
+        cols = [c.strip() for c in proc.stdout.strip().splitlines()[0].split(",")]
+        return int(cols[0]), int(cols[1])
+    except (subprocess.SubprocessError, OSError, ValueError, IndexError):
+        return None
+
+
+def compute_apps(gpu_index: int) -> list[tuple[int, int]]:
+    """--query-compute-apps=pid,used_memory → [(pid, used_mib)]（Pitfall 1 每镜
+    PID 归因复查的数据源）。"[Not Found]" 行（进程退出瞬间占位）被 isdigit
+    数字校验自然跳过（T-20-07）；异常整体返回 []（fail-open）。"""
+    try:
+        proc = subprocess.run(
+            ["nvidia-smi", "--query-compute-apps=pid,used_memory",
+             "--format=csv,noheader,nounits", "-i", str(gpu_index)],
+            capture_output=True, text=True, timeout=10)
+    except (subprocess.SubprocessError, OSError):
+        return []
+    out: list[tuple[int, int]] = []
+    for line in proc.stdout.strip().splitlines():
+        cols = [c.strip() for c in line.split(",")]
+        if len(cols) >= 2 and cols[0].isdigit():
+            used = cols[1].replace("MiB", "").strip()
+            out.append((int(cols[0]), int(used) if used.isdigit() else 0))
+    return out
+
+
+def find_tts_listeners() -> list[tuple[int, int, str]] | None:
+    """ss -tlnp 解析 TTS_PORTS 监听 → [(pid, port, name)]。
+    返回 None = 探测失败（ss 不可用/非零退出——哨兵区分「探测失败」与「无监听」，
+    前者触发 pkill 回退）；[] = 确认无监听（no-op 安全路径）。"""
+    try:
+        proc = subprocess.run(["ss", "-tlnp"],
+                              capture_output=True, text=True, timeout=10)
+    except (subprocess.SubprocessError, OSError):
+        return None
+    if proc.returncode != 0:
+        return None
+    listeners: list[tuple[int, int, str]] = []
+    for line in proc.stdout.splitlines():
+        for port in TTS_PORTS:
+            if f":{port} " in line:
+                m = re.search(r"pid=(\d+)", line)
+                if m:
+                    pid = int(m.group(1))
+                    listeners.append((pid, port, proc_name(pid)))
+                break
+    return listeners
+
+
+def kill_tts(listeners: list[tuple[int, int, str]] | None) -> list[dict]:
+    """定向 kill TTS 监听进程：每个 (pid, port, name) os.kill(pid, SIGTERM)
+    （ProcessLookupError 容忍——进程已退出不算错），返回审计记录。
+    listeners is None（ss 探测失败）→ 回退 pkill -f 两个精确脚本名（A5 兜底，
+    pattern 限于 TTS_FALLBACK_PATTERNS——绝不宽 pattern，T-20-05）；
+    listeners == []（确认无监听）→ 空列表（无 kill 动作）。"""
+    if listeners is None:
+        killed: list[dict] = []
+        for pat in TTS_FALLBACK_PATTERNS:
+            try:
+                r = subprocess.run(["pkill", "-f", pat],
+                                   capture_output=True, timeout=10)
+                if r.returncode == 0:
+                    killed.append({"pattern": pat, "method": "pkill-fallback"})
+            except (subprocess.SubprocessError, OSError):
+                pass
+        return killed
+    killed = []
+    for pid, port, name in listeners:
+        try:
+            os.kill(pid, signal.SIGTERM)
+            killed.append({"pid": pid, "port": port, "name": name,
+                           "method": "os.kill-SIGTERM"})
+        except ProcessLookupError:
+            pass                      # 进程已退出——视为已 kill
+        except OSError:
+            pass                      # 其余信号失败 best-effort 忽略
+    return killed
+
+
+def comfy_free(comfy_url: str) -> bool:
+    """POST {comfy}/free body {"unload_models": True, "free_memory": True}
+    （KAP gpuVramManager 同款 payload，实测 200）——驱逐 ComfyUI 自身模型
+    cache。best-effort：结果只在返回值体现，调用方不据此阻塞。"""
+    status, _ = _http_json(f"{comfy_url}/free",
+                           payload={"unload_models": True, "free_memory": True})
+    return status == 200
+
+
+def _listeners_desc(listeners: list[tuple[int, int, str]]) -> str:
+    """审计 warning detail 的监听者描述（pid/端口/进程名——CONTEXT 锁定要素）。"""
+    return "; ".join(
+        f"pid={p} port={port}({name[:60] or 'name-unreadable'})"
+        for p, port, name in listeners)
+
+
+def _apps_top_desc(gpu_index: int, limit: int = 3) -> str:
+    """compute-apps top 占用者描述（pid+进程名+MiB——Pitfall 9：gate 拒绝时
+    operator 一眼看出是谁占了）。"""
+    apps = sorted(compute_apps(gpu_index), key=lambda x: -x[1])
+    if not apps:
+        return "n/a（compute-apps 无读数）"
+    return "; ".join(f"pid={p}({proc_name(p)})={u}MiB" for p, u in apps[:limit])
+
+
+def batch_start_guard(comfy_url: str, gpu_index: int,
+                      wait_timeout: int) -> dict:
+    """批开始 VRAM guard（五步固定序，见模块 docstring「VRAM guard 语义」）。
+    返回 {blocked: bool, reason: str|None, killed: list[dict], warnings: list}——
+    warnings 由 main 统一收集 flush（审计 + 拒绝记因都走 vram_insufficient）。"""
+    result: dict = {"blocked": False, "reason": None, "killed": [], "warnings": []}
+
+    # ① TTS 端口→PID 归因 kill（前后审计 warning；无监听 no-op 安全）
+    listeners = find_tts_listeners()
+    if listeners is None:
+        result["killed"] = kill_tts(None)
+        hit = [k.get("pattern") for k in result["killed"]]
+        result["warnings"].append({
+            "code": "vram_insufficient",
+            "detail": f"TTS 端口探测失败（ss 不可用）→ pkill 回退："
+                      f"{hit if hit else '无命中'}（pattern 限 "
+                      f"{list(TTS_FALLBACK_PATTERNS)}）"})
+    elif listeners:
+        result["warnings"].append({
+            "code": "vram_insufficient",
+            "detail": f"TTS kill 前: {_listeners_desc(listeners)}"})
+        result["killed"] = kill_tts(listeners)
+        result["warnings"].append({
+            "code": "vram_insufficient",
+            "detail": f"TTS kill 后（SIGTERM 定向）: {_listeners_desc(listeners)}"})
+    else:
+        result["warnings"].append({
+            "code": "vram_insufficient",
+            "detail": f"TTS 端口 {list(TTS_PORTS)} 无监听 —— 无需 kill"
+                      f"（guard 检查已执行的审计记录）"})
+
+    # ② kill 后第一次 POST /free
+    comfy_free(comfy_url)
+
+    # ③ eye 串行等待（批开始绝对值检查——此刻无自身 cache 干扰，13GB 语义成立）
+    start = time.time()
+    while True:
+        mem = gpu_mem_mib(gpu_index)
+        if mem is None:
+            break                                # fail-open：读数不可得不阻塞
+        used = mem[0] - mem[1]
+        if used < EYE_LEASE_MIB:
+            break                                # eye lease 不在（或已释放）
+        if time.time() - start >= wait_timeout:
+            print(f"{STEP_TAG} eye lease 等待超时（{wait_timeout}s，"
+                  f"used={used}MiB）—— 拒绝整批")
+            result["blocked"] = True
+            result["reason"] = "eye-wait-timeout"
+            result["warnings"].append({
+                "code": "vram_insufficient",
+                "detail": f"eye lease 等待超时：used={used}MiB ≥ {EYE_LEASE_MIB}MiB"
+                          f"（等待 {wait_timeout}s 后仍占用）—— qwen-eye 在跑，"
+                          f"批不提交（--vram-wait-timeout 可配）"})
+            return result
+        print(f"{STEP_TAG} eye lease 在跑（used={used}MiB ≥ {EYE_LEASE_MIB}MiB）"
+              f"—— 等待释放…")
+        time.sleep(GUARD_POLL_SEC)
+
+    # ④ 批开始前第二次 POST /free（「kill 后与批开始前各一次」——CONTEXT 字面）
+    comfy_free(comfy_url)
+
+    # ⑤ 严格 gate：free < 22528MiB 拒整批（detail 含 free + top 占用者——Pitfall 9）
+    mem = gpu_mem_mib(gpu_index)
+    if mem is not None and mem[1] < BATCH_MIN_FREE_MIB:
+        print(f"{STEP_TAG} 批开始 free={mem[1]}MiB < {BATCH_MIN_FREE_MIB}MiB"
+              f"（22GB）—— 拒绝整批")
+        result["blocked"] = True
+        result["reason"] = "batch-free-below-min"
+        result["warnings"].append({
+            "code": "vram_insufficient",
+            "detail": f"批开始 free={mem[1]}MiB < {BATCH_MIN_FREE_MIB}MiB（22GB）—— "
+                      f"top 占用: {_apps_top_desc(gpu_index)}（music3 常驻 676MiB "
+                      f"属正常态，kill 后实测 ≈22539 仍过线）"})
+    return result
+
+
+def baseline_pid_snapshot(gpu_index: int) -> set[int]:
+    """每镜复查基线：guard 完成后 compute-apps 全部 PID ∪ docker inspect
+    comfyui-primary 主 PID（best-effort，docker 不可用静默忽略）。"""
+    pids = {p for p, _ in compute_apps(gpu_index)}
+    try:
+        proc = subprocess.run(
+            ["docker", "inspect", "--format", "{{.State.Pid}}", COMFY_CONTAINER],
+            capture_output=True, text=True, timeout=10)
+        pids.add(int(proc.stdout.strip()))
+    except (subprocess.SubprocessError, OSError, ValueError):
+        pass
+    return pids
+
+
+def per_shot_vram_ok(gpu_index: int, baseline: set[int],
+                     wait_timeout: int) -> bool:
+    """每镜提交前 PID 归因复查（Pitfall 1 反自锁）：foreign = 当前 compute-apps
+    中不在基线的 PID；Σforeign_used < FOREIGN_BLOCK_MIB → True；否则 15s 等待
+    循环（log 一次 top foreign）至超时 → False（main 收到 False → warning +
+    优雅终止批）。基线内 PID（ComfyUI 自身 cache 驻留）永不触发。"""
+    start = time.time()
+    logged = False
+    while True:
+        foreign = [(p, u) for p, u in compute_apps(gpu_index) if p not in baseline]
+        total_used = sum(u for _, u in foreign)
+        if total_used < FOREIGN_BLOCK_MIB:
+            return True
+        if not logged:
+            top = max(foreign, key=lambda x: x[1])
+            print(f"{STEP_TAG} foreign GPU 占用 {total_used}MiB ≥ "
+                  f"{FOREIGN_BLOCK_MIB}MiB（top pid={top[0]} {top[1]}MiB）"
+                  f"—— 等待释放…")
+            logged = True
+        if time.time() - start >= wait_timeout:
+            return False
+        time.sleep(GUARD_POLL_SEC)
+
+
 # ─── main ───────────────────────────────────────────────────────────────────
 
 def main() -> int:
@@ -521,6 +812,11 @@ def main() -> int:
                          "（roundtrip/ + roundtrip.json）后重渲")
     ap.add_argument("--shot-timeout", type=int, default=0,
                     help="单镜渲染超时秒数（0=自动 900+3*length，按帧数缩放防长镜误判）")
+    ap.add_argument("--gpu-index", type=int, default=VRAM_GPU_INDEX_DEFAULT,
+                    help=f"nvidia-smi GPU index（默认 {VRAM_GPU_INDEX_DEFAULT} = "
+                         f"comfyui-primary 所在 3090）")
+    ap.add_argument("--vram-wait-timeout", type=int, default=1800,
+                    help="批开始 eye 等待 / 每镜 foreign 等待的超时秒数（默认 1800）")
     args = ap.parse_args()
     signal.signal(signal.SIGINT, signal.default_int_handler)  # Ctrl-C 可中断批（断点续跑承接）
 
@@ -544,8 +840,8 @@ def main() -> int:
             os.unlink(force_sidecar)
         print(f"{STEP_TAG} [force] 已清除 {force_cache_dir} / {force_out_dir} / {force_sidecar}")
 
-    # ComfyUI 可达性 gate（标准序第一位；20-02 的 VRAM guard 序列插在此 gate 之后：
-    # ComfyUI down 时直接降级退出，不白杀 TTS、不空轮 eye lease）。
+    # ComfyUI 可达性 gate（标准序第一位：ComfyUI down 时先降级退出，不白杀 TTS、
+    # 不空轮 eye lease）→ batch_start_guard → 批循环（20-01 注释锁定的标准序）。
     status, _body = _http_json(f"{args.comfy_url}/system_stats")
     if status != 200:
         pending_warnings.append({"code": "comfyui_unreachable",
@@ -553,6 +849,19 @@ def main() -> int:
         append_roundtrip_warnings(work_dir, pending_warnings)
         print(f"{STEP_TAG} ComfyUI 不可达（status={status}）—— graceful-degrade 退出")
         return 0
+
+    # 批开始 VRAM guard（五步固定序，见模块 docstring）。blocked → 优雅退出
+    # exit 0（graceful-degrade：vram_insufficient warning，cache 保留续跑语义）。
+    guard = batch_start_guard(args.comfy_url, args.gpu_index,
+                              args.vram_wait_timeout)
+    pending_warnings.extend(guard["warnings"])
+    if guard["blocked"]:
+        append_roundtrip_warnings(work_dir, pending_warnings)
+        print(f"{STEP_TAG} 批开始 guard 拒绝（reason={guard['reason']}）"
+              f"—— graceful-degrade 退出")
+        return 0
+    # 每镜复查基线（guard 之后快照——此刻 GPU 上的 PID 全部属「已过 gate」态）。
+    baseline_pids = baseline_pid_snapshot(args.gpu_index)
 
     # 本 plan 固定默认分辨率（--regen-resolution flag 在 20-02 接入）。
     width, height = DEFAULT_WIDTH, DEFAULT_HEIGHT
@@ -584,6 +893,23 @@ def main() -> int:
             cache_hits += 1
             print(f"{STEP_TAG} shot {sid}: cache hit, skipping")
             continue
+        # 每镜提交前 PID 归因复查（Pitfall 1：基线内自身 cache 驻留不触发；
+        # foreign ≥4GB 且超时 → 优雅终止批，break 落到收尾 flush 后 return 0）。
+        if not per_shot_vram_ok(args.gpu_index, baseline_pids,
+                                args.vram_wait_timeout):
+            foreign = sorted(((p, u) for p, u in compute_apps(args.gpu_index)
+                              if p not in baseline_pids), key=lambda x: -x[1])
+            top = "; ".join(f"pid={p}({proc_name(p)})={u}MiB"
+                            for p, u in foreign[:3]) or "n/a"
+            mem = gpu_mem_mib(args.gpu_index)
+            free_s = f"{mem[1]}MiB" if mem else "n/a"
+            pending_warnings.append({
+                "code": "vram_insufficient",
+                "detail": f"镜 {sid} 提交前 foreign GPU 占用 ≥{FOREIGN_BLOCK_MIB}MiB"
+                          f"（top: {top}; free={free_s}）—— 优雅终止批，cache 保留续跑"})
+            print(f"{STEP_TAG} shot {sid}: foreign 占用超限 —— 优雅终止批"
+                  f"（cache 保留续跑）")
+            break
         try:
             length = h3_frame_count(shot["duration"])
             seed = derive_seed(vch, sid)
@@ -620,6 +946,10 @@ def main() -> int:
                 "height": height,
                 "mp4_sha256": _file_sha256(mp4),
             })
+            # 渲后水位留档（Open Q1 数据：--lowvram 下渲后自身 cache 驻留的实测
+            # 水位，为后续 guard 调参留证据；nvidia-smi 不可得记 None）。
+            mem_after = gpu_mem_mib(args.gpu_index)
+            meta["post_render_free_mib"] = mem_after[1] if mem_after else None
             cache_write(sid, work_dir, meta)
             rendered += 1
             print(f"{STEP_TAG} shot {sid}: rendered {os.path.basename(mp4)}")
