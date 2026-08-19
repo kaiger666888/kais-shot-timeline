@@ -21,7 +21,7 @@
 ### RT — 契约层（schema 1.2→1.3，纯增量）
 - [x] **RT-01**: `roundtrip.schema.json` sidecar — per-shot {regen video ref, scores{midframe_sim, judge}, verdict{accepted/rejected}, attribution, reason}；additive optional；v1.2 及以前全部数据文件 **byte-identical-absent 红线**
 - [x] **RT-02**: `SCHEMA_VERSION = "1.3"` producer-locked 单源；`validate.py` shape gate 扩展；fixture + v1.2↔v1.3 bidirectional cross-version proof
-- [ ] **RT-03**: SPEC §4 changelog 1.2→1.3 + §5 roundtrip 形状文档 + fidelity disclaimer（accepted = 「h3 可复现」≠「prompt 完美」）
+- [x] **RT-03**: SPEC §4 changelog 1.2→1.3 + §5 roundtrip 形状文档 + fidelity disclaimer（accepted = 「h3 可复现」≠「prompt 完美」）
 - [x] **RT-04**: graceful-degrade —— ComfyUI 不可达 / VRAM 不足 / 打分模型缺席 → roundtrip sidecar 缺省（byte-identical-absent）、资产照常导出、`[roundtrip]` warnings sidecar 记因
 - [ ] **RT-05**: accepted 子集独立 dataset 目录导出 —— `dataset/<video-stem>/`（per-shot 首帧/尾帧 jpg + prompt.json + manifest 含 scores/attribution）；消费端不依赖 asset 契约
 
@@ -81,7 +81,7 @@ Each v1.3 REQ-ID maps to exactly one phase. Coverage: 19/19 (100%).
 |--------|-------|--------|
 | RT-01 | Phase 18 (Contract v1.3) | Complete |
 | RT-02 | Phase 18 (Contract v1.3) | Complete |
-| RT-03 | Phase 18 (Contract v1.3) | Pending |
+| RT-03 | Phase 18 (Contract v1.3) | Complete |
 | RT-04 | Phase 18 (Contract v1.3) | Complete |
 | RT-05 | Phase 22 (Dataset Export + Integration) | Pending |
 | VISION-01 | Phase 19 (qwen-eye v2 看片段) | Pending |
