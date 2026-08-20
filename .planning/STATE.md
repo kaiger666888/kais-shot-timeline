@@ -4,7 +4,7 @@ milestone: v1.3
 milestone_name: Round-trip Validation（逆推→复现→比对闭环数据集）
 status: milestone_complete
 stopped_at: Milestone complete (Phase 22 was final phase)
-last_updated: 2026-08-20T13:04:17.296Z
+last_updated: 2026-08-20T13:04:26.472Z
 last_activity: 2026-08-20
 progress:
   total_phases: 5
@@ -36,7 +36,7 @@ Progress: [█████████░] 94%
 
 **Velocity (cumulative historical):**
 
-- Total plans completed: 81 (v1.0: 7, v1.1: 16, v1.2: 20 — all archived)
+- Total plans completed: 85 (v1.0: 7, v1.1: 16, v1.2: 20 — all archived)
 - v1.3 plans completed: 9
 
 **By Phase (v1.3 — populates as plans complete):**
@@ -172,3 +172,12 @@ Resume file: None
 - `/gsd:plan-phase 21`（Scorer + 阈值校准）——v1.3 第四个 phase，依赖 18+20 均已就绪
 - 可选（Kai 指令触发）：Phase 21 前置 overnight uniform-20 批任务（20-03 SUMMARY「SC1 验证姿态」载明，为打分器备 19-20 镜 regen 素材；`--sample-shots 20` 全量 live 不在交互路径）
 - :8765 静态服务（Task 3 抽检用，PID 见 /tmp/kst_serve_2003.log）看片已结束，可由 orchestrator/用户 kill
+
+## Deferred Items
+
+Items acknowledged and deferred at milestone close on 2026-08-20:
+
+| Category | Item | Status |
+|----------|------|--------|
+| quick_task | 260725-afz-prompt-spike-audio-gen-nl-prompt-demucs- | missing SUMMARY（v1.2 期 quick，先于 v1.3） |
+| quick_task | 260819-aw2-canvas-auto-import | missing SUMMARY（08-19 quick，canvas 自动导入已 ship 于 aw2 commits） |
