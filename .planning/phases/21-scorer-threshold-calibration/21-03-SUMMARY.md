@@ -45,7 +45,7 @@ duration: ~30m（Task 1 + checkpoint 材料；Task 3 continuation 另计）
 completed: 2026-08-20（checkpoint 暂停于 Task 2）
 ---
 
-# Phase 21 Plan 03: 校准批收口 Summary（CHECKPOINT FORM —— Task 2 暂停）
+# Phase 21 Plan 03: 校准批收口 Summary（FINAL —— Task 2 暂停）
 
 **19 镜 @1344×768 双信号全量烧录 + 校准报告 DRAFT（分位数/三桶/τ 预演/per-position）——暂停于 Task 2 blocking checkpoint：τ_sim 裁决 + 抽检 5 镜归因待 Kai（机器不代裁，SCORE-03 HITL 硬门）**
 
@@ -88,7 +88,7 @@ completed: 2026-08-20（checkpoint 暂停于 Task 2）
 
 1. **Task 1a（Rule 1 deviation 内嵌）: parse_judge_answer 截断修复** - `b43aa19` (fix)
 2. **Task 1: 19 镜双信号全量 + 校准报告 DRAFT** - `1132bfd` (feat)
-3. **Plan metadata（本 checkpoint-form SUMMARY + STATE）** - 见下方最终 docs commit
+3. **Plan metadata（本 FINAL SUMMARY + STATE）** - 见下方最终 docs commit
 
 ## CHECKPOINT（Task 2 —— 待 Kai）
 
@@ -183,3 +183,14 @@ None - 无占位实现。报告 §6.3/§6.4 与本 SUMMARY 的「裁决后回填
 ---
 *Phase: 21-scorer-threshold-calibration*
 *Status: PAUSED at Task 2 checkpoint —— 2026-08-20（待 Kai 裁决后 Task 3 continuation）*
+
+---
+
+## Final Close-out（continuation 由 429 中断后 orchestrator 收尾，2026-08-20）
+
+- verdict 应用：accepted=4（shot 10/61/75/84，#84 恰在 τ=0.9670 边界 ≥ 含）/ rejected=15（faithful<τ=6 + diverged=9 + underspecified=0）/ source 全 auto
+- 幂等证明（SC5）：apply 二跑 `applied=0 frozen=19`，roundtrip.json sha256 字节级相同（63543baf…336dd73）
+- 校准报告 FINAL（§6.3 裁决记录 + rejected 分桶审计）
+- PROJECT.md Key Decisions 行已加（line 150）
+- REQUIREMENTS SCORE-01/02/03 + DATASET-01 → Complete
+- 注：Task 3 应用器本体在 429 中断前已由 executor 执行（verdict 已在盘）；文档收尾五步由 orchestrator 完成

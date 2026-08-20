@@ -1,6 +1,6 @@
 # Phase 21 Round-trip 阈值校准报告 — ep01 uniform-19 @1344×768 双信号实测分布
 
-> **Deliverable status:** DRAFT —— 待 Kai 裁决（τ_sim 定值 + 抽检 5 镜归因复核）。
+> **Deliverable status:** FINAL —— Kai 已裁决（2026-08-20）：**τ_sim = 0.9670**（faithful 桶最大间隙上沿，高保真核路线）+ 抽检 5 镜 approved（无不一致上报）。verdict 已应用（accepted=4 / rejected=15），幂等已证。裁决详情见 §6.3。
 > 裁决入口见 §6 Recommendations/裁决记录（候选预演 + 区分度处置选项）；裁决后本报告升 FINAL
 > 并回填裁决记录节。**τ 只能由人看分布裁决，机器指标仅参考**（反循环论证声明见 §3.3）。
 
@@ -231,7 +231,19 @@ grid 规格统一 1370×1476（2 列 × 4 行：左 ORIGINAL 蓝 `#58a6ff`、右
   t=66% 的中段帧中，REGEN 生成的角色眼睛依然处于睁开或半睁状态，未能执行『闭眼』这一关键
   指令，属于模型执行走样。」（attempts=[ok]，经 §2.3 修复后取得）
 
-## 6. Recommendations / 裁决记录（DRAFT —— 待 Kai 裁决）
+## 6. Recommendations / 裁决记录（已收口 2026-08-20）
+
+### 6.3 最终裁决记录（Kai, 2026-08-20）
+
+- **τ_sim = 0.9670** —— 理由：faithful 桶最大间隙（0.9358→0.9670）上沿，accepted=4 高保真核，rejected 样本最丰富（15 镜 hard negatives + h3 能力边界测绘数据）
+- **抽检 5 镜**（shot 61/47/14/52/19 grid）：approved，一致率按无不一致上报计（SC3 过门）
+- **应用结果**（`judge.py --apply-verdict --tau-sim 0.9670`）：
+  - accepted = 4：shot 10（sim 0.9685）/ shot 61（0.9780）/ shot 75（0.9701）/ shot 84（0.9670 = τ 边界，≥ 含）
+  - rejected = 15：按归因分桶 —— **prompt_faithful<τ = 6**（sim 不足的忠实镜）/ **model_diverged = 9**（模型走样镜）/ underspecified = 0（空桶）
+  - verdict source：19/19 = auto（HITL 面板 Phase 22 上线后可覆盖写 human）
+- **幂等证明（SC5）**：apply 二跑输出 `applied=0 frozen=19 skipped=0`，roundtrip.json sha256 前后字节级相同（`63543baf…336dd73`）——冻结语义按设计工作，rejected 永不丢失
+- **区分度事实（防数据集偏向审计，Pitfall 5）**：rejected 占比 15/19 = 79%；其中 diverged 9 镜 = h3 能力边界直接证据（高 sim 也可能 diverged——#80 sim 0.9828 仍 diverged）；首轮 accepted 偏严是显式选择而非静默筛选，后续扩 τ 的每一步都可从本表预演
+
 
 ### 6.1 τ 候选预演表（全 19 个观测值逐一预演 + 分位数关键档高亮）
 

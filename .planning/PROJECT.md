@@ -147,6 +147,7 @@ Cross-repo dependencies out of this repo's control; producer/contract side compl
 | **v1.3** h3 客户端 kst 直连 ComfyUI API（非经 kmc/hermes runtime） | 闭环是 kst 资产生产一部分；mirror route-client 模式 + p11b VRAM pitfalls（kill TTS + `/free`）+ per-shot cache | — Pending |
 | **v1.3** dataset 导出独立目录（非 asset.json 内嵌 subset） | 消费端不受契约约束；asset 契约只 additive 挂 `roundtrip.json` sidecar | — Pending |
 | **v1.3** MUS-04 乐器识别继续 defer（v1.2 遗留，PANNs zenodo-blocked 未解） | 本 milestone 已满载不捎带；DIA-06 同理继续 defer | — Pending |
+| **v1.3 Phase 21** — accepted 双门槛：τ_sim=0.9670 ∧ prompt_faithful（硬合取） | Kai 看分布裁决（2026-08-20）：faithful 桶最大间隙 0.9358→0.9670 上沿——高保真核路线 accepted=4，rejected=15（faithful<τ=6 + diverged=9）保 hard negatives 丰富性；sim 对归因桶区分度弱（两桶重叠 17/19）故双门槛实质由 faithful 桶主导 | ✓ Validated Phase 21（19 镜 @1344×768 实测分布；证据 `.planning/research/roundtrip-threshold-calibration.md` §6.1 预演表 + §6.3 裁决记录；幂等 sha256 双值已证） |
 
 ## Evolution
 

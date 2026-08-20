@@ -36,12 +36,12 @@
 - [x] **REGEN-04**: 抽样与降载 —— `--sample-shots N`（首轮 ≤20 镜校准用）+ `--regen-resolution` 降分辨率验证模式 + >10s 长镜跳过策略（可配置）
 
 ### SCORE — 打分器
-- [ ] **SCORE-01**: 中段帧相似度 —— 原片段 vs 重生成片段在 25%-75% 时窗的 CLIP/SigLIP 帧 embedding 轨迹相似度；显式排除 t=0/t=end（被 condition，无信息量）
-- [ ] **SCORE-02**: VLM judge 归因 —— qwen-eye 看原片段 vs 重生成片段采样帧并排，产 schema 化 verdict：`prompt_faithful`（prompt 描述了X且渲染出X）/ `model_diverged`（描述了X渲染成Y，prompt 好）/ `prompt_underspecified`（欠约束，h3 自行脑补）；结构化输出（可复用 glm-structured-output 模式）
-- [ ] **SCORE-03**: 阈值校准 spike —— ep01 抽样 ≤20 镜实测双信号分布（midframe_sim + judge）→ 锁 accepted 双门槛；rejected 占比记录且可审计（防数据集静默偏向简单动作）
+- [x] **SCORE-01**: 中段帧相似度 —— 原片段 vs 重生成片段在 25%-75% 时窗的 CLIP/SigLIP 帧 embedding 轨迹相似度；显式排除 t=0/t=end（被 condition，无信息量）
+- [x] **SCORE-02**: VLM judge 归因 —— qwen-eye 看原片段 vs 重生成片段采样帧并排，产 schema 化 verdict：`prompt_faithful`（prompt 描述了X且渲染出X）/ `model_diverged`（描述了X渲染成Y，prompt 好）/ `prompt_underspecified`（欠约束，h3 自行脑补）；结构化输出（可复用 glm-structured-output 模式）
+- [x] **SCORE-03**: 阈值校准 spike —— ep01 抽样 ≤20 镜实测双信号分布（midframe_sim + judge）→ 锁 accepted 双门槛；rejected 占比记录且可审计（防数据集静默偏向简单动作）
 
 ### DATASET — verdict 与数据集
-- [ ] **DATASET-01**: verdict 合并写 `roundtrip.json` —— accepted/rejected + attribution + reason + scores；rejected **永不删除**（hard negatives + h3 能力边界测绘）
+- [x] **DATASET-01**: verdict 合并写 `roundtrip.json` —— accepted/rejected + attribution + reason + scores；rejected **永不删除**（hard negatives + h3 能力边界测绘）
 - [ ] **DATASET-02**: dataset manifest + hard-negative 索引 —— accepted/rejected 分清单，含 prompt 快照与引擎版本（可复现、可审计）
 
 ### PIPE — 流水线集成
@@ -90,10 +90,10 @@ Each v1.3 REQ-ID maps to exactly one phase. Coverage: 19/19 (100%).
 | REGEN-02 | Phase 20 (h3 复现客户端) | Complete |
 | REGEN-03 | Phase 20 (h3 复现客户端) | Complete |
 | REGEN-04 | Phase 20 (h3 复现客户端) | Complete |
-| SCORE-01 | Phase 21 (Scorer + 阈值校准) | Pending |
-| SCORE-02 | Phase 21 (Scorer + 阈值校准) | Pending |
-| SCORE-03 | Phase 21 (Scorer + 阈值校准) | Pending |
-| DATASET-01 | Phase 21 (Scorer + 阈值校准) | Pending |
+| SCORE-01 | Phase 21 (Scorer + 阈值校准) | Complete |
+| SCORE-02 | Phase 21 (Scorer + 阈值校准) | Complete |
+| SCORE-03 | Phase 21 (Scorer + 阈值校准) | Complete |
+| DATASET-01 | Phase 21 (Scorer + 阈值校准) | Complete |
 | DATASET-02 | Phase 22 (Dataset Export + Integration) | Pending |
 | PIPE-01 | Phase 22 (Dataset Export + Integration) | Pending |
 | PIPE-02 | Phase 22 (Dataset Export + Integration) | Pending |

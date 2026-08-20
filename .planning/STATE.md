@@ -2,10 +2,10 @@
 gsd_state_version: 1.0
 milestone: v1.3
 milestone_name: Round-trip Validation（逆推→复现→比对闭环数据集）
-status: executing
+status: verifying
 stopped_at: 21-03 Task 2 checkpoint —— 待 Kai 裁决 tau_sim + 抽检 5 镜（材料：.planning/research/roundtrip-threshold-calibration.md DRAFT）
-last_updated: "2026-08-20T01:58:12.861Z"
-last_activity: 2026-08-19
+last_updated: "2026-08-20T02:39:55.978Z"
+last_activity: 2026-08-20
 progress:
   total_phases: 5
   completed_phases: 4
@@ -27,7 +27,7 @@ See: .planning/PROJECT.md (updated 2026-08-19)
 
 Phase: 21 (Scorer + 阈值校准) — EXECUTING
 Plan: 3 of 3
-Status: PAUSED — Task 2 checkpoint（待 Kai 裁决 tau_sim + 抽检 5 镜；Task 3 continuation 未启动）
+Status: Phase complete — ready for verification
 Last activity: 2026-08-20
 
 Progress: [█████████░] 92%
