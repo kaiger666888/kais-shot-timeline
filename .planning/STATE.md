@@ -2,16 +2,16 @@
 gsd_state_version: 1.0
 milestone: v1.3
 milestone_name: Round-trip Validation（逆推→复现→比对闭环数据集）
-status: ready_to_plan
-stopped_at: Phase 21 complete (3/3) — ready to discuss Phase 22
-last_updated: 2026-08-20T03:23:05.787Z
-last_activity: 2026-08-20
+status: executing
+stopped_at: Phase 22 UI-SPEC approved
+last_updated: "2026-08-20T04:25:44.727Z"
+last_activity: 2026-08-20 -- Phase 22 planning complete
 progress:
   total_phases: 5
   completed_phases: 4
-  total_plans: 12
+  total_plans: 16
   completed_plans: 12
-  percent: 80
+  percent: 75
 ---
 
 # Project State
@@ -27,8 +27,8 @@ See: .planning/PROJECT.md (updated 2026-08-19)
 
 Phase: 22
 Plan: Not started
-Status: Ready to plan
-Last activity: 2026-08-20
+Status: Ready to execute
+Last activity: 2026-08-20 -- Phase 22 planning complete
 
 Progress: [█████████░] 92%
 
@@ -150,9 +150,9 @@ Items acknowledged and carried forward (full history in archived milestone REQUI
 
 ## Session Continuity
 
-Last session: 2026-08-20T01:57:54.234Z
-Stopped at: 21-03 Task 2 checkpoint —— 待 Kai 裁决 tau_sim + 抽检 5 镜（材料：.planning/research/roundtrip-threshold-calibration.md DRAFT）
-Resume file: .planning/research/roundtrip-threshold-calibration.md
+Last session: 2026-08-20T03:49:39.285Z
+Stopped at: Phase 22 UI-SPEC approved
+Resume file: .planning/phases/22-dataset-export-integration/22-UI-SPEC.md
 
 ## Operator Next Steps
 

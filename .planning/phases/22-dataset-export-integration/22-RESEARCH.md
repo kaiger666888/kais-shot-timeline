@@ -373,14 +373,14 @@ def test_xss_injection_not_executed(tmp_path):
 | A4 | 首尾帧优先直拷 route_cache/h3_regen/frames/ 现存文件、缺席才重提 | Pattern 6 | 若 route_cache 帧曾被清（--force 后未重渲），回落到重提路径——同一函数，字节等价，无正确性风险仅耗时 |
 | A5 | scorer/judge 不透传 pipeline `--device`（保持模块自身默认） | Pattern 3 | 若 Kai 想统一设备控制，需加映射逻辑；现状默认已是精心设计的分卡 |
 
-## Open Questions
+## Open Questions (RESOLVED)
 
-1. **dataset 目录根的两层解读**
+RESOLVED → 22-02 采纳。原问：1. **dataset 目录根的两层解读**
    - What we know: RT-05/CONTEXT 写 `dataset/<video-stem>/`；PROJECT.md locked decision #6 只说"独立目录（非 asset.json 内嵌）"。
    - What's unclear: dataset 根在 output/ 下还是 work_dir 内。
    - Recommendation: `--dataset-root` 默认 `<output-dir>/dataset`（跨视频集合心智 + 消费端一个根取全量）。plan 里作 discretion 决策显式记录即可，不必回问。
 
-2. **roundtrip-edits 要不要 schema —— 推荐要（已在 Pattern 5 给理由）**
+RESOLVED → 22-02 采纳。原问：2. **roundtrip-edits 要不要 schema —— 推荐要（已在 Pattern 5 给理由）**
    - registry/speaker 双先例都建了；T-07-02 把"apply 前 Validator 预校验"列为强制；UI-SPEC 也已把 schema 文件路径写进契约（`spec/schemas/roundtrip-edits.schema.json`）。执行即可，非真开放问题。
 
 ## Environment Availability
