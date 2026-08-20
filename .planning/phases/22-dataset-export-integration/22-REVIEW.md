@@ -63,6 +63,8 @@ const check = q ? q.querySelector('.queue-check') : null;
 if (check) check.textContent = state.reviewed.has(sid) ? '✓' : '';
 ```
 
+**Outcome:** fixed (6cc0cde) — applyVisualState 改经 `.queue-check` 占位 span 更新 ✓（anchor 其余子节点不动）；新增回归锚 `test_queue_checkmark_targets_dedicated_span`（源码断言不写 `q.textContent` + check span 选择器/填充形态/server 渲染 span 计数锁）；ep01 正本 roundtrip_review.html 已重生成复验 19/19 queue 项 topline/sim bar 完好，roundtrip.json sha 不变。
+
 ## Warnings
 
 ### WR-01: `accepted.txt` and `manifest["shots"]` list accepted shots whose directories were never created (or were removed) — count and index contradict each other
@@ -83,6 +85,8 @@ with open(..., "accepted.txt", ...) as f:
         f.write(name + "\n")
 ```
 
+**Outcome:** fixed (d4d8b11) — 导出循环内建 `exported_names`（本轮成功集）+ `skipped_ids`；accepted.txt / manifest["shots"] 均从实际导出集派生（accepted_count == len(shots) == accepted.txt 行数），skipped 镜单列 manifest["exported_skipped"]；新增两回归锚（prompts 缺条目路径 + 帧降级路径的索引三一致断言）。
+
 ### WR-02: Degraded rerun deletes previously-good dataset shot directories
 
 **File:** `analysis/roundtrip/export_dataset.py:338-346`
@@ -101,17 +105,23 @@ if frames is None:
     continue
 ```
 
+**Outcome:** fixed (c7bcd6c) — `created = not isdir(shot_dir)` 区分本轮自建/上轮遗存：降级只 rmtree 本轮半成品，上轮完好目录保留 + warning（不进本轮索引，WR-01 口径）；新增两回归锚（降级重跑上轮帧/prompt.json 字节不变 + 对照面：本轮自建半成品仍清）。
+
 ### WR-03: τ change on a cache-hit rerun displays a non-governing τ as governing (panel pill/tick/queue-sort + dataset manifest)
 
 **File:** `run_pipeline.py:630-651` (τ forwarded to `_gen_review_html` on both hit and miss paths), `analysis/roundtrip/export_dataset.py:355-357` (manifest `tau_sim`)
 **Issue:** `--tau-sim` is not part of the step_roundtrip cache key and verdicts are frozen by design (judge skips any shot with an existing verdict). Scenario: first full run at τ=0.9670 freezes verdicts; operator re-runs with `--tau-sim 0.93` — shots/prompts mtimes and video-stamp unchanged → outer cache hits → judge never re-runs (and would skip frozen verdicts anyway) → the review HTML is regenerated with the **new** τ: header pill `τ_sim=0.9300`, tick at 93%, and `_queue_sort_key` "τ 边界排序" computed under the new τ — all describing verdicts actually decided under 0.9670. The dataset post-step then records `tau_sim: 0.93` in `manifest.json` for the same frozen verdicts. The panel and manifest actively misrepresent the threshold that produced the data (provenance/audit defect; judge's frozen semantics are locked, so the fix belongs on the display/provenance side).
 **Fix:** Record the effective τ with the verdict at freeze time (e.g. judge writes `decided_at` alongside a `tau_sim` field, or sidecar top-level `verdict_tau`), and have the panel/manifest read the frozen value when present; at minimum, when the passed τ differs from the τ under which frozen verdicts were decided, print a prominent warning and/or stamp the manifest with the sidecar's τ rather than the CLI flag.
 
+**Outcome:** fixed (daf8365) — 三处最小正确解：(1) judge.apply_verdict 首次实际 apply 把决策 τ 写 `roundtrip.json.verdict-tau` stamp（mirror .video-stamp 纯文本先例；阈值不进 roundtrip.schema.json——two-tier authority lock 不动；写后不覆盖 + 换 τ 重跑不一致 warning）；(2) step_roundtrip 外层 cache stamp 身份追加 `|tau=<τ>` 后缀——换 τ 强制 miss 重生成 HTML/manifest；(3) export_dataset manifest 的 `tau_sim` 拆成 `verdict_tau`（从 stamp 读，缺席/坏值 → null + warning）与 `export_tau`（本轮 CLI τ）双记。新增六回归锚（judge 两 + export 三 + wiring 一）。schema 未动（spec/validate.py 0 failures 保持）。
+
 ### WR-04: UI-SPEC data-mapping deviation — `regen.engine_version` / `engine_name` never rendered; `_esc` docstring overclaims coverage
 
 **File:** `html/gen_roundtrip_review.py:262-264` (prompt fold summary), docstring `:20-22`
 **Issue:** 22-UI-SPEC data→UI mapping table row "`shots[].regen.engine_version` / `prompt_version` | prompt 快照 `<summary>` 尾注`" is only half-implemented: only `prompt_version` appears in the `<summary>`; `engine_version` (and `engine_name`) are not rendered anywhere in the panel. The module docstring's XSS checklist claims `engine_name+engine_version+prompt_version` are escaped — vacuously true for two of the three since they never reach the HTML. Operator-facing consequence: the panel provides no way to audit which engine version produced a regen (a stated purpose of the regen 4-tuple contract); the operator must open the sidecar JSON.
 **Fix:** Add engine version to the fold header, e.g. `▸ Prompt 快照 (prompt v{prompt_version} · {engine_version})` (through `_esc`), or a mono line inside the fold body; alternatively amend the UI-SPEC if the omission was a deliberate cut — but then also fix the docstring claim.
+
+**Outcome:** fixed (bc51e50) — fold summary 尾注改「prompt v{pv} · {engine_version}」（均经 _esc，半边缺席退化）；docstring 第 1 层清单改为实际到达 HTML 的字段（engine_name 不渲染——映射表未含，进 dataset prompt.json）；新增回归锚 `test_prompt_fold_summary_includes_engine_version`；ep01 正本重生成复验 19/19 尾注含引擎版本、roundtrip.json sha 不变。
 
 ## Info
 
