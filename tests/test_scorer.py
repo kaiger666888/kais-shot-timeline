@@ -321,6 +321,73 @@ def test_cache_miss_on_different_regen_bytes(tmp_path, monkeypatch):
     assert payload2["regen_mp4_sha256_16"] != sha1
 
 
+# ── CR-01：cache-hit 回填 sidecar（断点续跑完整性）──────────────────────────
+
+def test_cache_hit_backfills_missing_sidecar_half(tmp_path, monkeypatch):
+    """CR-01：批末 sidecar 写未发生（cache 已持久、sidecar 无分数）→ 重跑
+    全命中也从 cache 回填半边——零模型加载，分数回到 roundtrip.json。"""
+    thetas = [0.25 * (j + 1) for j in range(8)]
+    work = make_workdir(tmp_path, n_shots=1)
+    loads, _ = patch_scorer(monkeypatch,
+                            embed_impl=make_fake_embed(work, 1, thetas))
+    assert run_main(work) == 0
+    cached_score = read_cache(work, 1)["score"]
+    # 模拟中断：roundtrip.json 回到只有 regen 半边的状态（cache 保留）
+    side = read_sidecar(work)
+    side["shots"][0].pop("scores", None)
+    (work / "roundtrip.json").write_text(
+        json.dumps(side, ensure_ascii=False, indent=2), encoding="utf-8")
+    assert run_main(work) == 0                     # 全命中重跑
+    assert loads["n"] == 1                         # 仍零模型加载
+    after = read_sidecar(work)
+    assert validate_sidecar(after) == []
+    entry = after["shots"][0]
+    assert entry["scores"]["midframe_sim"]["score"] == cached_score
+    assert entry["scores"]["midframe_sim"]["model"] == sc.MODEL_LABEL
+
+
+def test_partial_hit_backfills_interrupted_half(tmp_path, monkeypatch):
+    """CR-01 命中子集：shot 1 cache 在而 sidecar 半边丢、shot 2 cache 丢 →
+    重跑 shot 1 回填（零前向）+ shot 2 重打分，批尾一次写齐两条半边。"""
+    thetas = [0.18 * (j + 1) for j in range(8)]
+
+    def embed_by_position(model, processor, device, frames):
+        """多镜通用的位置序替身（embed_frames 收到的 frames 恒为 orig 0..7
+        + regen 0..7 的 PIL 序列——不依赖 frames 目录的单镜假设）。"""
+        dim = 8 + 1
+        vecs = []
+        for idx in range(16):
+            v = np.zeros(dim)
+            j = idx % 8
+            if idx < 8:
+                v[j] = 1.0
+            else:
+                v[j] = math.cos(thetas[j])
+                v[dim - 1] = math.sin(thetas[j])
+            vecs.append(v)
+        return np.array(vecs)
+
+    work = make_workdir(tmp_path, n_shots=2)
+    loads, _ = patch_scorer(monkeypatch, embed_impl=embed_by_position)
+    assert run_main(work) == 0
+    cached1 = read_cache(work, 1)["score"]
+    cached2 = read_cache(work, 2)["score"]
+    # 模拟中断：sidecar 两条半边都没落 + shot 2 cache 也没写成功
+    side = read_sidecar(work)
+    for s in side["shots"]:
+        s.pop("scores", None)
+    (work / "roundtrip.json").write_text(
+        json.dumps(side, ensure_ascii=False, indent=2), encoding="utf-8")
+    (work / sc.SCORER_CACHE_SUBDIR / "shot_002.json").unlink()
+    assert run_main(work) == 0
+    assert loads["n"] == 2                         # 只有 shot 2 重打分
+    after = read_sidecar(work)
+    assert validate_sidecar(after) == []
+    by = {s["shot_id"]: s for s in after["shots"]}
+    assert by[1]["scores"]["midframe_sim"]["score"] == cached1   # cache 回填
+    assert by[2]["scores"]["midframe_sim"]["score"] == cached2   # 重打分
+
+
 # ── sidecar 浅合并（DATASET-01 merge 语义）──────────────────────────────────
 
 def test_sidecar_shallow_merge_preserves_judge_and_verdict(tmp_path, monkeypatch):

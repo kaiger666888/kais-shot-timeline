@@ -27,6 +27,9 @@ mean 即 midframe_sim 主分数（DTW 轨迹对齐留升级位，CONTEXT 裁决�
    **浅合并**（只 update midframe_sim，绝不整体替换——不丢 judge 半边），
    verdict/regen/status 原样保留；写前两层自校验 mirror h3_regen WR-04
    （本批坏 sys.exit fail-loud；预存坏条目剔除 + .bak-<ts> 备份 + str warning）。
+   cache-hit 镜从 cache meta 重建半边条目随批写入（mirror h3_regen
+   build_sidecar_entries 的 cache-hit 重建——per-shot cache_write 先于批尾
+   sidecar 写，中断后重跑从 cache 回填，半边永不因「全命中早退」丢失，CR-01）。
 
 graceful-degrade 语义
 ---------------------
@@ -307,6 +310,32 @@ def cache_write(shot_id: int, work_dir: str, payload: dict) -> None:
     h3s._atomic_write_json(_scorer_cache_path(shot_id, work_dir), payload)
 
 
+def _replay_hit_entries(work_dir: str, hit_shots: list,
+                        keys: dict[int, dict]) -> list[dict]:
+    """cache-hit 镜从 cache meta 重建 sidecar 半边条目（CR-01，mirror
+    h3_regen build_sidecar_entries 的 cache-hit 重建——「per-shot cache_write
+    已持久但批末 sidecar 写未发生（OSError/Ctrl-C）」的断点续跑死局由此
+    自愈：全命中与命中子集两条路径都回填）。只返回 sidecar 现存内容缺席
+    或不同值的条目——纯 no-op 重跑不重写 roundtrip.json。"""
+    current: dict[int, dict] = {}
+    for s in _read_sidecar_shots(work_dir):
+        if isinstance(s, dict) and isinstance(s.get("shot_id"), int):
+            scores = s.get("scores") if isinstance(s.get("scores"), dict) else {}
+            half = scores.get("midframe_sim")
+            if isinstance(half, dict):
+                current[int(s["shot_id"])] = half
+    out: list[dict] = []
+    for sid, _regen, _path in hit_shots:
+        meta = cache_read(sid, work_dir, keys[sid])
+        if meta is None:
+            continue
+        half = {"score": meta.get("score"), "model": MODEL_LABEL}
+        if current.get(sid) == half:
+            continue                  # sidecar 已有同值半边——无需回填
+        out.append({"shot_id": sid, "scores": {"midframe_sim": half}})
+    return out
+
+
 # ─── roundtrip.json scores 半边写入（READ-merge + 浅合并 + 两层自校验）──────
 
 def write_scores_sidecar(work_dir: str, entries: list[dict]) -> list[str]:
@@ -493,6 +522,7 @@ def main(argv=None) -> int:
     # cache 预判：全 hit 零模型加载（SigLIP 只在存在 miss 时才进内存）。
     keys: dict[int, dict] = {}
     misses: list[tuple[int, dict, str]] = []
+    hit_shots: list[tuple[int, dict, str]] = []
     hits = 0
     for sid, regen, regen_path in candidates:
         key = {
@@ -505,13 +535,21 @@ def main(argv=None) -> int:
         keys[sid] = key
         if cache_read(sid, work_dir, key) is not None:
             hits += 1
+            hit_shots.append((sid, regen, regen_path))
         else:
             misses.append((sid, regen, regen_path))
 
     if not misses:
+        # CR-01：全命中不等于 sidecar 已落——半边缺席/过期时从 cache 回填
+        #（mirror h3_regen cache-hit 重建），否则中断后重跑会「静默成功」
+        # 且分数永不落盘。
+        replayed = _replay_hit_entries(work_dir, hit_shots, keys)
+        if replayed:
+            pending_warnings.extend(write_scores_sidecar(work_dir, replayed))
         if pending_warnings:
             h3s.append_roundtrip_warnings(work_dir, pending_warnings)
-        print(f"{STEP_TAG} 全部 cache 命中（hit={hits} miss=0）—— 零模型加载，无新分数")
+        print(f"{STEP_TAG} 全部 cache 命中（hit={hits} miss=0）—— 零模型加载"
+              f"（sidecar 回填 {len(replayed)} 镜）")
         return 0
 
     try:
@@ -549,6 +587,10 @@ def main(argv=None) -> int:
             "score": payload["score"], "model": MODEL_LABEL}}})
         print(f"{STEP_TAG} shot {sid}: scored sim={payload['score']:.4f}")
 
+    # CR-01：hit 镜半边缺席/过期时同样从 cache 重建，与新打分条目同一批
+    # 批尾写——per-shot cache_write 先于批尾 sidecar 写的中断窗口由此闭环
+    #（中断处之后的重跑把已 cache 的镜回填进 roundtrip.json）。
+    new_entries.extend(_replay_hit_entries(work_dir, hit_shots, keys))
     if new_entries:
         sidecar_warnings = write_scores_sidecar(work_dir, new_entries)
         pending_warnings.extend(sidecar_warnings)

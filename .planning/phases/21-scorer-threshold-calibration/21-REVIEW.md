@@ -70,6 +70,8 @@ if replayed and replayed != 已在 sidecar 的内容:
 
 （或最低成本修法：把批末单次 sidecar 写改为逐镜写 / 或在早退分支检测 sidecar 缺该半边时强制回放。）
 
+**Outcome (fix):** FIXED — 两模块各新增 `_replay_hit_entries(work_dir, hit_shots, keys)`：cache-hit 镜从 cache meta（scorer 取 score / judge 取 parsed 三件套，字段原样透传）重建半边条目，与 sidecar 现存内容比对后只回填缺席/不同值的镜（纯 no-op 重跑不重写 roundtrip.json）。接入两条路径：① 全命中早退分支先回填再 return（含 pending_warnings flush）；② 命中子集路径在批尾 `new_entries.extend(replay)`——per-shot cache_write 先于批尾 sidecar 写的中断窗口由此闭环，重跑即自愈。选择主修法（回放）而非逐镜写：保持批末单次写的原子性/性能，语义 mirror h3_regen L742-745 的 cache-hit 重建。回归锚：`test_cache_hit_backfills_missing_sidecar_half`、`test_partial_hit_backfills_interrupted_half`（scorer）、`test_judge_cache_hit_backfills_missing_sidecar_half`（judge）。
+
 ## Warnings
 
 ### WR-01: judge cache key 缺 prompt 身份维 —— prompts.json 修订后 stale attribution 命中

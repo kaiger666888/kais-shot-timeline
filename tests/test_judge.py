@@ -488,6 +488,37 @@ def test_judge_all_cache_hit_zero_instantiation(tmp_path, monkeypatch):
                           encoding="utf-8")
     patch_judge(monkeypatch, eye_cls=exploding)
     assert run_main(work) == 0
+    # CR-01：全命中早退不吞 sidecar——judge 半边缺席时从 cache 回填
+    side = read_sidecar(work)
+    assert validate_sidecar(side) == []
+    assert side["shots"][0]["scores"]["judge"]["attribution"] == \
+        "prompt_faithful"
+    assert side["shots"][0]["scores"]["judge"]["confidence"] == 0.9
+
+
+def test_judge_cache_hit_backfills_missing_sidecar_half(tmp_path, monkeypatch):
+    """CR-01：批末 sidecar 写未发生（cache 已持久、sidecar 无 judge 半边）→
+    重跑全命中也从 cache parsed 回填——零引擎实例化，判定回到 roundtrip.json。"""
+
+    def exploding(*a, **kw):
+        raise AssertionError("QwenEye 不应被实例化（全 cache 命中零实例化）")
+
+    work = make_workdir(tmp_path, n_shots=1)
+    eye_cls, _state = make_fake_eye([good_answer()])
+    patch_judge(monkeypatch, eye_cls=eye_cls)
+    assert run_main(work) == 0
+    # 模拟中断：roundtrip.json 回到只有 regen 半边的状态（cache 保留）
+    side = read_sidecar(work)
+    side["shots"][0].pop("scores", None)
+    write_sidecar(work, side)
+    patch_judge(monkeypatch, eye_cls=exploding)     # 零实例化仍必须回填
+    assert run_main(work) == 0
+    after = read_sidecar(work)
+    assert validate_sidecar(after) == []
+    judge = after["shots"][0]["scores"]["judge"]
+    assert judge["attribution"] == "prompt_faithful"
+    assert judge["confidence"] == 0.85
+    assert judge["reason"] == json.loads(good_answer())["reason"]
 
 
 def test_engine_unavailable_degrade(tmp_path, monkeypatch):
