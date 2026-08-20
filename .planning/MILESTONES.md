@@ -1,5 +1,30 @@
 # Milestones
 
+## v1.3 Round-trip Validation（逆推→复现→比对闭环数据集） (Shipped: 2026-08-20)
+
+**Phases completed:** 5 phases, 16 plans, 39 tasks
+
+**Key accomplishments:**
+
+- One-liner:
+- One-liner:
+- One-liner:
+- qwen_eye_client 加 observe_pair（两条 user 各一图规避 llama.cpp 多图丢弃 bug）/ask_text（纯文本合并）入口；新建 vision_seq_facets.py v2 模块（均匀 ≤8 帧采样 + action 逐帧问 + camera 相邻对问 + ear 白名单注入 + 双信封 RAW cache + 三策略合并 + 只填空缺 + 预判生命周期 + 零修改短路），22 个新离线单测全套 58 passed，v1 文件零字节改动
+- One-liner:
+- run_pipeline 挂载无编号 pre-step 5.6（--vision-seq/--no-vision-seq/--no-ear 三 flag，5.5 后 step_reid 前，banner plain-label 不 bump step counter）+ wiring 四件套机器锁（62 tests 零回归）；SC1/SC4 wiring 形态收口：sandbox 六镜默认策略 temporal 填充 diff 可见、live sha256 前后等值负测试、cache 命中 0.968s/0.939s 秒级零引擎重跑，全部落 sc1_evidence.txt + 报告新节
+- ComfyUI 直连 fl2va 复现客户端核心链路：13 节点 workflow 模板 deepcopy 注入 + 提交/轮询/view 下载 + per-shot 4-tuple cache 断点续跑 + warnings 双形 merge，15 个全离线单测零真引擎
+- batch_start_guard 五步固定序（TTS 端口→PID 定向 SIGTERM + 审计 / eye 13.7GB 串行等待 / 双 /free / 22GB 严格 gate）+ per-shot PID 归因防自锁 + 均匀抽样/超时跳过/分辨率降载三 CLI，12 个全离线单测（fake nvidia-smi/ss/os.kill），全套 100 passed 零真机
+- roundtrip.json regen 半边写入（READ-merge + schema 写前自校验 + 单源版本）+ ep01 真 ComfyUI smoke 双镜真提交真回收 10.5min + 同命令重跑全 cache-hit 零新提交 + 渲后水位实测——Task 3 目视抽检 checkpoint 待 Kai
+- SigLIP 中段帧轨迹相似度打分器 + qwen-eye 三分类归因 judge + --apply-verdict 硬合取冻结应用器，全离线 FakeSigLIP/FakeEye 替身 38 用例零 GPU 验证（157 passed 零回归）
+- 2 镜 896×512 真 GPU 双信号（SigLIP scorer @GPU0 + qwen-eye judge @GPU1，模块零 bug 零修复 + 157 pytest 零回归）+ uniform-19 @1344×768 overnight 批 nohup 运行中（guard 过线、shot 1 已回收、pidfile/日志交接就位）
+- 19 镜 @1344×768 双信号全量烧录 + 校准报告 DRAFT（分位数/三桶/τ 预演/per-position）——暂停于 Task 2 blocking checkpoint：τ_sim 裁决 + 抽检 5 镜归因待 Kai（机器不代裁，SCORE-03 HITL 硬门）
+- round-trip HITL 审阅面板生成器（双 video 并排 + 三态覆盖 + exportEdits）落地，XSS 三层 hardening 以 19 个注入/六态/形状断言 + mutation 探针锁定为机器证明而非宣称。
+- PRESENT-01 回写半边 + RT-05/DATASET-02 模块半边落地：roundtrip-edits schema（confirmed-only 硬门的一半）+ apply CLI（human 覆盖唯一冻结替换路径、重放 byte-idempotent）+ accepted 子集独立 dataset 导出（消费端零契约依赖，25 个新用例 + ep01 只读双演示全绿）。
+- PIPE-01 落地：step_roundtrip 成为编号 step [9/10]（timeline 与 export 之间）——外层 mtime+video-stamp cache 短路 + 四 subprocess 串（judge --tau-sim 总是显式）+ 六 flag 全透传（τ_sim=0.9670 进默认）+ banner [N/10] 重编号零存活 + Pattern 4 条件挂载修补 + dataset post-step，220 pytest 零回归。
+- Status:
+
+---
+
 ## v1.2 v1.2 (Shipped: 2026-07-26)
 
 **Phases completed:** 8 phases, 20 plans, 39 tasks

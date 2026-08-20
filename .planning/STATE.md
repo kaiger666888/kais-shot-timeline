@@ -2,16 +2,16 @@
 gsd_state_version: 1.0
 milestone: v1.3
 milestone_name: Round-trip Validation（逆推→复现→比对闭环数据集）
-status: milestone_complete
-stopped_at: Milestone complete (Phase 22 was final phase)
-last_updated: 2026-08-20T13:04:26.472Z
-last_activity: 2026-08-20
+status: Awaiting next milestone
+stopped_at: "Completed 22-03-PLAN.md (run_pipeline wiring: step_roundtrip [9/10] + Pattern 4 + dataset post-step)"
+last_updated: "2026-08-20T13:20:45.006Z"
+last_activity: 2026-08-20 — Milestone v1.3 completed and archived
 progress:
   total_phases: 5
-  completed_phases: 4
+  completed_phases: 5
   total_plans: 16
   completed_plans: 16
-  percent: 80
+  percent: 100
 ---
 
 # Project State
@@ -25,12 +25,10 @@ See: .planning/PROJECT.md (updated 2026-08-19)
 
 ## Current Position
 
-Phase: 22
-Plan: Not started
-Status: Milestone complete
-Last activity: 2026-08-20
-
-Progress: [█████████░] 94%
+Phase: Milestone v1.3 complete
+Plan: —
+Status: Awaiting next milestone
+Last activity: 2026-08-20 — Milestone v1.3 completed and archived
 
 ## Performance Metrics
 
@@ -169,9 +167,7 @@ Resume file: None
 
 ## Operator Next Steps
 
-- `/gsd:plan-phase 21`（Scorer + 阈值校准）——v1.3 第四个 phase，依赖 18+20 均已就绪
-- 可选（Kai 指令触发）：Phase 21 前置 overnight uniform-20 批任务（20-03 SUMMARY「SC1 验证姿态」载明，为打分器备 19-20 镜 regen 素材；`--sample-shots 20` 全量 live 不在交互路径）
-- :8765 静态服务（Task 3 抽检用，PID 见 /tmp/kst_serve_2003.log）看片已结束，可由 orchestrator/用户 kill
+- Start the next milestone with /gsd-new-milestone
 
 ## Deferred Items
 
