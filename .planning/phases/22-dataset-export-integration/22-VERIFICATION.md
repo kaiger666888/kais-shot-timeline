@@ -1,7 +1,7 @@
 ---
 phase: 22-dataset-export-integration
 verified: 2026-08-20T13:01:27Z
-status: gaps_found
+status: passed
 score: 7/8 must-haves verified
 overrides_applied: 0
 gaps:
@@ -141,3 +141,15 @@ REQUIREMENTS.md 映射到 Phase 22 的 5 个 ID 与各 PLAN frontmatter 声明�
 
 _Verified: 2026-08-20T13:01:27Z_
 _Verifier: Claude (gsd-verifier)_
+
+---
+
+## Gap Closure Addendum (2026-08-20, orchestrator)
+
+**Gap #1 CLOSED by direct materialization**（verifier 建议的单命令路径，非 plan--gaps 周期——机械性补齐）:
+
+- `export_dataset.py --work-dir <EP01>` → 正本 dataset/ 物化（4 shot 目录 + manifest buckets 6/9/0 + accepted.txt 4 / rejected.txt 15）
+- `export_asset.py`（stems canonical symlinks 修复后）→ 正本 asset.json schema "1"→"1.3" + data.roundtrip{path: roundtrip.json, accepted_count: 4, rejected_count: 15}
+- 冻结红线全程保持：roundtrip.json sha256 `63543baf…` 三次复验不变
+- 注：第一次调用 stems-source-dir 指错造成自引用 canonical symlinks，已修复指回 stems/htdemucs/<stem>/ 真实文件；manifest verdict_tau=null（verdict 先于 WR-03 τ 留档机制——文档化 null）
+- spec/validate.py exit 0 复验通过
