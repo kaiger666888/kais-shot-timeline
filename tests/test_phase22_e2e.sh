@@ -528,8 +528,10 @@ acc = [l.strip() for l in open(f"{d}/accepted.txt", encoding="utf-8") if l.strip
 rej = [l.strip() for l in open(f"{d}/rejected.txt", encoding="utf-8") if l.strip()]
 assert len(acc) == 4, f"accepted.txt {len(acc)} lines"
 assert len(rej) == 15, f"rejected.txt {len(rej)} lines"
-assert m["tau_sim"] == 0.9670, f"manifest tau_sim={m['tau_sim']}"
-print(f"  [PASS] S2 manifest 4/15 + buckets {b} + accepted.txt 4 行 + rejected.txt 15 行 + tau_sim=0.9670")
+# WR-03 后 manifest τ 双记：verdict_tau（决策时刻留档，旧 sidecar 先于留档机制可为 null）
+# + export_tau（本次导出 CLI 值）——harness 断言取 export_tau（B1 修复 2026-08-20）
+assert m.get("export_tau") == 0.9670, f"manifest export_tau={m.get('export_tau')}"
+print(f"  [PASS] S2 manifest 4/15 + buckets {b} + accepted.txt 4 行 + rejected.txt 15 行 + export_tau=0.9670（verdict_tau={m.get('verdict_tau')}）")
 PYEOF
 
 # 冻结红线第 1 点：正本零触碰 + 副本 verdict 块 byte-equal
