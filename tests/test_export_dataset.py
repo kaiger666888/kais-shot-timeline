@@ -329,3 +329,54 @@ def test_partial_failure_frame_degrade_index_consistency(tmp_path):
     assert acc == ["shot_001"]
     assert m["shots"] == {"1": "shot_001"} and m["accepted_count"] == 1
     assert m["exported_skipped"] == [2]
+
+
+# ── 11. WR-02 回归锚：降级重跑不删上轮已成功导出的目录 ─────────────────────
+
+def test_degraded_rerun_preserves_prior_good_dirs(tmp_path, capsys):
+    """WR-02（22-REVIEW）：首轮成功导出后，第二轮因帧来源降级（cache 帧被清
+    + 无源视频）重跑——上轮 shot 目录的 first/last_frame.jpg + prompt.json
+    **必须保留**（旧实现 rmtree 毁掉上轮完好派生数据）；仅本轮自建的半成品
+    目录才清。保留目录不进本轮索引（WR-01 口径）。"""
+    wd = make_work_dir(tmp_path)
+    root = tmp_path / "ds"
+    assert run(wd, root) == 0          # 首轮：1/2 两镜全部导出成功
+    stem = root / wd.name
+    ff_before = (stem / "shot_002" / "first_frame.jpg").read_bytes()
+    pj_before = (stem / "shot_002" / "prompt.json").read_bytes()
+
+    # 第二轮降级：清 shot 2 帧缓存 + 无源视频 → _ensure_endpoint_frames None
+    for f in ("ff", "lf"):
+        (wd / "route_cache" / "h3_regen" / "frames"
+         / f"kst_{VCH}_shot002_{f}.jpg").unlink()
+    assert run(wd, root) == 0
+
+    # 上轮完好导出保留（WR-02 核心）：帧 + prompt.json 字节不变
+    d2 = stem / "shot_002"
+    assert d2.is_dir(), "降级重跑不得删上轮已成功导出的 shot 目录"
+    assert (d2 / "first_frame.jpg").read_bytes() == ff_before
+    assert (d2 / "last_frame.jpg").is_file()
+    assert (d2 / "prompt.json").read_bytes() == pj_before
+    # 但本轮该镜不进索引（帧未重算，索引只列本轮导出成功集）
+    m = json.loads((stem / "manifest.json").read_text(encoding="utf-8"))
+    acc = (stem / "accepted.txt").read_text(encoding="utf-8").strip().splitlines()
+    assert m["exported_skipped"] == [2] and "2" not in m["shots"]
+    assert "shot_002" not in acc
+    # 未降级的 shot 1 本轮照常重导出成功
+    assert m["shots"] == {"1": "shot_001"} and m["accepted_count"] == 1
+    # 保留决策可审计（warning 打印）
+    out = capsys.readouterr().out
+    assert "shot 2" in out and "保留不删" in out
+
+
+def test_degraded_first_run_cleans_own_half_built_dir(tmp_path):
+    """WR-02 对照面：目录是**本轮自建**（无上轮遗存）且降级 → 半成品目录仍清
+    （不残留空目录冒充导出成功）。"""
+    wd = make_work_dir(tmp_path)
+    for f in ("ff", "lf"):
+        (wd / "route_cache" / "h3_regen" / "frames"
+         / f"kst_{VCH}_shot002_{f}.jpg").unlink()
+    root = tmp_path / "ds"
+    assert run(wd, root) == 0
+    assert not (root / wd.name / "shot_002").exists(), \
+        "本轮自建半成品目录必须清（无上轮遗存可保留）"

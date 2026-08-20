@@ -28,7 +28,12 @@ SFT-grade 数据集目录：
       underspecified——DATASET-02 hard-negative 索引可审计）。
     * 幂等重建：重跑整目录自重建——不在当前 accepted 集的 shot_NNN 目录被清
       （**显式清单删自身目录，绝不 glob/rmtree 父级**，T-22-09/T-14-01）；
-      dataset-root 下其它 video-stem 目录不碰。
+      dataset-root 下其它 video-stem 目录不碰。降级重跑（帧来源失败）**不清
+      上轮已成功导出的目录**（WR-02：只清本轮自建半成品，上轮遗存保留 +
+      warning；保留目录不进本轮索引）。
+    * 索引一致性（WR-01）：accepted.txt / manifest["shots"] 只列**本轮实际
+      导出成功**的镜——accepted_count == len(shots) == accepted.txt 行数；
+      降级跳过的镜单列 manifest["exported_skipped"]，绝不进索引。
     * graceful：roundtrip.json 缺席/损坏 → 打印 warning 退出 0（post-step
       语义，不炸管线）；sidecar 坏条目经 h3s._iter_sidecar_errors 过滤 +
       warning 跳过，不炸整批。
@@ -344,13 +349,22 @@ def export_dataset(work_dir: str, dataset_root: str, tau_sim: float) -> int:
             skipped_ids.append(sid)
             continue
         shot_dir = os.path.join(out_dir, f"shot_{sid:03d}")
+        # WR-02（22-REVIEW）：区分本轮自建 vs 上轮遗存——降级（帧两级来源失败）
+        # 只清本轮半成品；上轮已成功导出的目录**保留**（rmtree 会毁掉上轮完好的
+        # first/last_frame.jpg + prompt.json 派生数据）。保留目录不进本轮索引
+        # （WR-01），warning 可审计。
+        created = not os.path.isdir(shot_dir)
         os.makedirs(shot_dir, exist_ok=True)
         frames = _ensure_endpoint_frames(work_dir, sid, prompt_entry,
                                          s.get("regen") if isinstance(
                                              s.get("regen"), dict) else {},
                                          warnings)
         if frames is None:
-            shutil.rmtree(shot_dir, ignore_errors=True)   # 半成品目录不残留
+            if created:
+                shutil.rmtree(shot_dir, ignore_errors=True)   # 仅清本轮半成品
+            else:
+                warnings.append(f"{STEP_TAG} shot {sid}: 帧降级——上轮导出目录"
+                                f"完好，保留不删（本轮不进索引；重跑可重算）")
             skipped_shots += 1
             skipped_ids.append(sid)
             continue
