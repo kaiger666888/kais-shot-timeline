@@ -208,7 +208,8 @@ def test_run_pipeline_help_flags():
 
 def test_canvas_wiring_static():
     """静态断言：canvas_import 调用块在 step_export 之后、check=False、
-    无 [10/ 编号 banner（plain label post-step，step counter 不 bump）。"""
+    无 [11/ 编号 banner（plain label post-step，step counter 不 bump；
+    Phase 22 重编号后 export 是合法 [10/10]，下一个未用号是 11）。"""
     src = (REPO_ROOT / "run_pipeline.py").read_text(encoding="utf-8")
     assert "canvas_import.py" in src
     # 调用块在 step_export 之后（源码顺序；argparse help 亦提及脚本名，均晚于
@@ -219,5 +220,5 @@ def test_canvas_wiring_static():
     assert "check=False" in src[idx_call:idx_call + 800]
     # banner 无编号前缀（mirror attach_refs / local-vision 先例）；banner 是单条
     # f-string print（含内嵌 \n 分隔线），label 非独立引号串 —— 断言文本本身
-    assert "[10/" not in src
+    assert "[11/" not in src
     assert "canvas auto-import (canvas_import post-step)" in src

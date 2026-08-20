@@ -96,10 +96,13 @@ def test_pre_step_wiring_static():
 
 
 def test_step_banner_count_unchanged():
-    """step-counter grep count 不变：[N/9] 形式的 banner 仍只来自原 9 步。"""
+    """step-counter grep count：[N/10] 形式 banner 来自 10 步（Phase 22 重编号后）。
+
+    Phase 22 step_roundtrip 进管线为 [9/10]、export [9/9]→[10/10]（双位数）——
+    regex 相应从 \\d 升到 \\d+；[5.5/10] plain-label 锁语义保持。"""
     import re
     src = (REPO_ROOT / "run_pipeline.py").read_text(encoding="utf-8")
-    numbered = re.findall(r"\[\d/9\]", src)
-    # 原 9 步 × 多处 banner；新 pre-step 用 plain label —— 数量不因它增长
-    assert "[5.5/9]" not in src and "[6/9" in src
+    numbered = re.findall(r"\[\d+/10\]", src)
+    # 10 步 × 多处 banner；5.5 pre-step 用 plain label —— 数量不因它增长
+    assert "[5.5/10]" not in src and "[6/10" in src
     assert len(numbered) >= 9

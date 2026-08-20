@@ -6,7 +6,7 @@
   * --no-ear 默认 False、传入后 True（ear 直通子进程 argv）。
   * 5.6 块在 5.5（local_vision）之后、step_reid 调用之前（源码顺序）。
   * --audio-semantic 引用 step 7 产物路径变量（ear 直通，存在性模块自判）。
-  * banner 无 numeric 前缀（step-counter grep count 不变 —— [5.6/9] 锁）。
+  * banner 无 numeric 前缀（step-counter grep count 不变 —— [5.6/10] 锁）。
 """
 import argparse
 import subprocess
@@ -96,12 +96,12 @@ def test_pre_step_wiring_static():
 
 
 def test_step_banner_count_unchanged():
-    """step-counter grep count 不变：[N/9] 形式的 banner 仍只来自原 9 步。
-    v1 文件的两条既有断言形态全部保留（[5.5/9] 锁继续在位），并加 [5.6/9] 锁。"""
+    """step-counter grep count：[N/10] 形式 banner 来自 10 步（Phase 22 重编号后）。
+    v1 文件的两条既有断言形态全部保留（[5.5/10] 锁继续在位），并加 [5.6/10] 锁。"""
     import re
     src = (REPO_ROOT / "run_pipeline.py").read_text(encoding="utf-8")
-    numbered = re.findall(r"\[\d/9\]", src)
-    # 原 9 步 × 多处 banner；5.5/5.6 两个 pre-step 都用 plain label —— 数量不因它们增长
-    assert "[5.5/9]" not in src and "[6/9" in src
-    assert "[5.6/9]" not in src, "5.6 pre-step banner 绝不带数字前缀（grep 锁）"
+    numbered = re.findall(r"\[\d+/10\]", src)
+    # 10 步 × 多处 banner；5.5/5.6 两个 pre-step 都用 plain label —— 数量不因它们增长
+    assert "[5.5/10]" not in src and "[6/10" in src
+    assert "[5.6/10]" not in src, "5.6 pre-step banner 绝不带数字前缀（grep 锁）"
     assert len(numbered) >= 9
