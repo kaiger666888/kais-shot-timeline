@@ -129,6 +129,8 @@ except Exception as exc:
     ...
 ```
 
+**Outcome (fix):** FIXED — 采纳建议原样：coercion + probe 三行挪进 `try:`（与 judge.py L764-767 逐行对齐，两模块不再漂移）；坏 `duration_sec`（如 `"6,73"`）→ ValueError 落 per-shot except → 打印异常 + `failed` 名单 + continue，批继续。回归锚：`test_bad_duration_sec_single_shot_fail_not_batch`（2 镜中 shot 1 duration_sec="6,73" → rc=0、shot 2 照常打分、shot 1 进 failed 名单且其坏条目被写侧 schema-invalid 层按既有 WR-04 语义剔除）。
+
 ### WR-04: 预存条目「形状不对」（非 dict / shot_id 非 int）在 merge 中被静默丢弃 —— 无 warning 无备份
 
 **File:** `analysis/roundtrip/scorer.py:343-345`、`analysis/roundtrip/judge.py:346-348`（两处 merged 构建循环）

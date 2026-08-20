@@ -340,6 +340,47 @@ def test_cache_key_miss_on_geometry_change(tmp_path, monkeypatch):
     assert read_cache(work, 1)["orig_window"] == [1.5, 6.73]
 
 
+# ── WR-03：坏 duration_sec 单镜失败不炸批 ──────────────────────────────────
+
+def test_bad_duration_sec_single_shot_fail_not_batch(tmp_path, monkeypatch):
+    """WR-03：hand-edit 的非数值 duration_sec（"6,73"）→ float() ValueError
+    落在 per-shot try 内 → 该镜按单镜失败处理，其余镜照常打分，rc=0。"""
+    thetas = [0.14 * (j + 1) for j in range(8)]
+
+    def embed_by_position(model, processor, device, frames):
+        dim = 8 + 1
+        vecs = []
+        for idx in range(16):
+            v = np.zeros(dim)
+            j = idx % 8
+            if idx < 8:
+                v[j] = 1.0
+            else:
+                v[j] = math.cos(thetas[j])
+                v[dim - 1] = math.sin(thetas[j])
+            vecs.append(v)
+        return np.array(vecs)
+
+    work = make_workdir(tmp_path, n_shots=2)
+    side = read_sidecar(work)
+    side["shots"][0]["regen"]["duration_sec"] = "6,73"   # 非数值（欧式小数点）
+    (work / "roundtrip.json").write_text(
+        json.dumps(side, ensure_ascii=False, indent=2), encoding="utf-8")
+    loads, _ = patch_scorer(monkeypatch, embed_impl=embed_by_position)
+    assert run_main(work) == 0                     # 修复前：ValueError 炸批
+    assert loads["n"] == 1
+    warns = read_warnings(work)
+    assert any(isinstance(w, str) and "failed shots: [1]" in w for w in warns)
+    assert not (work / sc.SCORER_CACHE_SUBDIR / "shot_001.json").exists()
+    after = read_sidecar(work)
+    # shot 1 的坏条目被写侧 schema-invalid 层剔除（WR-04 既有语义）；
+    # shot 2 照常打分落盘
+    by = {s["shot_id"]: s for s in after["shots"]}
+    assert 1 not in by
+    assert "midframe_sim" in by[2]["scores"]
+    assert validate_sidecar(after) == []
+
+
 # ── CR-01：cache-hit 回填 sidecar（断点续跑完整性）──────────────────────────
 
 def test_cache_hit_backfills_missing_sidecar_half(tmp_path, monkeypatch):

@@ -583,10 +583,12 @@ def main(argv=None) -> int:
             pending_warnings.append(
                 f"{STEP_TAG} shot {sid}: shots.json 无该镜条目，跳过打分")
             continue
-        regen_dur = float(regen.get("duration_sec") or 0.0)
-        if regen_dur <= 0.0:
-            regen_dur = h3s.probe_duration_sec(regen_path)
         try:
+            # WR-03：coercion 进 per-shot try（judge 同款）——读侧不校验
+            # schema，hand-edit 的非数值 duration_sec 单镜失败不炸整批。
+            regen_dur = float(regen.get("duration_sec") or 0.0)
+            if regen_dur <= 0.0:
+                regen_dur = h3s.probe_duration_sec(regen_path)
             payload = score_shot(model, processor, device, work_dir,
                                  src_video, shot, regen_path, regen_dur, keys[sid])
         except Exception as exc:                      # 单镜失败不阻塞批（h3_regen 先例）
