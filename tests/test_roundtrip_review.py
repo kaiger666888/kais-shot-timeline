@@ -305,3 +305,19 @@ def test_queue_checkmark_targets_dedicated_span(tmp_path):
     assert 'id="q-shot_003"' in html
     assert '<span class="queue-topline"><span class="queue-id">shot_003</span>' \
         in html
+
+
+# ── 10. WR-04 回归锚：prompt 折叠 summary 尾注含 engine_version ────────────
+
+def test_prompt_fold_summary_includes_engine_version(tmp_path):
+    """WR-04（22-REVIEW）：22-UI-SPEC 数据→UI 映射表行「regen.engine_version /
+    prompt_version | prompt 快照 <summary> 尾注」此前只渲染 prompt_version
+    半边——engine_version 必须进 fold header（经 _esc），操作员不开 sidecar
+    JSON 即可审计 regen 引擎版本。"""
+    html = run_gen(tmp_path, load_fixture())
+    # fixture 五镜 regen 的 engine_version/prompt_version 同值 → 尾注计数 5
+    expected = ("▸ Prompt 快照 (prompt v8e5b30fd · "
+                "fl2va-int8/euler+simple/15/1344x768)")
+    assert html.count(f"<summary>{expected}</summary>") == 5
+    # 降级卡（shot 10，status failed 无 regen）summary 不带尾注
+    assert html.count("<summary>▸ Prompt 快照</summary>") == 1

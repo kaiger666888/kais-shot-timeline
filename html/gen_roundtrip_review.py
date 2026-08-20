@@ -18,7 +18,9 @@ XSS 三层 hardening（SC3 / 22-UI-SPEC §XSS Hardening 强制清单）：
   1. 内联 _esc() 5 字符转义（& 先）覆盖每一个进入 HTML 的动态字符串：
      judge.reason / attribution（enum 也转，defense-in-depth）/
      verdict.decision+source+decided_at / status.error / midframe_sim.model /
-     engine_name+engine_version+prompt_version / prompt_text + 全部六 facet /
+     regen.prompt_version+engine_version（prompt 折叠 summary 尾注；engine_name
+     不渲染——UI-SPEC 映射表未含该行，引擎名进 dataset prompt.json 而非本
+     面板）/ prompt_text + 全部六 facet /
      character_refs+prop_refs / asset_name / regen.path；数字经 _esc 内 str() 兜底。
   2. JSON-in-<script> bootstrap：json.dumps(...).replace("</", "<\\/") 防
      </script> 序列从 script 岛破出（registry/speaker 双先例原样）。
@@ -259,9 +261,19 @@ def _shot_card_html(shot, prompt, meta, video_src_base, tau):
       </div>""")
 
     # ---- prompt 快照折叠（默认折叠；全部字符串过 _esc——route/模型产出文本）----
+    # WR-04（22-REVIEW）：summary 尾注补 engine_version——22-UI-SPEC 数据→UI
+    # 映射表行「regen.engine_version / prompt_version | prompt 快照 <summary>
+    # 尾注」此前只实现了 prompt_version 半边；补齐后操作员不开 sidecar JSON
+    # 即可审计各 regen 的引擎版本（regen 4-tuple 契约的审计目的）。
     prompt_ver = regen.get("prompt_version") if regen else None
-    summary_txt = (f"▸ Prompt 快照 (prompt v{_esc(prompt_ver)})"
-                   if prompt_ver else "▸ Prompt 快照")
+    eng_ver = regen.get("engine_version") if regen else None
+    tail_bits = []
+    if prompt_ver:
+        tail_bits.append(f"prompt v{_esc(prompt_ver)}")
+    if eng_ver:
+        tail_bits.append(_esc(eng_ver))
+    summary_txt = (f"▸ Prompt 快照 ({' · '.join(tail_bits)})"
+                   if tail_bits else "▸ Prompt 快照")
     facet_rows = "".join(
         f'<tr><td class="facet-key">{_esc(k)}</td>'
         f'<td class="facet-val">{_esc((prompt or {}).get(k) or "(无)")}</td></tr>'
