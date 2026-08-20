@@ -1,7 +1,8 @@
 ---
 phase: 22
 slug: dataset-export-integration
-status: draft
+status: approved
+reviewed_at: 2026-08-20
 shadcn_initialized: false
 preset: none
 created: 2026-08-20
@@ -58,8 +59,10 @@ Exceptions（非 spacing 的 stroke/radius，先例原值保留）：`1px` hairl
 | Role | Size | Weight | Line Height |
 |------|------|--------|-------------|
 | Display（header h1 面板标题） | 18px | 600 | 1.2 |
-| Heading（CTA 按钮 / export 按钮 / sidebar h2） | 14px（h2 用 13px 视作 Body 档） | 600 | 1.2 |
-| Body（summary pill / 卡片正文 / 按钮标签 / score 行） | 13px | 400 | 1.5 |
+| Heading（export bar 按钮 + per-card 三态覆盖按钮 / sidebar h2） | 14px（h2 用 13px 视作 Body 档） | 600 | 1.2 |
+| Body（summary pill / 卡片正文 / queue 与次级控件标签 / score 行） | 13px | 400 | 1.5 |
+
+> 字号归属消歧（ui-checker FLAG 收口）：**14/600** 只给「产生 edit 动作或导出」的按钮（export bar + per-card 三态）；**13/400** 给其余一切可点元素（queue 跳转、sync 控件、折叠开关）。两档并存是对 gen_registry_review.py 的 byte-fidelity 而非疏漏——executor 勿归一。
 | Meta（queue 项 / reason 正文 / members 式列表 / badge / mono 数值） | 11px | 400（mono id 600） | 1.5 |
 
 - 所有 shot_id / 分数 / hash / 时窗 / model 名 / τ 值一律 `monospace`
