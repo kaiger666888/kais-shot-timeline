@@ -719,6 +719,15 @@ def step_export(work_dir: str, video: str, stems_source_dir: str,
         os.path.join(work_dir, "prompts.json"),
         video,
     ]
+    # Phase 22（Pattern 4）：roundtrip.json 条件性入 cache inputs（mirror
+    # step_timeline :471-474 audio_semantic 模式）。存在且比 asset.json 新 →
+    # miss → 重导出挂载 data.roundtrip（export_asset.py:375-404）；缺席 → 不入
+    # inputs → cache 命中保持 → byte-identical-absent（RT-01 红线）。**绝不
+    # 无条件 append**：_safe_mtime 缺席=+inf 会永久 miss，每跑必重写 asset.json
+    # （generated_at 漂移，破坏 byte-identical-absent）。
+    roundtrip_json_path = os.path.join(work_dir, "roundtrip.json")
+    if os.path.exists(roundtrip_json_path):
+        inputs.append(roundtrip_json_path)
     # TOCTOU-safe mtime：缺失 input → +inf → 强制 cache miss（不再 exists+getmtime 两步）
     input_mtimes = [_safe_mtime(p) for p in inputs]
     all_inputs_present = all(m != float("inf") for m in input_mtimes)
@@ -925,12 +934,14 @@ def main():
         # cache 不应阻塞 forced rerun）；audio_analysis 子目录同理 rmtree。
         # Phase 19：下方 route_cache 整目录 rmtree 已天然覆盖 route_cache/vision_seq/
         # 子目录（5.6 pre-step 的 RAW 证据 cache）—— 无需单列进清单。
-        # Phase 20：route_cache 整目录 rmtree 已天然覆盖 route_cache/h3_regen/
-        # 子目录（h3 复现元数据 cache）—— 无需单列进清单。roundtrip/（h3 复现
-        # 产物目录）与 roundtrip.json（RT 契约 sidecar）**不清**（20-REVIEW WR-01
-        # 收紧）：管线自身不生产 roundtrip 数据（h3_regen 是独立 CLI，非
-        # pipeline step），删了无法由管线找回；sidecar 内 scores/verdict 是
-        # Phase 21 人工数据，红线「rejected 永不删除」。
+        # Phase 20（Phase 22 改述）：route_cache 整目录 rmtree 已天然覆盖
+        # route_cache/h3_regen|scorer|judge/ 三模块 cache 子目录 —— regen/scores
+        # 可由 cache 重算找回。roundtrip/（h3 复现产物目录）与 roundtrip.json
+        # （RT 契约 sidecar）**不清**（WR-01 红线保持）：sidecar 内 verdict/scores
+        # 是冻结人工数据（human 覆盖唯一路径 = apply_edits.py confirmed-only
+        # CLI，非管线），删了无法由管线找回；红线「rejected 永不删除」。step 9
+        # 进管线后此决策不变 —— --force 只清可重建的 cache/派生物，绝不清人工
+        # 裁决真值（T-22-10）。
         import shutil
         route_cache_dir = os.path.join(work_dir, "route_cache")
         audio_analysis_cache_dir = os.path.join(route_cache_dir, "audio_analysis")
@@ -1119,6 +1130,46 @@ def main():
                 if r.returncode != 0:
                     print(f"[canvas-import] warning: canvas_import.py 退出码 "
                           f"{r.returncode}（graceful-degrade，管线继续）")
+
+    # 12. roundtrip dataset 导出（post-step —— 无编号 plain label，mirror 画布
+    # 导入先例；keyed on roundtrip.json 存在而非 CLI flag：sidecar 在 = step 9
+    # 产出过，accepted 子集导出是纯派生数据；缺席 = step_roundtrip 被跳过/降级
+    # → warning 跳过不阻断。--tau-sim 透传（dataset-root 走模块默认 = work_dir
+    # 同级 dataset/）。
+    rt_json = os.path.join(work_dir, "roundtrip.json")
+    if not os.path.isfile(rt_json):
+        print("[roundtrip-dataset] warning: roundtrip.json 不存在"
+              "（step_roundtrip 被跳过/降级），跳过 dataset 导出")
+    else:
+        print(f"\n{'='*60}\nroundtrip dataset export (export_dataset post-step)\n{'='*60}")
+        cmd_ds = [sys.executable,
+                  str(HERE / "analysis" / "roundtrip" / "export_dataset.py"),
+                  "--work-dir", work_dir,
+                  "--tau-sim", str(args.tau_sim)]
+        # NOT run_step —— 那是 check=True helper，失败会 raise 阻断管线；本
+        # post-step 要求 graceful-degrade，自写 check=False + returncode 判断
+        # + OSError 双防线（mirror canvas-import T-AW2-03）。list-form argv
+        # 不经 shell（T-22-11）。
+        try:
+            r = subprocess.run(cmd_ds, check=False)
+        except OSError as e:
+            print(f"[roundtrip-dataset] warning: 无法启动 export_dataset.py: "
+                  f"{e}（graceful-degrade，管线继续）")
+        else:
+            if r.returncode != 0:
+                print(f"[roundtrip-dataset] warning: export_dataset.py 退出码 "
+                      f"{r.returncode}（graceful-degrade，管线继续）")
+
+    # roundtrip HITL hint（mirror speaker-link hint :893-904）：审阅面板生成后
+    # 提示操作员 apply CLI 用法 —— apply_edits.py 是独立 standalone CLI
+    # confirmed-only 硬门（human 覆盖唯一冻结替换路径），本管线 NEVER 调用它。
+    if os.path.exists(roundtrip_review_html):
+        rt_edits_hint = os.path.join(work_dir, "roundtrip-edits.json")
+        print(f"[hint] PRESENT-01 HITL: after reviewing roundtrip_review.html + "
+              f"exporting roundtrip-edits.json, run apply_edits:")
+        print(f"         python analysis/roundtrip/apply_edits.py \\")
+        print(f"           --work-dir {work_dir} \\")
+        print(f"           --edits     {rt_edits_hint}")
 
     print(f"\n[done] timeline: {html}")
     print(f"       work dir: {work_dir}")
