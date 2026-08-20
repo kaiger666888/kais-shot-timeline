@@ -309,3 +309,28 @@ def test_select_frames_first_mid_last():
         assert len(lvf.select_frames(str(fd), 0.0, 0.1)) == 1
         # 窗口外（t > 全部长度）→ 空
         assert lvf.select_frames(str(fd), 99.0, 100.0) == []
+
+
+def test_zero_change_run_does_not_rewrite_prompts(tmp_path, monkeypatch):
+    """22-04 Rule 3 回归锁：全部 facet 已填 → 零改动跑不重写 prompts.json。
+
+    保 mtime 是下游 step_roundtrip 外层 cache（roundtrip.json > prompts.json）
+    与 step_export mtime cache 的命中前提（mirror vision_seq changed-guard）。
+    """
+    work, shots, pp = make_workdir(
+        tmp_path, empty_facets=False,
+        scene_values=["已填场景一", "已填场景二"])
+    prompts = json.loads(pp.read_text(encoding="utf-8"))
+    for p in prompts:
+        p["subject"] = "已填主体"
+    pp.write_text(json.dumps(prompts, ensure_ascii=False, indent=2),
+                  encoding="utf-8")
+    before_bytes = pp.read_bytes()
+    before_mtime = pp.stat().st_mtime_ns
+    fake = FakeEngine("不应被问到")
+    patch_engine(monkeypatch, fake)
+    rc = run_main(work, pp)
+    assert rc == 0
+    assert fake.calls == 0                          # 全已填 → 零引擎调用
+    assert pp.read_bytes() == before_bytes          # 字节不变
+    assert pp.stat().st_mtime_ns == before_mtime    # 且根本没重写（mtime 不动）

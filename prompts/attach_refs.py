@@ -222,6 +222,17 @@ def main():
                  + "\n".join(lines))
 
     out_path = args.output or args.prompts
+    if out == prompts:
+        # Phase 22（22-04 Rule 3）：输出与输入等值（refs 已挂载、prompt_text 已是
+        # 最新 recompose）→ 跳过原子写，保住 prompts.json 的 mtime —— 下游
+        # step_roundtrip 外层 cache（roundtrip.json > prompts.json）与 step_export
+        # 的 mtime cache 都以 prompts 为 input；无条件重写会让这两个 cache 每次
+        # 跑都 miss（mirror vision_seq_facets 的 changed-guard 先例）。
+        print(f"[attach-refs] {len(out)} shots + "
+              f"{sum(len(c.get('character_refs', [])) for c in out)} char refs + "
+              f"{sum(len(c.get('prop_refs', [])) for c in out)} prop refs → {out_path} "
+              f"unchanged (zero entries modified — output not rewritten)")
+        return
     _atomic_write(out_path, out)
     print(f"[attach-refs] {len(out)} shots + "
           f"{sum(len(c.get('character_refs', [])) for c in out)} char refs + "

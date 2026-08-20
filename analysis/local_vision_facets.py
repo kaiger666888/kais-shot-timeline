@@ -227,6 +227,11 @@ def main():
     #    泄漏 13.4GB。预存在 lease（healthy 且非我们拉起）绝不停。
     engine = QwenEye()
     filled = {"scene": 0, "subject": 0}
+    # Phase 22（22-04 Rule 3）：零 facet 改动 → 完全跳过 prompts.json 原子写，
+    # 保住 mtime —— 下游 step_roundtrip 外层 cache（roundtrip.json > prompts.json）
+    # 与 step_export 的 mtime cache 都以 prompts 为 input；无条件重写会让两个
+    # cache 每次跑都 miss（mirror vision_seq_facets 的 changed-guard 先例）。
+    changed = False
     try:
         healthy, _owned = engine.ensure_ready()
         if not healthy:
@@ -265,6 +270,7 @@ def main():
                     if answer:
                         p[facet] = answer
                         filled[facet] += 1
+                        changed = True
                 if (sid % 10) == 0:
                     print(f"[vision] {sid}/{len(prompts)} shots processed")
     finally:
@@ -281,11 +287,13 @@ def main():
             + "; ".join(f"{'/'.join(map(str, e.absolute_path))}: {e.message}"
                         for e in errors[:3]))
 
-    # 5. 原子写 prompts.json（tmp + os.replace —— 防 partial-write 被下游读到）
-    tmp = args.output + ".tmp"
-    with open(tmp, "w", encoding="utf-8") as f:
-        json.dump(prompts, f, ensure_ascii=False, indent=2)
-    os.replace(tmp, args.output)
+    # 5. 原子写 prompts.json（tmp + os.replace —— 防 partial-write 被下游读到）。
+    #    零 facet 改动时跳过（保 mtime，见上方 changed 注释）。
+    if changed:
+        tmp = args.output + ".tmp"
+        with open(tmp, "w", encoding="utf-8") as f:
+            json.dump(prompts, f, ensure_ascii=False, indent=2)
+        os.replace(tmp, args.output)
 
     # 6. warnings sidecar —— READ-merge-write。strip 本 step 上一轮的 [vision]
     #    条目再 append fresh（防 self-accumulate，mirror call_reid WR-01）；
@@ -294,9 +302,14 @@ def main():
     with open(warnings_sidecar, "w", encoding="utf-8") as f:
         json.dump({"warnings": prior + warnings}, f, ensure_ascii=False, indent=2)
 
-    print(f"[vision] wrote {args.output} "
-          f"(scene filled: {filled['scene']}, subject filled: {filled['subject']}, "
-          f"{len(warnings)} new warnings)")
+    if changed:
+        print(f"[vision] wrote {args.output} "
+              f"(scene filled: {filled['scene']}, subject filled: {filled['subject']}, "
+              f"{len(warnings)} new warnings)")
+    else:
+        print(f"[vision] {args.output} unchanged "
+              f"(zero facets modified — output not rewritten; "
+              f"{len(warnings)} new warnings)")
     return 0
 
 
