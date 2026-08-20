@@ -49,7 +49,7 @@
 - [ ] **PIPE-02**: smoke 回归 harness —— ≥4 场景（ComfyUI down / cache-hit 断点续跑 / 抽样模式 / VRAM-guard 拒提交），mirror v1.2 Phase 14 模式
 
 ### PRESENT — 审阅呈现
-- [ ] **PRESENT-01**: gallery round-trip 审阅面板 —— 原片段 vs 重生成片段并排 + 双分数 + 归因标签 + accept/reject 按钮（HITL 复核导出，mirror registry/speaker review 先例）+ XSS `_esc()` hardening（verdict/reason 是模型产出文本 = 新 attack surface）
+- [x] **PRESENT-01**: gallery round-trip 审阅面板 —— 原片段 vs 重生成片段并排 + 双分数 + 归因标签 + accept/reject 按钮（HITL 复核导出，mirror registry/speaker review 先例）+ XSS `_esc()` hardening（verdict/reason 是模型产出文本 = 新 attack surface）
 
 ---
 
@@ -97,7 +97,7 @@ Each v1.3 REQ-ID maps to exactly one phase. Coverage: 19/19 (100%).
 | DATASET-02 | Phase 22 (Dataset Export + Integration) | Pending |
 | PIPE-01 | Phase 22 (Dataset Export + Integration) | Pending |
 | PIPE-02 | Phase 22 (Dataset Export + Integration) | Pending |
-| PRESENT-01 | Phase 22 (Dataset Export + Integration) | Pending |
+| PRESENT-01 | Phase 22 (Dataset Export + Integration) | Complete |
 
 **Phase coverage summary:**
 

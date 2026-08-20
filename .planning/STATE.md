@@ -3,14 +3,14 @@ gsd_state_version: 1.0
 milestone: v1.3
 milestone_name: Round-trip Validation（逆推→复现→比对闭环数据集）
 status: executing
-stopped_at: Phase 22 UI-SPEC approved
-last_updated: "2026-08-20T04:40:11.936Z"
+stopped_at: Completed 22-02-PLAN.md (edits schema + apply CLI + dataset export)
+last_updated: "2026-08-20T04:54:36.391Z"
 last_activity: 2026-08-20
 progress:
   total_phases: 5
   completed_phases: 4
   total_plans: 16
-  completed_plans: 13
+  completed_plans: 14
   percent: 80
 ---
 
@@ -26,11 +26,11 @@ See: .planning/PROJECT.md (updated 2026-08-19)
 ## Current Position
 
 Phase: 22 (Dataset Export + Integration) — EXECUTING
-Plan: 2 of 4
+Plan: 3 of 4
 Status: Ready to execute
 Last activity: 2026-08-20
 
-Progress: [████████░░] 81%
+Progress: [█████████░] 88%
 
 ## Performance Metrics
 
@@ -67,6 +67,7 @@ Progress: [████████░░] 81%
 | Phase 21 P01 | 15m | 3 tasks | 4 files |
 | Phase 21 P02 | ~40m | 2 tasks | 8 files |
 | Phase 22 P01 | 4m | 2 tasks | 3 files |
+| Phase 22 P02 | 6min | 2 tasks | 5 files |
 
 ## Accumulated Context
 
@@ -116,6 +117,9 @@ Carried (still load-bearing): contract-first minor bump（一个 milestone 一�
 - [Phase 22]: 22-01: PRESENT-01 保持未勾选 —— 呈现半边（面板+XSS+exportEdits）已交付，apply CLI 回写半边在 22-02 共享同 requirement ID（mirror 18-01/19-01/20-01/21-01 先例）
 - [Phase 22]: 22-01: regen 失败降级卡保留三态按钮（UI-SPEC Interaction §2 + States 表 vs Copywriting『无按钮』内部张力——human 覆盖是未裁决卡拿到 verdict 的唯一路径，按更具体语义契约收口）
 - [Phase 22]: 22-01: bootstrap RT_SHOTS = 完整 shots 数组（mirror registry DRAFT 全量先例——route 文本进 JS 岛使 </ 转义成为可测攻击面）；XSS 断言配 mutation 探针（剥 _esc/剥 </ 转义必红）防 vacuous green
+- [Phase 22]: 22-02: PRESENT-01 收口（面板 22-01 + apply CLI 22-02 双半边齐备）；RT-05/DATASET-02 保持未勾选——模块半边已交付，pipeline 挂载 22-03 与 e2e 齐产 22-04 共享同 requirement IDs（mirror 半边交付先例）
+- [Phase 22]: 22-02 discretion 定名：apply CLI = analysis/roundtrip/apply_edits.py（与 roundtrip 三件套同目录共享 h3s importlib 装载块；与 registry/apply_edits.py 跨目录无命名冲突）；dataset 导出 = analysis/roundtrip/export_dataset.py（RESEARCH 建议名采纳）
+- [Phase 22]: 22-02: 重放真 no-op——已 human 且同 decision 跳过不写（decided_at 不漂移；全跳过不落盘 mtime 不动）；dataset 帧两级来源 route_cache 直拷优先、缺席回落 extract_endpoint_frames 回填 cache 后改名
 
 ### Pending Todos
 
@@ -154,8 +158,8 @@ Items acknowledged and carried forward (full history in archived milestone REQUI
 
 ## Session Continuity
 
-Last session: 2026-08-20T04:40:11.929Z
-Stopped at: Phase 22 UI-SPEC approved
+Last session: 2026-08-20T04:54:36.379Z
+Stopped at: Completed 22-02-PLAN.md (edits schema + apply CLI + dataset export)
 Resume file: None
 
 ## Operator Next Steps
