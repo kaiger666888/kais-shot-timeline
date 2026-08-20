@@ -9,7 +9,8 @@ SFT-grade 数据集目录：
     <dataset-root>/<video-stem>/
         shot_NNN/{first_frame.jpg, last_frame.jpg, prompt.json}   # accepted 镜
         manifest.json          # τ/引擎版本/计数/rejected 分桶/shots 索引
-        accepted.txt           # 每行一个 shot_NNN
+        accepted.txt           # 每行一个 shot_NNN（仅本轮实际导出成功的镜——WR-01：
+                               # 降级跳过的镜不进索引，单列 manifest.exported_skipped）
         rejected.txt           # 每行 `shot_NNN sim={:.4f} {attribution} {reason 前 80 字符}`
 
 关键设计（CONTEXT locked decisions）：
@@ -325,8 +326,14 @@ def export_dataset(work_dir: str, dataset_root: str, tau_sim: float) -> int:
             print(f"{STEP_TAG} prune 陈旧目录 {name}（不在当前 accepted 集）")
 
     # ── accepted 镜：帧两级来源 + prompt.json 自含落盘 ──────────────────────
+    # WR-01（22-REVIEW）：索引（accepted.txt / manifest["shots"]）只列**本轮实际
+    # 导出成功**的镜——降级跳过的镜绝不进索引（否则消费端迭代索引会撞上缺席/
+    # 半空目录，accepted_count 与索引长度互相矛盾）。skipped 镜单列 manifest
+    # "exported_skipped"（可审计），warnings 逐镜说明原因。
     exported = 0
     skipped_shots = 0
+    skipped_ids: list[int] = []
+    exported_names: dict[int, str] = {}   # sid → shot_NNN（本轮导出成功集）
     for s in accepted:
         sid = int(s["shot_id"])
         prompt_entry = prompts_by_id.get(sid)
@@ -334,6 +341,7 @@ def export_dataset(work_dir: str, dataset_root: str, tau_sim: float) -> int:
             warnings.append(f"{STEP_TAG} shot {sid}: prompts.json 缺该镜条目，"
                             f"跳过（prompt.json 无法自含）")
             skipped_shots += 1
+            skipped_ids.append(sid)
             continue
         shot_dir = os.path.join(out_dir, f"shot_{sid:03d}")
         os.makedirs(shot_dir, exist_ok=True)
@@ -344,12 +352,14 @@ def export_dataset(work_dir: str, dataset_root: str, tau_sim: float) -> int:
         if frames is None:
             shutil.rmtree(shot_dir, ignore_errors=True)   # 半成品目录不残留
             skipped_shots += 1
+            skipped_ids.append(sid)
             continue
         shutil.copy2(frames[0], os.path.join(shot_dir, "first_frame.jpg"))
         shutil.copy2(frames[1], os.path.join(shot_dir, "last_frame.jpg"))
         h3s._atomic_write_json(os.path.join(shot_dir, "prompt.json"),
                                _build_prompt_json(sid, prompt_entry, s))
         exported += 1
+        exported_names[sid] = f"shot_{sid:03d}"
 
     # ── manifest + 两清单 ──────────────────────────────────────────────────
     manifest = {
@@ -360,13 +370,16 @@ def export_dataset(work_dir: str, dataset_root: str, tau_sim: float) -> int:
         "accepted_count": exported,
         "rejected_count": len(rejected),
         "rejected_buckets": buckets,
-        "shots": {str(int(s["shot_id"])): f"shot_{int(s['shot_id']):03d}"
-                  for s in accepted},
+        # WR-01：shots 索引从本轮实际导出成功集派生（== accepted_count ==
+        # len(accepted.txt) 行数）；skipped 镜单列，绝不进索引
+        "exported_skipped": sorted(skipped_ids),
+        "shots": {str(sid): exported_names[sid]
+                  for sid in sorted(exported_names)},
     }
     h3s._atomic_write_json(os.path.join(out_dir, "manifest.json"), manifest)
     with open(os.path.join(out_dir, "accepted.txt"), "w", encoding="utf-8") as f:
-        for name in sorted(current_dirs):
-            f.write(name + "\n")
+        for sid in sorted(exported_names):
+            f.write(exported_names[sid] + "\n")
     with open(os.path.join(out_dir, "rejected.txt"), "w", encoding="utf-8") as f:
         for s in rejected:
             f.write(_rejected_line(s) + "\n")

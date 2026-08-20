@@ -277,3 +277,55 @@ def test_stale_shot_dir_pruned_sibling_stem_untouched(tmp_path):
     assert (sibling / "manifest.json").exists(), "兄弟 video-stem 目录绝不碰"
     # 当前 accepted 目录仍在
     assert (stem / "shot_001" / "prompt.json").is_file()
+
+
+# ── 10. WR-01 回归锚：部分失败时索引只列实际导出的镜 ───────────────────────
+
+def test_partial_failure_index_consistency(tmp_path, capsys):
+    """WR-01（22-REVIEW）：accepted 镜降级跳过（prompts.json 缺条目）时，
+    accepted.txt / manifest["shots"] 只列实际导出成功的镜——accepted_count ==
+    len(shots) == accepted.txt 行数；skipped 镜单列 manifest.exported_skipped，
+    绝不进索引（旧实现索引全 accepted 集，消费端迭代会撞缺席目录）。"""
+    wd = make_work_dir(tmp_path)
+    # 删掉 shot 2 的 prompts 条目 → 该镜本轮降级跳过（无目录可导出）
+    prompts = json.loads((wd / "prompts.json").read_text(encoding="utf-8"))
+    prompts = [p for p in prompts if p["shot_id"] != 2]
+    (wd / "prompts.json").write_text(
+        json.dumps(prompts, ensure_ascii=False, indent=2), encoding="utf-8")
+    root = tmp_path / "ds"
+    assert run(wd, root) == 0
+    stem = root / wd.name
+    # 索引三一致：accepted_count == len(shots) == accepted.txt 行数 == 1
+    acc = (stem / "accepted.txt").read_text(encoding="utf-8").strip().splitlines()
+    m = json.loads((stem / "manifest.json").read_text(encoding="utf-8"))
+    assert acc == ["shot_001"]
+    assert m["shots"] == {"1": "shot_001"}
+    assert m["accepted_count"] == 1
+    assert m["accepted_count"] == len(m["shots"]) == len(acc)
+    # skipped 镜单列 exported_skipped（可审计），不进任何索引
+    assert m["exported_skipped"] == [2]
+    assert "2" not in m["shots"] and "shot_002" not in acc
+    # 被跳过镜无目录残留（本轮自建的半成品已清）
+    assert not (stem / "shot_002").exists()
+    # shot 1 导出完好不受牵连
+    assert (stem / "shot_001" / "prompt.json").is_file()
+    out = capsys.readouterr().out
+    assert "shot 2" in out and "prompts.json 缺该镜条目" in out
+
+
+def test_partial_failure_frame_degrade_index_consistency(tmp_path):
+    """WR-01 帧降级路径：accepted 镜帧两级来源全失败（cache 缺席 + 无源视频）
+    → 跳过镜不进 accepted.txt / shots 索引（第二类降级路径同口径）。"""
+    wd = make_work_dir(tmp_path)
+    # 删 shot 2 的 cache 帧 + 不放假源视频 → _ensure_endpoint_frames 降级返回 None
+    for f in ("ff", "lf"):
+        (wd / "route_cache" / "h3_regen" / "frames"
+         / f"kst_{VCH}_shot002_{f}.jpg").unlink()
+    root = tmp_path / "ds"
+    assert run(wd, root) == 0
+    stem = root / wd.name
+    acc = (stem / "accepted.txt").read_text(encoding="utf-8").strip().splitlines()
+    m = json.loads((stem / "manifest.json").read_text(encoding="utf-8"))
+    assert acc == ["shot_001"]
+    assert m["shots"] == {"1": "shot_001"} and m["accepted_count"] == 1
+    assert m["exported_skipped"] == [2]
