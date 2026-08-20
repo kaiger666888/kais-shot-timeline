@@ -198,8 +198,24 @@ Plans:
   4. accepted 子集导出独立 `dataset/<video-stem>/`：per-shot 首帧/尾帧 jpg + prompt.json + manifest（scores / attribution / 引擎版本 / prompt 快照）+ accepted/rejected 分清单（hard-negative 索引）——消费端不依赖 asset 契约可直接取用
   5. smoke 回归 harness ≥4 场景全绿：ComfyUI down（byte-identical-absent degrade）/ cache-hit 断点续跑 / 抽样模式 / VRAM-guard 拒提交（mirror v1.2 Phase 14 模式）
 
-**Plans**: TBD
-**UI hint**: yes
+**Plans**: 4 plans
+
+Plans:
+**Wave 1** *(22-01 与 22-02 并行，零文件交集)*
+
+- [ ] 22-01-PLAN.md — 审阅面板呈现半边：gen_roundtrip_review.py（UI-SPEC 全契约 + 双 video 同步 + 三态覆盖 + exportEdits）+ XSS 三层 hardening + 三注入/六态/payload 单测
+
+- [ ] 22-02-PLAN.md — HITL 回写 + dataset 导出：roundtrip-edits.schema.json + apply_edits.py（confirmed-only + source:human + 重放幂等）+ export_dataset.py（帧直拷优先 + manifest + accepted/rejected 分清单）+ 单测×2
+
+**Wave 2** *(blocked on 22-01 + 22-02)*
+
+- [ ] 22-03-PLAN.md — run_pipeline step_roundtrip 编号 step [9/10]（外层 cache + 四 subprocess）+ 六 flag 透传（--tau-sim 默认 0.9670）+ banner 重编号 27 处 + 既有 wiring 测试同步 + step_export 条件 input（Pattern 4）+ dataset post-step + 新 wiring 测试
+
+**Wave 3** *(blocked on 22-03)*
+
+- [ ] 22-04-PLAN.md — tests/test_phase22_e2e.sh 四场景（down-degrade/cache-hit 续跑/抽样/VRAM guard，含 GPU/ComfyUI 前置探测）+ ep01 --sample-shots 2 端到端真跑（asset 1.3 挂载 + dataset 齐产）+ Kai 浏览器走查 checkpoint
+
+**UI hint**: yes（已收口：22-UI-SPEC.md approved 2026-08-20）
 
 ## Progress
 
