@@ -1,0 +1,26 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://kais.shot-timeline/spec/schemas/roundtrip-edits.schema.json",
+  "draft": "2020-12",
+  "title": "Round-trip HITL 审阅 edits (review HTML 产 → roundtrip apply CLI 消费)",
+  "description": "Structured HITL review edits round-trip shape for round-trip verdict overrides (accept_overrides/reject_overrides)。Producer by html/gen_roundtrip_review.py（Phase 22 PRESENT-01 审阅面板 exportEdits 按钮，UI-SPEC §5 锁定 payload 契约）；consumer by analysis/roundtrip/apply_edits.py（confirmed-only 回写 CLI：edits → roundtrip.json verdict{decision, source:\"human\", decided_at}）。严格遵守 v1.0 的 strict-schema × lenient-consumer 原则：schema 校验时 additionalProperties:false 全程生效。与 registry-edits.schema.json 的唯一结构性差异：override 项是 integer shot_id（roundtrip.schema.json shots[].shot_id 交叉引用），非 pattern-locked 字符串 cluster_id。",
+  "$comment": "Phase 22 PRESENT-01 回写半边 lock（CONTEXT）：confirmed-only + idempotent + human 覆盖是唯一允许替换已冻结 verdict 的路径（语义反转点 vs judge.apply_verdict frozen-skip——auto 一律跳过；apply_edits.py 恰相反，edits 命中的镜 verdict 半边替换为 source:human）。面板只收显式 Accept/Reject（「维持 auto」不进 edits）；与 auto 判定同向的显式覆盖照导（apply 后 source 变 human，防未来重打分翻案——roundtrip.schema.json verdict.source 字段的设计用途）。Idempotency guard（A3 采纳）：apply_edits.py 对「已 human 且同 decision」的镜跳过不写（decided_at 不漂移）——同 edits 重放第二遍是 byte 级 no-op diff。T-22-05 (Tampering)：apply 前 Draft202012Validator 预校验本 schema + accept/reject 两清单交集 fail-loud + 未知 shot_id fail-loud。T-22-07 (Tampering)：integer minimum 1 天然拒字符串 path-traversal（与 roundtrip.schema.json shot_id 同约束）。所有字段可选 —— 空 edits {} schema-valid（操作员审阅但无改动的情况，mirror speaker-edits 空 {} 先例）。",
+  "type": "object",
+  "additionalProperties": false,
+  "properties": {
+    "accept_overrides": {
+      "type": "array",
+      "description": "显式接受覆盖清单（→ verdict{decision:\"accepted\", source:\"human\"}）。每项是 integer shot_id（交叉引用 roundtrip.json shots[].shot_id / shots.json#id），升序导出。与 auto 判定同向的显式覆盖照收（apply 后 source 变 human）。",
+      "items": {"type": "integer", "minimum": 1}
+    },
+    "reject_overrides": {
+      "type": "array",
+      "description": "显式拒绝覆盖清单（→ verdict{decision:\"rejected\", source:\"human\"}）。每项是 integer shot_id，升序导出。rejected 语义是数据集排除（hard negative 索引），非销毁——sidecar 条目原样保留。",
+      "items": {"type": "integer", "minimum": 1}
+    },
+    "review_notes": {
+      "type": "string",
+      "description": "可选自由文本审阅备注（apply CLI 忽略；审计用）。Producer 固定导出 'Exported from roundtrip review HTML on <ISO-8601>'（UI-SPEC §5）。T-07-03 (Repudiation) 镜像：提供审计 trail；无加密签名（YAGNI —— 单操作员本地工具）。"
+    }
+  }
+}
