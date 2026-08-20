@@ -99,3 +99,41 @@ A repo-agnostic ShotTimelineAsset format contract spanning two repos (loose coup
 | Cross-repo overhead | ~30% | ~30% (consistent) |
 | Deferred-at-ship items | 2 (WR-01/04) | 3 (cross-repo routes + e2e) |
 | Graceful-degrade deferrals | 1 (canvas) | 3 (shot-analysis, character-reid, e2e) — pattern now standard |
+
+## Milestone: v1.3 — Round-trip Validation（逆推→复现→比对闭环数据集）
+
+**Shipped:** 2026-08-20
+**Phases:** 5 | **Plans:** 16 | **Tasks:** 39
+
+### What Was Built
+- 契约层：roundtrip.schema.json（v1.x 首个 object 挂载 + warnings 双形）+ SCHEMA_VERSION 1.3 单源 + 四阶 fixture gate + v1.2↔v1.3 双向证明
+- qwen-eye v2：≤8 帧序列逐帧实证升级 action/camera facet + ear 融合（盲评锁定 temporal 合并）
+- h3 复现客户端：ComfyUI 直连 fl2va + 4-tuple cache 断点续跑 + VRAM guard 五步 + PID 归因反自锁
+- Scorer：SigLIP so400m 中段帧轨迹 + VLM judge 三分类；τ_sim=0.9670 Kai 看分布裁决；verdict 冻结（rejected 永不删除）
+- 集成层：step_roundtrip [9/10] + HITL 审阅面板（双 video 同步）+ confirmed-only apply + dataset 独立导出 + 四场景 e2e
+
+### What Worked
+- 契约先行 + 抽样先行 + 串行编排三大 ordering 约束全程未破
+- 每 phase 的 code-review→fix→re-review 链抓到 5 个 Critical（含 2 个 DOM/缓存真 bug）——复审二次发现的「修复引入回归」类（WR-06×2）证明 re-review 不是走过场
+- 冻结红线（rejected 永不删除）在 --force/重跑/apply/prune 四处语义一致，sha256 三点证明落地
+- GPU 任务 nohup + cache 断点续跑设计让 429 中断零损失恢复
+
+### What Was Inefficient
+- 3 次 API 429 使用限额中断（10.5h 15:34 20:35）——overnight/harness 类长任务依赖 orchestrator inline 续跑收尾
+- 22-04 首次正本尝试的 attach_refs 改写 live prompts.json 造成 B2 溯源断裂（COPY 载体教训：**任何 live 数据上的管线首跑都该先副本**）
+- plan-checker 的 test-count 基线类 warning 三次重复出现（19/20/21 各一次）——planner 模板可固化「相对断言」规则
+
+### Patterns Established
+- 「verdict 冻结 + human 覆盖唯一路径」的 HITL 数据语义（source: auto/human）
+- 正本零触碰测试法：副本载体 + 正本 sha 三点断言
+- PROMPT_VERSION/cache key 强化 = 设计性 stale 重打分（verdict 不动）
+
+### Key Lessons
+- SigLIP 余弦高窄带（随机噪声 0.99）使阈值直觉全部失效——分布实测 + 人类裁决不可省
+- 字符串断言测试测不出 DOM 级 bug（CR-01 queue 摧溃）——面板类交付需要浏览器走查硬门
+- 中断恢复：executor 半途死 → git log + 产物 sha 对账 → inline 机械收尾，比重跑省 80%
+
+### Cost Observations
+- Timeline: 08-19 20:54 → 08-20 21:14（~24h 墙钟，含 2 次 overnight GPU 批 + 3 次 429 等待）
+- ~65 milestone commits；234 tests（36 → 234，+198）
+- Notable: GPU 实测远优于预估（overnight 批 2h53m vs 预估 3-4.5h；smoke 147 calls 15.5min vs 预估 1-3h）
