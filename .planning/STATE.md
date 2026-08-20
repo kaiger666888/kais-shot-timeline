@@ -25,10 +25,8 @@ See: .planning/PROJECT.md (updated 2026-08-19)
 
 ## Current Position
 
-Phase: Milestone v1.3 complete
-Plan: —
-Status: Awaiting next milestone
-Last activity: 2026-08-20 — Milestone v1.3 completed and archived
+Milestone: v1.3 COMPLETE (2026-08-20) — 归档 .planning/milestones/v1.3-*
+Status: Planning next milestone（/gsd:new-milestone）
 
 ## Performance Metrics
 
