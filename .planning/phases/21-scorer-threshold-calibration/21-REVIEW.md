@@ -13,7 +13,7 @@ findings:
   warning: 1
   info: 3
   total: 4
-status: issues_found
+status: fixed
 review_iteration: 2 (re-review after fixes 95fadc2..c4fc324)
 ---
 
