@@ -14,13 +14,24 @@
 #      b) 同 fixture 去掉 --skip-export 重跑 → export fresh（asset.json 存在
 #         且无 data.roundtrip 键 —— absent-不挂载 pipeline 级证明）
 #      c) 再跑 → export cache-hit（asset.json md5 等值）
-#   S2 cache-hit 断点续跑（ep01 live）：run_pipeline --sample-shots 2 →
-#      外层 cache / 全链产四类产物（asset 1.3 + data.roundtrip 4/15 +
-#      review HTML 19 卡 + dataset 目录/manifest/两清单）+ sidecar sha 不变
-#   S3 抽样模式（ep01 live，GPU1-gated 双分支）：直调 h3_regen --sample-shots 2
-#      → 2/93 镜入样 + cache-hit=2 rendered=0 + sidecar 19 镜 READ-merge 不丢
-#      + scorer/judge 直调全 cache 命中冻结不动；GPU1 free < 22528MiB →
-#      文档化降级分支（PASS-with-note，非功能失败）
+#   S2 抽样 e2e 真跑（ep01 COPY 上 live，SC1 证明）：run_pipeline --sample-shots 2
+#      → 全链产四类产物（asset 1.3 + data.roundtrip 4/15 + review HTML 19 卡 +
+#      dataset 目录/manifest/两清单）；verdict 冻结块 byte-equal + 正本
+#      roundtrip.json sha 全程不变。COPY 载体的原因（Task 2 实测发现，Rule 1
+#      plan bug）：ep01 的 prompts.json 在 direct-module 时代从未被 attach_refs
+#      归一化——管线首跑会 recompose prompt_text → h3_regen 的 per-shot cache
+#      key 含 prompt_version=sha256(prompt_text)[:8] → 19 镜 overnight 渲染
+#      缓存全失效。在正本上重渲 = 改写冻结 regen/scores 半边（HITL 红线）；
+#      故 S2/S3/S4 全部在 cp -a 副本上跑，正本只做 sha 三点断言（证明零触碰）。
+#      首跑副本：attach_refs no-op（已归一化）→ h3_regen 真渲 2 镜（rendered=2）
+#      → scorer 全量补分 19 镜（直调时代的正本 cache 是五字段扁平旧 schema，
+#      WR-02 orig_window 进 key 后全 stale——hit=0 miss-scored=19）→ judge
+#      applied=0 frozen=19（verdict 冻结在新渲染上不动 —— 比 plan 预期的
+#      cache-hit 更强的冻结证明）。
+#   S3 抽样模式（ep01 COPY 上，GPU1-gated 双分支）：S2 已暖 1/47 缓存 → 直调
+#      h3_regen --sample-shots 2 → 2/93 镜入样 + cache-hit=2 rendered=0 +
+#      sidecar 19 镜 READ-merge 不丢 + scorer/judge 直调全 cache 命中冻结
+#      不动；GPU1 free（/free 后）< 22528MiB → 文档化降级分支（PASS-with-note）
 #   S4 VRAM-guard 拒提交（确定性，GPU0=3060Ti ~4.9GB free）：直调 h3_regen
 #      --gpu-index 0 → 批开始 guard 拒绝 + vram_insufficient + exit 0 +
 #      sidecar sha 等值（cache 保留，二跑可续）
@@ -28,6 +39,9 @@
 # 环境旋钮：
 #   P22_LIVE=0       只跑 S1（离线确定性）+ 探测；S2/S3/S4 标 SKIP-with-note
 #                    （Task 1 本地离线验证用；live 三场景需 ComfyUI up）
+#   P22_EP_DIR=path  复用已暖副本（跳过 cp -a + 跳过重渲：外层 cache 命中
+#                    `[9/10] cached roundtrip sidecar` 稳态锚）——Task 2 的
+#                    幂等复跑用（mirror plan「复跑一遍全绿」分钟级预期）
 #   P22_COMFY_URL    ComfyUI API URL（默认 http://127.0.0.1:8188）
 #
 # 全部 PASS → echo "ALL_SCENARIOS_PASS" + exit 0；任一 FAIL → exit 1 + 证据。
@@ -40,8 +54,15 @@ COMFY_URL="${P22_COMFY_URL:-http://127.0.0.1:8188}"
 # 批开始 guard 的 GPU 门槛（h3_regen BATCH_MIN_FREE_MIB=22528，22GB）
 VRAM_GATE_MIB=22528
 
+# 清理契约：全 PASS 且未设 P22_KEEP → 删 WORK；FAIL 或 P22_KEEP=1 → 保留并
+# 打印路径（FAIL 证据 + 已暖副本可复用：P22_EP_DIR 指向其 rt/<stem> 做幂等复跑）。
+ALL_PASS=0
 cleanup() {
-    rm -rf "${WORK}"
+    if [[ "${ALL_PASS}" == "1" && -z "${P22_KEEP:-}" ]]; then
+        rm -rf "${WORK}"
+    else
+        echo "[cleanup] WORK 保留（ALL_PASS=${ALL_PASS} P22_KEEP=${P22_KEEP:-0}）：${WORK}"
+    fi
 }
 trap cleanup EXIT
 
@@ -349,14 +370,72 @@ if [[ "${COMFY_CODE}" != "200" ]]; then
     exit 1
 fi
 
-# 冻结红线基线：roundtrip.json sha256 快照（S2/S3/S4 三点复测等值）
+# 冻结红线基线（正本）：roundtrip.json sha256 快照——S2/S3/S4 后三点复测等值，
+# 证明 harness 全程零触碰正本（Task 3 Kai 走查的就是这份冻结数据）。
 RT_SHA_BASE="${WORK}/rt_sha_base"
 sha256sum "${RT_JSON}" | cut -d' ' -f1 > "${RT_SHA_BASE}"
-echo "[freeze] roundtrip.json sha256 基线 = $(cat "${RT_SHA_BASE}")"
+echo "[freeze] 正本 roundtrip.json sha256 基线 = $(cat "${RT_SHA_BASE}")"
 
-# ═══ SCENARIO 2: ep01 抽样 e2e 真跑（SC1 live 证明 + cache 断点续跑）════
+assert_freeze_sha() {
+    local label="$1"
+    local now
+    now="$(sha256sum "${RT_JSON}" | cut -d' ' -f1)"
+    if [[ "${now}" == "$(cat "${RT_SHA_BASE}")" ]]; then
+        echo "  [PASS] ${label}: 正本 roundtrip.json sha256 等值（零触碰冻结红线）"
+    else
+        echo "  [FAIL] ${label}: 正本 sha256 漂移：${now} != $(cat "${RT_SHA_BASE}")"
+        exit 1
+    fi
+}
+
+# verdict 冻结块指纹（副本侧红线：regen/scores 半边可随重渲更新，verdict
+# 半边是冻结人工数据——19 镜的 verdict 对象 byte-equal）。
+verdict_blocks_sha() {
+    python3 - "$1" <<'PYV'
+import hashlib, json, sys
+rt = json.load(open(sys.argv[1]))
+blocks = {str(s["shot_id"]): s.get("verdict") for s in rt["shots"]}
+canon = json.dumps(blocks, ensure_ascii=False, sort_keys=True, indent=2)
+print(hashlib.sha256(canon.encode()).hexdigest())
+PYV
+}
+
+# ─── ep01 工作副本（Task 2 实测发现的载体架构，见文件头 S2 注释）────────
+# P22_EP_DIR 指向已暖副本（S2 已跑过 → 外层 cache 命中稳态）时直接复用；
+# 否则 cp -a 全量副本（775M，mtime 全保留 → timeline/export cache 语义一致）。
+if [[ -n "${P22_EP_DIR:-}" ]]; then
+    EP_WORK="${P22_EP_DIR}"
+    echo "[copy] 复用已暖副本：${EP_WORK}"
+else
+    COPY_ROOT="${WORK}/rt"
+    mkdir -p "${COPY_ROOT}"
+    echo "[copy] cp -a 正本 → 副本（${EP01_DIR} → ${COPY_ROOT}/）……"
+    cp -a "${EP01_DIR}" "${COPY_ROOT}/"
+    EP_WORK="${COPY_ROOT}/$(basename "${EP01_DIR}")"
+fi
+if [[ ! -f "${EP_WORK}/roundtrip.json" ]]; then
+    echo "[FAIL] 副本 roundtrip.json missing: ${EP_WORK}"
+    exit 1
+fi
+RT_WORK="${EP_WORK}/roundtrip.json"
+VB_BASE="$(verdict_blocks_sha "${RT_WORK}")"
+echo "[freeze] 副本 verdict 冻结块指纹基线 = ${VB_BASE}"
+
+assert_verdict_freeze() {
+    local label="$1"
+    local now
+    now="$(verdict_blocks_sha "${RT_WORK}")"
+    if [[ "${now}" == "${VB_BASE}" ]]; then
+        echo "  [PASS] ${label}: 副本 19 镜 verdict 冻结块 byte-equal"
+    else
+        echo "  [FAIL] ${label}: verdict 冻结块漂移（${now} != ${VB_BASE}）"
+        exit 1
+    fi
+}
+
+# ═══ SCENARIO 2: ep01 副本抽样 e2e 真跑（SC1 live 证明）═════════════════
 echo ""
-echo "═══ SCENARIO 2: ep01 --sample-shots 2 端到端（asset 1.3 + dataset + HTML 19 卡）═══"
+echo "═══ SCENARIO 2: ep01 副本 --sample-shots 2 端到端（asset 1.3 + dataset + HTML 19 卡）═══"
 # Deviation（Rule 1 plan bug）：plan 写 --video "$EP01/h264.mp4"，但 h264.mp4
 # 是 -an 去 audio 的转码中间产物 → export_asset sys.exit "video has no audio
 # stream"。改传 readlink -f video.mp4（原始片源，含音轨；与 ep01 既有
@@ -377,20 +456,30 @@ fi
 S2_SKIP_FLAGS=(--skip-detect --skip-separate --skip-transcribe --skip-semantic
                --skip-reid --skip-audio-semantic --skip-speaker-link)
 S2_LOG="${WORK}/s2.log"
-run_logged "S2 pipeline" 600 "${S2_LOG}" \
+# timeout 1800：全新副本首跑 = 真渲 2 镜（fl2va 单镜 ~8min ×2 + scorer/judge/
+# export/dataset）；P22_EP_DIR 暖副本复跑 = 外层 cache 命中秒级。
+run_logged "S2 pipeline" 1800 "${S2_LOG}" \
     python3 "${REPO_ROOT}/run_pipeline.py" \
-    --video "${EP01_VIDEO}" --output-dir "${REPO_ROOT}/output" \
+    --video "${EP01_VIDEO}" --output-dir "$(dirname "${EP_WORK}")" \
     "${S2_SKIP_FLAGS[@]}" \
     --sample-shots 2
 echo "  [PASS] S2 pipeline exit 0（全链四类产物一次齐产）"
 
-# 状态感知锚：首跑（video-stamp 缺席 → 全链 miss）与复跑（外层 cache 命中）
+# 状态感知锚：全新副本首跑（video-stamp 缺席 → 全链 miss + 真渲 2 镜）vs
+# 暖副本复跑（外层 cache 命中短路整链）
 assert_either_grep "S2 step_roundtrip 链（首跑 regen / 复跑 cached）" \
     "\[9/10\] cached roundtrip sidecar" "\[9/10\] roundtrip regen \(h3" "${S2_LOG}"
 if grep -qE "\[9/10\] roundtrip regen \(h3" "${S2_LOG}"; then
-    assert_grep "S2 h3_regen 全 cache 命中" "rendered=0 cache-hit=2" "${S2_LOG}"
-    assert_grep "S2 scorer 全 cache 命中" "全部 cache 命中" "${S2_LOG}"
-    assert_grep "S2 judge 冻结不动" "applied=0 frozen=19" "${S2_LOG}"
+    # 首跑重渲锚（Rule 1 deviation：attach_refs 首次归一化 ep01 prompts →
+    # prompt_version bump → 19 镜 overnight h3 缓存全失效；plan 预期的
+    # rendered=0 cache-hit=2 在正本上不可达，副本上以真渲 + judge 冻结证明）
+    assert_grep "S2 h3_regen 重渲 2 镜零失败" "完成：rendered=2 cache-hit=0 failed=0" "${S2_LOG}"
+    # scorer 六字段 key 含 orig_window（WR-02 镜几何进 key）——直调时代的
+    # 正本 cache 是五字段扁平旧 schema（无 orig_window）→ 19 镜全 stale，
+    # 首跑全量补分（SigLIP 一次加载 19 镜打分，cache 以新 key 重写；S3 的
+    # 「全部 cache 命中」证明新 key 稳态命中）。
+    assert_grep "S2 scorer 全量补分（旧五字段 cache 全 stale）" "完成：hit=0 miss-scored=19 failed=0" "${S2_LOG}"
+    assert_grep "S2 judge 冻结不动（新渲染上 verdict 仍冻结）" "applied=0 frozen=19" "${S2_LOG}"
 fi
 assert_grep "S2 review HTML 产出" "\[roundtrip-review\] wrote .* \(19 shots\)" "${S2_LOG}"
 assert_either_grep "S2 export（fresh 重导出 / cached）" \
@@ -398,8 +487,8 @@ assert_either_grep "S2 export（fresh 重导出 / cached）" \
 assert_grep "S2 dataset post-step 跑" "\[roundtrip-dataset\] 完成" "${S2_LOG}"
 
 # asset.json：schema 1.3 + data.roundtrip 4/15（陈旧 asset 重导出 —— roundtrip.json
-# mtime 新于 asset.json → Pattern 4 条件 input 强制 miss）
-python3 - "${EP01_DIR}/asset.json" <<'PYEOF'
+# mtime 新于 asset.json → Pattern 4 条件 input 强制 miss；verdict 计数不受重渲影响）
+python3 - "${EP_WORK}/asset.json" <<'PYEOF'
 import json, sys
 a = json.load(open(sys.argv[1]))
 assert a.get("schema_version") == "1.3", f"schema_version={a.get('schema_version')!r}"
@@ -411,7 +500,7 @@ print("  [PASS] S2 asset.json schema_version=1.3 + data.roundtrip{accepted:4, re
 PYEOF
 
 # review HTML 19 卡
-HTML_CARDS="$(grep -c 'class="shot-card' "${EP01_DIR}/roundtrip_review.html" || true)"
+HTML_CARDS="$(grep -c 'class="shot-card' "${EP_WORK}/roundtrip_review.html" || true)"
 if [[ "${HTML_CARDS}" == "19" ]]; then
     echo "  [PASS] S2 roundtrip_review.html 19 卡"
 else
@@ -419,9 +508,10 @@ else
     exit 1
 fi
 
-# dataset 目录：manifest + 两清单 + 4 个 accepted shot 目录
+# dataset 目录：manifest + 两清单 + 4 个 accepted shot 目录（dataset-root =
+# 副本 work_dir 同级 dataset/ —— 副本树内，不污染 repo output/）
 EP01_STEM="$(basename "${EP01_DIR}")"
-DS_DIR="${REPO_ROOT}/output/dataset/${EP01_STEM}"
+DS_DIR="$(dirname "${EP_WORK}")/dataset/${EP01_STEM}"
 for d in shot_010 shot_061 shot_075 shot_084; do
     assert_file_exists "S2 dataset ${d}/" "${DS_DIR}/${d}/prompt.json"
     assert_file_exists "S2 dataset ${d} 首帧" "${DS_DIR}/${d}/first_frame.jpg"
@@ -442,92 +532,105 @@ assert m["tau_sim"] == 0.9670, f"manifest tau_sim={m['tau_sim']}"
 print(f"  [PASS] S2 manifest 4/15 + buckets {b} + accepted.txt 4 行 + rejected.txt 15 行 + tau_sim=0.9670")
 PYEOF
 
-# 冻结红线第 1 点：S2 后 sha256 等值
-RT_NOW="$(sha256sum "${RT_JSON}" | cut -d' ' -f1)"
-if [[ "${RT_NOW}" == "$(cat "${RT_SHA_BASE}")" ]]; then
-    echo "  [PASS] S2 后 roundtrip.json sha256 等值（verdict 冻结红线）"
-else
-    echo "  [FAIL] S2 后 sha256 漂移：${RT_NOW} != $(cat "${RT_SHA_BASE}")"
-    exit 1
-fi
-cp "${EP01_DIR}/asset.json" "${WORK}/snap/asset_s2.json"
+# 冻结红线第 1 点：正本零触碰 + 副本 verdict 块 byte-equal
+assert_freeze_sha "S2 后"
+assert_verdict_freeze "S2 后"
+RT_WORK_SHA_S2="$(sha256sum "${RT_WORK}" | cut -d' ' -f1)"
+echo "${RT_WORK_SHA_S2}" > "${WORK}/rt_work_sha_s2"
+cp "${EP_WORK}/asset.json" "${WORK}/snap/asset_s2.json"
 echo "[smoke] SCENARIO 2: PASS"
 
-# ═══ SCENARIO 3: 抽样模式直调（GPU1-gated 双分支）═══════════════════════
+# ═══ SCENARIO 3: 抽样模式直调（副本上，GPU1-gated 双分支）══════════════
 echo ""
 echo "═══ SCENARIO 3: h3_regen --sample-shots 2 直调（GPU1 gate=${VRAM_GATE_MIB}MiB）═══"
-if [[ "${GPU1_FREE}" -ge ${VRAM_GATE_MIB} ]]; then
+# gate 探测在 S2 之后现测：S2 渲染后 ComfyUI 驻留模型 → 先 best-effort POST
+# /free（mirror guard 步骤② 的既有语义；队列为空时仅卸模型）再读 free。
+curl -s --max-time 10 -X POST -H 'Content-Type: application/json' \
+    -d '{"unload_models": true, "free_memory": true}' \
+    "${COMFY_URL}/free" >/dev/null 2>&1 || true
+sleep 4
+GPU1_FREE_NOW="$(probe_gpu_free_mib 1)"
+echo "[probe] S3 前置（/free 后）GPU1 free=${GPU1_FREE_NOW}MiB"
+if [[ "${GPU1_FREE_NOW}" -ge ${VRAM_GATE_MIB} ]]; then
     S3_LOG="${WORK}/s3.log"
     run_logged "S3 h3_regen 直调" 300 "${S3_LOG}" \
         python3 "${REPO_ROOT}/analysis/roundtrip/h3_regen.py" \
-        --work-dir "${EP01_DIR}" --comfy-url "${COMFY_URL}" \
+        --work-dir "${EP_WORK}" --comfy-url "${COMFY_URL}" \
         --sample-shots 2 --vram-wait-timeout 90
     echo "  [PASS] S3 h3_regen exit 0（guard 五步过 gate）"
     assert_grep "S3 抽样 2/93 镜入样" "2/93 镜入样" "${S3_LOG}"
-    assert_grep "S3 cache-hit=2 rendered=0" "rendered=0 cache-hit=2" "${S3_LOG}"
+    assert_grep "S3 cache-hit=2 rendered=0（S2 已暖 1/47 缓存）" "rendered=0 cache-hit=2" "${S3_LOG}"
 
     S3_SCORE_LOG="${WORK}/s3_scorer.log"
     run_logged "S3 scorer 直调" 300 "${S3_SCORE_LOG}" \
         python3 "${REPO_ROOT}/analysis/roundtrip/scorer.py" \
-        --work-dir "${EP01_DIR}"
+        --work-dir "${EP_WORK}"
     assert_grep "S3 scorer 直调全 cache 命中" "全部 cache 命中" "${S3_SCORE_LOG}"
 
     S3_JUDGE_LOG="${WORK}/s3_judge.log"
     run_logged "S3 judge 直调" 300 "${S3_JUDGE_LOG}" \
         python3 "${REPO_ROOT}/analysis/roundtrip/judge.py" \
-        --work-dir "${EP01_DIR}" --comfy-url "${COMFY_URL}" \
+        --work-dir "${EP_WORK}" --comfy-url "${COMFY_URL}" \
         --apply-verdict --tau-sim 0.9670
     assert_grep "S3 judge 直调冻结不动" "applied=0 frozen=19" "${S3_JUDGE_LOG}"
 
-    # sidecar READ-merge 不丢存量：仍 19 镜 + sha 等值（冻结红线第 2 点）
+    # sidecar READ-merge 不丢存量：仍 19 镜 + sha 等值（vs S2 后快照——cache-hit
+    # 重写 byte-identical）+ 冻结红线第 2 点
     python3 -c "
 import json, sys
-rt = json.load(open('${RT_JSON}'))
+rt = json.load(open('${RT_WORK}'))
 assert len(rt['shots']) == 19, f\"sidecar shots={len(rt['shots'])} != 19（READ-merge 丢存量）\"
 print('  [PASS] S3 sidecar 仍 19 镜（READ-merge 不丢存量）')
 "
-    RT_NOW="$(sha256sum "${RT_JSON}" | cut -d' ' -f1)"
-    if [[ "${RT_NOW}" == "$(cat "${RT_SHA_BASE}")" ]]; then
-        echo "  [PASS] S3 后 roundtrip.json sha256 等值（verdict 冻结红线）"
+    RT_NOW_WORK="$(sha256sum "${RT_WORK}" | cut -d' ' -f1)"
+    if [[ "${RT_NOW_WORK}" == "$(cat "${WORK}/rt_work_sha_s2")" ]]; then
+        echo "  [PASS] S3 后副本 sidecar sha256 等值（cache-hit 重写 byte-identical）"
     else
-        echo "  [FAIL] S3 后 sha256 漂移：${RT_NOW} != $(cat "${RT_SHA_BASE}")"
+        echo "  [FAIL] S3 后副本 sha256 漂移：${RT_NOW_WORK} != $(cat "${WORK}/rt_work_sha_s2")"
         exit 1
     fi
+    assert_verdict_freeze "S3 后"
+    assert_freeze_sha "S3 后"
     echo "[smoke] SCENARIO 3: PASS"
 else
     # 文档化降级分支（PASS-with-note）：GPU1 free < gate 是环境余量，非功能失败。
-    # 模块级 cache 语义已由 Phase 20 pytest + S2 外层 cache 覆盖；S4 独立证明
-    # guard 语义。
-    echo "  [SKIP] GPU1 free=${GPU1_FREE} < ${VRAM_GATE_MIB}（环境余量，非功能失败；模块级 cache 已由 Phase 20 测试 + S2 外层 cache 覆盖）"
+    # 模块级 cache 语义已由 Phase 20 pytest + S2 链路覆盖；S4 独立证明 guard 语义。
+    echo "  [SKIP] GPU1 free=${GPU1_FREE_NOW} < ${VRAM_GATE_MIB}（环境余量，非功能失败；模块级 cache 已由 Phase 20 测试 + S2 链路覆盖）"
     echo "[smoke] SCENARIO 3: PASS-with-note（GPU1 余量不足走文档化降级分支）"
 fi
 
-# ═══ SCENARIO 4: VRAM-guard 拒提交（GPU0=3060Ti 确定性触发）═════════════
+# ═══ SCENARIO 4: VRAM-guard 拒提交（副本上，GPU0=3060Ti 确定性触发）════
 echo ""
 echo "═══ SCENARIO 4: h3_regen --gpu-index 0 → 批开始 guard 拒提交 ═══"
-if [[ "${GPU0_FREE}" -lt ${VRAM_GATE_MIB} ]]; then
+GPU0_FREE_NOW="$(probe_gpu_free_mib 0)"
+if [[ "${GPU0_FREE_NOW}" -lt ${VRAM_GATE_MIB} ]]; then
     S4_LOG="${WORK}/s4.log"
     run_logged "S4 h3_regen 直调（--gpu-index 0）" 300 "${S4_LOG}" \
         python3 "${REPO_ROOT}/analysis/roundtrip/h3_regen.py" \
-        --work-dir "${EP01_DIR}" --comfy-url "${COMFY_URL}" \
+        --work-dir "${EP_WORK}" --comfy-url "${COMFY_URL}" \
         --gpu-index 0 --sample-shots 2 --vram-wait-timeout 90
     echo "  [PASS] S4 h3_regen exit 0（guard 拒绝是 graceful-degrade 非 crash）"
     assert_grep "S4 guard 拒绝日志" "批开始 guard 拒绝（reason=" "${S4_LOG}"
-    assert_grep "S4 warnings 记 vram_insufficient" "vram_insufficient" "${EP01_DIR}/route_cache/warnings.json"
-    # 冻结红线第 3 点：cache 保留（二跑可续）
-    RT_NOW="$(sha256sum "${RT_JSON}" | cut -d' ' -f1)"
-    if [[ "${RT_NOW}" == "$(cat "${RT_SHA_BASE}")" ]]; then
-        echo "  [PASS] S4 后 roundtrip.json sha256 等值（cache 保留，二跑可续）"
+    assert_grep "S4 warnings 记 vram_insufficient" "vram_insufficient" "${EP_WORK}/route_cache/warnings.json"
+    # 冻结红线第 3 点：cache 保留（二跑可续）——副本 sha vs S3 后 + 正本零触碰
+    RT_NOW_WORK="$(sha256sum "${RT_WORK}" | cut -d' ' -f1)"
+    if [[ "${RT_NOW_WORK}" == "$(cat "${WORK}/rt_work_sha_s2")" ]]; then
+        echo "  [PASS] S4 后副本 sidecar sha256 等值（cache 保留，二跑可续）"
     else
-        echo "  [FAIL] S4 后 sha256 漂移：${RT_NOW} != $(cat "${RT_SHA_BASE}")"
+        echo "  [FAIL] S4 后副本 sha256 漂移：${RT_NOW_WORK} != $(cat "${WORK}/rt_work_sha_s2")"
         exit 1
     fi
+    assert_verdict_freeze "S4 后"
+    assert_freeze_sha "S4 后"
     echo "[smoke] SCENARIO 4: PASS"
 else
-    echo "  [SKIP] GPU0 free=${GPU0_FREE} ≥ ${VRAM_GATE_MIB}（本机预期 3060Ti ~4.9GB —— 环境态意外，guard 拒绝位不成立；非功能失败）"
+    echo "  [SKIP] GPU0 free=${GPU0_FREE_NOW} ≥ ${VRAM_GATE_MIB}（本机预期 3060Ti ~4.9GB —— 环境态意外，guard 拒绝位不成立；非功能失败）"
     echo "[smoke] SCENARIO 4: PASS-with-note（GPU0 余量异常走文档化降级分支）"
 fi
 
+# 收尾冻结红线（第 3 点，无条件——S3/S4 降级分支也要证明正本零触碰）
+assert_freeze_sha "全场景收尾"
 echo ""
+ALL_PASS=1
 echo "ALL_SCENARIOS_PASS"
 exit 0
