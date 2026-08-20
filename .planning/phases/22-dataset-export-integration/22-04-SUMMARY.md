@@ -1,14 +1,14 @@
 ---
 phase: 22
 plan: 22-04
-status: checkpoint
+status: complete
 requirements: [PIPE-02, PIPE-01, RT-05]
 created: 2026-08-20
 ---
 
 # Plan 22-04: e2e harness + ep01 真跑 + 走查 checkpoint — SUMMARY
 
-**Status:** Tasks 1-2 complete（ALL_SCENARIOS_PASS）；Task 3 = blocking human-verify checkpoint（等待 Kai 浏览器走查）
+**Status:** 3/3 complete — Task 3 走查 approved（Kai, 2026-08-20：双 video 同步/三态/export edits 全部正常）
 
 ## 执行实录（429 中断后 orchestrator inline 续跑）
 
@@ -42,6 +42,6 @@ created: 2026-08-20
 - S2 的 scorer 全量 stale 重打分是 WR-02 cache key 加强的正确后果（分数可更新、verdict 冻结不受影响——正是设计）
 - 走查 HTML 生成在正本（gen 只读 sidecar；sha 复验不变）
 
-## Task 3（checkpoint:human-verify）
+## Task 3（human-verify）
 
-见 VALIDATION.md Manual-Only 表——Kai 走查 6 步后裁决。
+✓ approved — Kai, 2026-08-20，走查 6 步全过（同步播放/三态覆盖/queue 跳转/edits Blob 导出）。serve 已清理。

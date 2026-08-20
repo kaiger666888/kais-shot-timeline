@@ -23,7 +23,7 @@
 - [x] **RT-02**: `SCHEMA_VERSION = "1.3"` producer-locked 单源；`validate.py` shape gate 扩展；fixture + v1.2↔v1.3 bidirectional cross-version proof
 - [x] **RT-03**: SPEC §4 changelog 1.2→1.3 + §5 roundtrip 形状文档 + fidelity disclaimer（accepted = 「h3 可复现」≠「prompt 完美」）
 - [x] **RT-04**: graceful-degrade —— ComfyUI 不可达 / VRAM 不足 / 打分模型缺席 → roundtrip sidecar 缺省（byte-identical-absent）、资产照常导出、`[roundtrip]` warnings sidecar 记因
-- [ ] **RT-05**: accepted 子集独立 dataset 目录导出 —— `dataset/<video-stem>/`（per-shot 首帧/尾帧 jpg + prompt.json + manifest 含 scores/attribution）；消费端不依赖 asset 契约
+- [x] **RT-05**: accepted 子集独立 dataset 目录导出 —— `dataset/<video-stem>/`（per-shot 首帧/尾帧 jpg + prompt.json + manifest 含 scores/attribution）；消费端不依赖 asset 契约
 
 ### VISION — qwen-eye v2 看片段（升级 action/camera facet）
 - [x] **VISION-01**: 帧序列逐帧问答升级 action/camera facet —— 每镜 ≤8 帧（frames_5fps 复用）逐帧 `observe_single` 问「这帧在做什么/镜头怎么动」→ 合并成完整动作链/运镜描述；合并策略（最长回答 vs 时序拼接）在 ep01 小样本上 spike 验证后锁定；只升级空缺/更短 facet（不覆盖 route/人工产物，mirror local_vision 边界）
@@ -42,11 +42,11 @@
 
 ### DATASET — verdict 与数据集
 - [x] **DATASET-01**: verdict 合并写 `roundtrip.json` —— accepted/rejected + attribution + reason + scores；rejected **永不删除**（hard negatives + h3 能力边界测绘）
-- [ ] **DATASET-02**: dataset manifest + hard-negative 索引 —— accepted/rejected 分清单，含 prompt 快照与引擎版本（可复现、可审计）
+- [x] **DATASET-02**: dataset manifest + hard-negative 索引 —— accepted/rejected 分清单，含 prompt 快照与引擎版本（可复现、可审计）
 
 ### PIPE — 流水线集成
-- [ ] **PIPE-01**: `step_roundtrip` 流水线 slot（timeline/export 前后，精确位置 Phase 22 定）+ CLI flags（`--skip-roundtrip`/`--comfyui-url`/`--sample-shots`/`--regen-resolution` 等）+ banner 重编号 + `--force` 缓存清单扩展
-- [ ] **PIPE-02**: smoke 回归 harness —— ≥4 场景（ComfyUI down / cache-hit 断点续跑 / 抽样模式 / VRAM-guard 拒提交），mirror v1.2 Phase 14 模式
+- [x] **PIPE-01**: `step_roundtrip` 流水线 slot（timeline/export 前后，精确位置 Phase 22 定）+ CLI flags（`--skip-roundtrip`/`--comfyui-url`/`--sample-shots`/`--regen-resolution` 等）+ banner 重编号 + `--force` 缓存清单扩展
+- [x] **PIPE-02**: smoke 回归 harness —— ≥4 场景（ComfyUI down / cache-hit 断点续跑 / 抽样模式 / VRAM-guard 拒提交），mirror v1.2 Phase 14 模式
 
 ### PRESENT — 审阅呈现
 - [x] **PRESENT-01**: gallery round-trip 审阅面板 —— 原片段 vs 重生成片段并排 + 双分数 + 归因标签 + accept/reject 按钮（HITL 复核导出，mirror registry/speaker review 先例）+ XSS `_esc()` hardening（verdict/reason 是模型产出文本 = 新 attack surface）
@@ -83,7 +83,7 @@ Each v1.3 REQ-ID maps to exactly one phase. Coverage: 19/19 (100%).
 | RT-02 | Phase 18 (Contract v1.3) | Complete |
 | RT-03 | Phase 18 (Contract v1.3) | Complete |
 | RT-04 | Phase 18 (Contract v1.3) | Complete |
-| RT-05 | Phase 22 (Dataset Export + Integration) | Pending |
+| RT-05 | Phase 22 (Dataset Export + Integration) | Complete |
 | VISION-01 | Phase 19 (qwen-eye v2 看片段) | Complete |
 | VISION-02 | Phase 19 (qwen-eye v2 看片段) | Complete |
 | REGEN-01 | Phase 20 (h3 复现客户端) | Complete |
@@ -94,9 +94,9 @@ Each v1.3 REQ-ID maps to exactly one phase. Coverage: 19/19 (100%).
 | SCORE-02 | Phase 21 (Scorer + 阈值校准) | Complete |
 | SCORE-03 | Phase 21 (Scorer + 阈值校准) | Complete |
 | DATASET-01 | Phase 21 (Scorer + 阈值校准) | Complete |
-| DATASET-02 | Phase 22 (Dataset Export + Integration) | Pending |
-| PIPE-01 | Phase 22 (Dataset Export + Integration) | Pending |
-| PIPE-02 | Phase 22 (Dataset Export + Integration) | Pending |
+| DATASET-02 | Phase 22 (Dataset Export + Integration) | Complete |
+| PIPE-01 | Phase 22 (Dataset Export + Integration) | Complete |
+| PIPE-02 | Phase 22 (Dataset Export + Integration) | Complete |
 | PRESENT-01 | Phase 22 (Dataset Export + Integration) | Complete |
 
 **Phase coverage summary:**
