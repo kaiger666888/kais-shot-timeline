@@ -507,6 +507,8 @@ def apply_verdict(work_dir: str, tau_sim: float) -> dict:
     的镜 accepted ⇔ midframe_sim.score ≥ τ ∧ attribution == prompt_faithful
     （硬合取）；信号缺一（无 sim 或无 judge）跳过 + str warning 列 shot_id。
     verdict = {decision, source: "auto", decided_at: UTC ISO}。
+    WR-03：首次实际 apply 把决策 τ 写 roundtrip.json.verdict-tau stamp
+    （写后不覆盖；换 τ 重跑打不一致 warning——冻结 verdict 不重判）。
     返回 {applied, frozen, skipped_missing, accepted, rejected}。"""
     try:
         with open(os.path.join(work_dir, "roundtrip.json"), encoding="utf-8") as f:
@@ -556,6 +558,31 @@ def apply_verdict(work_dir: str, tau_sim: float) -> dict:
 
     if entries:
         pending_warnings.extend(_merge_write_sidecar(work_dir, entries))
+    # WR-03（22-REVIEW）：verdict 决策 τ 留档——首次实际 apply 时把 τ 写进
+    # roundtrip.json.verdict-tau stamp（mirror .video-stamp 纯文本 sidecar 先例；
+    # 阈值本身不进 roundtrip.schema.json——schema 明文 two-tier authority lock）。
+    # 写后不覆盖：verdict 冻结语义下，首次 τ 即首批冻结 verdict 的决策阈值；
+    # 换 τ 重跑（冻结镜跳过）stamp 仍指首次 τ，export_dataset 据此分开记录
+    # verdict_tau（决策时）与 export_tau（导出时），τ 显示不再冒充决策阈值。
+    tau_stamp = os.path.join(work_dir, "roundtrip.json.verdict-tau")
+    recorded_tau: float | None = None
+    if os.path.exists(tau_stamp):
+        try:
+            with open(tau_stamp, encoding="utf-8") as f:
+                recorded_tau = float(f.read().strip())
+        except (OSError, ValueError):
+            recorded_tau = None
+    if recorded_tau is not None and recorded_tau != float(tau_sim):
+        print(f"{STEP_TAG} warning: τ_sim={tau_sim} 与 verdict 决策留档 "
+              f"τ={recorded_tau} 不一致——冻结 verdict 不重判（本轮新增 verdict "
+              f"仍按 τ_sim={tau_sim} 判；dataset manifest 将分开记录 "
+              f"verdict_tau={recorded_tau} / export_tau={tau_sim}）")
+    if entries and recorded_tau is None:
+        try:
+            with open(tau_stamp, "w", encoding="utf-8") as f:
+                f.write(str(float(tau_sim)))
+        except OSError:
+            pass              # best-effort 留档；失败仅损失 manifest 精确度
     for sid in skipped_missing:
         pending_warnings.append(
             f"{STEP_TAG} shot {sid}: 双信号缺一（midframe_sim/judge 不齐），"

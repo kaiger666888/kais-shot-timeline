@@ -164,7 +164,10 @@ def test_manifest_buckets(tmp_path):
     run(wd, root)
     m = json.loads((root / wd.name / "manifest.json").read_text(encoding="utf-8"))
     assert m["video_stem"] == wd.name
-    assert m["tau_sim"] == 0.9670
+    # WR-03：τ 双记——export_tau = 本轮 CLI τ；verdict_tau = 决策留档 τ
+    # （fixture work_dir 无 verdict-tau stamp → null，判定先于留档机制）
+    assert m["export_tau"] == 0.9670
+    assert m["verdict_tau"] is None
     assert m["generated"]
     assert m["accepted_count"] == 2 and m["rejected_count"] == 2
     assert m["rejected_buckets"] == {"faithful_below_tau": 1, "diverged": 1,
@@ -380,3 +383,45 @@ def test_degraded_first_run_cleans_own_half_built_dir(tmp_path):
     assert run(wd, root) == 0
     assert not (root / wd.name / "shot_002").exists(), \
         "本轮自建半成品目录必须清（无上轮遗存可保留）"
+
+
+# ── 12. WR-03 回归锚：manifest τ 双记（verdict_tau / export_tau）───────────
+
+def test_manifest_tau_split_record(tmp_path, capsys):
+    """WR-03（22-REVIEW）：τ 换值 cache-hit 重跑场景——manifest 必须分开记录
+    verdict_tau（judge apply 时留档 roundtrip.json.verdict-tau）与 export_tau
+    （本轮 CLI τ），不拿导出时 CLI 值冒充决策阈值；不一致时打 warning。"""
+    wd = make_work_dir(tmp_path)
+    (wd / "roundtrip.json.verdict-tau").write_text("0.92", encoding="utf-8")
+    root = tmp_path / "ds"
+    assert run(wd, root) == 0
+    m = json.loads((root / wd.name / "manifest.json").read_text(encoding="utf-8"))
+    assert m["verdict_tau"] == 0.92       # 决策留档值，非本轮 CLI 值
+    assert m["export_tau"] == 0.9670      # 本轮 CLI 默认值
+    out = capsys.readouterr().out
+    assert "τ 不一致" in out and "verdict 决策 τ=0.92" in out
+    assert "export_tau" in out            # warning 说明双记去向
+
+
+def test_manifest_tau_stamp_absent_null_plus_warning(tmp_path, capsys):
+    """WR-03 缺席面：无 verdict-tau stamp（旧 sidecar 先于留档机制）→
+    verdict_tau=null + 留档缺席 warning（可审计），export_tau 照记。"""
+    wd = make_work_dir(tmp_path)
+    root = tmp_path / "ds"
+    assert run(wd, root) == 0
+    m = json.loads((root / wd.name / "manifest.json").read_text(encoding="utf-8"))
+    assert m["verdict_tau"] is None and m["export_tau"] == 0.9670
+    out = capsys.readouterr().out
+    assert "verdict 决策 τ 留档缺席" in out
+
+
+def test_manifest_tau_stamp_garbage_graceful(tmp_path):
+    """WR-03 坏 stamp 面：verdict-tau 内容非 float → graceful 降级 null
+    （不炸整批导出）。"""
+    wd = make_work_dir(tmp_path)
+    (wd / "roundtrip.json.verdict-tau").write_text("not-a-tau",
+                                                   encoding="utf-8")
+    root = tmp_path / "ds"
+    assert run(wd, root) == 0
+    m = json.loads((root / wd.name / "manifest.json").read_text(encoding="utf-8"))
+    assert m["verdict_tau"] is None and m["export_tau"] == 0.9670

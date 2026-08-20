@@ -650,6 +650,34 @@ def test_apply_verdict_requires_tau_sim(tmp_path):
         run_main(work, ["--apply-verdict"])
 
 
+# ── WR-03（22-REVIEW）：verdict 决策 τ 留档 stamp ────────────────────────────
+
+def test_apply_verdict_records_decision_tau_stamp(tmp_path, capsys):
+    """WR-03：首次实际 apply 把决策 τ 写 roundtrip.json.verdict-tau stamp；
+    换 τ 重跑（verdict 冻结跳过）stamp **不覆盖** + 打不一致 warning——
+    export_dataset 据此分开记录 verdict_tau（决策时）/export_tau（导出时），
+    τ 显示不冒充决策阈值。"""
+    work = make_workdir(tmp_path, n_shots=1)
+    preset_signals(work, {1: (0.95, "prompt_faithful", None)})
+    stamp = work / "roundtrip.json.verdict-tau"
+    assert run_main(work, ["--apply-verdict", "--tau-sim", "0.9"]) == 0
+    assert stamp.read_text(encoding="utf-8").strip() == "0.9"
+    # 换 τ 重跑：verdict 冻结跳过（无新增 entries）→ stamp 留首次决策 τ
+    assert run_main(work, ["--apply-verdict", "--tau-sim", "0.5"]) == 0
+    assert stamp.read_text(encoding="utf-8").strip() == "0.9"
+    out = capsys.readouterr().out
+    assert "τ_sim=0.5" in out and "决策留档" in out and "τ=0.9" in out
+
+
+def test_apply_verdict_no_entries_no_stamp(tmp_path):
+    """WR-03 对照面：双信号缺一 → 无 verdict 实际写入 → 不写 stamp（τ 尚未
+    成为任何 verdict 的决策阈值）。"""
+    work = make_workdir(tmp_path, n_shots=1)
+    preset_signals(work, {1: (None, None, None)})
+    assert run_main(work, ["--apply-verdict", "--tau-sim", "0.9"]) == 0
+    assert not (work / "roundtrip.json.verdict-tau").exists()
+
+
 # ── Pitfall 8 双向 + WR-04 + schema gate ────────────────────────────────────
 
 def test_pitfall8_h3_regen_rewrite_preserves_verdict(tmp_path):

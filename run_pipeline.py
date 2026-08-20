@@ -588,9 +588,12 @@ def step_roundtrip(work_dir: str, video: str, shots_json: str,
          standalone CLI，本步 NEVER subprocess 调用它 —— mirror link_speakers）
 
     外层 cache（mirror step_reid :290-307）：mtime（roundtrip.json vs shots.json
-    + prompts.json）+ video 身份 sidecar。命中时短路整个 subprocess 链 —— 连带
-    跳过 h3_regen 批前 guard（TTS kill + POST /free + eye-wait 最长 1800s 阻塞，
-    T-22-13）—— 但仍补生成审阅 HTML（纯 Python 毫秒级，HTML 可能尚未生成，A2）。
+    + prompts.json）+ video 身份 sidecar（WR-03：stamp 内容含 τ —— video 身份
+    追加 "|tau=<τ>"，换 τ 重跑强制 miss 重生成 HTML/manifest；verdict 冻结不
+    重判，决策 τ 由 judge 写 roundtrip.json.verdict-tau 留档）。命中时短路整个
+    subprocess 链 —— 连带跳过 h3_regen 批前 guard（TTS kill + POST /free +
+    eye-wait 最长 1800s 阻塞，T-22-13）—— 但仍补生成审阅 HTML（纯 Python
+    毫秒级，HTML 可能尚未生成，A2）。
 
     Args:
         work_dir: 资产根目录；roundtrip.json / roundtrip/ / route_cache 写在其下。
@@ -617,6 +620,10 @@ def step_roundtrip(work_dir: str, video: str, shots_json: str,
     # video 换（同/更老 mtime，backup 恢复等）会让外层 cache 命中但内层 per-shot
     # cache 全 stale → 不同 video 强制 miss 重跑；shots.json / prompts.json 任一
     # 更新也强制 miss（prompts 缺席时 _safe_mtime=+inf → 恒 miss）。
+    # WR-03（22-REVIEW）：τ 也进 cache key——stamp 身份追加 "|tau=<τ>" 后缀，
+    # 换 τ 重跑强制 miss（verdict 冻结不重判，但 review HTML 的 τ pill/tick/
+    # τ 边界排序与 dataset manifest 的 export_tau 必须按新 τ 重生成，不拿旧
+    # τ 面板冒充新 τ）。旧 stamp（无 τ 后缀）一次性 miss 后重写为新格式。
     video_stamp = rt_json + ".video-stamp"
     cached_video_id = None
     if os.path.exists(video_stamp):
@@ -626,6 +633,8 @@ def step_roundtrip(work_dir: str, video: str, shots_json: str,
         except OSError:
             cached_video_id = None
     current_video_id = _video_identity(video)
+    current_cache_id = (f"{current_video_id}|tau={tau_sim}"
+                        if current_video_id is not None else None)
 
     def _gen_review_html():
         """审阅 HTML 生成（cache 命中与 miss 路径共用 —— 子进程 4，A2）。"""
@@ -643,7 +652,7 @@ def step_roundtrip(work_dir: str, video: str, shots_json: str,
             and _safe_mtime(rt_json) > _safe_mtime(shots_json)
             and _safe_mtime(rt_json) > _safe_mtime(prompts_json)
             and cached_video_id is not None
-            and cached_video_id == current_video_id):
+            and cached_video_id == current_cache_id):
         print(f"[9/10] cached roundtrip sidecar: {rt_json}")
         # cache 命中仍补生成 review HTML（HTML 是新文件可能尚未生成 —— ep01 首跑
         # e2e 正是此态；纯 Python 毫秒级无代价），再短路整链（跳过批前 guard）。
@@ -684,10 +693,11 @@ def step_roundtrip(work_dir: str, video: str, shots_json: str,
     # 独立 CLI，由操作员在浏览器审阅后手动运行）。
     _gen_review_html()
     # 写 video 身份 sidecar —— best-effort（WR-01，mirror step_reid）；成功链尾写。
-    if current_video_id is not None:
+    # WR-03：内容是 video 身份 + τ 的组合 cache key（见上方 current_cache_id）。
+    if current_cache_id is not None:
         try:
             with open(video_stamp, "w", encoding="utf-8") as f:
-                f.write(current_video_id)
+                f.write(current_cache_id)
         except OSError:
             pass
     return rt_json if os.path.exists(rt_json) else None

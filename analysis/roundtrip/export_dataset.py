@@ -44,7 +44,9 @@ SFT-grade 数据集目录：
     python3 analysis/roundtrip/export_dataset.py \\
         --work-dir     <abs path>   (必填 — output/<video-stem>/，roundtrip.json 所在) \\
         --dataset-root <abs path>   (可选 — 默认 work_dir.parent/"dataset" 即 output/dataset/；跨视频可累积集合根) \\
-        --tau-sim      <float>      (可选 — 默认 0.9670，仅 manifest 记录用；判定已在 judge 冻结)
+        --tau-sim      <float>      (可选 — 默认 0.9670，写 manifest.export_tau；verdict
+                                    决策 τ 从 roundtrip.json.verdict-tau 留档读入
+                                    manifest.verdict_tau——判定已在 judge 冻结)
 
 退出码：0（含 graceful 降级）；无数据可导出时打印原因退出 0（post-step 语义）。
 """
@@ -376,9 +378,30 @@ def export_dataset(work_dir: str, dataset_root: str, tau_sim: float) -> int:
         exported_names[sid] = f"shot_{sid:03d}"
 
     # ── manifest + 两清单 ──────────────────────────────────────────────────
+    # WR-03（22-REVIEW）：τ 双记——verdict_tau = verdict **决策时**留档的 τ
+    # （judge apply 时写 roundtrip.json.verdict-tau stamp；缺席 = 早于留档机制
+    # 的旧 sidecar → null + warning）；export_tau = 本轮导出 CLI τ。judge 冻结
+    # 语义下换 τ 重跑不重判——两者可能不同，分开记录才不冒充决策阈值。
+    verdict_tau: float | None = None
+    tau_stamp = os.path.join(work_dir, "roundtrip.json.verdict-tau")
+    if os.path.isfile(tau_stamp):
+        try:
+            with open(tau_stamp, encoding="utf-8") as f:
+                verdict_tau = float(f.read().strip())
+        except (OSError, ValueError):
+            verdict_tau = None
+    if verdict_tau is None:
+        warnings.append(f"{STEP_TAG} verdict 决策 τ 留档缺席"
+                        f"（roundtrip.json.verdict-tau 不在/不可读——sidecar 先于"
+                        f"留档机制），manifest verdict_tau=null")
+    elif verdict_tau != float(tau_sim):
+        warnings.append(f"{STEP_TAG} τ 不一致：verdict 决策 τ={verdict_tau} ≠ "
+                        f"本轮导出 τ={tau_sim}（冻结 verdict 不重判——manifest "
+                        f"分开记录 verdict_tau/export_tau）")
     manifest = {
         "video_stem": stem,
-        "tau_sim": float(tau_sim),
+        "verdict_tau": verdict_tau,
+        "export_tau": float(tau_sim),
         "generated": time.strftime("%Y-%m-%dT%H:%M:%S", time.gmtime()),
         "engine_versions": sorted(engine_versions),
         "accepted_count": exported,
@@ -422,7 +445,9 @@ def main(argv=None) -> int:
                          "output/dataset/——跨视频可累积集合根）")
     ap.add_argument("--tau-sim", type=float, default=TAU_SIM_DEFAULT,
                     help=f"τ_sim 记录值（默认 {TAU_SIM_DEFAULT}，Phase 21 锁定值；"
-                         f"仅写入 manifest，判定已在 judge 冻结）")
+                         f"写入 manifest.export_tau——verdict 决策 τ 另由 "
+                         f"roundtrip.json.verdict-tau 留档读入 manifest.verdict_tau，"
+                         f"判定已在 judge 冻结）")
     args = ap.parse_args(argv)
 
     dataset_root = args.dataset_root or os.path.join(

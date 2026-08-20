@@ -131,6 +131,11 @@ def test_step_roundtrip_wiring_static():
     assert "_safe_mtime(rt_json) > _safe_mtime(prompts_json)" in window
     assert 'rt_json + ".video-stamp"' in window
     assert "_video_identity(video)" in window
+    # WR-03（22-REVIEW）：τ 进外层 cache key——stamp 身份追加 "|tau=<τ>" 后缀，
+    # 比对/写盘都走 current_cache_id（换 τ 重跑强制 miss 重生成 HTML/manifest）
+    assert 'current_cache_id = (f"{current_video_id}|tau={tau_sim}"' in window
+    assert "cached_video_id == current_cache_id" in window
+    assert "f.write(current_cache_id)" in window
     # cache 命中路径仍补生成 review HTML（A2 —— HTML 可能尚未存在）
     cached_seg = window[window.index("cached roundtrip sidecar"):
                         window.index('"h3_regen.py"')]
