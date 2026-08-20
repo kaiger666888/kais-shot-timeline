@@ -197,9 +197,8 @@ def test_unknown_shot_id_fail_loud(tmp_path, capsys):
     with pytest.raises(SystemExit) as ei:
         am.main(["--work-dir", str(wd),
                  "--edits", write_edits(tmp_path, {"accept_overrides": [1, 999]})])
-    assert ei.value.code != 0
-    out = capsys.readouterr().out
-    assert "999" in out, "未知 shot_id 必须列出（typo 防护）"
+    # sys.exit(str) 的消息在 SystemExit.code 上（未被解释器捕获时才打 stderr）
+    assert "999" in str(ei.value.code), "未知 shot_id 必须列出（typo 防护）"
 
 
 def test_missing_sidecar_fail_loud(tmp_path):
