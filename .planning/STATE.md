@@ -2,9 +2,9 @@
 gsd_state_version: 1.0
 milestone: v1.3
 milestone_name: Round-trip Validation（逆推→复现→比对闭环数据集）
-status: verifying
-stopped_at: 21-03 Task 2 checkpoint —— 待 Kai 裁决 tau_sim + 抽检 5 镜（材料：.planning/research/roundtrip-threshold-calibration.md DRAFT）
-last_updated: "2026-08-20T02:39:55.978Z"
+status: ready_to_plan
+stopped_at: Phase 21 complete (3/3) — ready to discuss Phase 22
+last_updated: 2026-08-20T03:23:05.787Z
 last_activity: 2026-08-20
 progress:
   total_phases: 5
@@ -21,13 +21,13 @@ progress:
 See: .planning/PROJECT.md (updated 2026-08-19)
 
 **Core value:** 把成片解构成可导航、多轨道、带语义的分镜资产（分镜 + 分离音轨 + 对白 + 镜头语言/动作/场景 prompt + 跨镜角色/道具注册表 + 三模态音频语义），且形态可移植——能作为无限画布等下游消费者的「最终资产集合形态」被直接消费。
-**Current focus:** Phase 21 — Scorer + 阈值校准
+**Current focus:** Phase 22 — dataset export + integration
 
 ## Current Position
 
-Phase: 21 (Scorer + 阈值校准) — EXECUTING
-Plan: 3 of 3
-Status: Phase complete — ready for verification
+Phase: 22
+Plan: Not started
+Status: Ready to plan
 Last activity: 2026-08-20
 
 Progress: [█████████░] 92%
@@ -36,7 +36,7 @@ Progress: [█████████░] 92%
 
 **Velocity (cumulative historical):**
 
-- Total plans completed: 74 (v1.0: 7, v1.1: 16, v1.2: 20 — all archived)
+- Total plans completed: 77 (v1.0: 7, v1.1: 16, v1.2: 20 — all archived)
 - v1.3 plans completed: 9
 
 **By Phase (v1.3 — populates as plans complete):**
@@ -49,6 +49,7 @@ Progress: [█████████░] 92%
 | 21. Scorer + 阈值校准 | 0/TBD | - | - |
 | 22. Dataset Export + Integration | 0/TBD | - | - |
 | 20 | 3 | - | - |
+| 21 | 3 | - | - |
 
 **Plan metrics (per executed plan):**
 

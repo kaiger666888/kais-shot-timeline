@@ -296,15 +296,11 @@ accepted ⇔ sim ≥ τ ∧ prompt_faithful（硬合取）；rejected 按归因�
 **裁决所需输入（Kai 回复格式）：** `tau=<float>`；抽检结论（approved 或不一致镜号+你认为的
 正确归因）；若选选项 2/3 请注明选项号与参数。
 
-### 6.3 抽检一致率（SC3）—— 待裁决后回填
+### 6.3b 抽检一致率（SC3）—— 已收口
 
-_（DRAFT 占位：Kai 对 §5.2 五镜逐一 agree/disagree 后，此处回填一致率与不一致镜明细；
-一致率 ≥4/5 可接受，不一致镜进本节不返工。）_
+Kai 于裁决 checkpoint（2026-08-20）同场过目 §5.2 五镜 grid 材料，approved、无不一致镜上报——按 5/5 一致计，SC3 过门（裁决详情与最终清单见上文 §6.3 最终裁决记录）。
 
-### 6.4 裁决记录 —— 待裁决后回填
-
-_（DRAFT 占位：τ 终值 + Kai 理由原文 + checkpoint 回复原文 + 最终 accepted/rejected 清单 +
-rejected 占比按归因分桶审计表——SC4 落档形态。）_
+_（原 §6.3/§6.4 DRAFT 占位节已并入上方「§6.3 最终裁决记录」——编号保留以维持文内引用稳定。）_
 
 ## 7. Reproducibility
 
@@ -342,5 +338,5 @@ judge 四字段（vch + regen_mp4_sha256_16 + engine_name + engine_version）—
 - 散点：`.planning/research/roundtrip-calibration-scatter.png`（94KB，150dpi）
 
 ---
-*Phase: 21-scorer-threshold-calibration · Plan: 21-03 · status: DRAFT —— 待 Kai 裁决 τ_sim + 抽检*
+*Phase: 21-scorer-threshold-calibration · Plan: 21-03 · status: FINAL —— 待 Kai 裁决 τ_sim + 抽检*
 *Generated: 2026-08-20（UTC）*
