@@ -18,8 +18,10 @@ roundtrip.json（rejected 永不删除，DATASET-01）。
 judge 批（默认模式）：
 1. 读 roundtrip.json 取有 regen.path 的条目（status/failed str warning 跳过）
    + shots.json/prompts.json（经 h3s.load_shot_prompts join prompt_text）；
-2. 逐镜 cache 预判（key 四字段：video_content_hash + regen_mp4_sha256_16 +
-   engine_name + engine_version；parsed 缺席同样 miss）；全命中零引擎实例化；
+2. 逐镜 cache 预判（key 五字段：video_content_hash + regen_mp4_sha256_16 +
+   engine_name + engine_version + prompt_version——attribution 是 prompt_text
+   的直接函数，prompt 改稿必须重判，WR-01；parsed 缺席同样 miss）；
+   全命中零引擎实例化；
 3. miss 镜：ffmpeg 提取 4 时位 {0, 1/3, 2/3, 1} ×2 侧 = 8 帧（t=100% 同样
    clamp min(ts, dur-0.2)，Pitfall 3）→ PIL 2×4 grid（列头 ORIGINAL 蓝 /
    REGEN (h3) 绿 + 行标签 t=0%/33%/66%/100% 竖排**进图**——judge 只收一张
@@ -55,8 +57,9 @@ lease 崩溃也不泄漏，WR-03）。全 cache 命中 → 零实例化零 HTTP�
 
 cache 惯例
 ----------
-- 元数据 work_dir/route_cache/judge/shot_{NNN}.json；hit = key 四字段全等
-  **且** parsed 为 dict（解析失败产物不算命中，重跑必重问）；
+- 元数据 work_dir/route_cache/judge/shot_{NNN}.json；hit = key 五字段全等
+  （含 prompt_version——prompt 改稿 stale 命中失效，WR-01）**且** parsed
+  为 dict（解析失败产物不算命中，重跑必重问）；
 - payload 另存 grid{path,w,h}（相对路径，SC3 抽检素材指针）+ attempts
   [{parse, raw_len}]（重问审计）+ parsed + judged_at；
 - grid 实体落 roundtrip/_judge_grids/shot_{NNN}.jpg（mirror 20-03
@@ -130,9 +133,12 @@ GRIDS_SUBDIR = "roundtrip/_judge_grids"
 # 失败重问上限（1 次主问 + 2 次重问）。
 MAX_RETRIES = 2
 
-# cache key 四字段（引擎身份 × regen 产物身份 × 源视频身份）。
+# cache key 五字段（引擎身份 × regen 产物身份 × 源视频身份 × prompt 身份）。
+# prompt_version mirror h3_regen _CACHE_KEY_FIELDS：attribution 是 prompt_text
+# 的直接函数——prompts.json 改稿而 regen mp4 未重渲（字节不变 → sha/vch 不变）
+# 时必须重判，绝不吃 stale 命中（WR-01）。
 _JUDGE_KEY_FIELDS = ("video_content_hash", "regen_mp4_sha256_16",
-                     "engine_name", "engine_version")
+                     "engine_name", "engine_version", "prompt_version")
 
 
 # ─── grid 时窗 / 帧提取 ─────────────────────────────────────────────────────
@@ -759,6 +765,9 @@ def main(argv=None) -> int:
             "regen_mp4_sha256_16": regen_sha16(regen_path),
             "engine_name": ENGINE_NAME,
             "engine_version": ENGINE_VERSION,
+            # WR-01：sidecar regen 半边带的 prompt_version 进 key——
+            # prompt 改稿后 stale attribution 必须失效（mirror h3_regen）。
+            "prompt_version": str(regen.get("prompt_version") or ""),
         }
         keys[sid] = key
         if cache_read(sid, work_dir, key) is not None:

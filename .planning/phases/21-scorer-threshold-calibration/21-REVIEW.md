@@ -90,6 +90,8 @@ key = {
 }
 ```
 
+**Outcome (fix):** FIXED — 采纳建议原样：`_JUDGE_KEY_FIELDS` 四字段 → 五字段（+`prompt_version`），key 装配处并入 `str(regen.get("prompt_version") or "")`（sidecar regen 半边自带该值，无需改 prompts.json 读路径）；payload = dict(key) 使该维自动进 cache 留档。模块 docstring 步骤 2 与 cache 惯例同步改为「五字段」。存量 judge cache 因缺该字段全部 miss 重判（预期行为——attribution 是 prompt_text 的直接函数）。回归锚：`test_judge_cache_key_prompt_revision_rejudges`（pv1→pv2、mp4 字节不变 → 重判 + payload 留档）；`test_judge_all_cache_hit_zero_instantization` 的预置 payload 同步补 `prompt_version`。
+
 ### WR-02: scorer cache key 缺 orig 侧镜几何维 —— 重分割后 stale 分数命中
 
 **File:** `analysis/roundtrip/scorer.py:108-109`、`analysis/roundtrip/scorer.py:498-504`

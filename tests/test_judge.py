@@ -475,6 +475,7 @@ def test_judge_all_cache_hit_zero_instantiation(tmp_path, monkeypatch):
     payload = {
         "video_content_hash": vch, "regen_mp4_sha256_16": sha16,
         "engine_name": jm.ENGINE_NAME, "engine_version": jm.ENGINE_VERSION,
+        "prompt_version": "pv1",            # WR-01：key 五字段含 prompt 维
         "grid": {"path": "roundtrip/_judge_grids/shot_001.jpg",
                  "w": 1370, "h": 1476},
         "attempts": [{"parse": "ok", "raw_len": 100}],
@@ -519,6 +520,30 @@ def test_judge_cache_hit_backfills_missing_sidecar_half(tmp_path, monkeypatch):
     assert judge["attribution"] == "prompt_faithful"
     assert judge["confidence"] == 0.85
     assert judge["reason"] == json.loads(good_answer())["reason"]
+
+
+def test_judge_cache_key_prompt_revision_rejudges(tmp_path, monkeypatch):
+    """WR-01：prompt_version 变（prompts.json 改稿、regen mp4 字节不变）→
+    cache key 不等 → 必重判；cache payload 留档 prompt_version 维。"""
+    work = make_workdir(tmp_path, n_shots=1)
+    eye_cls, state = make_fake_eye([good_answer(),
+                                    good_answer(attribution="model_diverged")])
+    patch_judge(monkeypatch, eye_cls=eye_cls)
+    assert run_main(work) == 0
+    assert len(state["questions"]) == 1                # 首跑判定一次
+    # prompts.json 改稿：sidecar regen 半边 prompt_version pv1 → pv2
+    #（regen mp4 字节不变——sha16/vch 均不变，只有 prompt 维变）
+    side = read_sidecar(work)
+    side["shots"][0]["regen"]["prompt_version"] = "pv2"
+    write_sidecar(work, side)
+    assert run_main(work) == 0
+    assert len(state["questions"]) == 2                # 重判（stale 不命中）
+    payload = read_cache(work, 1)
+    assert payload["prompt_version"] == "pv2"          # key 维进 payload 留档
+    after = read_sidecar(work)
+    assert validate_sidecar(after) == []
+    judge = after["shots"][0]["scores"]["judge"]
+    assert judge["attribution"] == "model_diverged"    # 新判定覆盖旧归因
 
 
 def test_engine_unavailable_degrade(tmp_path, monkeypatch):
