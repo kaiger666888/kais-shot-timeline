@@ -287,6 +287,35 @@ def test_parse_no_brace():
     assert code == "no-brace"
 
 
+def test_parse_truncated_final_brace_repaired():
+    """末尾 `}` 被 EOS 截断（21-03 shot 19 实测：引擎在 `。"` 后提前停token，
+    三个样本全部缺闭括号）→ 补一个 `}` 后应正常解析。"""
+    obj, code = jm.parse_judge_answer(
+        '{"attribution": "model_diverged", "confidence": 0.9, '
+        '"reason": "prompt 明确描述了动作，但 REGEN 中段帧未执行该指令，'
+        '属于模型执行走样。"')
+    assert code == "ok"
+    assert obj["attribution"] == "model_diverged"
+    assert obj["confidence"] == 0.9
+
+
+def test_parse_truncated_brace_does_not_mask_garbage():
+    """截断修复不得掩盖真坏 JSON：缺 `}` 且内容本身非法（尾逗号）→ json: 码
+    照常进 retry-with-feedback。"""
+    _, code = jm.parse_judge_answer(
+        '{"attribution": "prompt_faithful", "confidence": 0.5, '
+        '"reason": "aaaaaaaaaa",')
+    assert code.startswith("json:"), code
+
+
+def test_parse_truncated_brace_validation_still_applies():
+    """截断修复后 enum/conf 校验照常生效（修复只补括号不放松语义校验）。"""
+    _, code = jm.parse_judge_answer(
+        '{"attribution": "bad_enum", "confidence": 0.5, '
+        '"reason": "aaaaaaaaaa"')
+    assert code == "enum"
+
+
 # ── grid 时窗 / 布局（T-21-03 标签进图）────────────────────────────────────
 
 def test_grid_ts_endpoint_clamp():

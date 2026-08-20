@@ -244,13 +244,26 @@ def parse_judge_answer(txt: str) -> tuple[dict | None, str]:
     """解析 judge 回答 → (obj | None, code)。六码：no-brace / json:<msg> /
     enum / conf-range / reason-short / ok。fence 剥离 → 花括号截取 → 严格
     校验（enum 三值闭集 / confidence ∈[0,1] / reason ≥10 字符——比 schema
-    minLength 1 更严，短 reason 无证据价值）。"""
+    minLength 1 更严，短 reason 无证据价值）。
+
+    末尾 `}` 截断修复（21-03 shot 19 实测）：引擎偶发在 `。"` 后提前 EOS，
+    闭括号被吃（三个样本全缺尾 `}`，json.loads 无法截取）。以 `{` 开头却
+    无 `}` 收尾的文本补一个 `}` 再解析——修复只补括号，后续 enum/conf/
+    reason 校验照常（真坏 JSON 仍落 json: 码进 retry-with-feedback）。"""
     t = re.sub(r"```(?:json)?", "", txt.strip()).strip("` \n")
     m = re.search(r"\{.*\}", t, re.DOTALL)
     if not m:
-        return None, "no-brace"
+        if t.startswith("{"):
+            m = re.match(r"\{.*", t, re.DOTALL)   # 缺尾 }：补一个再试
+            if m is None:
+                return None, "no-brace"
+            candidate = m.group(0) + "}"
+        else:
+            return None, "no-brace"
+    else:
+        candidate = m.group(0)
     try:
-        obj = json.loads(m.group(0))
+        obj = json.loads(candidate)
     except json.JSONDecodeError as e:
         return None, f"json:{e.msg[:40]}"
     if not isinstance(obj, dict) or obj.get("attribution") not in ATTRIBUTIONS:
