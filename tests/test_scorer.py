@@ -321,6 +321,25 @@ def test_cache_miss_on_different_regen_bytes(tmp_path, monkeypatch):
     assert payload2["regen_mp4_sha256_16"] != sha1
 
 
+def test_cache_key_miss_on_geometry_change(tmp_path, monkeypatch):
+    """WR-02：同源视频重分割（shots.json 镜几何变、vch/regen mp4 不变）→
+    cache key 不等 → 必重打分；key 的 orig_window 维留档新几何。"""
+    thetas = [0.12 * (j + 1) for j in range(8)]
+    work = make_workdir(tmp_path, n_shots=1, duration=6.73)
+    loads, _ = patch_scorer(monkeypatch,
+                            embed_impl=make_fake_embed(work, 1, thetas))
+    assert run_main(work) == 0
+    assert read_cache(work, 1)["orig_window"] == [0.0, 6.73]
+    assert loads["n"] == 1
+    # 重分割：同一源视频（h264.mp4/regen mp4 字节不变），镜 1 边界漂移
+    shots = json.loads((work / "shots.json").read_text(encoding="utf-8"))
+    shots[0].update({"start_sec": 1.5, "end_sec": 8.23, "duration": 6.73})
+    (work / "shots.json").write_text(json.dumps(shots), encoding="utf-8")
+    assert run_main(work) == 0
+    assert loads["n"] == 2                         # stale 不命中，重打分
+    assert read_cache(work, 1)["orig_window"] == [1.5, 6.73]
+
+
 # ── CR-01：cache-hit 回填 sidecar（断点续跑完整性）──────────────────────────
 
 def test_cache_hit_backfills_missing_sidecar_half(tmp_path, monkeypatch):

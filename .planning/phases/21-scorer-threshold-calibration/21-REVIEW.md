@@ -110,6 +110,8 @@ key = {
 
 （或以 shots.json 内容 hash 作一维。）
 
+**Outcome (fix):** FIXED — 采纳建议原样：`_SCORER_KEY_FIELDS` 五字段 → 六字段（+`orig_window: [round(start_sec,3), round(duration,3)]`），key 装配处从 shots_index 取镜几何（dur 推导式与 score_shot 同义；round 3 为几何最小身份）。payload = dict(key) 使该维自动进 cache 留档。模块 docstring 步骤 2 / cache 惯例 / cache_read docstring 同步改「六字段」。存量 scorer cache 因缺该字段全部 miss 重打分（预期——scored_at/device 均会刷新，τ 校准锚不受影响）。回归锚：`test_cache_key_miss_on_geometry_change`（start 0→1.5、mp4 字节不变 → 重打分 + orig_window 留档 [1.5, 6.73]）。
+
 ### WR-03: scorer 的 `float(regen.get("duration_sec"))` 在 per-shot try 守卫之外 —— 单条坏值炸整批
 
 **File:** `analysis/roundtrip/scorer.py:536-538`

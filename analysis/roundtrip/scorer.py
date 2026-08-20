@@ -14,9 +14,10 @@ mean 即 midframe_sim 主分数（DTW 轨迹对齐留升级位，CONTEXT 裁决�
 --------
 1. 读 work_dir/roundtrip.json 取有 regen.path 的条目（status/failed 条目
    str warning 跳过——它们没有可比对产物）；--shots 可选 int 子集过滤；
-2. 逐镜 cache 预判（key 五字段：video_content_hash + regen_mp4_sha256_16 +
-   model + n_frames + window——regen mp4 身份进 key，896×512 smoke 与
-   1344×768 批产物天然分离，Pitfall 7）；全 hit 零模型加载；
+2. 逐镜 cache 预判（key 六字段：video_content_hash + regen_mp4_sha256_16 +
+   orig_window[start,dur] + model + n_frames + window——regen mp4 身份进 key，
+   896×512 smoke 与 1344×768 批产物天然分离，Pitfall 7；orig 镜几何进 key，
+   重分割后 stale 分数失效，WR-02）；全 hit 零模型加载；
 3. miss 镜：ffmpeg 逐帧提取 16 帧（orig 侧 ts = shot.start_sec + 时窗偏移；
    regen 侧 ts = 时窗偏移按 regen 时长归一；两端 clamp min(ts, dur-0.2)——
    175f/24fps 流末帧起点 7.25s，-ss 7.252 实测越界，Pitfall 3）；
@@ -42,9 +43,10 @@ cuda:0 即 GPU0 3060Ti 零竞争）。
 
 cache 惯例
 ----------
-- 元数据 work_dir/route_cache/scorer/shot_{NNN}.json；hit = key 五字段与
-  payload 内字段全等（缺席/损坏/字段不等一律 miss，绝不部分复用——mirror
-  h3_regen cache_read）；
+- 元数据 work_dir/route_cache/scorer/shot_{NNN}.json；hit = key 六字段
+  （含 orig_window 镜几何——重分割后 stale 分数失效，WR-02）与 payload 内
+  字段全等（缺席/损坏/字段不等一律 miss，绝不部分复用——mirror h3_regen
+  cache_read）；
 - payload 另存 frames.orig/regen 清单（j / t_pct / t_sec / path）、
   per_position_cos（SC2 审计面）、score、model、device、scored_at；
 - 帧实体落 route_cache/scorer/frames/shot_{NNN}_{side}_{JJ}.jpg（side ∈
@@ -107,9 +109,11 @@ _h3_spec = importlib.util.spec_from_file_location(
 h3s = importlib.util.module_from_spec(_h3_spec)
 _h3_spec.loader.exec_module(h3s)
 
-# cache key 五字段（Pitfall 7：分辨率/引擎身份经 regen mp4 sha256 联动）。
+# cache key 六字段（Pitfall 7：分辨率/引擎身份经 regen mp4 sha256 联动；
+# orig 侧镜几何 start/duration 进 key——同源视频重分割后 vch 不变但该镜
+# 时间段已变，stale 分数必须失效，WR-02）。
 _SCORER_KEY_FIELDS = ("video_content_hash", "regen_mp4_sha256_16",
-                      "model", "n_frames", "window")
+                      "orig_window", "model", "n_frames", "window")
 
 
 # ─── 帧窗数学（SCORE-01 核心，探针实测公式）────────────────────────────────
@@ -290,7 +294,7 @@ def _scorer_cache_path(shot_id: int, work_dir: str) -> str:
 
 
 def cache_read(shot_id: int, work_dir: str, key: dict) -> dict | None:
-    """读 cache：key 五字段与 payload 内字段全等才返回 payload，否则 None
+    """读 cache：key 六字段与 payload 内字段全等才返回 payload，否则 None
     （缺席/损坏/字段不等一律 miss，绝不部分复用）。"""
     try:
         with open(_scorer_cache_path(shot_id, work_dir), encoding="utf-8") as f:
@@ -525,9 +529,17 @@ def main(argv=None) -> int:
     hit_shots: list[tuple[int, dict, str]] = []
     hits = 0
     for sid, regen, regen_path in candidates:
+        shot = shots_index.get(sid) or {}
+        start = float(shot.get("start_sec", 0.0) or 0.0)
+        dur = float(shot.get("duration")
+                    or (float(shot.get("end_sec", 0.0) or 0.0) - start))
         key = {
             "video_content_hash": vch,
             "regen_mp4_sha256_16": regen_sha16(regen_path),
+            # WR-02：orig 半边帧窗由 shots.json 的 start/duration 决定——
+            # 同源视频重分割（vch 不变）后镜几何必须进 key，stale 分数失效。
+            # round 3 与 score_shot 的 dur 推导式同义（几何最小身份）。
+            "orig_window": [round(start, 3), round(dur, 3)],
             "model": MODEL_LABEL,
             "n_frames": N_FRAMES,
             "window": list(WINDOW_PCT),
