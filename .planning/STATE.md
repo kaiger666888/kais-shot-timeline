@@ -4,14 +4,14 @@ milestone: v1.3
 milestone_name: Round-trip Validation（逆推→复现→比对闭环数据集）
 status: executing
 stopped_at: Phase 22 UI-SPEC approved
-last_updated: "2026-08-20T04:25:44.727Z"
-last_activity: 2026-08-20 -- Phase 22 planning complete
+last_updated: "2026-08-20T04:40:11.936Z"
+last_activity: 2026-08-20
 progress:
   total_phases: 5
   completed_phases: 4
   total_plans: 16
-  completed_plans: 12
-  percent: 75
+  completed_plans: 13
+  percent: 80
 ---
 
 # Project State
@@ -21,16 +21,16 @@ progress:
 See: .planning/PROJECT.md (updated 2026-08-19)
 
 **Core value:** 把成片解构成可导航、多轨道、带语义的分镜资产（分镜 + 分离音轨 + 对白 + 镜头语言/动作/场景 prompt + 跨镜角色/道具注册表 + 三模态音频语义），且形态可移植——能作为无限画布等下游消费者的「最终资产集合形态」被直接消费。
-**Current focus:** Phase 22 — dataset export + integration
+**Current focus:** Phase 22 — Dataset Export + Integration
 
 ## Current Position
 
-Phase: 22
-Plan: Not started
+Phase: 22 (Dataset Export + Integration) — EXECUTING
+Plan: 2 of 4
 Status: Ready to execute
-Last activity: 2026-08-20 -- Phase 22 planning complete
+Last activity: 2026-08-20
 
-Progress: [█████████░] 92%
+Progress: [████████░░] 81%
 
 ## Performance Metrics
 
@@ -66,6 +66,7 @@ Progress: [█████████░] 92%
 | Phase 20 P03 | ~20min | 3 tasks | 2 files |
 | Phase 21 P01 | 15m | 3 tasks | 4 files |
 | Phase 21 P02 | ~40m | 2 tasks | 8 files |
+| Phase 22 P01 | 4m | 2 tasks | 3 files |
 
 ## Accumulated Context
 
@@ -112,6 +113,9 @@ Carried (still load-bearing): contract-first minor bump（一个 milestone 一�
 - [Phase 21]: 21-02: SCORE-01/SCORE-02 保持未勾选 —— live 证据半边已交付（2 镜真机双信号），≤20 镜校准集打分与 τ 锁定在 21-03 共享同 requirement IDs（mirror 18-01/19-01/20-01/21-01 先例）
 - [Phase ?]: [Phase 21]: 21-03: shot 19 judge 三连 no-brace 根因 = 引擎提前 EOS 吃掉闭括号（传输层截断非判定问题）——b43aa19 TDD 修复只补 } 不放松校验，160 pytest 零回归
 - [Phase ?]: [Phase 21]: 21-03: 双信号实测两桶 sim 重叠 0.9011-0.9780（最高分镜 diverged/最低分镜 faithful）、underspecified 空桶 0/19——τ_sim 待 Kai 裁决（HITL 硬门），三处置选项见报告 §6.2
+- [Phase 22]: 22-01: PRESENT-01 保持未勾选 —— 呈现半边（面板+XSS+exportEdits）已交付，apply CLI 回写半边在 22-02 共享同 requirement ID（mirror 18-01/19-01/20-01/21-01 先例）
+- [Phase 22]: 22-01: regen 失败降级卡保留三态按钮（UI-SPEC Interaction §2 + States 表 vs Copywriting『无按钮』内部张力——human 覆盖是未裁决卡拿到 verdict 的唯一路径，按更具体语义契约收口）
+- [Phase 22]: 22-01: bootstrap RT_SHOTS = 完整 shots 数组（mirror registry DRAFT 全量先例——route 文本进 JS 岛使 </ 转义成为可测攻击面）；XSS 断言配 mutation 探针（剥 _esc/剥 </ 转义必红）防 vacuous green
 
 ### Pending Todos
 
@@ -150,9 +154,9 @@ Items acknowledged and carried forward (full history in archived milestone REQUI
 
 ## Session Continuity
 
-Last session: 2026-08-20T03:49:39.285Z
+Last session: 2026-08-20T04:40:11.929Z
 Stopped at: Phase 22 UI-SPEC approved
-Resume file: .planning/phases/22-dataset-export-integration/22-UI-SPEC.md
+Resume file: None
 
 ## Operator Next Steps
 

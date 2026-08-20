@@ -203,7 +203,7 @@ Plans:
 Plans:
 **Wave 1** *(22-01 与 22-02 并行，零文件交集)*
 
-- [ ] 22-01-PLAN.md — 审阅面板呈现半边：gen_roundtrip_review.py（UI-SPEC 全契约 + 双 video 同步 + 三态覆盖 + exportEdits）+ XSS 三层 hardening + 三注入/六态/payload 单测
+- [x] 22-01-PLAN.md — 审阅面板呈现半边：gen_roundtrip_review.py（UI-SPEC 全契约 + 双 video 同步 + 三态覆盖 + exportEdits）+ XSS 三层 hardening + 三注入/六态/payload 单测
 
 - [ ] 22-02-PLAN.md — HITL 回写 + dataset 导出：roundtrip-edits.schema.json + apply_edits.py（confirmed-only + source:human + 重放幂等）+ export_dataset.py（帧直拷优先 + manifest + accepted/rejected 分清单）+ 单测×2
 
@@ -246,4 +246,4 @@ v1.3 phases execute in numeric order: 18 → 19 → 20 → 21 → 22
 | 19. qwen-eye v2 看片段 | v1.3 | 3/3 | Complete    | 2026-08-19 |
 | 20. h3 复现客户端 | v1.3 | 3/3 | Complete    | 2026-08-19 |
 | 21. Scorer + 阈值校准 | v1.3 | 3/3 | Complete    | 2026-08-20 |
-| 22. Dataset Export + Integration | v1.3 | 0/TBD | Not started | - |
+| 22. Dataset Export + Integration | v1.3 | 1/4 | In Progress|  |
