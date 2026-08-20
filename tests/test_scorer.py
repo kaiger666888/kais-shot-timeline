@@ -381,6 +381,59 @@ def test_bad_duration_sec_single_shot_fail_not_batch(tmp_path, monkeypatch):
     assert validate_sidecar(after) == []
 
 
+# ── WR-06：shots.json 坏几何不炸 cache 预判 ─────────────────────────────────
+
+def test_bad_shots_geometry_precheck_tolerant_replay_not_blocked(
+        tmp_path, monkeypatch):
+    """WR-06：hand-edit 的 shots.json 非数值几何（duration "6,73"）不再在
+    cache 预判阶段炸整批——预判容错为永不命中的 [None,None] 哨兵，坏镜在
+    miss 循环经 score_shot 的同款 float() 按 per-shot 失败处理（warning +
+    failed 名单），好镜照常打分；已 cache 好镜的 CR-01 回填不被坏镜阻断
+    （修复前：预判 ValueError 确定性炸批，零打分零回填零 warning flush）。"""
+    thetas = [0.16 * (j + 1) for j in range(8)]
+
+    def embed_by_position(model, processor, device, frames):
+        dim = 8 + 1
+        vecs = []
+        for idx in range(16):
+            v = np.zeros(dim)
+            j = idx % 8
+            if idx < 8:
+                v[j] = 1.0
+            else:
+                v[j] = math.cos(thetas[j])
+                v[dim - 1] = math.sin(thetas[j])
+            vecs.append(v)
+        return np.array(vecs)
+
+    work = make_workdir(tmp_path, n_shots=2)
+    loads, _ = patch_scorer(monkeypatch, embed_impl=embed_by_position)
+    assert run_main(work) == 0                       # 基线：两镜全打分入 cache
+    assert loads["n"] == 1
+    cached2 = read_cache(work, 2)["score"]
+    # hand-edit 坏几何（shot 1 duration 欧式小数点）+ 模拟中断（sidecar
+    # scores 半边全丢、cache 保留）
+    shots = json.loads((work / "shots.json").read_text(encoding="utf-8"))
+    shots[0]["duration"] = "6,73"
+    (work / "shots.json").write_text(json.dumps(shots), encoding="utf-8")
+    side = read_sidecar(work)
+    for s in side["shots"]:
+        s.pop("scores", None)
+    (work / "roundtrip.json").write_text(
+        json.dumps(side, ensure_ascii=False, indent=2), encoding="utf-8")
+    assert run_main(work) == 0                       # 修复前：预判 ValueError 炸批
+    assert loads["n"] == 2                           # shot 1 miss → 重加载（shot 2 hit）
+    warns = read_warnings(work)
+    assert any(isinstance(w, str) and "failed shots: [1]" in w for w in warns)
+    # 哨兵从未入 cache——shot 1 的 run-1 payload 原样（坏几何只 miss 不覆写）
+    assert read_cache(work, 1)["orig_window"] == [0.0, 6.73]
+    after = read_sidecar(work)
+    assert validate_sidecar(after) == []
+    by = {s["shot_id"]: s for s in after["shots"]}
+    assert "scores" not in by[1]                     # 坏镜单镜失败：无半边
+    assert by[2]["scores"]["midframe_sim"]["score"] == cached2   # CR-01 回填
+
+
 # ── CR-01：cache-hit 回填 sidecar（断点续跑完整性）──────────────────────────
 
 def test_cache_hit_backfills_missing_sidecar_half(tmp_path, monkeypatch):
