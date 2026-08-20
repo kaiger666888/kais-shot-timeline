@@ -70,7 +70,7 @@ Round-trip closes the loop the first three milestones opened: qwen-eye v2 watche
 - [x] **Phase 19: qwen-eye v2 看片段** — 每镜 ≤8 帧逐帧 `observe_single` 问答升级 action/camera facet + audio_semantic ear 融合（合并策略 ep01 spike 后锁定） (completed 2026-08-19)
 - [x] **Phase 20: h3 复现客户端** — kst 直连 ComfyUI 提交 MiniMax H3 fl2va workflow + per-shot 4-tuple cache + 断点续跑 + VRAM guard（TTS kill + `/free` + eye↔h3 串行编排） (completed 2026-08-20)
 - [x] **Phase 21: Scorer + 阈值校准** — 中段帧 CLIP/SigLIP 轨迹相似度 + VLM judge 归因三分类 + ep01 ≤20 镜实测分布锁 accepted 双门槛 + verdict 写 `roundtrip.json`（rejected 永不删除） (completed 2026-08-20)
-- [ ] **Phase 22: Dataset Export + Integration** — `step_roundtrip` 流水线集成 + ≥4 场景 smoke 回归 + gallery round-trip HITL 审阅面板 + accepted 子集独立 dataset 目录导出
+- [x] **Phase 22: Dataset Export + Integration** — `step_roundtrip` 流水线集成 + ≥4 场景 smoke 回归 + gallery round-trip HITL 审阅面板 + accepted 子集独立 dataset 目录导出 (completed 2026-08-20)
 
 ## Phase Details
 
@@ -213,7 +213,7 @@ Plans:
 
 **Wave 3** *(blocked on 22-03)*
 
-- [ ] 22-04-PLAN.md — tests/test_phase22_e2e.sh 四场景（down-degrade/cache-hit 续跑/抽样/VRAM guard，含 GPU/ComfyUI 前置探测）+ ep01 --sample-shots 2 端到端真跑（asset 1.3 挂载 + dataset 齐产）+ Kai 浏览器走查 checkpoint
+- [x] 22-04-PLAN.md — tests/test_phase22_e2e.sh 四场景（down-degrade/cache-hit 续跑/抽样/VRAM guard，含 GPU/ComfyUI 前置探测）+ ep01 --sample-shots 2 端到端真跑（asset 1.3 挂载 + dataset 齐产）+ Kai 浏览器走查 checkpoint
 
 **UI hint**: yes（已收口：22-UI-SPEC.md approved 2026-08-20）
 
@@ -246,4 +246,4 @@ v1.3 phases execute in numeric order: 18 → 19 → 20 → 21 → 22
 | 19. qwen-eye v2 看片段 | v1.3 | 3/3 | Complete    | 2026-08-19 |
 | 20. h3 复现客户端 | v1.3 | 3/3 | Complete    | 2026-08-19 |
 | 21. Scorer + 阈值校准 | v1.3 | 3/3 | Complete    | 2026-08-20 |
-| 22. Dataset Export + Integration | v1.3 | 3/4 | In Progress|  |
+| 22. Dataset Export + Integration | v1.3 | 4/4 | Complete   | 2026-08-20 |
