@@ -608,6 +608,15 @@ def main(argv=None) -> int:
             regen_dur = float(regen.get("duration_sec") or 0.0)
             if regen_dur <= 0.0:
                 regen_dur = h3s.probe_duration_sec(regen_path)
+            if regen_dur <= ENDPOINT_GUARD_SEC:
+                # WR-05：probe 失败（文档明确返 0.0）/极短流不产分数——
+                # plan_frames 会把全窗位 clamp 到 t≈0，对 8 张同帧打分是
+                # 静默垃圾（截断但头有效的 mp4 恰是这种形态）。
+                pending_warnings.append(
+                    f"{STEP_TAG} shot {sid}: regen 时长不可测/过短"
+                    f"（{regen_dur}），跳过打分")
+                failed.append(sid)
+                continue
             payload = score_shot(model, processor, device, work_dir,
                                  src_video, shot, regen_path, regen_dur, keys[sid])
         except Exception as exc:                      # 单镜失败不阻塞批（h3_regen 先例）

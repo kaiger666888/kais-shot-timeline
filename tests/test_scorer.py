@@ -501,6 +501,33 @@ def test_preexisting_malformed_entry_warned_with_backup(tmp_path, monkeypatch):
                and "备份" in w for w in warns)
 
 
+# ── WR-05：regen 时长不可测/过短不产分数 ───────────────────────────────────
+
+def test_regen_duration_unmeasurable_or_short_skips(tmp_path, monkeypatch):
+    """WR-05：probe 失败返 0.0（shot 1 无 duration_sec、ffprobe 假替身返空）
+    与极短流（shot 2 duration_sec=0.15 < guard）→ per-shot 失败语义：
+    str warning + skip，绝不产出全 t=0 同帧的垃圾分数。"""
+    work = make_workdir(tmp_path, n_shots=2)
+    side = read_sidecar(work)
+    side["shots"][0]["regen"].pop("duration_sec", None)   # → probe → 0.0
+    side["shots"][1]["regen"]["duration_sec"] = 0.15      # < ENDPOINT_GUARD_SEC
+    (work / "roundtrip.json").write_text(
+        json.dumps(side, ensure_ascii=False, indent=2), encoding="utf-8")
+    loads, calls = patch_scorer(monkeypatch)
+    assert run_main(work) == 0
+    warns = read_warnings(work)
+    assert any(isinstance(w, str) and "shot 1" in w and "时长不可测/过短" in w
+               for w in warns)
+    assert any(isinstance(w, str) and "shot 2" in w and "时长不可测/过短" in w
+               for w in warns)
+    # 无 cache、无帧提取（extract_frame 从未被调）、sidecar 无 scores
+    assert not any((work / sc.SCORER_CACHE_SUBDIR).glob("shot_*.json"))
+    assert not any(c[0] == "ffmpeg" for c in calls)
+    after = read_sidecar(work)
+    assert all("scores" not in s for s in after["shots"])
+    assert validate_sidecar(after) == []
+
+
 # ── degrade（RT-04）─────────────────────────────────────────────────────────
 
 def test_scorer_model_missing_degrade(tmp_path, monkeypatch):

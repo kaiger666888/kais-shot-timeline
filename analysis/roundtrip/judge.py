@@ -840,6 +840,15 @@ def main(argv=None) -> int:
                 regen_dur = float(regen.get("duration_sec") or 0.0)
                 if regen_dur <= 0.0:
                     regen_dur = h3s.probe_duration_sec(regen_path)
+                if regen_dur <= ENDPOINT_GUARD_SEC:
+                    # WR-05：probe 失败（文档明确返 0.0）/极短流不判定——
+                    # grid_ts 会把 4 时位全部 clamp 到 t=0，4 行同帧的归因
+                    # 是静默垃圾；按 per-shot 失败处理（warning + skip）。
+                    pending_warnings.append(
+                        f"{STEP_TAG} shot {sid}: regen 时长不可测/过短"
+                        f"（{regen_dur}），跳过 judge")
+                    failed.append(sid)
+                    continue
                 dur = float(shot.get("duration")
                             or (float(shot.get("end_sec", 0.0))
                                 - float(shot.get("start_sec", 0.0))))

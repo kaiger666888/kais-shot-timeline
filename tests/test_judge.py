@@ -676,6 +676,29 @@ def test_pitfall8_h3_regen_rewrite_preserves_verdict(tmp_path):
     assert by[1]["regen"]["engine_version"].endswith("1344x768")  # regen 已替换
 
 
+def test_judge_regen_duration_unmeasurable_skips(tmp_path, monkeypatch):
+    """WR-05：probe 失败返 0.0（无 duration_sec、ffprobe 假替身返空）→
+    per-shot 失败语义：str warning + skip，零归因调用、无 cache、无 scores。"""
+    work = make_workdir(tmp_path, n_shots=1)
+    side = read_sidecar(work)
+    side["shots"][0]["regen"].pop("duration_sec", None)   # → probe → 0.0
+    write_sidecar(work, side)
+    eye_cls, state = make_fake_eye([good_answer()])       # 备而不用
+    http, calls = patch_judge(monkeypatch, eye_cls=eye_cls)
+    assert run_main(work) == 0
+    assert state["questions"] == []                       # 零归因调用
+    assert not (work / jm.JUDGE_CACHE_SUBDIR / "shot_001.json").exists()
+    after = read_sidecar(work)
+    assert "scores" not in after["shots"][0]
+    assert validate_sidecar(after) == []
+    warns = read_warnings(work)
+    assert any(isinstance(w, str) and "shot 1" in w and "时长不可测/过短" in w
+               for w in warns)
+    # 引擎编排照常（comfy_free 发生 + stop 恰一次），只是无镜可判
+    assert any(c[0].endswith("/free") for c in http.calls)
+    assert state["stopped"] == 1
+
+
 def test_preexisting_malformed_entry_warned_with_backup(tmp_path, monkeypatch):
     """WR-04：预存「形状不对」条目（shot_id 字符串 "5"，内含 human verdict）
     → 剔除时 str warning + .bak-<ts> 备份（不再静默消失）；本批照常落盘。"""

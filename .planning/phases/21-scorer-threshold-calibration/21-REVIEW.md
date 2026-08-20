@@ -165,6 +165,8 @@ if regen_dur <= ENDPOINT_GUARD_SEC:
     continue
 ```
 
+**Outcome (fix):** FIXED — 采纳建议原样：两模块（scorer 打分循环 / judge 判定循环）在 probe 后加 `if regen_dur <= ENDPOINT_GUARD_SEC:` 守卫 → str warning（含实测时长值）+ `failed.append(sid)` + continue，不提取帧、不产分数/归因。scorer 侧守卫位于 WR-03 挪入的 per-shot try 内（judge 侧本就在 try 内）。阈值为 ENDPOINT_GUARD_SEC（0.2s）——该值以下 plan_frames/grid_ts 的全部窗位都坍缩到 t≈0，与「dur < guard 的极短流同样全坍缩」的 Issue 描述一致。回归锚：`test_regen_duration_unmeasurable_or_short_skips`（scorer：probe→0.0 与 0.15s 双形态 → 零帧提取零 cache 零 scores + 双 warning）、`test_judge_regen_duration_unmeasurable_skips`（judge：零归因调用 + 引擎编排照常 + warning）。
+
 ## Info
 
 ### IN-01: `QwenEye()` 构造在 try/finally 之外 —— 构造器异常绕过 graceful-degrade
