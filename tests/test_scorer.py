@@ -475,6 +475,32 @@ def test_sidecar_shallow_merge_preserves_judge_and_verdict(tmp_path, monkeypatch
     assert entry["regen"]["engine_version"].startswith("fl2va")  # regen 不动
 
 
+# ── WR-04：malformed 预存条目驱逐有告警有备份 ──────────────────────────────
+
+def test_preexisting_malformed_entry_warned_with_backup(tmp_path, monkeypatch):
+    """WR-04：预存「形状不对」条目（shot_id 字符串 "5"，内含 human verdict）
+    → 剔除时 str warning + .bak-<ts> 备份（不再静默消失）；本批照常落盘。"""
+    thetas = [0.13 * (j + 1) for j in range(8)]
+    work = make_workdir(tmp_path, n_shots=1)
+    side = read_sidecar(work)
+    side["shots"].append({"shot_id": "5", "verdict": {
+        "decision": "rejected", "source": "human",
+        "decided_at": "2026-08-19T00:00:00"}})
+    (work / "roundtrip.json").write_text(
+        json.dumps(side, ensure_ascii=False, indent=2), encoding="utf-8")
+    patch_scorer(monkeypatch, embed_impl=make_fake_embed(work, 1, thetas))
+    assert run_main(work) == 0
+    after = read_sidecar(work)
+    assert validate_sidecar(after) == []
+    assert [s["shot_id"] for s in after["shots"]] == [1]  # malformed 5 剔除
+    assert "midframe_sim" in after["shots"][0]["scores"]  # 本批照常落盘
+    baks = list(work.glob("roundtrip.json.bak-*"))
+    assert len(baks) == 1                                 # 原文件已备份
+    warns = read_warnings(work)
+    assert any(isinstance(w, str) and "形状非法" in w and "shot_id" in w
+               and "备份" in w for w in warns)
+
+
 # ── degrade（RT-04）─────────────────────────────────────────────────────────
 
 def test_scorer_model_missing_degrade(tmp_path, monkeypatch):

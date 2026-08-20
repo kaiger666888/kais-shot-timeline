@@ -353,6 +353,8 @@ def write_scores_sidecar(work_dir: str, entries: list[dict]) -> list[str]:
     - 写前两层自校验（WR-04）：① 本批 entries 单独校验有错 sys.exit 不落盘；
       ② 合并 payload 校验有错按 absolute_path 归因 shot_id → per-shot str
       warning + 剔除 + 原文件备份 .bak-<ts> → 复验仍错则 sys.exit；
+      预存「形状不对」条目（非 dict / shot_id 非整数）同款两层语义：
+      丢弃前备份原文件 + per-shot str warning（绝不静默消失）；
     - schema_version 经 h3s._load_schema_version()（export_asset 单源）。
     返回追加的 per-shot warnings（调用方统一 flush）。"""
     sidecar_path = os.path.join(work_dir, "roundtrip.json")
@@ -373,9 +375,15 @@ def write_scores_sidecar(work_dir: str, entries: list[dict]) -> list[str]:
         sys.exit(f"{STEP_TAG} roundtrip.json 本批条目 schema 校验失败"
                  f"（{len(own_errors)} 错误，拒绝落盘）: {detail}")
     merged: dict[int, dict] = {}
+    warnings: list[str] = []
+    malformed: list[str] = []
     for s in existing["shots"]:
         if isinstance(s, dict) and isinstance(s.get("shot_id"), int):
             merged[int(s["shot_id"])] = s
+        else:
+            # WR-04 补层：形状非法（非 dict / shot_id 非整数）的预存条目
+            # 此前被静默丢弃——补齐 schema-invalid 同款两层语义（见下）。
+            malformed.append(str(s)[:120])
     for e in entries:
         if not isinstance(e, dict) or not isinstance(e.get("shot_id"), int):
             continue
@@ -388,10 +396,21 @@ def write_scores_sidecar(work_dir: str, entries: list[dict]) -> list[str]:
             kept["scores"] = merged_scores
         kept.update({k: v for k, v in e.items() if k != "scores"})
         merged[sid] = kept
+    if malformed:
+        # WR-04：malformed-shape 驱逐 = 数据未随迁——备份原文件 + 逐条 str
+        # warning（人工数据未销毁，操作者可从 .bak 找回）。
+        import shutil
+        bak = f"{sidecar_path}.bak-{int(time.time())}"
+        if os.path.isfile(sidecar_path):
+            shutil.copy2(sidecar_path, bak)
+        for s in malformed:
+            warnings.append(
+                f"{STEP_TAG} roundtrip.json 预存条目形状非法（非 dict 或 "
+                f"shot_id 非整数），本次写入已丢弃（原文件备份 "
+                f"{os.path.basename(bak)}，人工数据未销毁）: {s}")
     payload = {"schema_version": schema_version,
                "shots": [merged[k] for k in sorted(merged)]}
     # ② 合并校验：预存坏条目归因 → warning + 剔除 + 备份
-    warnings: list[str] = []
     errors = h3s._iter_sidecar_errors(payload)
     if errors:
         bad_ids: set[int] = set()

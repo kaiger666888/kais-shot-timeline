@@ -676,6 +676,30 @@ def test_pitfall8_h3_regen_rewrite_preserves_verdict(tmp_path):
     assert by[1]["regen"]["engine_version"].endswith("1344x768")  # regen 已替换
 
 
+def test_preexisting_malformed_entry_warned_with_backup(tmp_path, monkeypatch):
+    """WR-04：预存「形状不对」条目（shot_id 字符串 "5"，内含 human verdict）
+    → 剔除时 str warning + .bak-<ts> 备份（不再静默消失）；本批照常落盘。"""
+    work = make_workdir(tmp_path, n_shots=1)
+    side = read_sidecar(work)
+    side["shots"].append({"shot_id": "5", "verdict": {
+        "decision": "accepted", "source": "human",
+        "decided_at": "2026-08-19T00:00:00"}})
+    write_sidecar(work, side)
+    eye_cls, _ = make_fake_eye([good_answer()])
+    patch_judge(monkeypatch, eye_cls=eye_cls)
+    assert run_main(work) == 0
+    after = read_sidecar(work)
+    assert validate_sidecar(after) == []
+    assert [s["shot_id"] for s in after["shots"]] == [1]  # malformed 5 剔除
+    assert after["shots"][0]["scores"]["judge"]["attribution"] == \
+        "prompt_faithful"                                 # 本批照常落盘
+    baks = list(work.glob("roundtrip.json.bak-*"))
+    assert len(baks) == 1                                 # 原文件已备份
+    warns = read_warnings(work)
+    assert any(isinstance(w, str) and "形状非法" in w and "shot_id" in w
+               and "备份" in w for w in warns)
+
+
 def test_preexisting_bad_entry_stripped_with_backup(tmp_path, monkeypatch):
     """WR-04：预存坏条目（path 穿越）→ 剔除 + .bak-<ts> 备份 + str warning；
     本批 judge 结果照常落盘。"""

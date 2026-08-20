@@ -147,6 +147,8 @@ for s in existing["shots"]:
                         f"{str(s)[:120]}")
 ```
 
+**Outcome (fix):** FIXED（含 .bak 补强）——两份 merge-writer（scorer `write_scores_sidecar` / judge `_merge_write_sidecar`）的 merged 构建循环补 else 分支收集 malformed 条目；驱逐前 `shutil.copy2` 备份原文件到 `roundtrip.json.bak-<ts>` 并逐条发 str warning（含条目内容截断 120 字 + 备份文件名）——与既有 schema-invalid 层完全同款的两层语义（warning + .bak），比 Fix 建议多补了备份（fix_contract 指明 mirror h3_regen WR-04 两层语义）。两函数 docstring 同步。顶层未知 key 丢弃未加告警（每次写入都会触发、噪音大于价值，维持 Fix 建议范围）。回归锚：两模块各 `test_preexisting_malformed_entry_warned_with_backup`（shot_id 字符串 "5" + human verdict → 剔除 + warning + .bak 恰一份 + 本批照常落盘）。
+
 ### WR-05: `regen_dur <= 0`（probe 失败返 0.0）无守卫 —— 退化为全 t=0 帧的静默垃圾打分/判定
 
 **File:** `analysis/roundtrip/scorer.py:536-538`、`analysis/roundtrip/judge.py:765-767`
