@@ -246,4 +246,4 @@ v1.3 phases execute in numeric order: 18 → 19 → 20 → 21 → 22
 | 19. qwen-eye v2 看片段 | v1.3 | 3/3 | Complete    | 2026-08-19 |
 | 20. h3 复现客户端 | v1.3 | 3/3 | Complete    | 2026-08-19 |
 | 21. Scorer + 阈值校准 | v1.3 | 3/3 | Complete    | 2026-08-20 |
-| 22. Dataset Export + Integration | v1.3 | 4/4 | Complete   | 2026-08-20 |
+| 22. Dataset Export + Integration | v1.3 | 4/4 | Complete    | 2026-08-20 |
