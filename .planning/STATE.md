@@ -3,14 +3,14 @@ gsd_state_version: 1.0
 milestone: v1.3
 milestone_name: Round-trip Validation（逆推→复现→比对闭环数据集）
 status: executing
-stopped_at: Completed 22-02-PLAN.md (edits schema + apply CLI + dataset export)
-last_updated: "2026-08-20T04:54:36.391Z"
+stopped_at: "Completed 22-03-PLAN.md (run_pipeline wiring: step_roundtrip [9/10] + Pattern 4 + dataset post-step)"
+last_updated: "2026-08-20T05:05:10.228Z"
 last_activity: 2026-08-20
 progress:
   total_phases: 5
   completed_phases: 4
   total_plans: 16
-  completed_plans: 14
+  completed_plans: 15
   percent: 80
 ---
 
@@ -26,11 +26,11 @@ See: .planning/PROJECT.md (updated 2026-08-19)
 ## Current Position
 
 Phase: 22 (Dataset Export + Integration) — EXECUTING
-Plan: 3 of 4
+Plan: 4 of 4
 Status: Ready to execute
 Last activity: 2026-08-20
 
-Progress: [█████████░] 88%
+Progress: [█████████░] 94%
 
 ## Performance Metrics
 
@@ -68,6 +68,7 @@ Progress: [█████████░] 88%
 | Phase 21 P02 | ~40m | 2 tasks | 8 files |
 | Phase 22 P01 | 4m | 2 tasks | 3 files |
 | Phase 22 P02 | 6min | 2 tasks | 5 files |
+| Phase 22 P03 | 8min | 2 tasks | 5 files |
 
 ## Accumulated Context
 
@@ -120,6 +121,9 @@ Carried (still load-bearing): contract-first minor bump（一个 milestone 一�
 - [Phase 22]: 22-02: PRESENT-01 收口（面板 22-01 + apply CLI 22-02 双半边齐备）；RT-05/DATASET-02 保持未勾选——模块半边已交付，pipeline 挂载 22-03 与 e2e 齐产 22-04 共享同 requirement IDs（mirror 半边交付先例）
 - [Phase 22]: 22-02 discretion 定名：apply CLI = analysis/roundtrip/apply_edits.py（与 roundtrip 三件套同目录共享 h3s importlib 装载块；与 registry/apply_edits.py 跨目录无命名冲突）；dataset 导出 = analysis/roundtrip/export_dataset.py（RESEARCH 建议名采纳）
 - [Phase 22]: 22-02: 重放真 no-op——已 human 且同 decision 跳过不写（decided_at 不漂移；全跳过不落盘 mtime 不动）；dataset 帧两级来源 route_cache 直拷优先、缺席回落 extract_endpoint_frames 回填 cache 后改名
+- [Phase 22]: 22-03: PIPE-01 保持未勾选 —— 编排半边（step_roundtrip [9/10] + 六 flag + Pattern 4 条件挂载 + dataset post-step）已交付，ep01 live 证明在 22-04 共享同 requirement ID（mirror 半边交付先例）
+- [Phase 22]: 22-03: judge --tau-sim pipeline 总是显式透传（默认 0.9670）——不改 judge standalone 显式安全门；scorer 不透传 --device（cuda:0=3060Ti 分卡红线，wiring 测试锁死）；cache 命中仍补生成 review HTML（A2）
+- [Phase 22]: 22-03: banner 重编号波及面含第三处锁 —— test_canvas_import '[10/' 幻影锁前移 '[11/'（PATTERNS 27+2 清单漏列，Rule 1 同 commit 修，全套件 215→220 绿）
 
 ### Pending Todos
 
@@ -158,8 +162,8 @@ Items acknowledged and carried forward (full history in archived milestone REQUI
 
 ## Session Continuity
 
-Last session: 2026-08-20T04:54:36.379Z
-Stopped at: Completed 22-02-PLAN.md (edits schema + apply CLI + dataset export)
+Last session: 2026-08-20T05:05:10.220Z
+Stopped at: Completed 22-03-PLAN.md (run_pipeline wiring: step_roundtrip [9/10] + Pattern 4 + dataset post-step)
 Resume file: None
 
 ## Operator Next Steps

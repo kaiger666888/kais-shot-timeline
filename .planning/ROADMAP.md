@@ -209,7 +209,7 @@ Plans:
 
 **Wave 2** *(blocked on 22-01 + 22-02)*
 
-- [ ] 22-03-PLAN.md — run_pipeline step_roundtrip 编号 step [9/10]（外层 cache + 四 subprocess）+ 六 flag 透传（--tau-sim 默认 0.9670）+ banner 重编号 27 处 + 既有 wiring 测试同步 + step_export 条件 input（Pattern 4）+ dataset post-step + 新 wiring 测试
+- [x] 22-03-PLAN.md — run_pipeline step_roundtrip 编号 step [9/10]（外层 cache + 四 subprocess）+ 六 flag 透传（--tau-sim 默认 0.9670）+ banner 重编号 27 处 + 既有 wiring 测试同步 + step_export 条件 input（Pattern 4）+ dataset post-step + 新 wiring 测试
 
 **Wave 3** *(blocked on 22-03)*
 
@@ -246,4 +246,4 @@ v1.3 phases execute in numeric order: 18 → 19 → 20 → 21 → 22
 | 19. qwen-eye v2 看片段 | v1.3 | 3/3 | Complete    | 2026-08-19 |
 | 20. h3 复现客户端 | v1.3 | 3/3 | Complete    | 2026-08-19 |
 | 21. Scorer + 阈值校准 | v1.3 | 3/3 | Complete    | 2026-08-20 |
-| 22. Dataset Export + Integration | v1.3 | 2/4 | In Progress|  |
+| 22. Dataset Export + Integration | v1.3 | 3/4 | In Progress|  |
