@@ -3,15 +3,15 @@ gsd_state_version: 1.0
 milestone: v1.3
 milestone_name: Round-trip Validation（逆推→复现→比对闭环数据集）
 status: executing
-stopped_at: 20-03 COMPLETE — Task 3 目视抽检 Kai approved（2026-08-20，三点检查全过）；Phase 20 三 plan 收口、REGEN-01..04 全勾、ROADMAP/REQUIREMENTS 同步
-last_updated: "2026-08-19T23:00:21.201Z"
+stopped_at: 21-03 Task 2 checkpoint —— 待 Kai 裁决 tau_sim + 抽检 5 镜（材料：.planning/research/roundtrip-threshold-calibration.md DRAFT）
+last_updated: "2026-08-20T01:58:12.861Z"
 last_activity: 2026-08-19
 progress:
   total_phases: 5
-  completed_phases: 3
+  completed_phases: 4
   total_plans: 12
-  completed_plans: 11
-  percent: 60
+  completed_plans: 12
+  percent: 80
 ---
 
 # Project State
@@ -27,8 +27,8 @@ See: .planning/PROJECT.md (updated 2026-08-19)
 
 Phase: 21 (Scorer + 阈值校准) — EXECUTING
 Plan: 3 of 3
-Status: Ready to execute
-Last activity: 2026-08-19
+Status: PAUSED — Task 2 checkpoint（待 Kai 裁决 tau_sim + 抽检 5 镜；Task 3 continuation 未启动）
+Last activity: 2026-08-20
 
 Progress: [█████████░] 92%
 
@@ -109,6 +109,8 @@ Carried (still load-bearing): contract-first minor bump（一个 milestone 一�
 - [Phase 21]: 21-02: GPU smoke 走既有 896×512 regen 先行验证全链（shot 1 sim=0.9309 / shot 47 sim=0.8396，双镜 prompt_faithful conf=0.95，schema 0 errors，157 pytest 零回归，模块零修复）——cache key 含 regen 身份，1344×768 批后自然 miss 重打分
 - [Phase 21]: 21-02: overnight 批以 python3 -u 启动（stdout 块缓冲会让 nohup 审计日志滞后小时级——ComfyUI 0.30 /history 不含运行中 prompt，poll 的 continue 全跳过 elapsed 打印）；批 @1344×768 后台运行，pidfile/log 交接块在 21-02-SUMMARY
 - [Phase 21]: 21-02: SCORE-01/SCORE-02 保持未勾选 —— live 证据半边已交付（2 镜真机双信号），≤20 镜校准集打分与 τ 锁定在 21-03 共享同 requirement IDs（mirror 18-01/19-01/20-01/21-01 先例）
+- [Phase ?]: [Phase 21]: 21-03: shot 19 judge 三连 no-brace 根因 = 引擎提前 EOS 吃掉闭括号（传输层截断非判定问题）——b43aa19 TDD 修复只补 } 不放松校验，160 pytest 零回归
+- [Phase ?]: [Phase 21]: 21-03: 双信号实测两桶 sim 重叠 0.9011-0.9780（最高分镜 diverged/最低分镜 faithful）、underspecified 空桶 0/19——τ_sim 待 Kai 裁决（HITL 硬门），三处置选项见报告 §6.2
 
 ### Pending Todos
 
@@ -147,9 +149,9 @@ Items acknowledged and carried forward (full history in archived milestone REQUI
 
 ## Session Continuity
 
-Last session: 2026-08-19T22:57:58.256Z
-Stopped at: 20-03 COMPLETE — Task 3 目视抽检 Kai approved（2026-08-20，三点检查全过）；Phase 20 三 plan 收口、REGEN-01..04 全勾、ROADMAP/REQUIREMENTS 同步
-Resume file: None
+Last session: 2026-08-20T01:57:54.234Z
+Stopped at: 21-03 Task 2 checkpoint —— 待 Kai 裁决 tau_sim + 抽检 5 镜（材料：.planning/research/roundtrip-threshold-calibration.md DRAFT）
+Resume file: .planning/research/roundtrip-threshold-calibration.md
 
 ## Operator Next Steps
 
