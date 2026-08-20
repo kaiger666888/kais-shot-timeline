@@ -70,6 +70,8 @@
 
 _v1.3 requirements defined in `.planning/REQUIREMENTS.md` (categories: CONTRACT / VISION / REGEN / SCORE / DATASET / PIPELINE / PRESENT)._
 
+- ✓ **Phase 22 (Dataset Export + Integration) DELIVERED** — RT-05/DATASET-02/PIPE-01/02/PRESENT-01：step_roundtrip [9/10] 编号挂载 + 六 flag（τ=0.9670 默认）+ banner 重编号；HITL 审阅面板（双 video Media Fragments 同步 + 三态覆盖 + edits Blob 导出，走查 approved）+ roundtrip-edits schema + confirmed-only apply（source:human 唯一冻结替换路径）；dataset/<stem>/ 独立导出（4 accepted + hard-negative 索引）；XSS 三注入用例；e2e 四场景 ALL_SCENARIOS_PASS（正本零触碰三点证明）。评审 1C+4W 全修 + 复审 clean（234 tests）。ep01 正本已物化 asset 1.3 挂载 + dataset 目录。
+
 - ✓ **Phase 21 (Scorer + 阈值校准) DELIVERED** — SCORE-01..03 + DATASET-01：scorer.py（SigLIP so400m N=8 @25-75% + 帧清单审计）+ judge.py（2×4 grid 三分类 + 严格校验重试 + --apply-verdict 冻结应用器）；overnight 批 19/19 @1344×768；19 镜双信号全量 schema 0 errors；τ_sim=0.9670 Kai 裁决锁定（accepted=4 / rejected=15 分桶审计）；幂等 sha256 双值证明。评审 1C+5W+WR-06 全修（171 tests）。
 
 - ✓ **Phase 20 (h3 复现客户端) DELIVERED** — REGEN-01..04：analysis/roundtrip/ ComfyUI 直连客户端（fl2va 13 节点模板 + 17k+5 length 下发 + 确定性 seed + /prompt 提交 + /history 轮询 + /view 原子下载 + sha 校验 hit）；4-tuple cache 断点续跑（真机实证 cache-hit 零重渲）；VRAM guard 五步（TTS 端口→PID kill + /free + eye 串行等待 + 22GB gate + 每镜 PID 归因）；roundtrip.json regen 半边写入；真机 smoke 2 镜 + 目视 approved。评审 2C+5W 全修（--force 不再毁 verdict 红线）。uniform-20 全量 = Phase 21 前置 overnight 批。
@@ -169,4 +171,4 @@ This document evolves at phase transitions and milestone boundaries.
 4. Update Context with current state
 
 ---
-*Last updated: 2026-08-20 — Phase 21 (Scorer + 阈值校准) complete; round-trip 闭环打分/裁决链路通**v1.3 Round-trip Validation** (qwen-eye v2 看片段逆推 → h3 fl2va 复现 → 中段帧打分 + 归因 → accepted 数据集导出; schema 1.2→1.3). v1.2 音频语义深化 SHIPPED (8 phases, 20 plans, 33/33 reqs).*
+*Last updated: 2026-08-20 — v1.3 全部 5 phases complete（18-22）；round-trip 闭环端到端通，ep01 真值数据集已产出**v1.3 Round-trip Validation** (qwen-eye v2 看片段逆推 → h3 fl2va 复现 → 中段帧打分 + 归因 → accepted 数据集导出; schema 1.2→1.3). v1.2 音频语义深化 SHIPPED (8 phases, 20 plans, 33/33 reqs).*
