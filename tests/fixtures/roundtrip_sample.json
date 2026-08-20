@@ -1,0 +1,136 @@
+{
+  "schema_version": "1.3",
+  "shots": [
+    {
+      "shot_id": 3,
+      "regen": {
+        "path": "roundtrip/shot_003_regen.mp4",
+        "video_content_hash": "ece64d62bcbc534a",
+        "engine_name": "comfyui-fl2va",
+        "engine_version": "fl2va-int8/euler+simple/15/1344x768",
+        "prompt_version": "8e5b30fd",
+        "duration_sec": 7.292,
+        "width": 1344,
+        "height": 768
+      },
+      "scores": {
+        "midframe_sim": {
+          "score": 0.9731,
+          "model": "siglip-so400m-patch14-384"
+        },
+        "judge": {
+          "attribution": "prompt_faithful",
+          "confidence": 0.95,
+          "reason": "REGEN 忠实呈现 prompt 描述的动作序列，中段帧主体与场景元素均准确还原。"
+        }
+      },
+      "verdict": {
+        "decision": "accepted",
+        "source": "auto",
+        "decided_at": "2026-08-20T02:05:49"
+      }
+    },
+    {
+      "shot_id": 7,
+      "regen": {
+        "path": "roundtrip/shot_007_regen.mp4",
+        "video_content_hash": "11aa22bb33cc44dd",
+        "engine_name": "comfyui-fl2va",
+        "engine_version": "fl2va-int8/euler+simple/15/1344x768",
+        "prompt_version": "8e5b30fd",
+        "duration_sec": 6.875,
+        "width": 1344,
+        "height": 768
+      },
+      "scores": {
+        "midframe_sim": {
+          "score": 0.9011,
+          "model": "siglip-so400m-patch14-384"
+        },
+        "judge": {
+          "attribution": "model_diverged",
+          "confidence": 0.85,
+          "reason": "<script>alert(1)</script>"
+        }
+      },
+      "verdict": {
+        "decision": "rejected",
+        "source": "auto",
+        "decided_at": "2026-08-20T02:05:49"
+      }
+    },
+    {
+      "shot_id": 10,
+      "status": {
+        "state": "failed",
+        "error": "\" onerror=\"alert(1)\" x=\""
+      }
+    },
+    {
+      "shot_id": 12,
+      "regen": {
+        "path": "roundtrip/shot_012_regen.mp4",
+        "video_content_hash": "55ee66ff7788aabb",
+        "engine_name": "comfyui-fl2va",
+        "engine_version": "fl2va-int8/euler+simple/15/1344x768",
+        "prompt_version": "8e5b30fd",
+        "duration_sec": 5.208,
+        "width": 1344,
+        "height": 768
+      }
+    },
+    {
+      "shot_id": 19,
+      "regen": {
+        "path": "roundtrip/shot_019_regen.mp4",
+        "video_content_hash": "99cc0011ee22dd33",
+        "engine_name": "comfyui-fl2va",
+        "engine_version": "fl2va-int8/euler+simple/15/1344x768",
+        "prompt_version": "8e5b30fd",
+        "duration_sec": 7.958,
+        "width": 1344,
+        "height": 768
+      },
+      "scores": {
+        "midframe_sim": {
+          "score": 0.9358,
+          "model": "PHNjcmlwdD5hbGVydCgxKTwvc2NyaXB0Pg=="
+        },
+        "judge": {
+          "attribution": "prompt_underspecified",
+          "confidence": 0.7,
+          "reason": "prompt 未约束背景细节，REGEN 自由发挥与原片不一致。"
+        }
+      }
+    },
+    {
+      "shot_id": 84,
+      "regen": {
+        "path": "roundtrip/shot_084_regen.mp4",
+        "video_content_hash": "ab12cd34ef56ab90",
+        "engine_name": "comfyui-fl2va",
+        "engine_version": "fl2va-int8/euler+simple/15/1344x768",
+        "prompt_version": "8e5b30fd",
+        "duration_sec": 4.125,
+        "width": 1344,
+        "height": 768
+      },
+      "scores": {
+        "midframe_sim": {
+          "score": 0.978,
+          "model": "siglip-so400m-patch14-384"
+        },
+        "judge": {
+          "attribution": "prompt_faithful",
+          "confidence": 0.9,
+          "reason": "人工复核：动作序列与场景均与原片一致，覆盖 auto 的 rejected 判定。"
+        }
+      },
+      "verdict": {
+        "decision": "accepted",
+        "source": "human",
+        "decided_at": "2026-08-20T06:00:00"
+      }
+    }
+  ]
+}
