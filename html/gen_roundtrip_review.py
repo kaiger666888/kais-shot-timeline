@@ -294,7 +294,9 @@ def _shot_card_html(shot, prompt, meta, video_src_base, tau):
 def _queue_item_html(shot):
     """渲染单个 queue 项：verdict 色条 + shot_NNN + 微型 sim bar + {sim:.3f}。
 
-    ✓ 前缀占位 span（#q-shot_NNN）由 JS textContent 填充（零 innerHTML）。
+    ✓ 前缀占位 span（.queue-check —— anchor #q-shot_NNN 的首子节点）由 JS
+    textContent 填充（零 innerHTML）。CR-01（22-REVIEW）：JS 只写这个专用
+    span，绝不碰 anchor 其余子节点（topline / 微 sim bar）。
     """
     sid = _shot_id(shot)
     label = f"shot_{sid:03d}"
@@ -655,9 +657,14 @@ function applyVisualState() {{
         if (state.keepAuto.has(sid)) {{
             if (bK) bK.classList.add('active');
         }}
-        // queue 侧同步：已复核卡对应 queue 项加 ✓ 前缀（textContent-only）
+        // queue 侧同步：已复核卡对应 queue 项的 .queue-check 占位 span 填 ✓
+        // （CR-01 22-REVIEW：绝不对 queue anchor <a> 整体赋 textContent——那会
+        // 把 topline（shot id + sim 数）与微型 sim bar 子节点全部替换成单一
+        // 文本节点，页面一加载 applyVisualState() 即把整个队列抹成空行；
+        // ✓ 只进 server 渲染的专用占位 span，anchor 其余子节点不动）
         const q = document.getElementById('q-' + shotRef(sid));
-        if (q) q.textContent = state.reviewed.has(sid) ? '✓ ' : '';
+        const check = q ? q.querySelector('.queue-check') : null;
+        if (check) check.textContent = state.reviewed.has(sid) ? '✓ ' : '';
     }});
     // ⏳ 已复核 R/N pill：R<N 黄 / R=N 绿；export bar 左侧实时计数
     const r = state.reviewed.size;

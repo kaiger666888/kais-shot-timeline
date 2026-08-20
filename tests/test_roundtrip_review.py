@@ -278,3 +278,30 @@ def test_cli_atomic_write(tmp_path):
     assert list(tmp_path.glob("*.tmp*")) == []  # 无 .tmp 残留
     raw = (tmp_path / "review.html").read_bytes()
     raw.decode("utf-8")  # UTF-8 可读不 raise
+
+
+# ── 9. CR-01 回归锚：queue ✓ 只写 dedicated check span ─────────────────────
+
+def test_queue_checkmark_targets_dedicated_span(tmp_path):
+    """CR-01（22-REVIEW）回归锚：applyVisualState 绝不对 queue anchor <a>
+    （#q-shot_NNN）整体赋 textContent——那会把 topline（shot id + sim 数）与
+    微型 sim bar 子节点全部替换成单一文本节点，页面一加载（Initial state
+    application 即调 applyVisualState）整个 τ 边界排序队列被抹成空行。
+    ✓ 只允许进 server 渲染的 .queue-check 占位 span。源码级断言（本测试
+    套件无 DOM 执行环境，故锁生成 JS 的源码形状）。"""
+    html = run_gen(tmp_path, load_fixture())
+    # JS 侧：check span 选择器在场；anchor 整体 textContent 赋值不存在
+    assert "q.querySelector('.queue-check')" in html, \
+        "applyVisualState 必须经 .queue-check 占位 span 选择器更新 ✓"
+    assert "q.textContent" not in html, \
+        "CR-01 禁止对 queue anchor <a> 整体赋 textContent（清空全部子节点）"
+    # 占位 span 填充形态锁（✓ / 空串二态；check 而非 q）
+    assert ("if (check) check.textContent = state.reviewed.has(sid) "
+            "? '✓ ' : '';") in html
+    # server 渲染侧：每个 queue item 恰一个空占位 .queue-check span（JS 目标）
+    n_shots = len(load_fixture()["shots"])
+    assert html.count('<span class="queue-check"></span>') == n_shots
+    # anchor 子节点三件套仍在（check span + topline + sim num）——渲染端锁
+    assert 'id="q-shot_003"' in html
+    assert '<span class="queue-topline"><span class="queue-id">shot_003</span>' \
+        in html
