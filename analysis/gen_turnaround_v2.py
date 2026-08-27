@@ -72,7 +72,10 @@ def downscale_frame(frame_path: str, max_w: int = 1280) -> str:
 
 
 def analyze_character_crops(crops: list, api_key: str) -> dict | None:
-    """用 GLM-4.6V 从 bbox 裁出的角色 crop 分析外观（避免背景干扰）"""
+    """DEPRECATED 2026-08-27: 依赖 glm-4.6v 生产端点，该端点已回归故障
+    （thinking 吃满 max_tokens→零文本；加大额度后幻觉认错角色）。
+    Stage1 外观分析改由执行 agent 原生多模态现场完成（外观 JSON 由分析侧落盘），
+    本脚本此后只跑 Stage2 (dreamina img2image)。保留仅供离线复现。"""
     import urllib.request
     import io
 
@@ -142,7 +145,9 @@ def analyze_character_crops(crops: list, api_key: str) -> dict | None:
 
 
 def analyze_character_frames(frame_paths: list[str], api_key: str) -> dict | None:
-    """用 GLM-4.6V 从多张全帧分析角色外观，生成 turnaround prompt"""
+    """DEPRECATED 2026-08-27: 同 analyze_character_crops —— glm-4.6v 端点故障退役
+    （thinking 吃满 max_tokens→零文本；加大额度后幻觉）。
+    外观分析改由执行 agent 原生多模态完成，本函数保留仅供离线复现。"""
     import urllib.request
 
     images_b64 = []

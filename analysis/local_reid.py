@@ -67,6 +67,9 @@ def detect_characters_frame(img_path: str, api_key: str, max_retries: int = 2) -
     )
 
     payload = {
+        # DEPRECATED 2026-08-27: glm-4.6v 生产端点已回归故障（thinking 吃满 max_tokens→零文本；
+        # 加大额度后幻觉认错角色）。bbox 检测路线由 DINOv2 embedding + apply_edits 人审取代，
+        # 本函数保留仅供离线复现，新管线勿调。
         "model": "glm-4.6v",
         "max_tokens": 800,
         "temperature": 0.1,
