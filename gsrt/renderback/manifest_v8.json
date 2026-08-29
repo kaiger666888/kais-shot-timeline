@@ -1,0 +1,90 @@
+[
+ {
+  "shot_id": 91,
+  "shot_key": "S1_91",
+  "target_window": [
+   277.15,
+   281.1
+  ],
+  "duration_sec": 4.1,
+  "first_frame": "/data/workspace/kais-shot-timeline/gsrt/renderback/frames/91_first.jpg",
+  "last_frame": "/data/workspace/kais-shot-timeline/gsrt/renderback/frames/91_last_28110.jpg",
+  "target_clip": "/data/workspace/kais-shot-timeline/gsrt/renderback/targets/orig_091.mp4",
+  "ltx_prompt_source": "p09_shot-list.json (gsrt_tail_extension 2026-08-29)",
+  "reverse_prompt_under_test": "独角仙武士向绿肤螳螂武士深深躬身行礼，随即转身走向林间薄雾深处，背影渐远；螳螂武士手臂缠绷带持刀肃立，缓缓颔首回礼；苔藓倒木上毛毛虫小孩双手掩面专注数数。全景，平视，固定。原始森林，巨树盘根、蕨类苔藓、倒木横陈。丁达尔光束穿透树冠，暖绿交织，庄重而隐痛。3D 动画，皮克斯级写实渲染，电影感",
+  "full_prompt": "独角仙武士向绿肤螳螂武士深深躬身行礼，随即转身走向林间薄雾深处，背影渐远；螳螂武士手臂缠绷带持刀肃立，缓缓颔首回礼；苔藓倒木上毛毛虫小孩双手掩面专注数数。全景，平视，固定。原始森林，巨树盘根、蕨类苔藓、倒木横陈。丁达尔光束穿透树冠，暖绿交织，庄重而隐痛。3D 动画，皮克斯级写实渲染，电影感 · strictly diegetic in-world sound, unscored scene",
+  "length": 90,
+  "profile": "turbo",
+  "seed": 42,
+  "resolution": "1344x768",
+  "projectId": 901,
+  "filenamePrefix": "gsrt_t4_91",
+  "qc_skipped": null
+ },
+ {
+  "shot_id": 92,
+  "shot_key": "S1_92",
+  "target_window": [
+   281.25,
+   286.55
+  ],
+  "duration_sec": 5.4,
+  "first_frame": "/data/workspace/kais-shot-timeline/gsrt/renderback/frames/92_first.jpg",
+  "last_frame": "/data/workspace/kais-shot-timeline/gsrt/renderback/frames/92_last_28655.jpg",
+  "target_clip": "/data/workspace/kais-shot-timeline/gsrt/renderback/targets/orig_092.mp4",
+  "ltx_prompt_source": "p09_shot-list.json (gsrt_tail_extension 2026-08-29)",
+  "reverse_prompt_under_test": "毛毛虫小孩面部特写：双手掩面急促数数，随后猛然放下双手，大眼睛睁开放光，张嘴欢呼，表情从专注瞬间翻转为雀跃期待。特写，正视，固定。原始森林，巨树盘根、蕨类苔藓、倒木横陈，背景虚化。丁达尔光束穿透树冠，暖绿交织。3D 动画，皮克斯级写实渲染，电影感",
+  "full_prompt": "毛毛虫小孩面部特写：双手掩面急促数数，随后猛然放下双手，大眼睛睁开放光，张嘴欢呼，表情从专注瞬间翻转为雀跃期待。特写，正视，固定。原始森林，巨树盘根、蕨类苔藓、倒木横陈，背景虚化。丁达尔光束穿透树冠，暖绿交织。3D 动画，皮克斯级写实渲染，电影感 · strictly diegetic in-world sound, unscored scene",
+  "length": 124,
+  "profile": "turbo",
+  "seed": 42,
+  "resolution": "1344x768",
+  "projectId": 901,
+  "filenamePrefix": "gsrt_t4_92",
+  "qc_skipped": null
+ },
+ {
+  "shot_id": 93,
+  "shot_key": "S1_93",
+  "target_window": [
+   286.75,
+   296.1
+  ],
+  "duration_sec": 9.6,
+  "first_frame": "/data/workspace/kais-shot-timeline/gsrt/renderback/frames/93_first.jpg",
+  "last_frame": "/data/workspace/kais-shot-timeline/gsrt/renderback/frames/93_last_29610.jpg",
+  "target_clip": "/data/workspace/kais-shot-timeline/gsrt/renderback/targets/orig_093.mp4",
+  "ltx_prompt_source": "p09_shot-list.json (gsrt_tail_extension 2026-08-29)",
+  "reverse_prompt_under_test": "毛毛虫小孩站在苔藓倒木上转身张望，四处寻找；镜头持续缓慢拉远并微微升高，阿毛的身影在巨大森林中越缩越小，最终大远景中倒木横陈、孩子渺小孤立，画面右缘绿肤螳螂武士静立旁观。中景连续拉远至大远景，一镜到底。原始森林，巨树盘根、蕨类苔藓、倒木横陈。丁达尔光束穿透树冠，暖绿交织，空旷苍茫。3D 动画，皮克斯级写实渲染，电影感",
+  "full_prompt": "毛毛虫小孩站在苔藓倒木上转身张望，四处寻找；镜头持续缓慢拉远并微微升高，阿毛的身影在巨大森林中越缩越小，最终大远景中倒木横陈、孩子渺小孤立，画面右缘绿肤螳螂武士静立旁观。中景连续拉远至大远景，一镜到底。原始森林，巨树盘根、蕨类苔藓、倒木横陈。丁达尔光束穿透树冠，暖绿交织，空旷苍茫。3D 动画，皮克斯级写实渲染，电影感 · strictly diegetic in-world sound, unscored scene",
+  "length": 226,
+  "profile": "turbo",
+  "seed": 42,
+  "resolution": "1344x768",
+  "projectId": 901,
+  "filenamePrefix": "gsrt_t4_93",
+  "qc_skipped": null
+ },
+ {
+  "shot_id": 94,
+  "shot_key": "S1_94",
+  "target_window": [
+   296.3,
+   305.9
+  ],
+  "duration_sec": 9.8,
+  "first_frame": "/data/workspace/kais-shot-timeline/gsrt/renderback/frames/94_first.jpg",
+  "last_frame": "/data/workspace/kais-shot-timeline/gsrt/renderback/frames/94_last_30589.jpg",
+  "target_clip": "/data/workspace/kais-shot-timeline/gsrt/renderback/targets/orig_094.mp4",
+  "ltx_prompt_source": "p09_shot-list.json (gsrt_tail_extension 2026-08-29)",
+  "reverse_prompt_under_test": "高空航拍俯瞰浩瀚原始森林林冠层，云雾在树海间缓缓流转，无任何角色，画面随雾气缓慢横移。大远景俯瞰，极慢横移。青绿色调，晨雾弥漫，苍茫沉郁。3D 动画，皮克斯级写实渲染，电影感",
+  "full_prompt": "高空航拍俯瞰浩瀚原始森林林冠层，云雾在树海间缓缓流转，无任何角色，画面随雾气缓慢横移。大远景俯瞰，极慢横移。青绿色调，晨雾弥漫，苍茫沉郁。3D 动画，皮克斯级写实渲染，电影感 · strictly diegetic in-world sound, unscored scene",
+  "length": 226,
+  "profile": "turbo",
+  "seed": 42,
+  "resolution": "1344x768",
+  "projectId": 901,
+  "filenamePrefix": "gsrt_t4_94",
+  "qc_skipped": null
+ }
+]

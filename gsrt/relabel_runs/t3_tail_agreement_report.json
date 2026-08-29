@@ -1,0 +1,25 @@
+{
+ "runs": {
+  "runA": {
+   "emotion": {
+    "partial": 1,
+    "exact": 4
+   },
+   "intent_role_coverage": "9/11"
+  },
+  "runB": {
+   "emotion": {
+    "exact": 4,
+    "partial": 1
+   },
+   "intent_role_coverage": "8/11"
+  }
+ },
+ "inter_run": {
+  "same_intent_elements": "7/11"
+ },
+ "verdict": {
+  "T3_tail_inference": "PASS(带族内先验警示)",
+  "detail": "两独立run(温度0.7/0.3+措辞变体)对尾段5镜: emotion同义聚类 exact+partial=10/10, intent_role命中=8/11, run间同要素=7/11. 本次T3验证的是『本次重写推断层的盲标一致性』——金标答案作者=标注器同族(先验共享风险在案), 非原片真值独立来源; 尾段推断层的物理锚=T1(帧证/ASR), 争议最终仲裁权=视频证据"
+ }
+}

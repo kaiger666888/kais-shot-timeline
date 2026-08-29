@@ -1,0 +1,42 @@
+[
+ {
+  "shot_id": "S1_91",
+  "duration_sec": 4.1,
+  "dialogue": "[阿毛] （掩面数数）九十八……九十九……",
+  "camera_movement": "固定",
+  "start_frame": "全景三人：左侧花青躬身行礼，右侧前辈持刀肃立，倒木上阿毛掩面数数",
+  "end_frame": "花青背影远入薄雾，前辈颔首回礼，阿毛掩面报到九十九"
+ },
+ {
+  "shot_id": "S1_92",
+  "duration_sec": 5.4,
+  "dialogue": "[阿毛] （掩面急数后报到一百，放下手）一百！数完啦——爸爸？",
+  "camera_movement": "固定",
+  "start_frame": "特写：阿毛双手掩面急促数数，嘴张开",
+  "end_frame": "双手放下，大眼睛放光张嘴欢呼（计数卡100）"
+ },
+ {
+  "shot_id": "S1_93",
+  "duration_sec": 9.6,
+  "dialogue": "[阿毛] 爸爸……爸爸……爸爸你在哪儿？",
+  "camera_movement": "缓慢拉远（dolly out，中景→大远景一镜到底）",
+  "start_frame": "中景：阿毛在倒木上转身，张望",
+  "end_frame": "大远景：倒木横陈空场，阿毛极小，前辈右缘静立"
+ },
+ {
+  "shot_id": "S1_94",
+  "duration_sec": 9.8,
+  "dialogue": "[阿毛] （旁白）他有一百种方法逗我开心。可是这一次，他骗了我。",
+  "camera_movement": "缓慢横移",
+  "start_frame": "俯瞰林海，云雾弥漫",
+  "end_frame": "同机位横移，雾气流转"
+ },
+ {
+  "shot_id": "S1_95",
+  "duration_sec": 2.4,
+  "dialogue": "[阿毛] （旁白，黑场白字定格）我要去把他找回来。",
+  "camera_movement": "无（渐黑）",
+  "start_frame": "画面渐黑，白字浮现",
+  "end_frame": "纯黑+白字定格"
+ }
+]
