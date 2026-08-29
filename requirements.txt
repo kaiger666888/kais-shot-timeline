@@ -1,0 +1,29 @@
+# KST (kais-shot-timeline) Python 依赖锁定
+# 由 GSD 审计 (2026-08-29, CLAUDE.md) 指出缺 lockfile 后生成；版本 = 2026-08-29 生产环境实测。
+#
+# 双解释器架构（重要——两个解释器各管一半依赖）:
+#   * 分析/评分脚本 (analysis/, gsrt/, prompts/, spec/): 活跃 venv 的 python
+#     (依赖 torch 系重量级库, 装在 /data/venv 系 venv 中)
+#   * 音频脚本 (audio/transcribe.py 等): /usr/bin/python3
+#     (faster-whisper 装系统 Python, 走 CTranslate2, 不依赖 venv 的 torch)
+#
+# 复现命令 (README.md §安装 的锁定版替换):
+#   # 分析环境 (venv):
+#   pip install -r requirements.txt
+#   # 音频环境 (/usr/bin/python3):
+#   /usr/bin/python3 -m pip install faster-whisper==1.2.1
+
+# --- 分析/评分环境 (活跃 venv, Python 3.12) ---
+scenedetect==0.7
+demucs==4.1.0
+pillow==12.2.0
+numpy==2.4.6
+opencv-python==5.0.0.93
+scikit-learn==1.9.0
+scipy==1.18.0
+torch==2.13.0
+httpx==0.28.1
+
+# --- 音频环境 (/usr/bin/python3, 不进 venv) ---
+# faster-whisper==1.2.1        # 装系统 Python: /usr/bin/python3 -m pip install faster-whisper==1.2.1
+#   └─ 运行时依赖: ctranslate2==4.8.1 / onnxruntime==1.27.0 / tokenizers==0.22.2 (pip 自动解析)

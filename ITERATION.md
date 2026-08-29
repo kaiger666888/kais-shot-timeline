@@ -126,8 +126,10 @@ KST 产出的不是"一份金标"，而是**分级信任的资产**。`golden-se
 
 - [ ] **a) 检测器 V4 候选**（仅当下游消费暴露边界问题）：必须新旧版分镜边界对比 +
   下游 prompt 反推质量作最终裁判，走完整循环一（改→对比→收敛→LOCK）。
-- [ ] **b) 仓卫生**：requirements.txt 锁定（GSD 审计已指出缺 lockfile）、
-  `gsrt/` 二进制证据已 ignore（可再生：ffmpeg 提帧 / H3 渲染产物）。
+- [x] **b) 仓卫生**（2026-08-29 完成）：`requirements.txt` 落地（锁定版 = 生产实测，
+  注明双解释器架构：分析环境 venv torch 系 / 音频环境系统 Python faster-whisper 系）；
+  README 安装节改指 lockfile；`.gitignore` 补 p1a frames_full/ 与 qc_tmp/tmp 再生中间物
+  （可再生：ffmpeg 提帧 / H3 渲染产物），QC 判据网格等不可再生 vision 证据入库。
 
 ## 6. 评估纪律在 KST 的适用（从伞收拢，不重述）
 

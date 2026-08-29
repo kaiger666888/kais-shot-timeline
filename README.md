@@ -138,6 +138,8 @@ python prompts/extract_frames.py \
 #    （字段：subject/action/camera/scene/lighting/style/prompt_text）
 #    ⚠ action 必须是「完整物理动作链」(谁→做什么→一步步→物理合理,如"抬头→接住浆果→送嘴→吃"),
 #       不能只写一句话——下游视频模型靠这条链路演动作,写简了会瞎演/违反物理。详见 prompts.schema.json#action。
+#    ⚠ 主体+运动共存镜用「分离式描述法」(GSRT shot64 v6 验证): 锐利主体与高速部位分开写状态;
+#       subject 写「构图终点」不写程度词 («占满画面»会推过头出画)。详见 prompts.schema.json#action/#subject/#prompt_text。
 
 # 3. 合并分片 + 补时间元数据
 python prompts/merge_prompts.py \
@@ -193,8 +195,16 @@ python html/gen_prompts_html.py \
 - PIL/Pillow, numpy, opencv-python
 - httpx（Phase 6 运镜语义分析路由调用；已用 0.28.1 验证，当前开发环境无需额外安装）
 
+## 安装（锁定版本见 `requirements.txt`，2026-08-29 实测环境）
+
+双解释器架构：分析/评分脚本用活跃 venv 的 python；音频脚本（`audio/transcribe.py`）用 `/usr/bin/python3`（faster-whisper 装系统 Python，走 CTranslate2，不占 venv 的 torch）。
+
 ```bash
-pip install scenedetect demucs faster-whisper pillow numpy opencv-python httpx
+# 分析环境 (venv) — 锁定版本以 requirements.txt 为准
+pip install -r requirements.txt
+
+# 音频环境 (系统 Python)
+/usr/bin/python3 -m pip install faster-whisper==1.2.1
 # 或只装 openai-whisper
 pip install openai-whisper
 ```

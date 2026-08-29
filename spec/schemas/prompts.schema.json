@@ -41,11 +41,11 @@
       },
       "subject": {
         "type": "string",
-        "description": "Who/what is in the shot (characters, key objects)."
+        "description": "Who/what is in the shot (characters, key objects). 写『构图终点』而非程度词——GSRT 实证 (shot64 v4): 写『面部占满画面』会推过头导致主体出画; 应先实读原片该帧的真实构图再描述 (如『面部特写位于画面左 2/3, 头顶留白』), 禁止从上一版判词线性外推。"
       },
       "action": {
         "type": "string",
-        "description": "FULL physical action chain of the shot — who does what, step by step, in temporal order, physically grounded (e.g., 'looks up → reaches out and catches the berry → brings it to mouth → takes a bite → chews, expression softening'). Write the COMPLETE motion sequence the video must animate, never a one-line summary like 'looks up' (that leaves gaps the video model fills with broken/unphysical motion). Camera framing & movement go in the `camera` field, not here."
+        "description": "FULL physical action chain of the shot — who does what, step by step, in temporal order, physically grounded (e.g., 'looks up → reaches out and catches the berry → brings it to mouth → takes a bite → chews, expression softening'). Write the COMPLETE motion sequence the video must animate, never a one-line summary like 'looks up' (that leaves gaps the video model fills with broken/unphysical motion). Camera framing & movement go in the `camera` field, not here. GSRT render-back 验证的分隔符法 (separation method, shot64 v6 LOCKED): 画面内同时存在『锐利静止主体』与『高速运动部位』时, 分开描述各自的状态——如『头部清晰锐利可辨瞳孔 + 前肢高速运动呈强运动模糊』, 禁止写成一句笼统的『快速跑动』 (笼统写法会让视频模型把主体整个糊掉)。"
       },
       "camera": {
         "type": "string",
@@ -65,7 +65,7 @@
       },
       "prompt_text": {
         "type": "string",
-        "description": "Ready-to-use prompt text (composed from the above facets)."
+        "description": "Ready-to-use prompt text (composed from the above facets). GSRT 纪律: prompt 首句必须是主体身份锚定 (角色+外观特征), 主体在句首权重最高; 身份描述与动作描述分离, 避免把外观编进动作从句 (下游模型会漏外观细节)。"
       },
       "character_refs": {
         "type": "array",

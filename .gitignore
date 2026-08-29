@@ -6,3 +6,6 @@ __pycache__/
 *.pyc
 .DS_Store
 gsrt/frames/
+gsrt/renderback/p1a_anchor_scan/frames_full/
+gsrt/renderback/p1a_anchor_scan/tmp_*.jpg
+gsrt/renderback/qc_tmp_*.jpg
