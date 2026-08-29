@@ -1,0 +1,31 @@
+{
+ "batch": "manifest_v8 tail 4-shot render-back (2026-08-29)",
+ "protocol": "像素锚定(256x144 MAD, <10锚定/<20轻漂移) + vision中帧节拍 + 尾帧核实",
+ "shots": {
+  "92": {
+   "pixel": "d_first=3.2 d_last=10.5 LIGHT_DRIFT(临界)",
+   "vision": "放手+睁眼+欢呼@90%完整(计数26→100对应报到一百), 三节拍全在时序正确",
+   "note": "节拍后移~10%(75%处仍掩面, 引擎把揭晓压后); 中段计数卡数字19/34/26为引擎装饰性生成非判分项",
+   "verdict": "PASS(节拍后移备注)"
+  },
+  "93": {
+   "pixel": "d_first=6.8 d_last=9.2 ANCHORED",
+   "vision": "拉远一镜到底复现: 25%人较大→75%人极小单调递减, 倒木/丁达尔光/螳螂入画位置全对, 无跳变无主体消失",
+   "verdict": "PASS"
+  },
+  "94": {
+   "pixel": "d_first=5.3 d_last=7.7 ANCHORED",
+   "vision": "航拍俯瞰/林冠/雾/无角色全对",
+   "note": "中央乱码文字=条件帧伪影(原片烧录字幕被条件帧继承,H3幻觉乱码) — 按gsrt协议条件帧污染不计入prompt判分",
+   "verdict": "PASS(条件帧字幕伪影在案)"
+  },
+  "91": {
+   "status": "渲染中(KAP gpuQueue放行后ComfyUI排队, promptId=8eca659f)"
+  }
+ },
+ "infra": {
+  "shot91首提": "vram_insufficient 400拒绝(外部任务占卡) → free缓存后91b重提成功",
+  "shot93救回": "容器迟到产物 docker cp 补收(本地48B残片覆盖为4.65MB完整)"
+ },
+ "rejected_qc_mistake": "92的75%单点FAIL判读被尾帧核实推翻——vision单点采样判节拍需末端加密采样复核(skill v1.1收敛硬规的QC侧同款纪律)"
+}

@@ -1,0 +1,26 @@
+{
+ "92": {
+  "d_first": 3.2,
+  "d_last": 10.5,
+  "dur": 5.17,
+  "target_dur": 5.4,
+  "verdict": "LIGHT_DRIFT",
+  "grid": "/data/workspace/kais-shot-timeline/gsrt/renderback/qc_92_midbeats.jpg"
+ },
+ "93": {
+  "d_first": 6.8,
+  "d_last": 9.2,
+  "dur": 9.42,
+  "target_dur": 9.6,
+  "verdict": "ANCHORED",
+  "grid": "/data/workspace/kais-shot-timeline/gsrt/renderback/qc_93_midbeats.jpg"
+ },
+ "94": {
+  "d_first": 5.3,
+  "d_last": 7.7,
+  "dur": 9.42,
+  "target_dur": 9.8,
+  "verdict": "ANCHORED",
+  "grid": "/data/workspace/kais-shot-timeline/gsrt/renderback/qc_94_midbeats.jpg"
+ }
+}
