@@ -157,7 +157,7 @@ submit_renderback_v2.py),成片 4+1 镜,shot1/57/64 三档锚点 QC 见 `referen
 - `scripts/submit_renderback.py` — T4 渲染回测提交器 (i2va multipart + 空响应重试 + docker cp 提取 + jobs.json 状态机)
 - `scripts/agreement_report.py` — 轨 B 判分器 (emotion 聚类三档 / felt_intent role-signal / shot_type 别名)
 - `templates/relabel-prompt.md` — 轨 B 盲重标注 prompt 模板 (证据包占位符)
-- 工作区实例: `/data/workspace/kais-shot-timeline/gsrt/` (SKILL.md 含完整试点叙事、evidence_packs.json、golden_answers_sealed.json、pilot_verdict_20260828.json、golden_p02_fix_proposal.json 待 Kai 拍板)
+- 工作区实例: `/data/workspace/kais-shot-timeline/gsrt/` (SKILL.md 含完整试点叙事、evidence_packs.json、golden_answers_sealed.json、pilot_verdict_20260828.json；golden_p02_fix_proposal.json 已 ADOPTED 执行 2026-08-29，审计 gsrt/p02_correction_20260829.md)
 - 注入臂实例: worktree `ep-gsrt01` (金标 P00 逐字节 + P01 忠实映射)
 
 ## See Also

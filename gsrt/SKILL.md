@@ -63,8 +63,11 @@
 「不忠实」是误判。)
 
 **T2 单独不足定谳** (往返相似度 0.10 无法区分「管线自由度」与「金标失真」)，
-T2+视频仲裁首例即抓到金标缺陷——协议路线正确。修正提案在
-`golden_p02_fix_proposal.json`，待 Kai 拍板后替换正式金标 (原件不动)。
+T2+视频仲裁首例即抓到金标缺陷——协议路线正确。修正提案
+`golden_p02_fix_proposal.json` 已于 2026-08-29 经 Kai 拍板执行（status=ADOPTED），
+P02 已重写为 `video_arbitrated` 级（原件备份+集级 git 化），执行审计见
+`gsrt/p02_correction_20260829.md`——执行中追加实锤：全片 beat 时间轴为匀速编造
+分布（Midpoint 偏 66s）、中段"前辈为救花青负伤"整段漏采（t185 帧证）。
 
 ## See Also
 

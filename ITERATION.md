@@ -96,9 +96,14 @@ KST 产出的不是"一份金标"，而是**分级信任的资产**。`golden-se
 
 ### P0 — 金标可信度基建（KMC 循环二的地基）
 
-- [ ] **a) P02 失真修复收口**：`gsrt/golden_p02_fix_proposal.json` 待 Kai 拍板 →
-  修金标 P02（悲壮托孤真结局）→ 重跑 T2/T3 → 补 T4（托孤区已 4 PASS）→ 产出首个
-  `video_arbitrated` 全级金标。
+- [x] **a) P02 失真修复收口**（2026-08-29 完成）：`golden_p02_fix_proposal.json`
+  Kai 拍板 → P02 重写为**首个 `video_arbitrated` 全级金标**（金标集已 git 化
+  `~/learning_sets`，commit 2e5a093）。执行审计：`gsrt/p02_correction_20260829.md`。
+  执行中追加实锤×2：全片 beat 时间轴为匀速编造分布（Midpoint 偏 66s）；
+  中段「前辈为救花青负伤」整段漏采（t185 帧证+ASR 3:53 互证）。
+  残项：277-305s 区间（数数回头/独白收尾）补测待 GPU 窗口；shot89 已由并行会话
+  v4 重推 LOCKED（08-29 晨，Kai 复核揭穿 v3 假收敛——构图全对但拔刀缺交接帧）；
+  P03/P09 推断层未审。
 - [ ] **b) T4 出厂检验常态化**：新 episode 金标打包前抽样 5-6 镜跑 render-back
   （覆盖开场/战斗/空镜/争议区 + 必含 1 极速镜），通过才出库。GPU 预算：≈5 镜 × 40min。
 

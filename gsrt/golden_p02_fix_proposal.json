@@ -1,50 +1,50 @@
 {
- "target": "p02_story-framework.json",
- "beats_rewrite": {
-  "Finale": {
-   "time_range": "3:41-5:05(实为227-305s区间)",
-   "content": "承诺后的反转:父亲『告诉你个秘密——其实我们不是亲爷俩』,自述『我时间不够了』,向前辈托孤『这个孩子我就托付给你了,教他一些功夫吧』。阿毛在旁数数(61→100),数完回头父亲已消失。『爸爸你在哪儿?』",
-   "emotion": "隐痛·离别"
+  "target": "p02_story-framework.json",
+  "beats_rewrite": {
+    "Finale": {
+      "time_range": "3:41-5:05(实为227-305s区间)",
+      "content": "承诺后的反转:父亲『告诉你个秘密——其实我们不是亲爷俩』,自述『我时间不够了』,向前辈托孤『这个孩子我就托付给你了,教他一些功夫吧』。阿毛在旁数数(61→100),数完回头父亲已消失。『爸爸你在哪儿?』",
+      "emotion": "隐痛·离别"
+    },
+    "Final Image": {
+      "time_range": "4:57-5:08(297-305s)",
+      "content": "阿毛:『他有一百种方法逗我开心,可是这一次,他骗了我。我要去把他找回来。』——与开场旁白同句式回环:开场『我喜欢他』→结尾『他骗了我』,从被安慰者变为主动寻父者。系列钩子=寻父之旅。",
+      "emotion": "被骗之痛→决然寻父"
+    },
+    "emotion_curve_tail": [
+      {
+        "time": "3:41",
+        "emotion": "承诺·依恋",
+        "intensity": 8
+      },
+      {
+        "time": "3:47",
+        "emotion": "秘密·隐痛",
+        "intensity": 6
+      },
+      {
+        "time": "4:10",
+        "emotion": "托孤·诀别",
+        "intensity": 9
+      },
+      {
+        "time": "4:46",
+        "emotion": "消失·慌乱",
+        "intensity": 9
+      },
+      {
+        "time": "4:57",
+        "emotion": "被骗之痛",
+        "intensity": 8
+      },
+      {
+        "time": "5:05",
+        "emotion": "决然寻父",
+        "intensity": 8
+      }
+    ],
+    "arc_type_fix": "Rags-to-Riches with Midpoint Dip → 温馨日常→危机→诀别的Fall-and-Resolve(离别-成长)弧;growth以『主动寻父』而非『学功夫契约』呈现"
   },
-  "Final Image": {
-   "time_range": "4:57-5:08(297-305s)",
-   "content": "阿毛:『他有一百种方法逗我开心,可是这一次,他骗了我。我要去把他找回来。』——与开场旁白同句式回环:开场『我喜欢他』→结尾『他骗了我』,从被安慰者变为主动寻父者。系列钩子=寻父之旅。",
-   "emotion": "被骗之痛→决然寻父"
-  },
-  "emotion_curve_tail": [
-   {
-    "time": "3:41",
-    "emotion": "承诺·依恋",
-    "intensity": 8
-   },
-   {
-    "time": "3:47",
-    "emotion": "秘密·隐痛",
-    "intensity": 6
-   },
-   {
-    "time": "4:10",
-    "emotion": "托孤·诀别",
-    "intensity": 9
-   },
-   {
-    "time": "4:46",
-    "emotion": "消失·慌乱",
-    "intensity": 9
-   },
-   {
-    "time": "4:57",
-    "emotion": "被骗之痛",
-    "intensity": 8
-   },
-   {
-    "time": "5:05",
-    "emotion": "决然寻父",
-    "intensity": 8
-   }
-  ],
-  "arc_type_fix": "Rags-to-Riches with Midpoint Dip → 温馨日常→危机→诀别的Fall-and-Resolve(离别-成长)弧;growth以『主动寻父』而非『学功夫契约』呈现"
- },
- "evidence": "asr_vocals_clean.json 221-305s + frames t255(托孤字幕+甲壳裂纹)/t295(爸爸你在哪)/t303(空镜)",
- "status": "PROPOSAL — 待Kai拍板后替换正式金标(原件不动)"
+  "evidence": "asr_vocals_clean.json 221-305s + frames t255(托孤字幕+甲壳裂纹)/t295(爸爸你在哪)/t303(空镜)",
+  "status": "ADOPTED 2026-08-29 — Kai拍板, 已按提案执行并新增帧证据(t185前辈负伤/全beat时间轴重锚), 见p02内gsrt_correction"
 }
