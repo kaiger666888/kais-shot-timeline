@@ -1,0 +1,461 @@
+[
+ {
+  "shot": "S1_19",
+  "kst_id": 19,
+  "dur": 2.07,
+  "d_first": 17,
+  "d_last": 2,
+  "d_self": 20,
+  "verdict": "RED",
+  "window": [
+   70.8,
+   72.87
+  ],
+  "min_d_first": 5,
+  "min_d_last": 1,
+  "probes_f": [
+   5,
+   17,
+   23,
+   20
+  ],
+  "probes_l": [
+   3,
+   2,
+   1
+  ],
+  "recheck": "DOWNGRADE"
+ },
+ {
+  "shot": "S1_34",
+  "kst_id": 34,
+  "dur": 0.77,
+  "d_first": 31,
+  "d_last": 25,
+  "d_self": 33,
+  "verdict": "RED",
+  "window": [
+   100.1,
+   100.87
+  ],
+  "min_d_first": 25,
+  "min_d_last": 1,
+  "probes_f": [
+   25,
+   32,
+   33,
+   27
+  ],
+  "probes_l": [
+   26,
+   30,
+   1
+  ],
+  "recheck": "CONFIRMED"
+ },
+ {
+  "shot": "S1_35",
+  "kst_id": 35,
+  "dur": 0.53,
+  "d_first": 15,
+  "d_last": 26,
+  "d_self": 32,
+  "verdict": "RED",
+  "window": [
+   100.87,
+   101.4
+  ],
+  "min_d_first": 0,
+  "min_d_last": 0,
+  "probes_f": [
+   0,
+   25,
+   27,
+   30
+  ],
+  "probes_l": [
+   19,
+   21,
+   0
+  ],
+  "recheck": "DOWNGRADE"
+ },
+ {
+  "shot": "S1_38",
+  "kst_id": 38,
+  "dur": 3.24,
+  "d_first": 1,
+  "d_last": 21,
+  "d_self": 33,
+  "verdict": "RED",
+  "window": [
+   107.63,
+   110.87
+  ],
+  "min_d_first": 1,
+  "min_d_last": 0,
+  "probes_f": [
+   1,
+   2,
+   5,
+   27
+  ],
+  "probes_l": [
+   20,
+   18,
+   0
+  ],
+  "recheck": "DOWNGRADE"
+ },
+ {
+  "shot": "S1_39",
+  "kst_id": 39,
+  "dur": 1.6,
+  "d_first": 11,
+  "d_last": 29,
+  "d_self": 23,
+  "verdict": "RED",
+  "window": [
+   110.87,
+   112.47
+  ],
+  "min_d_first": 0,
+  "min_d_last": 0,
+  "probes_f": [
+   0,
+   11,
+   35,
+   30
+  ],
+  "probes_l": [
+   35,
+   29,
+   0
+  ],
+  "recheck": "DOWNGRADE"
+ },
+ {
+  "shot": "S1_40",
+  "kst_id": 40,
+  "dur": 2.0,
+  "d_first": 25,
+  "d_last": 23,
+  "d_self": 32,
+  "verdict": "RED",
+  "window": [
+   112.47,
+   114.47
+  ],
+  "min_d_first": 0,
+  "min_d_last": 1,
+  "probes_f": [
+   0,
+   29,
+   37,
+   40
+  ],
+  "probes_l": [
+   33,
+   28,
+   1
+  ],
+  "recheck": "DOWNGRADE"
+ },
+ {
+  "shot": "S1_41",
+  "kst_id": 41,
+  "dur": 1.53,
+  "d_first": 17,
+  "d_last": 0,
+  "d_self": 26,
+  "verdict": "RED",
+  "window": [
+   114.47,
+   116.0
+  ],
+  "min_d_first": 0,
+  "min_d_last": 0,
+  "probes_f": [
+   0,
+   18,
+   26,
+   26
+  ],
+  "probes_l": [
+   3,
+   1,
+   0
+  ],
+  "recheck": "DOWNGRADE"
+ },
+ {
+  "shot": "S1_44",
+  "kst_id": 44,
+  "dur": 1.57,
+  "d_first": 16,
+  "d_last": 19,
+  "d_self": 34,
+  "verdict": "RED",
+  "window": [
+   120.8,
+   122.37
+  ],
+  "min_d_first": 8,
+  "min_d_last": 0,
+  "probes_f": [
+   8,
+   25,
+   36,
+   35
+  ],
+  "probes_l": [
+   33,
+   36,
+   0
+  ],
+  "recheck": "DOWNGRADE"
+ },
+ {
+  "shot": "S1_46",
+  "kst_id": 46,
+  "dur": 5.7,
+  "d_first": 16,
+  "d_last": 0,
+  "d_self": 32,
+  "verdict": "RED",
+  "window": [
+   123.7,
+   129.4
+  ],
+  "min_d_first": 10,
+  "min_d_last": 0,
+  "probes_f": [
+   10,
+   16,
+   25,
+   27
+  ],
+  "probes_l": [
+   3,
+   0,
+   0
+  ],
+  "recheck": "BORDERLINE"
+ },
+ {
+  "shot": "S1_48",
+  "kst_id": 48,
+  "dur": 1.27,
+  "d_first": 23,
+  "d_last": 19,
+  "d_self": 29,
+  "verdict": "RED",
+  "window": [
+   132.6,
+   133.87
+  ],
+  "min_d_first": 15,
+  "min_d_last": 0,
+  "probes_f": [
+   15,
+   23,
+   27,
+   32
+  ],
+  "probes_l": [
+   28,
+   21,
+   0
+  ],
+  "recheck": "BORDERLINE"
+ },
+ {
+  "shot": "S1_50",
+  "kst_id": 50,
+  "dur": 1.4,
+  "d_first": 12,
+  "d_last": 18,
+  "d_self": 20,
+  "verdict": "RED",
+  "window": [
+   136.27,
+   137.67
+  ],
+  "min_d_first": 0,
+  "min_d_last": 0,
+  "probes_f": [
+   0,
+   12,
+   22,
+   23
+  ],
+  "probes_l": [
+   22,
+   21,
+   0
+  ],
+  "recheck": "DOWNGRADE"
+ },
+ {
+  "shot": "S1_52",
+  "kst_id": 52,
+  "dur": 1.27,
+  "d_first": 12,
+  "d_last": 27,
+  "d_self": 36,
+  "verdict": "RED",
+  "window": [
+   138.93,
+   140.2
+  ],
+  "min_d_first": 17,
+  "min_d_last": 0,
+  "probes_f": [
+   17,
+   20,
+   34,
+   31
+  ],
+  "probes_l": [
+   28,
+   32,
+   0
+  ],
+  "recheck": "CONFIRMED"
+ },
+ {
+  "shot": "S1_53",
+  "kst_id": 53,
+  "dur": 4.0,
+  "d_first": 22,
+  "d_last": 27,
+  "d_self": 33,
+  "verdict": "RED",
+  "window": [
+   140.2,
+   144.2
+  ],
+  "min_d_first": 0,
+  "min_d_last": 0,
+  "probes_f": [
+   0,
+   28,
+   26,
+   34
+  ],
+  "probes_l": [
+   38,
+   27,
+   0
+  ],
+  "recheck": "DOWNGRADE"
+ },
+ {
+  "shot": "S1_55",
+  "kst_id": 55,
+  "dur": 2.27,
+  "d_first": 19,
+  "d_last": 0,
+  "d_self": 30,
+  "verdict": "RED",
+  "window": [
+   147.63,
+   149.9
+  ],
+  "min_d_first": 19,
+  "min_d_last": 0,
+  "probes_f": [
+   19,
+   26,
+   32,
+   30
+  ],
+  "probes_l": [
+   0,
+   0,
+   0
+  ],
+  "recheck": "CONFIRMED"
+ },
+ {
+  "shot": "S1_64",
+  "kst_id": 64,
+  "dur": 0.87,
+  "d_first": 18,
+  "d_last": 38,
+  "d_self": 31,
+  "verdict": "RED",
+  "window": [
+   173.6,
+   174.47
+  ],
+  "min_d_first": 14,
+  "min_d_last": 0,
+  "probes_f": [
+   14,
+   24,
+   36,
+   33
+  ],
+  "probes_l": [
+   34,
+   34,
+   0
+  ],
+  "recheck": "BORDERLINE"
+ },
+ {
+  "shot": "S1_68",
+  "kst_id": 68,
+  "dur": 2.7,
+  "d_first": 2,
+  "d_last": 24,
+  "d_self": 21,
+  "verdict": "RED",
+  "window": [
+   182.9,
+   185.6
+  ],
+  "min_d_first": 2,
+  "min_d_last": 1,
+  "probes_f": [
+   2,
+   10,
+   22,
+   26
+  ],
+  "probes_l": [
+   32,
+   36,
+   1
+  ],
+  "recheck": "DOWNGRADE"
+ },
+ {
+  "shot": "S1_69",
+  "kst_id": 69,
+  "dur": 1.0,
+  "d_first": 19,
+  "d_last": 2,
+  "d_self": 26,
+  "verdict": "RED",
+  "window": [
+   185.6,
+   186.6
+  ],
+  "min_d_first": 0,
+  "min_d_last": 0,
+  "probes_f": [
+   0,
+   19,
+   31,
+   26
+  ],
+  "probes_l": [
+   30,
+   21,
+   0
+  ],
+  "recheck": "DOWNGRADE"
+ }
+]

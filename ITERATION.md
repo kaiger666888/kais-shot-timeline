@@ -111,8 +111,14 @@ KST 产出的不是"一份金标"，而是**分级信任的资产**。`golden-se
 
 ### P1 — prompt 层规模化（循环二从抽样到全覆盖的路径）
 
-- [ ] **a) 全镜批量锚评分**：`score_iter.py` 扩展至 93 镜全量 dHash 预筛，只把
-  锚差 >15 的镜送 vision/人工环节——把贵的人工判读聚焦到真失真镜。
+- [x] **a) 全镜批量锚评分**（2026-08-29 完成，三级协议）：①dHash 全量预筛 93 镜
+  （71 过/17 红/5 轻）→ ②RED 密集重采样甄别（11 假红=超短镜边界抖动，窗口内有锚定帧）
+  → ③3 CONFIRMED vision 触表终审全清白（高动态运动模糊 dHash 极限假红）。
+  **终版：85 ANCHORED / 8 LIGHT 灰区 / 0 确认失真** —— 金标机械层锚定全量实测成立。
+  台账 `gsrt/renderback/p1a_anchor_scan/`（scan_93 / red_recheck / p1a_final_ledger +
+  confirmed_contact_sheet.jpg）；审计脚本 p1a_*.py ×3。
+  附带实锤：frames.json 全帧 base64 带 16 字节垃圾前缀（ffmpeg 系容忍/PIL 系必炸），
+  canonical 修复待拍板；尾段编号双轨（shot-list 93 镜 vs manifest_v8 局部编号）已记录。
 - [ ] **b) 逆向 prompt 生成器沉淀**：v6 分离式描述法（构图终点 + 运动主体分离描述）
   回写 `prompts/` 反推生成器，让新一轮金标天生携带已验证的描述模式。
 

@@ -1,0 +1,1567 @@
+{
+ "summary": {
+  "protocol": "P1a 三级: ①dHash全量预筛(93镜) ②RED密集重采样甄别(边界抖动假红) ③CONFIRMED vision触表终审",
+  "counts": {
+   "ANCHORED_direct": 71,
+   "ANCHORED_downgraded": 11,
+   "ANCHORED_vision_cleared": 3,
+   "LIGHT_gray": 8,
+   "CONFIRMED_DISTORTED": 0
+  },
+  "lessons": [
+   "①frames.json全帧base64带16字节垃圾前缀(真JPEG自offset16, ffmpeg mjpeg扫描容忍/PIL必炸) — canonical修复待Kai拍板, 本仓缓存已清洗",
+   "②超短镜(0.5-2s)单点提帧边界抖动产生大量假红(11/17) — RED必须密集重采样取min再定罪",
+   "③高动态运动模糊镜存在dHash极限假红模式(3镜hash 17-25但vision内容一致) — 哈希红≠失真, vision触表是终审",
+   "④尾段编号双轨: shot-list 93镜=KMC契约真值; manifest_v8的91-94=补测批内局部编号(对应S1_90起) — 消费方须以kst_shot_id对齐"
+  ],
+  "motion_top": [
+   {
+    "shot": "S1_45",
+    "kst_id": 45,
+    "dur": 1.33,
+    "d_first": 11,
+    "d_last": 3,
+    "d_self": 37,
+    "verdict": "LIGHT",
+    "window": [
+     122.37,
+     123.7
+    ],
+    "final_verdict": "LIGHT",
+    "note": ""
+   },
+   {
+    "shot": "S1_58",
+    "kst_id": 58,
+    "dur": 6.37,
+    "d_first": 7,
+    "d_last": 3,
+    "d_self": 37,
+    "verdict": "ANCHORED",
+    "window": [
+     157.73,
+     164.1
+    ],
+    "final_verdict": "ANCHORED",
+    "note": ""
+   },
+   {
+    "shot": "S1_52",
+    "kst_id": 52,
+    "dur": 1.27,
+    "d_first": 12,
+    "d_last": 27,
+    "d_self": 36,
+    "verdict": "RED",
+    "window": [
+     138.93,
+     140.2
+    ],
+    "final_verdict": "ANCHORED",
+    "note": "vision触表终审清白: 同上: 蜈蚣扑击起手镜, vision触表内容一致"
+   },
+   {
+    "shot": "S1_60",
+    "kst_id": 60,
+    "dur": 1.9,
+    "d_first": 5,
+    "d_last": 0,
+    "d_self": 36,
+    "verdict": "ANCHORED",
+    "window": [
+     166.83,
+     168.73
+    ],
+    "final_verdict": "ANCHORED",
+    "note": ""
+   },
+   {
+    "shot": "S1_44",
+    "kst_id": 44,
+    "dur": 1.57,
+    "d_first": 16,
+    "d_last": 19,
+    "d_self": 34,
+    "verdict": "RED",
+    "window": [
+     120.8,
+     122.37
+    ],
+    "final_verdict": "ANCHORED",
+    "note": "假红→密集重采样min<10(采样偏移; 原d=16,19 min=8,0)"
+   },
+   {
+    "shot": "S1_34",
+    "kst_id": 34,
+    "dur": 0.77,
+    "d_first": 31,
+    "d_last": 25,
+    "d_self": 33,
+    "verdict": "RED",
+    "window": [
+     100.1,
+     100.87
+    ],
+    "final_verdict": "ANCHORED",
+    "note": "vision触表终审清白: 高动态运动模糊哈希极限: 甲虫疾跑镜, vision触表 C1≈C2 内容一致, 无错位无前镜污染"
+   },
+   {
+    "shot": "S1_38",
+    "kst_id": 38,
+    "dur": 3.24,
+    "d_first": 1,
+    "d_last": 21,
+    "d_self": 33,
+    "verdict": "RED",
+    "window": [
+     107.63,
+     110.87
+    ],
+    "final_verdict": "ANCHORED",
+    "note": "假红→密集重采样min<10(采样偏移; 原d=1,21 min=1,0)"
+   },
+   {
+    "shot": "S1_53",
+    "kst_id": 53,
+    "dur": 4.0,
+    "d_first": 22,
+    "d_last": 27,
+    "d_self": 33,
+    "verdict": "RED",
+    "window": [
+     140.2,
+     144.2
+    ],
+    "final_verdict": "ANCHORED",
+    "note": "假红→密集重采样min<10(采样偏移; 原d=22,27 min=0,0)"
+   },
+   {
+    "shot": "S1_35",
+    "kst_id": 35,
+    "dur": 0.53,
+    "d_first": 15,
+    "d_last": 26,
+    "d_self": 32,
+    "verdict": "RED",
+    "window": [
+     100.87,
+     101.4
+    ],
+    "final_verdict": "ANCHORED",
+    "note": "假红→密集重采样min<10(采样偏移; 原d=15,26 min=0,0)"
+   },
+   {
+    "shot": "S1_40",
+    "kst_id": 40,
+    "dur": 2.0,
+    "d_first": 25,
+    "d_last": 23,
+    "d_self": 32,
+    "verdict": "RED",
+    "window": [
+     112.47,
+     114.47
+    ],
+    "final_verdict": "ANCHORED",
+    "note": "假红→密集重采样min<10(采样偏移; 原d=25,23 min=0,1)"
+   }
+  ]
+ },
+ "rows": [
+  {
+   "shot": "S1_01",
+   "kst_id": 1,
+   "dur": 6.73,
+   "d_first": 0,
+   "d_last": 0,
+   "d_self": 26,
+   "verdict": "ANCHORED",
+   "window": [
+    0.0,
+    6.73
+   ],
+   "final_verdict": "ANCHORED",
+   "note": ""
+  },
+  {
+   "shot": "S1_02",
+   "kst_id": 2,
+   "dur": 2.9,
+   "d_first": 0,
+   "d_last": 2,
+   "d_self": 17,
+   "verdict": "ANCHORED",
+   "window": [
+    6.73,
+    9.63
+   ],
+   "final_verdict": "ANCHORED",
+   "note": ""
+  },
+  {
+   "shot": "S1_03",
+   "kst_id": 3,
+   "dur": 2.47,
+   "d_first": 0,
+   "d_last": 0,
+   "d_self": 1,
+   "verdict": "ANCHORED",
+   "window": [
+    9.63,
+    12.1
+   ],
+   "final_verdict": "ANCHORED",
+   "note": ""
+  },
+  {
+   "shot": "S1_04",
+   "kst_id": 4,
+   "dur": 9.3,
+   "d_first": 2,
+   "d_last": 1,
+   "d_self": 12,
+   "verdict": "ANCHORED",
+   "window": [
+    12.1,
+    21.4
+   ],
+   "final_verdict": "ANCHORED",
+   "note": ""
+  },
+  {
+   "shot": "S1_05",
+   "kst_id": 5,
+   "dur": 7.23,
+   "d_first": 1,
+   "d_last": 0,
+   "d_self": 14,
+   "verdict": "ANCHORED",
+   "window": [
+    21.4,
+    28.63
+   ],
+   "final_verdict": "ANCHORED",
+   "note": ""
+  },
+  {
+   "shot": "S1_06",
+   "kst_id": 6,
+   "dur": 3.5,
+   "d_first": 0,
+   "d_last": 1,
+   "d_self": 8,
+   "verdict": "ANCHORED",
+   "window": [
+    28.63,
+    32.13
+   ],
+   "final_verdict": "ANCHORED",
+   "note": ""
+  },
+  {
+   "shot": "S1_07",
+   "kst_id": 7,
+   "dur": 3.7,
+   "d_first": 3,
+   "d_last": 3,
+   "d_self": 28,
+   "verdict": "ANCHORED",
+   "window": [
+    32.13,
+    35.83
+   ],
+   "final_verdict": "ANCHORED",
+   "note": ""
+  },
+  {
+   "shot": "S1_08",
+   "kst_id": 8,
+   "dur": 5.14,
+   "d_first": 5,
+   "d_last": 2,
+   "d_self": 17,
+   "verdict": "ANCHORED",
+   "window": [
+    35.83,
+    40.97
+   ],
+   "final_verdict": "ANCHORED",
+   "note": ""
+  },
+  {
+   "shot": "S1_09",
+   "kst_id": 9,
+   "dur": 2.06,
+   "d_first": 0,
+   "d_last": 0,
+   "d_self": 12,
+   "verdict": "ANCHORED",
+   "window": [
+    40.97,
+    43.03
+   ],
+   "final_verdict": "ANCHORED",
+   "note": ""
+  },
+  {
+   "shot": "S1_10",
+   "kst_id": 10,
+   "dur": 3.84,
+   "d_first": 3,
+   "d_last": 0,
+   "d_self": 31,
+   "verdict": "ANCHORED",
+   "window": [
+    43.03,
+    46.87
+   ],
+   "final_verdict": "ANCHORED",
+   "note": ""
+  },
+  {
+   "shot": "S1_11",
+   "kst_id": 11,
+   "dur": 2.56,
+   "d_first": 0,
+   "d_last": 5,
+   "d_self": 17,
+   "verdict": "ANCHORED",
+   "window": [
+    46.87,
+    49.43
+   ],
+   "final_verdict": "ANCHORED",
+   "note": ""
+  },
+  {
+   "shot": "S1_12",
+   "kst_id": 12,
+   "dur": 1.67,
+   "d_first": 0,
+   "d_last": 0,
+   "d_self": 9,
+   "verdict": "ANCHORED",
+   "window": [
+    49.43,
+    51.1
+   ],
+   "final_verdict": "ANCHORED",
+   "note": ""
+  },
+  {
+   "shot": "S1_13",
+   "kst_id": 13,
+   "dur": 2.27,
+   "d_first": 0,
+   "d_last": 0,
+   "d_self": 28,
+   "verdict": "ANCHORED",
+   "window": [
+    51.1,
+    53.37
+   ],
+   "final_verdict": "ANCHORED",
+   "note": ""
+  },
+  {
+   "shot": "S1_14",
+   "kst_id": 14,
+   "dur": 1.76,
+   "d_first": 1,
+   "d_last": 1,
+   "d_self": 5,
+   "verdict": "ANCHORED",
+   "window": [
+    53.37,
+    55.13
+   ],
+   "final_verdict": "ANCHORED",
+   "note": ""
+  },
+  {
+   "shot": "S1_15",
+   "kst_id": 15,
+   "dur": 2.97,
+   "d_first": 1,
+   "d_last": 0,
+   "d_self": 12,
+   "verdict": "ANCHORED",
+   "window": [
+    55.13,
+    58.1
+   ],
+   "final_verdict": "ANCHORED",
+   "note": ""
+  },
+  {
+   "shot": "S1_16",
+   "kst_id": 16,
+   "dur": 2.03,
+   "d_first": 4,
+   "d_last": 4,
+   "d_self": 27,
+   "verdict": "ANCHORED",
+   "window": [
+    58.1,
+    60.13
+   ],
+   "final_verdict": "ANCHORED",
+   "note": ""
+  },
+  {
+   "shot": "S1_17",
+   "kst_id": 17,
+   "dur": 7.2,
+   "d_first": 0,
+   "d_last": 1,
+   "d_self": 3,
+   "verdict": "ANCHORED",
+   "window": [
+    60.13,
+    67.33
+   ],
+   "final_verdict": "ANCHORED",
+   "note": ""
+  },
+  {
+   "shot": "S1_18",
+   "kst_id": 18,
+   "dur": 3.47,
+   "d_first": 0,
+   "d_last": 0,
+   "d_self": 6,
+   "verdict": "ANCHORED",
+   "window": [
+    67.33,
+    70.8
+   ],
+   "final_verdict": "ANCHORED",
+   "note": ""
+  },
+  {
+   "shot": "S1_19",
+   "kst_id": 19,
+   "dur": 2.07,
+   "d_first": 17,
+   "d_last": 2,
+   "d_self": 20,
+   "verdict": "RED",
+   "window": [
+    70.8,
+    72.87
+   ],
+   "final_verdict": "ANCHORED",
+   "note": "假红→密集重采样min<10(采样偏移; 原d=17,2 min=5,1)"
+  },
+  {
+   "shot": "S1_20",
+   "kst_id": 20,
+   "dur": 1.53,
+   "d_first": 10,
+   "d_last": 9,
+   "d_self": 22,
+   "verdict": "LIGHT",
+   "window": [
+    72.87,
+    74.4
+   ],
+   "final_verdict": "LIGHT",
+   "note": ""
+  },
+  {
+   "shot": "S1_21",
+   "kst_id": 21,
+   "dur": 1.4,
+   "d_first": 3,
+   "d_last": 2,
+   "d_self": 16,
+   "verdict": "ANCHORED",
+   "window": [
+    74.4,
+    75.8
+   ],
+   "final_verdict": "ANCHORED",
+   "note": ""
+  },
+  {
+   "shot": "S1_22",
+   "kst_id": 22,
+   "dur": 1.37,
+   "d_first": 0,
+   "d_last": 1,
+   "d_self": 12,
+   "verdict": "ANCHORED",
+   "window": [
+    75.8,
+    77.17
+   ],
+   "final_verdict": "ANCHORED",
+   "note": ""
+  },
+  {
+   "shot": "S1_23",
+   "kst_id": 23,
+   "dur": 3.26,
+   "d_first": 0,
+   "d_last": 0,
+   "d_self": 18,
+   "verdict": "ANCHORED",
+   "window": [
+    77.17,
+    80.43
+   ],
+   "final_verdict": "ANCHORED",
+   "note": ""
+  },
+  {
+   "shot": "S1_24",
+   "kst_id": 24,
+   "dur": 1.0,
+   "d_first": 0,
+   "d_last": 4,
+   "d_self": 28,
+   "verdict": "ANCHORED",
+   "window": [
+    80.43,
+    81.43
+   ],
+   "final_verdict": "ANCHORED",
+   "note": ""
+  },
+  {
+   "shot": "S1_25",
+   "kst_id": 25,
+   "dur": 1.5,
+   "d_first": 0,
+   "d_last": 2,
+   "d_self": 29,
+   "verdict": "ANCHORED",
+   "window": [
+    81.43,
+    82.93
+   ],
+   "final_verdict": "ANCHORED",
+   "note": ""
+  },
+  {
+   "shot": "S1_26",
+   "kst_id": 26,
+   "dur": 1.0,
+   "d_first": 1,
+   "d_last": 3,
+   "d_self": 17,
+   "verdict": "ANCHORED",
+   "window": [
+    82.93,
+    83.93
+   ],
+   "final_verdict": "ANCHORED",
+   "note": ""
+  },
+  {
+   "shot": "S1_27",
+   "kst_id": 27,
+   "dur": 1.5,
+   "d_first": 0,
+   "d_last": 0,
+   "d_self": 26,
+   "verdict": "ANCHORED",
+   "window": [
+    83.93,
+    85.43
+   ],
+   "final_verdict": "ANCHORED",
+   "note": ""
+  },
+  {
+   "shot": "S1_28",
+   "kst_id": 28,
+   "dur": 6.04,
+   "d_first": 0,
+   "d_last": 1,
+   "d_self": 27,
+   "verdict": "ANCHORED",
+   "window": [
+    85.43,
+    91.47
+   ],
+   "final_verdict": "ANCHORED",
+   "note": ""
+  },
+  {
+   "shot": "S1_29",
+   "kst_id": 29,
+   "dur": 1.16,
+   "d_first": 0,
+   "d_last": 0,
+   "d_self": 23,
+   "verdict": "ANCHORED",
+   "window": [
+    91.47,
+    92.63
+   ],
+   "final_verdict": "ANCHORED",
+   "note": ""
+  },
+  {
+   "shot": "S1_30",
+   "kst_id": 30,
+   "dur": 2.4,
+   "d_first": 1,
+   "d_last": 0,
+   "d_self": 28,
+   "verdict": "ANCHORED",
+   "window": [
+    92.63,
+    95.03
+   ],
+   "final_verdict": "ANCHORED",
+   "note": ""
+  },
+  {
+   "shot": "S1_31",
+   "kst_id": 31,
+   "dur": 1.8,
+   "d_first": 0,
+   "d_last": 2,
+   "d_self": 10,
+   "verdict": "ANCHORED",
+   "window": [
+    95.03,
+    96.83
+   ],
+   "final_verdict": "ANCHORED",
+   "note": ""
+  },
+  {
+   "shot": "S1_32",
+   "kst_id": 32,
+   "dur": 2.27,
+   "d_first": 0,
+   "d_last": 0,
+   "d_self": 24,
+   "verdict": "ANCHORED",
+   "window": [
+    96.83,
+    99.1
+   ],
+   "final_verdict": "ANCHORED",
+   "note": ""
+  },
+  {
+   "shot": "S1_33",
+   "kst_id": 33,
+   "dur": 1.0,
+   "d_first": 0,
+   "d_last": 0,
+   "d_self": 3,
+   "verdict": "ANCHORED",
+   "window": [
+    99.1,
+    100.1
+   ],
+   "final_verdict": "ANCHORED",
+   "note": ""
+  },
+  {
+   "shot": "S1_34",
+   "kst_id": 34,
+   "dur": 0.77,
+   "d_first": 31,
+   "d_last": 25,
+   "d_self": 33,
+   "verdict": "RED",
+   "window": [
+    100.1,
+    100.87
+   ],
+   "final_verdict": "ANCHORED",
+   "note": "vision触表终审清白: 高动态运动模糊哈希极限: 甲虫疾跑镜, vision触表 C1≈C2 内容一致, 无错位无前镜污染"
+  },
+  {
+   "shot": "S1_35",
+   "kst_id": 35,
+   "dur": 0.53,
+   "d_first": 15,
+   "d_last": 26,
+   "d_self": 32,
+   "verdict": "RED",
+   "window": [
+    100.87,
+    101.4
+   ],
+   "final_verdict": "ANCHORED",
+   "note": "假红→密集重采样min<10(采样偏移; 原d=15,26 min=0,0)"
+  },
+  {
+   "shot": "S1_36",
+   "kst_id": 36,
+   "dur": 0.63,
+   "d_first": 14,
+   "d_last": 10,
+   "d_self": 22,
+   "verdict": "LIGHT",
+   "window": [
+    101.4,
+    102.03
+   ],
+   "final_verdict": "LIGHT",
+   "note": ""
+  },
+  {
+   "shot": "S1_37",
+   "kst_id": 37,
+   "dur": 5.6,
+   "d_first": 3,
+   "d_last": 3,
+   "d_self": 25,
+   "verdict": "ANCHORED",
+   "window": [
+    102.03,
+    107.63
+   ],
+   "final_verdict": "ANCHORED",
+   "note": ""
+  },
+  {
+   "shot": "S1_38",
+   "kst_id": 38,
+   "dur": 3.24,
+   "d_first": 1,
+   "d_last": 21,
+   "d_self": 33,
+   "verdict": "RED",
+   "window": [
+    107.63,
+    110.87
+   ],
+   "final_verdict": "ANCHORED",
+   "note": "假红→密集重采样min<10(采样偏移; 原d=1,21 min=1,0)"
+  },
+  {
+   "shot": "S1_39",
+   "kst_id": 39,
+   "dur": 1.6,
+   "d_first": 11,
+   "d_last": 29,
+   "d_self": 23,
+   "verdict": "RED",
+   "window": [
+    110.87,
+    112.47
+   ],
+   "final_verdict": "ANCHORED",
+   "note": "假红→密集重采样min<10(采样偏移; 原d=11,29 min=0,0)"
+  },
+  {
+   "shot": "S1_40",
+   "kst_id": 40,
+   "dur": 2.0,
+   "d_first": 25,
+   "d_last": 23,
+   "d_self": 32,
+   "verdict": "RED",
+   "window": [
+    112.47,
+    114.47
+   ],
+   "final_verdict": "ANCHORED",
+   "note": "假红→密集重采样min<10(采样偏移; 原d=25,23 min=0,1)"
+  },
+  {
+   "shot": "S1_41",
+   "kst_id": 41,
+   "dur": 1.53,
+   "d_first": 17,
+   "d_last": 0,
+   "d_self": 26,
+   "verdict": "RED",
+   "window": [
+    114.47,
+    116.0
+   ],
+   "final_verdict": "ANCHORED",
+   "note": "假红→密集重采样min<10(采样偏移; 原d=17,0 min=0,0)"
+  },
+  {
+   "shot": "S1_42",
+   "kst_id": 42,
+   "dur": 2.97,
+   "d_first": 0,
+   "d_last": 1,
+   "d_self": 1,
+   "verdict": "ANCHORED",
+   "window": [
+    116.0,
+    118.97
+   ],
+   "final_verdict": "ANCHORED",
+   "note": ""
+  },
+  {
+   "shot": "S1_43",
+   "kst_id": 43,
+   "dur": 1.83,
+   "d_first": 0,
+   "d_last": 2,
+   "d_self": 10,
+   "verdict": "ANCHORED",
+   "window": [
+    118.97,
+    120.8
+   ],
+   "final_verdict": "ANCHORED",
+   "note": ""
+  },
+  {
+   "shot": "S1_44",
+   "kst_id": 44,
+   "dur": 1.57,
+   "d_first": 16,
+   "d_last": 19,
+   "d_self": 34,
+   "verdict": "RED",
+   "window": [
+    120.8,
+    122.37
+   ],
+   "final_verdict": "ANCHORED",
+   "note": "假红→密集重采样min<10(采样偏移; 原d=16,19 min=8,0)"
+  },
+  {
+   "shot": "S1_45",
+   "kst_id": 45,
+   "dur": 1.33,
+   "d_first": 11,
+   "d_last": 3,
+   "d_self": 37,
+   "verdict": "LIGHT",
+   "window": [
+    122.37,
+    123.7
+   ],
+   "final_verdict": "LIGHT",
+   "note": ""
+  },
+  {
+   "shot": "S1_46",
+   "kst_id": 46,
+   "dur": 5.7,
+   "d_first": 16,
+   "d_last": 0,
+   "d_self": 32,
+   "verdict": "RED",
+   "window": [
+    123.7,
+    129.4
+   ],
+   "final_verdict": "LIGHT",
+   "note": "灰区待vision(低优先): min=10,0"
+  },
+  {
+   "shot": "S1_47",
+   "kst_id": 47,
+   "dur": 3.2,
+   "d_first": 7,
+   "d_last": 14,
+   "d_self": 26,
+   "verdict": "LIGHT",
+   "window": [
+    129.4,
+    132.6
+   ],
+   "final_verdict": "LIGHT",
+   "note": ""
+  },
+  {
+   "shot": "S1_48",
+   "kst_id": 48,
+   "dur": 1.27,
+   "d_first": 23,
+   "d_last": 19,
+   "d_self": 29,
+   "verdict": "RED",
+   "window": [
+    132.6,
+    133.87
+   ],
+   "final_verdict": "LIGHT",
+   "note": "灰区待vision(低优先): min=15,0"
+  },
+  {
+   "shot": "S1_49",
+   "kst_id": 49,
+   "dur": 2.4,
+   "d_first": 0,
+   "d_last": 0,
+   "d_self": 24,
+   "verdict": "ANCHORED",
+   "window": [
+    133.87,
+    136.27
+   ],
+   "final_verdict": "ANCHORED",
+   "note": ""
+  },
+  {
+   "shot": "S1_50",
+   "kst_id": 50,
+   "dur": 1.4,
+   "d_first": 12,
+   "d_last": 18,
+   "d_self": 20,
+   "verdict": "RED",
+   "window": [
+    136.27,
+    137.67
+   ],
+   "final_verdict": "ANCHORED",
+   "note": "假红→密集重采样min<10(采样偏移; 原d=12,18 min=0,0)"
+  },
+  {
+   "shot": "S1_51",
+   "kst_id": 51,
+   "dur": 1.26,
+   "d_first": 0,
+   "d_last": 8,
+   "d_self": 23,
+   "verdict": "ANCHORED",
+   "window": [
+    137.67,
+    138.93
+   ],
+   "final_verdict": "ANCHORED",
+   "note": ""
+  },
+  {
+   "shot": "S1_52",
+   "kst_id": 52,
+   "dur": 1.27,
+   "d_first": 12,
+   "d_last": 27,
+   "d_self": 36,
+   "verdict": "RED",
+   "window": [
+    138.93,
+    140.2
+   ],
+   "final_verdict": "ANCHORED",
+   "note": "vision触表终审清白: 同上: 蜈蚣扑击起手镜, vision触表内容一致"
+  },
+  {
+   "shot": "S1_53",
+   "kst_id": 53,
+   "dur": 4.0,
+   "d_first": 22,
+   "d_last": 27,
+   "d_self": 33,
+   "verdict": "RED",
+   "window": [
+    140.2,
+    144.2
+   ],
+   "final_verdict": "ANCHORED",
+   "note": "假红→密集重采样min<10(采样偏移; 原d=22,27 min=0,0)"
+  },
+  {
+   "shot": "S1_54",
+   "kst_id": 54,
+   "dur": 3.43,
+   "d_first": 4,
+   "d_last": 1,
+   "d_self": 10,
+   "verdict": "ANCHORED",
+   "window": [
+    144.2,
+    147.63
+   ],
+   "final_verdict": "ANCHORED",
+   "note": ""
+  },
+  {
+   "shot": "S1_55",
+   "kst_id": 55,
+   "dur": 2.27,
+   "d_first": 19,
+   "d_last": 0,
+   "d_self": 30,
+   "verdict": "RED",
+   "window": [
+    147.63,
+    149.9
+   ],
+   "final_verdict": "ANCHORED",
+   "note": "vision触表终审清白: 同上: 螳螂亮刀备战镜, vision触表内容一致"
+  },
+  {
+   "shot": "S1_56",
+   "kst_id": 56,
+   "dur": 3.57,
+   "d_first": 2,
+   "d_last": 0,
+   "d_self": 7,
+   "verdict": "ANCHORED",
+   "window": [
+    149.9,
+    153.47
+   ],
+   "final_verdict": "ANCHORED",
+   "note": ""
+  },
+  {
+   "shot": "S1_57",
+   "kst_id": 57,
+   "dur": 4.26,
+   "d_first": 0,
+   "d_last": 0,
+   "d_self": 12,
+   "verdict": "ANCHORED",
+   "window": [
+    153.47,
+    157.73
+   ],
+   "final_verdict": "ANCHORED",
+   "note": ""
+  },
+  {
+   "shot": "S1_58",
+   "kst_id": 58,
+   "dur": 6.37,
+   "d_first": 7,
+   "d_last": 3,
+   "d_self": 37,
+   "verdict": "ANCHORED",
+   "window": [
+    157.73,
+    164.1
+   ],
+   "final_verdict": "ANCHORED",
+   "note": ""
+  },
+  {
+   "shot": "S1_59",
+   "kst_id": 59,
+   "dur": 2.73,
+   "d_first": 0,
+   "d_last": 0,
+   "d_self": 1,
+   "verdict": "ANCHORED",
+   "window": [
+    164.1,
+    166.83
+   ],
+   "final_verdict": "ANCHORED",
+   "note": ""
+  },
+  {
+   "shot": "S1_60",
+   "kst_id": 60,
+   "dur": 1.9,
+   "d_first": 5,
+   "d_last": 0,
+   "d_self": 36,
+   "verdict": "ANCHORED",
+   "window": [
+    166.83,
+    168.73
+   ],
+   "final_verdict": "ANCHORED",
+   "note": ""
+  },
+  {
+   "shot": "S1_61",
+   "kst_id": 61,
+   "dur": 1.57,
+   "d_first": 0,
+   "d_last": 0,
+   "d_self": 0,
+   "verdict": "ANCHORED",
+   "window": [
+    168.73,
+    170.3
+   ],
+   "final_verdict": "ANCHORED",
+   "note": ""
+  },
+  {
+   "shot": "S1_62",
+   "kst_id": 62,
+   "dur": 1.57,
+   "d_first": 1,
+   "d_last": 0,
+   "d_self": 12,
+   "verdict": "ANCHORED",
+   "window": [
+    170.3,
+    171.87
+   ],
+   "final_verdict": "ANCHORED",
+   "note": ""
+  },
+  {
+   "shot": "S1_63",
+   "kst_id": 63,
+   "dur": 1.73,
+   "d_first": 1,
+   "d_last": 11,
+   "d_self": 30,
+   "verdict": "LIGHT",
+   "window": [
+    171.87,
+    173.6
+   ],
+   "final_verdict": "LIGHT",
+   "note": ""
+  },
+  {
+   "shot": "S1_64",
+   "kst_id": 64,
+   "dur": 0.87,
+   "d_first": 18,
+   "d_last": 38,
+   "d_self": 31,
+   "verdict": "RED",
+   "window": [
+    173.6,
+    174.47
+   ],
+   "final_verdict": "LIGHT",
+   "note": "灰区待vision(低优先): min=14,0"
+  },
+  {
+   "shot": "S1_65",
+   "kst_id": 65,
+   "dur": 0.76,
+   "d_first": 0,
+   "d_last": 1,
+   "d_self": 29,
+   "verdict": "ANCHORED",
+   "window": [
+    174.47,
+    175.23
+   ],
+   "final_verdict": "ANCHORED",
+   "note": ""
+  },
+  {
+   "shot": "S1_66",
+   "kst_id": 66,
+   "dur": 6.94,
+   "d_first": 1,
+   "d_last": 0,
+   "d_self": 17,
+   "verdict": "ANCHORED",
+   "window": [
+    175.23,
+    182.17
+   ],
+   "final_verdict": "ANCHORED",
+   "note": ""
+  },
+  {
+   "shot": "S1_67",
+   "kst_id": 67,
+   "dur": 0.73,
+   "d_first": 1,
+   "d_last": 4,
+   "d_self": 21,
+   "verdict": "ANCHORED",
+   "window": [
+    182.17,
+    182.9
+   ],
+   "final_verdict": "ANCHORED",
+   "note": ""
+  },
+  {
+   "shot": "S1_68",
+   "kst_id": 68,
+   "dur": 2.7,
+   "d_first": 2,
+   "d_last": 24,
+   "d_self": 21,
+   "verdict": "RED",
+   "window": [
+    182.9,
+    185.6
+   ],
+   "final_verdict": "ANCHORED",
+   "note": "假红→密集重采样min<10(采样偏移; 原d=2,24 min=2,1)"
+  },
+  {
+   "shot": "S1_69",
+   "kst_id": 69,
+   "dur": 1.0,
+   "d_first": 19,
+   "d_last": 2,
+   "d_self": 26,
+   "verdict": "RED",
+   "window": [
+    185.6,
+    186.6
+   ],
+   "final_verdict": "ANCHORED",
+   "note": "假红→密集重采样min<10(采样偏移; 原d=19,2 min=0,0)"
+  },
+  {
+   "shot": "S1_70",
+   "kst_id": 70,
+   "dur": 19.73,
+   "d_first": 5,
+   "d_last": 1,
+   "d_self": 25,
+   "verdict": "ANCHORED",
+   "window": [
+    186.6,
+    206.33
+   ],
+   "final_verdict": "ANCHORED",
+   "note": ""
+  },
+  {
+   "shot": "S1_71",
+   "kst_id": 71,
+   "dur": 4.04,
+   "d_first": 0,
+   "d_last": 0,
+   "d_self": 13,
+   "verdict": "ANCHORED",
+   "window": [
+    206.33,
+    210.37
+   ],
+   "final_verdict": "ANCHORED",
+   "note": ""
+  },
+  {
+   "shot": "S1_72",
+   "kst_id": 72,
+   "dur": 3.26,
+   "d_first": 0,
+   "d_last": 1,
+   "d_self": 15,
+   "verdict": "ANCHORED",
+   "window": [
+    210.37,
+    213.63
+   ],
+   "final_verdict": "ANCHORED",
+   "note": ""
+  },
+  {
+   "shot": "S1_73",
+   "kst_id": 73,
+   "dur": 1.3,
+   "d_first": 0,
+   "d_last": 0,
+   "d_self": 2,
+   "verdict": "ANCHORED",
+   "window": [
+    213.63,
+    214.93
+   ],
+   "final_verdict": "ANCHORED",
+   "note": ""
+  },
+  {
+   "shot": "S1_74",
+   "kst_id": 74,
+   "dur": 3.37,
+   "d_first": 0,
+   "d_last": 0,
+   "d_self": 6,
+   "verdict": "ANCHORED",
+   "window": [
+    214.93,
+    218.3
+   ],
+   "final_verdict": "ANCHORED",
+   "note": ""
+  },
+  {
+   "shot": "S1_75",
+   "kst_id": 75,
+   "dur": 1.93,
+   "d_first": 6,
+   "d_last": 0,
+   "d_self": 9,
+   "verdict": "ANCHORED",
+   "window": [
+    218.3,
+    220.23
+   ],
+   "final_verdict": "ANCHORED",
+   "note": ""
+  },
+  {
+   "shot": "S1_76",
+   "kst_id": 76,
+   "dur": 4.57,
+   "d_first": 1,
+   "d_last": 0,
+   "d_self": 9,
+   "verdict": "ANCHORED",
+   "window": [
+    220.23,
+    224.8
+   ],
+   "final_verdict": "ANCHORED",
+   "note": ""
+  },
+  {
+   "shot": "S1_77",
+   "kst_id": 77,
+   "dur": 1.63,
+   "d_first": 1,
+   "d_last": 1,
+   "d_self": 2,
+   "verdict": "ANCHORED",
+   "window": [
+    224.8,
+    226.43
+   ],
+   "final_verdict": "ANCHORED",
+   "note": ""
+  },
+  {
+   "shot": "S1_78",
+   "kst_id": 78,
+   "dur": 6.87,
+   "d_first": 1,
+   "d_last": 2,
+   "d_self": 13,
+   "verdict": "ANCHORED",
+   "window": [
+    226.43,
+    233.3
+   ],
+   "final_verdict": "ANCHORED",
+   "note": ""
+  },
+  {
+   "shot": "S1_79",
+   "kst_id": 79,
+   "dur": 1.5,
+   "d_first": 0,
+   "d_last": 1,
+   "d_self": 2,
+   "verdict": "ANCHORED",
+   "window": [
+    233.3,
+    234.8
+   ],
+   "final_verdict": "ANCHORED",
+   "note": ""
+  },
+  {
+   "shot": "S1_80",
+   "kst_id": 80,
+   "dur": 1.93,
+   "d_first": 2,
+   "d_last": 0,
+   "d_self": 2,
+   "verdict": "ANCHORED",
+   "window": [
+    234.8,
+    236.73
+   ],
+   "final_verdict": "ANCHORED",
+   "note": ""
+  },
+  {
+   "shot": "S1_81",
+   "kst_id": 81,
+   "dur": 0.97,
+   "d_first": 0,
+   "d_last": 1,
+   "d_self": 4,
+   "verdict": "ANCHORED",
+   "window": [
+    236.73,
+    237.7
+   ],
+   "final_verdict": "ANCHORED",
+   "note": ""
+  },
+  {
+   "shot": "S1_82",
+   "kst_id": 82,
+   "dur": 5.97,
+   "d_first": 1,
+   "d_last": 4,
+   "d_self": 9,
+   "verdict": "ANCHORED",
+   "window": [
+    237.7,
+    243.67
+   ],
+   "final_verdict": "ANCHORED",
+   "note": ""
+  },
+  {
+   "shot": "S1_83",
+   "kst_id": 83,
+   "dur": 1.4,
+   "d_first": 0,
+   "d_last": 0,
+   "d_self": 29,
+   "verdict": "ANCHORED",
+   "window": [
+    243.67,
+    245.07
+   ],
+   "final_verdict": "ANCHORED",
+   "note": ""
+  },
+  {
+   "shot": "S1_84",
+   "kst_id": 84,
+   "dur": 4.56,
+   "d_first": 0,
+   "d_last": 1,
+   "d_self": 17,
+   "verdict": "ANCHORED",
+   "window": [
+    245.07,
+    249.63
+   ],
+   "final_verdict": "ANCHORED",
+   "note": ""
+  },
+  {
+   "shot": "S1_85",
+   "kst_id": 85,
+   "dur": 2.34,
+   "d_first": 0,
+   "d_last": 0,
+   "d_self": 2,
+   "verdict": "ANCHORED",
+   "window": [
+    249.63,
+    251.97
+   ],
+   "final_verdict": "ANCHORED",
+   "note": ""
+  },
+  {
+   "shot": "S1_86",
+   "kst_id": 86,
+   "dur": 4.03,
+   "d_first": 0,
+   "d_last": 1,
+   "d_self": 0,
+   "verdict": "ANCHORED",
+   "window": [
+    251.97,
+    256.0
+   ],
+   "final_verdict": "ANCHORED",
+   "note": ""
+  },
+  {
+   "shot": "S1_87",
+   "kst_id": 87,
+   "dur": 4.2,
+   "d_first": 0,
+   "d_last": 0,
+   "d_self": 5,
+   "verdict": "ANCHORED",
+   "window": [
+    256.0,
+    260.2
+   ],
+   "final_verdict": "ANCHORED",
+   "note": ""
+  },
+  {
+   "shot": "S1_88",
+   "kst_id": 88,
+   "dur": 13.0,
+   "d_first": 1,
+   "d_last": 0,
+   "d_self": 31,
+   "verdict": "ANCHORED",
+   "window": [
+    260.2,
+    273.2
+   ],
+   "final_verdict": "ANCHORED",
+   "note": ""
+  },
+  {
+   "shot": "S1_89",
+   "kst_id": 89,
+   "dur": 3.87,
+   "d_first": 0,
+   "d_last": 0,
+   "d_self": 16,
+   "verdict": "ANCHORED",
+   "window": [
+    273.2,
+    277.07
+   ],
+   "final_verdict": "ANCHORED",
+   "note": ""
+  },
+  {
+   "shot": "S1_90",
+   "kst_id": 90,
+   "dur": 4.2,
+   "d_first": 2,
+   "d_last": 2,
+   "d_self": 7,
+   "verdict": "ANCHORED",
+   "window": [
+    277.07,
+    281.27
+   ],
+   "final_verdict": "ANCHORED",
+   "note": ""
+  },
+  {
+   "shot": "S1_91",
+   "kst_id": 91,
+   "dur": 15.1,
+   "d_first": 1,
+   "d_last": 7,
+   "d_self": 31,
+   "verdict": "ANCHORED",
+   "window": [
+    281.27,
+    296.37
+   ],
+   "final_verdict": "ANCHORED",
+   "note": ""
+  },
+  {
+   "shot": "S1_92",
+   "kst_id": 92,
+   "dur": 9.8,
+   "d_first": 1,
+   "d_last": 2,
+   "d_self": 24,
+   "verdict": "ANCHORED",
+   "window": [
+    296.37,
+    306.17
+   ],
+   "final_verdict": "ANCHORED",
+   "note": ""
+  },
+  {
+   "shot": "S1_93",
+   "kst_id": 93,
+   "dur": 2.16,
+   "d_first": 3,
+   "d_last": 3,
+   "d_self": 0,
+   "verdict": "ANCHORED",
+   "window": [
+    306.17,
+    308.33
+   ],
+   "final_verdict": "ANCHORED",
+   "note": ""
+  }
+ ]
+}
