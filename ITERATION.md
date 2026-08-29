@@ -107,7 +107,7 @@ KST 产出的不是"一份金标"，而是**分级信任的资产**。`golden-se
   91b 躬身复现 PASS（d_last=11.3 临界同 92 族；原片窗口内本就未离开，渲染如实复现）。
   QC 纪律：vision 单点 FAIL 判读必须末端加密采样复核（92 翻案 + 91 原片对照双实证）。台账
   `gsrt/renderback/t4_tail_qc_verdicts.json`（判定+infra 救回记录）/ `t4_tail_results.json`
-- [ ] d) T4 出厂检验常态化：新 episode 金标打包前抽样 5-6 镜（≈5 镜 × 40min GPU）
+- [ ] d) T4 出厂检验常态化：新 episode 金标打包前抽样 5-6 镜（≈5 镜 × 40min GPU）——**常设流程自 2026-08-29 起生效**（非待办工单：下一次金标打包时即执行，判据 = 本仓 T4 三级 QC 协议）
 
 ### P1 — prompt 层规模化（循环二从抽样到全覆盖的路径）
 
@@ -119,8 +119,12 @@ KST 产出的不是"一份金标"，而是**分级信任的资产**。`golden-se
   confirmed_contact_sheet.jpg）；审计脚本 p1a_*.py ×3。
   附带实锤：frames.json 全帧 base64 带 16 字节垃圾前缀（ffmpeg 系容忍/PIL 系必炸），
   canonical 修复待拍板；尾段编号双轨（shot-list 93 镜 vs manifest_v8 局部编号）已记录。
-- [ ] **b) 逆向 prompt 生成器沉淀**：v6 分离式描述法（构图终点 + 运动主体分离描述）
-  回写 `prompts/` 反推生成器，让新一轮金标天生携带已验证的描述模式。
+- [x] **b) 逆向 prompt 生成器沉淀**（2026-08-29 完成）：v6 分离式描述法（构图终点 +
+  运动主体分离描述）回写反推生成器——落点 `spec/schemas/prompts.schema.json` 描述层
+  （action=分离式分隔符法 / subject=构图终点法(v4 推过头教训) / prompt_text=主体身份锚定纪律），
+  README 步骤 2 注释同步。纯描述层零代码改动，`spec/validate.py` 全绿实证无破坏
+  （minimal/v1.1/v1.2/v1.3/smoke failures=0）。后续 LLM 按 schema 产出 prompt_parts 时
+  天生携带已验证描述模式（de0ec44）。
 
 ### P2 — 机械层（冻结中，解冻需走循环一）
 
