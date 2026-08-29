@@ -1,0 +1,1082 @@
+[
+ {
+  "shot_id": "S1_01",
+  "emotion": "悲伤、宣泄",
+  "felt_intent": "悲伤释放——情感宣泄的高潮beat",
+  "camera_intent": {
+   "shot_size": "远景",
+   "movement": "缓慢拉远",
+   "axis": "左→右",
+   "endpoint": "镜头结束于远景，角色情绪落点为「悲伤、宣泄」"
+  },
+  "shot_type": "FS"
+ },
+ {
+  "shot_id": "S1_02",
+  "emotion": "喜悦、温暖",
+  "felt_intent": "喜悦传递——温暖情感的建立",
+  "camera_intent": {
+   "shot_size": "特写",
+   "movement": "缓慢推进",
+   "axis": "左→右",
+   "endpoint": "镜头结束于特写，角色情绪落点为「喜悦、温暖」"
+  },
+  "shot_type": "CU"
+ },
+ {
+  "shot_id": "S1_03",
+  "emotion": "喜悦、温暖",
+  "felt_intent": "喜悦传递——温暖情感的建立",
+  "camera_intent": {
+   "shot_size": "过肩",
+   "movement": "固定",
+   "axis": "左→右",
+   "endpoint": "镜头结束于过肩，角色情绪落点为「喜悦、温暖」"
+  },
+  "shot_type": "MCU"
+ },
+ {
+  "shot_id": "S1_04",
+  "emotion": "亲密、安心",
+  "felt_intent": "亲密建立——关系温度的视觉确认",
+  "camera_intent": {
+   "shot_size": "远景",
+   "movement": "固定",
+   "axis": "左→右",
+   "endpoint": "镜头结束于远景，角色情绪落点为「亲密、安心」"
+  },
+  "shot_type": "FS"
+ },
+ {
+  "shot_id": "S1_05",
+  "emotion": "疑惑、悬念",
+  "felt_intent": "喜悦传递——温暖情感的建立",
+  "camera_intent": {
+   "shot_size": "过肩",
+   "movement": "固定",
+   "axis": "左→右",
+   "endpoint": "镜头结束于过肩，角色情绪落点为「疑惑、悬念」"
+  },
+  "shot_type": "MCU"
+ },
+ {
+  "shot_id": "S1_06",
+  "emotion": "期待、希望",
+  "felt_intent": "注视建立——观看者与角色的情感连接",
+  "camera_intent": {
+   "shot_size": "近景",
+   "movement": "上仰",
+   "axis": "左→右",
+   "endpoint": "镜头结束于近景，角色情绪落点为「期待、希望」"
+  },
+  "shot_type": "MCU"
+ },
+ {
+  "shot_id": "S1_07",
+  "emotion": "平静、叙事推进",
+  "felt_intent": "注视建立——观看者与角色的情感连接",
+  "camera_intent": {
+   "shot_size": "远景",
+   "movement": "固定",
+   "axis": "左→右",
+   "endpoint": "镜头结束于远景，角色情绪落点为「平静、叙事推进」"
+  },
+  "shot_type": "FS"
+ },
+ {
+  "shot_id": "S1_08",
+  "emotion": "喜悦、温暖",
+  "felt_intent": "喜悦传递——温暖情感的建立",
+  "camera_intent": {
+   "shot_size": "近景",
+   "movement": "固定",
+   "axis": "左→右",
+   "endpoint": "镜头结束于近景，角色情绪落点为「喜悦、温暖」"
+  },
+  "shot_type": "MCU"
+ },
+ {
+  "shot_id": "S1_09",
+  "emotion": "亲密、安心",
+  "felt_intent": "亲密建立——关系温度的视觉确认",
+  "camera_intent": {
+   "shot_size": "远景",
+   "movement": "固定",
+   "axis": "左→右",
+   "endpoint": "镜头结束于远景，角色情绪落点为「亲密、安心」"
+  },
+  "shot_type": "FS"
+ },
+ {
+  "shot_id": "S1_10",
+  "emotion": "平静、叙事推进",
+  "felt_intent": "叙事推进——情节与情绪的自然过渡",
+  "camera_intent": {
+   "shot_size": "特写",
+   "movement": "固定",
+   "axis": "左→右",
+   "endpoint": "镜头结束于特写，角色情绪落点为「平静、叙事推进」"
+  },
+  "shot_type": "CU"
+ },
+ {
+  "shot_id": "S1_11",
+  "emotion": "平静、叙事推进",
+  "felt_intent": "叙事推进——情节与情绪的自然过渡",
+  "camera_intent": {
+   "shot_size": "过肩",
+   "movement": "固定",
+   "axis": "左→右",
+   "endpoint": "镜头结束于过肩，角色情绪落点为「平静、叙事推进」"
+  },
+  "shot_type": "MCU"
+ },
+ {
+  "shot_id": "S1_12",
+  "emotion": "平静、叙事推进",
+  "felt_intent": "注视建立——观看者与角色的情感连接",
+  "camera_intent": {
+   "shot_size": "远景",
+   "movement": "固定",
+   "axis": "左→右",
+   "endpoint": "镜头结束于远景，角色情绪落点为「平静、叙事推进」"
+  },
+  "shot_type": "FS"
+ },
+ {
+  "shot_id": "S1_13",
+  "emotion": "紧张、冲突",
+  "felt_intent": "冲突展现——动作高潮的能量释放",
+  "camera_intent": {
+   "shot_size": "特写",
+   "movement": "缓慢拉远",
+   "axis": "左→右",
+   "endpoint": "镜头结束于特写，角色情绪落点为「紧张、冲突」"
+  },
+  "shot_type": "CU"
+ },
+ {
+  "shot_id": "S1_14",
+  "emotion": "紧张、冲突",
+  "felt_intent": "冲突展现——动作高潮的能量释放",
+  "camera_intent": {
+   "shot_size": "特写",
+   "movement": "固定",
+   "axis": "左→右",
+   "endpoint": "镜头结束于特写，角色情绪落点为「紧张、冲突」"
+  },
+  "shot_type": "CU"
+ },
+ {
+  "shot_id": "S1_15",
+  "emotion": "平静、叙事推进",
+  "felt_intent": "震惊反转——叙事节奏的突变",
+  "camera_intent": {
+   "shot_size": "特写",
+   "movement": "固定",
+   "axis": "左→右",
+   "endpoint": "镜头结束于特写，角色情绪落点为「平静、叙事推进」"
+  },
+  "shot_type": "CU"
+ },
+ {
+  "shot_id": "S1_16",
+  "emotion": "平静、叙事推进",
+  "felt_intent": "叙事推进——情节与情绪的自然过渡",
+  "camera_intent": {
+   "shot_size": "特写",
+   "movement": "固定",
+   "axis": "左→右",
+   "endpoint": "镜头结束于特写，角色情绪落点为「平静、叙事推进」"
+  },
+  "shot_type": "CU"
+ },
+ {
+  "shot_id": "S1_17",
+  "emotion": "紧张、冲突",
+  "felt_intent": "冲突展现——动作高潮的能量释放",
+  "camera_intent": {
+   "shot_size": "远景",
+   "movement": "固定",
+   "axis": "左→右",
+   "endpoint": "镜头结束于远景，角色情绪落点为「紧张、冲突」"
+  },
+  "shot_type": "FS"
+ },
+ {
+  "shot_id": "S1_18",
+  "emotion": "震惊、反转",
+  "felt_intent": "震惊反转——叙事节奏的突变",
+  "camera_intent": {
+   "shot_size": "近景",
+   "movement": "固定",
+   "axis": "左→右",
+   "endpoint": "镜头结束于近景，角色情绪落点为「震惊、反转」"
+  },
+  "shot_type": "MCU"
+ },
+ {
+  "shot_id": "S1_19",
+  "emotion": "平静、叙事推进",
+  "felt_intent": "叙事推进——情节与情绪的自然过渡",
+  "camera_intent": {
+   "shot_size": "特写",
+   "movement": "固定",
+   "axis": "左→右",
+   "endpoint": "镜头结束于特写，角色情绪落点为「平静、叙事推进」"
+  },
+  "shot_type": "CU"
+ },
+ {
+  "shot_id": "S1_20",
+  "emotion": "平静、叙事推进",
+  "felt_intent": "叙事推进——情节与情绪的自然过渡",
+  "camera_intent": {
+   "shot_size": "特写",
+   "movement": "固定",
+   "axis": "左→右",
+   "endpoint": "镜头结束于特写，角色情绪落点为「平静、叙事推进」"
+  },
+  "shot_type": "CU"
+ },
+ {
+  "shot_id": "S1_21",
+  "emotion": "平静、叙事推进",
+  "felt_intent": "叙事推进——情节与情绪的自然过渡",
+  "camera_intent": {
+   "shot_size": "近景",
+   "movement": "固定",
+   "axis": "左→右",
+   "endpoint": "镜头结束于近景，角色情绪落点为「平静、叙事推进」"
+  },
+  "shot_type": "MCU"
+ },
+ {
+  "shot_id": "S1_22",
+  "emotion": "平静、叙事推进",
+  "felt_intent": "注视建立——观看者与角色的情感连接",
+  "camera_intent": {
+   "shot_size": "近景",
+   "movement": "固定",
+   "axis": "左→右",
+   "endpoint": "镜头结束于近景，角色情绪落点为「平静、叙事推进」"
+  },
+  "shot_type": "MCU"
+ },
+ {
+  "shot_id": "S1_23",
+  "emotion": "平静、叙事推进",
+  "felt_intent": "震惊反转——叙事节奏的突变",
+  "camera_intent": {
+   "shot_size": "中景",
+   "movement": "固定",
+   "axis": "左→右",
+   "endpoint": "镜头结束于中景，角色情绪落点为「平静、叙事推进」"
+  },
+  "shot_type": "MS"
+ },
+ {
+  "shot_id": "S1_24",
+  "emotion": "震惊、反转",
+  "felt_intent": "震惊反转——叙事节奏的突变",
+  "camera_intent": {
+   "shot_size": "中景",
+   "movement": "推移",
+   "axis": "左→右",
+   "endpoint": "镜头结束于中景，角色情绪落点为「震惊、反转」"
+  },
+  "shot_type": "MS"
+ },
+ {
+  "shot_id": "S1_25",
+  "emotion": "平静、叙事推进",
+  "felt_intent": "空间建立——场景与角色的入场交代",
+  "camera_intent": {
+   "shot_size": "中景",
+   "movement": "固定",
+   "axis": "左→右",
+   "endpoint": "镜头结束于中景，角色情绪落点为「平静、叙事推进」"
+  },
+  "shot_type": "MS"
+ },
+ {
+  "shot_id": "S1_26",
+  "emotion": "平静、叙事推进",
+  "felt_intent": "叙事推进——情节与情绪的自然过渡",
+  "camera_intent": {
+   "shot_size": "远景",
+   "movement": "固定",
+   "axis": "左→右",
+   "endpoint": "镜头结束于远景，角色情绪落点为「平静、叙事推进」"
+  },
+  "shot_type": "FS"
+ },
+ {
+  "shot_id": "S1_27",
+  "emotion": "平静、叙事推进",
+  "felt_intent": "空间建立——场景与角色的入场交代",
+  "camera_intent": {
+   "shot_size": "近景",
+   "movement": "左摇",
+   "axis": "左→右",
+   "endpoint": "镜头结束于近景，角色情绪落点为「平静、叙事推进」"
+  },
+  "shot_type": "MCU"
+ },
+ {
+  "shot_id": "S1_28",
+  "emotion": "平静、叙事推进",
+  "felt_intent": "空间建立——场景与角色的入场交代",
+  "camera_intent": {
+   "shot_size": "中景",
+   "movement": "固定",
+   "axis": "左→右",
+   "endpoint": "镜头结束于中景，角色情绪落点为「平静、叙事推进」"
+  },
+  "shot_type": "MS"
+ },
+ {
+  "shot_id": "S1_29",
+  "emotion": "平静、叙事推进",
+  "felt_intent": "空间建立——场景与角色的入场交代",
+  "camera_intent": {
+   "shot_size": "远景",
+   "movement": "缓慢拉远",
+   "axis": "左→右",
+   "endpoint": "镜头结束于远景，角色情绪落点为「平静、叙事推进」"
+  },
+  "shot_type": "FS"
+ },
+ {
+  "shot_id": "S1_30",
+  "emotion": "平静、叙事推进",
+  "felt_intent": "注视建立——观看者与角色的情感连接",
+  "camera_intent": {
+   "shot_size": "远景",
+   "movement": "缓慢拉远",
+   "axis": "左→右",
+   "endpoint": "镜头结束于远景，角色情绪落点为「平静、叙事推进」"
+  },
+  "shot_type": "FS"
+ },
+ {
+  "shot_id": "S1_31",
+  "emotion": "平静、叙事推进",
+  "felt_intent": "叙事推进——情节与情绪的自然过渡",
+  "camera_intent": {
+   "shot_size": "特写",
+   "movement": "固定",
+   "axis": "左→右",
+   "endpoint": "镜头结束于特写，角色情绪落点为「平静、叙事推进」"
+  },
+  "shot_type": "CU"
+ },
+ {
+  "shot_id": "S1_32",
+  "emotion": "平静、叙事推进",
+  "felt_intent": "叙事推进——情节与情绪的自然过渡",
+  "camera_intent": {
+   "shot_size": "过肩",
+   "movement": "右摇",
+   "axis": "左→右",
+   "endpoint": "镜头结束于过肩，角色情绪落点为「平静、叙事推进」"
+  },
+  "shot_type": "MCU"
+ },
+ {
+  "shot_id": "S1_33",
+  "emotion": "平静、叙事推进",
+  "felt_intent": "叙事推进——情节与情绪的自然过渡",
+  "camera_intent": {
+   "shot_size": "特写",
+   "movement": "固定",
+   "axis": "左→右",
+   "endpoint": "镜头结束于特写，角色情绪落点为「平静、叙事推进」"
+  },
+  "shot_type": "CU"
+ },
+ {
+  "shot_id": "S1_34",
+  "emotion": "平静、叙事推进",
+  "felt_intent": "叙事推进——情节与情绪的自然过渡",
+  "camera_intent": {
+   "shot_size": "中景",
+   "movement": "跟随",
+   "axis": "左→右",
+   "endpoint": "镜头结束于中景，角色情绪落点为「平静、叙事推进」"
+  },
+  "shot_type": "MS"
+ },
+ {
+  "shot_id": "S1_35",
+  "emotion": "平静、叙事推进",
+  "felt_intent": "冲突展现——动作高潮的能量释放",
+  "camera_intent": {
+   "shot_size": "中景",
+   "movement": "快速推进",
+   "axis": "左→右",
+   "endpoint": "镜头结束于中景，角色情绪落点为「平静、叙事推进」"
+  },
+  "shot_type": "MS"
+ },
+ {
+  "shot_id": "S1_36",
+  "emotion": "平静、叙事推进",
+  "felt_intent": "叙事推进——情节与情绪的自然过渡",
+  "camera_intent": {
+   "shot_size": "过肩",
+   "movement": "跟随",
+   "axis": "左→右",
+   "endpoint": "镜头结束于过肩，角色情绪落点为「平静、叙事推进」"
+  },
+  "shot_type": "MCU"
+ },
+ {
+  "shot_id": "S1_37",
+  "emotion": "喜悦、温暖",
+  "felt_intent": "喜悦传递——温暖情感的建立",
+  "camera_intent": {
+   "shot_size": "中景",
+   "movement": "固定",
+   "axis": "左→右",
+   "endpoint": "镜头结束于中景，角色情绪落点为「喜悦、温暖」"
+  },
+  "shot_type": "MS"
+ },
+ {
+  "shot_id": "S1_38",
+  "emotion": "平静、叙事推进",
+  "felt_intent": "叙事推进——情节与情绪的自然过渡",
+  "camera_intent": {
+   "shot_size": "特写",
+   "movement": "固定",
+   "axis": "左→右",
+   "endpoint": "镜头结束于特写，角色情绪落点为「平静、叙事推进」"
+  },
+  "shot_type": "CU"
+ },
+ {
+  "shot_id": "S1_39",
+  "emotion": "平静、叙事推进",
+  "felt_intent": "空间建立——场景与角色的入场交代",
+  "camera_intent": {
+   "shot_size": "中景",
+   "movement": "固定",
+   "axis": "左→右",
+   "endpoint": "镜头结束于中景，角色情绪落点为「平静、叙事推进」"
+  },
+  "shot_type": "MS"
+ },
+ {
+  "shot_id": "S1_40",
+  "emotion": "平静、叙事推进",
+  "felt_intent": "叙事推进——情节与情绪的自然过渡",
+  "camera_intent": {
+   "shot_size": "中景",
+   "movement": "跟随",
+   "axis": "左→右",
+   "endpoint": "镜头结束于中景，角色情绪落点为「平静、叙事推进」"
+  },
+  "shot_type": "MS"
+ },
+ {
+  "shot_id": "S1_41",
+  "emotion": "紧张、冲突",
+  "felt_intent": "冲突展现——动作高潮的能量释放",
+  "camera_intent": {
+   "shot_size": "中景",
+   "movement": "缓慢拉远",
+   "axis": "左→右",
+   "endpoint": "镜头结束于中景，角色情绪落点为「紧张、冲突」"
+  },
+  "shot_type": "MS"
+ },
+ {
+  "shot_id": "S1_42",
+  "emotion": "喜悦、温暖",
+  "felt_intent": "喜悦传递——温暖情感的建立",
+  "camera_intent": {
+   "shot_size": "中景",
+   "movement": "固定",
+   "axis": "左→右",
+   "endpoint": "镜头结束于中景，角色情绪落点为「喜悦、温暖」"
+  },
+  "shot_type": "MS"
+ },
+ {
+  "shot_id": "S1_43",
+  "emotion": "平静、叙事推进",
+  "felt_intent": "空间建立——场景与角色的入场交代",
+  "camera_intent": {
+   "shot_size": "远景",
+   "movement": "固定",
+   "axis": "左→右",
+   "endpoint": "镜头结束于远景，角色情绪落点为「平静、叙事推进」"
+  },
+  "shot_type": "FS"
+ },
+ {
+  "shot_id": "S1_44",
+  "emotion": "紧张、冲突",
+  "felt_intent": "冲突展现——动作高潮的能量释放",
+  "camera_intent": {
+   "shot_size": "近景",
+   "movement": "跟随",
+   "axis": "左→右",
+   "endpoint": "镜头结束于近景，角色情绪落点为「紧张、冲突」"
+  },
+  "shot_type": "MCU"
+ },
+ {
+  "shot_id": "S1_45",
+  "emotion": "平静、叙事推进",
+  "felt_intent": "冲突展现——动作高潮的能量释放",
+  "camera_intent": {
+   "shot_size": "特写",
+   "movement": "快速推进",
+   "axis": "左→右",
+   "endpoint": "镜头结束于特写，角色情绪落点为「平静、叙事推进」"
+  },
+  "shot_type": "CU"
+ },
+ {
+  "shot_id": "S1_46",
+  "emotion": "平静、叙事推进",
+  "felt_intent": "叙事推进——情节与情绪的自然过渡",
+  "camera_intent": {
+   "shot_size": "特写",
+   "movement": "缓慢推进",
+   "axis": "左→右",
+   "endpoint": "镜头结束于特写，角色情绪落点为「平静、叙事推进」"
+  },
+  "shot_type": "CU"
+ },
+ {
+  "shot_id": "S1_47",
+  "emotion": "平静、叙事推进",
+  "felt_intent": "空间建立——场景与角色的入场交代",
+  "camera_intent": {
+   "shot_size": "中景",
+   "movement": "跟随",
+   "axis": "左→右",
+   "endpoint": "镜头结束于中景，角色情绪落点为「平静、叙事推进」"
+  },
+  "shot_type": "MS"
+ },
+ {
+  "shot_id": "S1_48",
+  "emotion": "平静、叙事推进",
+  "felt_intent": "空间建立——场景与角色的入场交代",
+  "camera_intent": {
+   "shot_size": "中景",
+   "movement": "跟随",
+   "axis": "左→右",
+   "endpoint": "镜头结束于中景，角色情绪落点为「平静、叙事推进」"
+  },
+  "shot_type": "MS"
+ },
+ {
+  "shot_id": "S1_49",
+  "emotion": "疑惑、悬念",
+  "felt_intent": "叙事推进——情节与情绪的自然过渡",
+  "camera_intent": {
+   "shot_size": "中景",
+   "movement": "固定",
+   "axis": "左→右",
+   "endpoint": "镜头结束于中景，角色情绪落点为「疑惑、悬念」"
+  },
+  "shot_type": "MS"
+ },
+ {
+  "shot_id": "S1_50",
+  "emotion": "平静、叙事推进",
+  "felt_intent": "注视建立——观看者与角色的情感连接",
+  "camera_intent": {
+   "shot_size": "特写",
+   "movement": "固定",
+   "axis": "左→右",
+   "endpoint": "镜头结束于特写，角色情绪落点为「平静、叙事推进」"
+  },
+  "shot_type": "CU"
+ },
+ {
+  "shot_id": "S1_51",
+  "emotion": "喜悦、温暖",
+  "felt_intent": "喜悦传递——温暖情感的建立",
+  "camera_intent": {
+   "shot_size": "近景",
+   "movement": "固定",
+   "axis": "左→右",
+   "endpoint": "镜头结束于近景，角色情绪落点为「喜悦、温暖」"
+  },
+  "shot_type": "MCU"
+ },
+ {
+  "shot_id": "S1_52",
+  "emotion": "平静、叙事推进",
+  "felt_intent": "叙事推进——情节与情绪的自然过渡",
+  "camera_intent": {
+   "shot_size": "远景",
+   "movement": "跟随",
+   "axis": "左→右",
+   "endpoint": "镜头结束于远景，角色情绪落点为「平静、叙事推进」"
+  },
+  "shot_type": "FS"
+ },
+ {
+  "shot_id": "S1_53",
+  "emotion": "平静、叙事推进",
+  "felt_intent": "叙事推进——情节与情绪的自然过渡",
+  "camera_intent": {
+   "shot_size": "远景",
+   "movement": "跟随",
+   "axis": "左→右",
+   "endpoint": "镜头结束于远景，角色情绪落点为「平静、叙事推进」"
+  },
+  "shot_type": "FS"
+ },
+ {
+  "shot_id": "S1_54",
+  "emotion": "平静、叙事推进",
+  "felt_intent": "叙事推进——情节与情绪的自然过渡",
+  "camera_intent": {
+   "shot_size": "远景",
+   "movement": "固定",
+   "axis": "左→右",
+   "endpoint": "镜头结束于远景，角色情绪落点为「平静、叙事推进」"
+  },
+  "shot_type": "FS"
+ },
+ {
+  "shot_id": "S1_55",
+  "emotion": "平静、叙事推进",
+  "felt_intent": "叙事推进——情节与情绪的自然过渡",
+  "camera_intent": {
+   "shot_size": "中景",
+   "movement": "固定",
+   "axis": "左→右",
+   "endpoint": "镜头结束于中景，角色情绪落点为「平静、叙事推进」"
+  },
+  "shot_type": "MS"
+ },
+ {
+  "shot_id": "S1_56",
+  "emotion": "平静、叙事推进",
+  "felt_intent": "空间建立——场景与角色的入场交代",
+  "camera_intent": {
+   "shot_size": "远景",
+   "movement": "固定",
+   "axis": "左→右",
+   "endpoint": "镜头结束于远景，角色情绪落点为「平静、叙事推进」"
+  },
+  "shot_type": "FS"
+ },
+ {
+  "shot_id": "S1_57",
+  "emotion": "平静、叙事推进",
+  "felt_intent": "叙事推进——情节与情绪的自然过渡",
+  "camera_intent": {
+   "shot_size": "远景",
+   "movement": "固定",
+   "axis": "左→右",
+   "endpoint": "镜头结束于远景，角色情绪落点为「平静、叙事推进」"
+  },
+  "shot_type": "FS"
+ },
+ {
+  "shot_id": "S1_58",
+  "emotion": "喜悦、温暖",
+  "felt_intent": "喜悦传递——温暖情感的建立",
+  "camera_intent": {
+   "shot_size": "近景",
+   "movement": "跟随",
+   "axis": "左→右",
+   "endpoint": "镜头结束于近景，角色情绪落点为「喜悦、温暖」"
+  },
+  "shot_type": "MCU"
+ },
+ {
+  "shot_id": "S1_59",
+  "emotion": "平静、叙事推进",
+  "felt_intent": "注视建立——观看者与角色的情感连接",
+  "camera_intent": {
+   "shot_size": "远景",
+   "movement": "固定",
+   "axis": "左→右",
+   "endpoint": "镜头结束于远景，角色情绪落点为「平静、叙事推进」"
+  },
+  "shot_type": "FS"
+ },
+ {
+  "shot_id": "S1_60",
+  "emotion": "平静、叙事推进",
+  "felt_intent": "冲突展现——动作高潮的能量释放",
+  "camera_intent": {
+   "shot_size": "远景",
+   "movement": "缓慢拉远",
+   "axis": "左→右",
+   "endpoint": "镜头结束于远景，角色情绪落点为「平静、叙事推进」"
+  },
+  "shot_type": "FS"
+ },
+ {
+  "shot_id": "S1_61",
+  "emotion": "平静、叙事推进",
+  "felt_intent": "叙事推进——情节与情绪的自然过渡",
+  "camera_intent": {
+   "shot_size": "特写",
+   "movement": "固定",
+   "axis": "左→右",
+   "endpoint": "镜头结束于特写，角色情绪落点为「平静、叙事推进」"
+  },
+  "shot_type": "CU"
+ },
+ {
+  "shot_id": "S1_62",
+  "emotion": "平静、叙事推进",
+  "felt_intent": "空间建立——场景与角色的入场交代",
+  "camera_intent": {
+   "shot_size": "远景",
+   "movement": "固定",
+   "axis": "左→右",
+   "endpoint": "镜头结束于远景，角色情绪落点为「平静、叙事推进」"
+  },
+  "shot_type": "FS"
+ },
+ {
+  "shot_id": "S1_63",
+  "emotion": "平静、叙事推进",
+  "felt_intent": "叙事推进——情节与情绪的自然过渡",
+  "camera_intent": {
+   "shot_size": "特写",
+   "movement": "快速推进",
+   "axis": "左→右",
+   "endpoint": "镜头结束于特写，角色情绪落点为「平静、叙事推进」"
+  },
+  "shot_type": "CU"
+ },
+ {
+  "shot_id": "S1_64",
+  "emotion": "平静、叙事推进",
+  "felt_intent": "叙事推进——情节与情绪的自然过渡",
+  "camera_intent": {
+   "shot_size": "特写",
+   "movement": "快速推进",
+   "axis": "左→右",
+   "endpoint": "镜头结束于特写，角色情绪落点为「平静、叙事推进」"
+  },
+  "shot_type": "CU"
+ },
+ {
+  "shot_id": "S1_65",
+  "emotion": "平静、叙事推进",
+  "felt_intent": "叙事推进——情节与情绪的自然过渡",
+  "camera_intent": {
+   "shot_size": "特写",
+   "movement": "快速拉远",
+   "axis": "左→右",
+   "endpoint": "镜头结束于特写，角色情绪落点为「平静、叙事推进」"
+  },
+  "shot_type": "CU"
+ },
+ {
+  "shot_id": "S1_66",
+  "emotion": "平静、叙事推进",
+  "felt_intent": "叙事推进——情节与情绪的自然过渡",
+  "camera_intent": {
+   "shot_size": "特写",
+   "movement": "跟随",
+   "axis": "左→右",
+   "endpoint": "镜头结束于特写，角色情绪落点为「平静、叙事推进」"
+  },
+  "shot_type": "CU"
+ },
+ {
+  "shot_id": "S1_67",
+  "emotion": "喜悦、温暖",
+  "felt_intent": "喜悦传递——温暖情感的建立",
+  "camera_intent": {
+   "shot_size": "过肩",
+   "movement": "固定",
+   "axis": "左→右",
+   "endpoint": "镜头结束于过肩，角色情绪落点为「喜悦、温暖」"
+  },
+  "shot_type": "MCU"
+ },
+ {
+  "shot_id": "S1_68",
+  "emotion": "平静、叙事推进",
+  "felt_intent": "叙事推进——情节与情绪的自然过渡",
+  "camera_intent": {
+   "shot_size": "特写",
+   "movement": "固定",
+   "axis": "左→右",
+   "endpoint": "镜头结束于特写，角色情绪落点为「平静、叙事推进」"
+  },
+  "shot_type": "CU"
+ },
+ {
+  "shot_id": "S1_69",
+  "emotion": "紧张、冲突",
+  "felt_intent": "震惊反转——叙事节奏的突变",
+  "camera_intent": {
+   "shot_size": "近景",
+   "movement": "固定",
+   "axis": "左→右",
+   "endpoint": "镜头结束于近景，角色情绪落点为「紧张、冲突」"
+  },
+  "shot_type": "MCU"
+ },
+ {
+  "shot_id": "S1_70",
+  "emotion": "平静、叙事推进",
+  "felt_intent": "叙事推进——情节与情绪的自然过渡",
+  "camera_intent": {
+   "shot_size": "特写",
+   "movement": "固定",
+   "axis": "左→右",
+   "endpoint": "镜头结束于特写，角色情绪落点为「平静、叙事推进」"
+  },
+  "shot_type": "CU"
+ },
+ {
+  "shot_id": "S1_71",
+  "emotion": "平静、叙事推进",
+  "felt_intent": "注视建立——观看者与角色的情感连接",
+  "camera_intent": {
+   "shot_size": "过肩",
+   "movement": "固定",
+   "axis": "左→右",
+   "endpoint": "镜头结束于过肩，角色情绪落点为「平静、叙事推进」"
+  },
+  "shot_type": "MCU"
+ },
+ {
+  "shot_id": "S1_72",
+  "emotion": "喜悦、温暖",
+  "felt_intent": "喜悦传递——温暖情感的建立",
+  "camera_intent": {
+   "shot_size": "过肩",
+   "movement": "固定",
+   "axis": "左→右",
+   "endpoint": "镜头结束于过肩，角色情绪落点为「喜悦、温暖」"
+  },
+  "shot_type": "MCU"
+ },
+ {
+  "shot_id": "S1_73",
+  "emotion": "平静、叙事推进",
+  "felt_intent": "叙事推进——情节与情绪的自然过渡",
+  "camera_intent": {
+   "shot_size": "特写",
+   "movement": "固定",
+   "axis": "左→右",
+   "endpoint": "镜头结束于特写，角色情绪落点为「平静、叙事推进」"
+  },
+  "shot_type": "CU"
+ },
+ {
+  "shot_id": "S1_74",
+  "emotion": "喜悦、温暖",
+  "felt_intent": "喜悦传递——温暖情感的建立",
+  "camera_intent": {
+   "shot_size": "远景",
+   "movement": "固定",
+   "axis": "左→右",
+   "endpoint": "镜头结束于远景，角色情绪落点为「喜悦、温暖」"
+  },
+  "shot_type": "FS"
+ },
+ {
+  "shot_id": "S1_75",
+  "emotion": "喜悦、温暖",
+  "felt_intent": "喜悦传递——温暖情感的建立",
+  "camera_intent": {
+   "shot_size": "近景",
+   "movement": "固定",
+   "axis": "左→右",
+   "endpoint": "镜头结束于近景，角色情绪落点为「喜悦、温暖」"
+  },
+  "shot_type": "MCU"
+ },
+ {
+  "shot_id": "S1_76",
+  "emotion": "喜悦、温暖",
+  "felt_intent": "喜悦传递——温暖情感的建立",
+  "camera_intent": {
+   "shot_size": "过肩",
+   "movement": "固定",
+   "axis": "左→右",
+   "endpoint": "镜头结束于过肩，角色情绪落点为「喜悦、温暖」"
+  },
+  "shot_type": "MCU"
+ },
+ {
+  "shot_id": "S1_77",
+  "emotion": "平静、叙事推进",
+  "felt_intent": "叙事推进——情节与情绪的自然过渡",
+  "camera_intent": {
+   "shot_size": "特写",
+   "movement": "固定",
+   "axis": "左→右",
+   "endpoint": "镜头结束于特写，角色情绪落点为「平静、叙事推进」"
+  },
+  "shot_type": "CU"
+ },
+ {
+  "shot_id": "S1_78",
+  "emotion": "喜悦、温暖",
+  "felt_intent": "喜悦传递——温暖情感的建立",
+  "camera_intent": {
+   "shot_size": "中景",
+   "movement": "固定",
+   "axis": "左→右",
+   "endpoint": "镜头结束于中景，角色情绪落点为「喜悦、温暖」"
+  },
+  "shot_type": "MS"
+ },
+ {
+  "shot_id": "S1_79",
+  "emotion": "平静、叙事推进",
+  "felt_intent": "叙事推进——情节与情绪的自然过渡",
+  "camera_intent": {
+   "shot_size": "特写",
+   "movement": "固定",
+   "axis": "左→右",
+   "endpoint": "镜头结束于特写，角色情绪落点为「平静、叙事推进」"
+  },
+  "shot_type": "CU"
+ },
+ {
+  "shot_id": "S1_80",
+  "emotion": "喜悦、温暖",
+  "felt_intent": "喜悦传递——温暖情感的建立",
+  "camera_intent": {
+   "shot_size": "过肩",
+   "movement": "固定",
+   "axis": "左→右",
+   "endpoint": "镜头结束于过肩，角色情绪落点为「喜悦、温暖」"
+  },
+  "shot_type": "MCU"
+ },
+ {
+  "shot_id": "S1_81",
+  "emotion": "平静、叙事推进",
+  "felt_intent": "注视建立——观看者与角色的情感连接",
+  "camera_intent": {
+   "shot_size": "特写",
+   "movement": "固定",
+   "axis": "左→右",
+   "endpoint": "镜头结束于特写，角色情绪落点为「平静、叙事推进」"
+  },
+  "shot_type": "CU"
+ },
+ {
+  "shot_id": "S1_82",
+  "emotion": "平静、叙事推进",
+  "felt_intent": "叙事推进——情节与情绪的自然过渡",
+  "camera_intent": {
+   "shot_size": "过肩",
+   "movement": "固定",
+   "axis": "左→右",
+   "endpoint": "镜头结束于过肩，角色情绪落点为「平静、叙事推进」"
+  },
+  "shot_type": "MCU"
+ },
+ {
+  "shot_id": "S1_83",
+  "emotion": "平静、叙事推进",
+  "felt_intent": "叙事推进——情节与情绪的自然过渡",
+  "camera_intent": {
+   "shot_size": "特写",
+   "movement": "缓慢推进",
+   "axis": "左→右",
+   "endpoint": "镜头结束于特写，角色情绪落点为「平静、叙事推进」"
+  },
+  "shot_type": "CU"
+ },
+ {
+  "shot_id": "S1_84",
+  "emotion": "平静、叙事推进",
+  "felt_intent": "叙事推进——情节与情绪的自然过渡",
+  "camera_intent": {
+   "shot_size": "过肩",
+   "movement": "固定",
+   "axis": "左→右",
+   "endpoint": "镜头结束于过肩，角色情绪落点为「平静、叙事推进」"
+  },
+  "shot_type": "MCU"
+ },
+ {
+  "shot_id": "S1_85",
+  "emotion": "平静、叙事推进",
+  "felt_intent": "叙事推进——情节与情绪的自然过渡",
+  "camera_intent": {
+   "shot_size": "特写",
+   "movement": "缓慢推进",
+   "axis": "左→右",
+   "endpoint": "镜头结束于特写，角色情绪落点为「平静、叙事推进」"
+  },
+  "shot_type": "CU"
+ },
+ {
+  "shot_id": "S1_86",
+  "emotion": "悲伤、宣泄",
+  "felt_intent": "悲伤释放——情感宣泄的高潮beat",
+  "camera_intent": {
+   "shot_size": "中景",
+   "movement": "固定",
+   "axis": "左→右",
+   "endpoint": "镜头结束于中景，角色情绪落点为「悲伤、宣泄」"
+  },
+  "shot_type": "MS"
+ },
+ {
+  "shot_id": "S1_87",
+  "emotion": "平静、叙事推进",
+  "felt_intent": "注视建立——观看者与角色的情感连接",
+  "camera_intent": {
+   "shot_size": "特写",
+   "movement": "固定",
+   "axis": "左→右",
+   "endpoint": "镜头结束于特写，角色情绪落点为「平静、叙事推进」"
+  },
+  "shot_type": "CU"
+ },
+ {
+  "shot_id": "S1_88",
+  "emotion": "平静、叙事推进",
+  "felt_intent": "注视建立——观看者与角色的情感连接",
+  "camera_intent": {
+   "shot_size": "过肩",
+   "movement": "固定",
+   "axis": "左→右",
+   "endpoint": "镜头结束于过肩，角色情绪落点为「平静、叙事推进」"
+  },
+  "shot_type": "MCU"
+ },
+ {
+  "shot_id": "S1_89",
+  "emotion": "平静、叙事推进",
+  "felt_intent": "注视建立——观看者与角色的情感连接",
+  "camera_intent": {
+   "shot_size": "中景",
+   "movement": "固定",
+   "axis": "左→右",
+   "endpoint": "镜头结束于中景，角色情绪落点为「平静、叙事推进」"
+  },
+  "shot_type": "MS"
+ },
+ {
+  "shot_id": "S1_90",
+  "emotion": "平静、叙事推进",
+  "felt_intent": "注视建立——观看者与角色的情感连接",
+  "camera_intent": {
+   "shot_size": "远景",
+   "movement": "固定",
+   "axis": "左→右",
+   "endpoint": "镜头结束于远景，角色情绪落点为「平静、叙事推进」"
+  },
+  "shot_type": "FS"
+ }
+]

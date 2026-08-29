@@ -1,0 +1,1982 @@
+[
+ {
+  "shot_id": "S1_01",
+  "engine_index": 1,
+  "video_time": [
+   0.0,
+   6.73
+  ],
+  "engine_semantic": {
+   "shot_scale": "中景",
+   "camera_primitive": "static",
+   "camera_speed": "medium",
+   "subjects": "毛毛虫小孩、独角仙武士",
+   "action_detail": "毛毛虫小孩捂脸，独角仙武士手持番茄蹲下注视它。",
+   "geometry_disagreement": true,
+   "geometry_primitive": "dolly_or_zoom_out",
+   "frames_analyzed": 162
+  },
+  "kst_subject": "毛毛虫小孩（橙黄色绒毛、圆滚身材、头顶绿色小草辫）低头抿嘴一脸委屈；尾帧独角仙武士（红棕油亮甲壳、巨大双叉弯角、前臂缠米色绑带）弯腰递上一颗红浆果",
+  "kst_action": "镜头拉出，独角仙武士俯身把红浆果递到毛毛虫小孩面前，小孩抬头望向它",
+  "dialogue_evidence": "",
+  "dialogue_note": ""
+ },
+ {
+  "shot_id": "S1_02",
+  "engine_index": 2,
+  "video_time": [
+   6.73,
+   9.63
+  ],
+  "engine_semantic": {
+   "shot_scale": "特写",
+   "camera_primitive": "static",
+   "camera_speed": "slow",
+   "subjects": "毛毛虫小孩(橙黄绒毛圆胖、头顶绿草辫)",
+   "action_detail": "毛毛虫小孩睁大眼睛看着面前两个番茄，嘴巴微张。",
+   "geometry_disagreement": false,
+   "geometry_primitive": "static",
+   "frames_analyzed": 70
+  },
+  "kst_subject": "毛毛虫小孩面部大特写，圆眼绒毛细密，前景两侧各一颗红浆果",
+  "kst_action": "表情由惊讶睁大眼张着嘴，变为开心咧嘴大笑",
+  "dialogue_evidence": "[阿毛] 爸爸好厉害，他有一百种方法逗我开心，每次都能成功。我喜欢他，我的爸爸。",
+  "dialogue_note": "本镜头对白由阿毛说出，情绪：旁白/内心独白，充满崇拜。TTS需匹配情绪"
+ },
+ {
+  "shot_id": "S1_03",
+  "engine_index": 3,
+  "video_time": [
+   9.63,
+   12.1
+  ],
+  "engine_semantic": {
+   "shot_scale": "特写",
+   "camera_primitive": "static",
+   "camera_speed": "medium",
+   "subjects": "毛毛虫小孩",
+   "action_detail": "毛毛虫小孩睁大眼睛，张开嘴巴看着前方两个番茄。",
+   "geometry_disagreement": false,
+   "geometry_primitive": "static",
+   "frames_analyzed": 59
+  },
+  "kst_subject": "独角仙武士近景，过毛毛虫小孩肩拍摄（左侧橙色绒毛虚化），武士面前摆着两颗红浆果",
+  "kst_action": "由低头温和微笑，变为咧嘴露齿开怀大笑",
+  "dialogue_evidence": "[阿毛] 爸爸，我不喜欢你总跟别人打架，你打伤了怎么办？",
+  "dialogue_note": "本镜头对白由阿毛说出，情绪：从崇拜转为担忧。TTS需匹配情绪"
+ },
+ {
+  "shot_id": "S1_04",
+  "engine_index": 4,
+  "video_time": [
+   12.1,
+   21.4
+  ],
+  "engine_semantic": {
+   "shot_scale": "中景",
+   "camera_primitive": "static",
+   "camera_speed": "medium",
+   "subjects": "毛毛虫小孩、独角仙武士",
+   "action_detail": "毛毛虫小孩和独角仙武士坐在树根上，各自拿着番茄。",
+   "geometry_disagreement": false,
+   "geometry_primitive": "static",
+   "frames_analyzed": 223
+  },
+  "kst_subject": "巨树盘根上，独角仙武士与毛毛虫小孩并肩而坐，周围散落数颗红浆果",
+  "kst_action": "基本静止，仅两者捧着红浆果相视互动，毛毛虫小孩侧身靠近爸爸",
+  "dialogue_evidence": "[花青] 好小子，知道心疼爸爸了。不过他们想找爸爸切磋，爸爸是不能拒绝的。",
+  "dialogue_note": "本镜头对白由花青说出，情绪：温和但坚定——这是江湖规矩。TTS需匹配情绪"
+ },
+ {
+  "shot_id": "S1_05",
+  "engine_index": 5,
+  "video_time": [
+   21.4,
+   28.63
+  ],
+  "engine_semantic": {
+   "shot_scale": "中景",
+   "camera_primitive": "static",
+   "camera_speed": "medium",
+   "subjects": "毛毛虫小孩、独角仙武士",
+   "action_detail": "毛毛虫小孩和独角仙武士坐在树根上吃西红柿",
+   "geometry_disagreement": false,
+   "geometry_primitive": "static",
+   "frames_analyzed": 174
+  },
+  "kst_subject": "独角仙武士中景，缠着米色绑带的前臂捧着一颗咬过的红浆果，毛毛虫小孩背影在左侧前景",
+  "kst_action": "先是微笑递果，随即睁大双眼愣住，露出疑惑神情",
+  "dialogue_evidence": "[花青] 爸爸，这是江湖的规矩。",
+  "dialogue_note": "本镜头对白由花青说出，情绪：补充说明，语气略沉。TTS需匹配情绪"
+ },
+ {
+  "shot_id": "S1_06",
+  "engine_index": 6,
+  "video_time": [
+   28.63,
+   32.13
+  ],
+  "engine_semantic": {
+   "shot_scale": "中景",
+   "camera_primitive": "static",
+   "camera_speed": "medium",
+   "subjects": "毛毛虫小孩、独角仙武士",
+   "action_detail": "毛毛虫小孩手持番茄，独角仙武士抱着番茄微笑",
+   "geometry_disagreement": false,
+   "geometry_primitive": "static",
+   "frames_analyzed": 84
+  },
+  "kst_subject": "毛毛虫小孩近景，怀抱咬过的红浆果仰头，独角仙武士半身在右侧入画",
+  "kst_action": "仰头望着武士，由微怔转为咧嘴期待地笑，开口说话",
+  "dialogue_evidence": "[阿毛] 爸爸，你不是说等我长大了就教我功夫吗？",
+  "dialogue_note": "本镜头对白由阿毛说出，情绪：急切期待。TTS需匹配情绪"
+ },
+ {
+  "shot_id": "S1_07",
+  "engine_index": 7,
+  "video_time": [
+   32.13,
+   35.83
+  ],
+  "engine_semantic": {
+   "shot_scale": "特写",
+   "camera_primitive": "static",
+   "camera_speed": "slow",
+   "subjects": "毛毛虫小孩、独角仙武士",
+   "action_detail": "毛毛虫小孩手持番茄，独角仙武士抱着被咬过的番茄笑得开心。",
+   "geometry_disagreement": false,
+   "geometry_primitive": "static",
+   "frames_analyzed": 89
+  },
+  "kst_subject": "苔藓树根上的双人全景，独角仙武士与毛毛虫小孩对坐，周围散落红浆果",
+  "kst_action": "毛毛虫小孩放下果子蹦跳着凑到武士身侧，武士抱果侧头看它",
+  "dialogue_evidence": "[花青] 可你还没长大呢。你得快点啊，不然等你老了谁来保护你啊？",
+  "dialogue_note": "本镜头对白由花青说出，情绪：半玩笑半认真。TTS需匹配情绪"
+ },
+ {
+  "shot_id": "S1_08",
+  "engine_index": 8,
+  "video_time": [
+   35.83,
+   40.97
+  ],
+  "engine_semantic": {
+   "shot_scale": "特写",
+   "camera_primitive": "static",
+   "camera_speed": "medium",
+   "subjects": "毛毛虫小孩",
+   "action_detail": "毛毛虫小孩双手捧着被咬了一口的番茄，眼睛睁得很大看着前方。",
+   "geometry_disagreement": false,
+   "geometry_primitive": "static",
+   "frames_analyzed": 123
+  },
+  "kst_subject": "独角仙武士近景居中，毛毛虫小孩绒球般背影从右侧入画",
+  "kst_action": "武士先神色认真地说话，随即咧嘴大笑，张开缠绑带的双臂把毛毛虫一把搂进怀里",
+  "dialogue_evidence": "[花青] 不会那么快老的，爸爸还要陪你玩呢。",
+  "dialogue_note": "本镜头对白由花青说出，情绪：温柔安抚。TTS需匹配情绪"
+ },
+ {
+  "shot_id": "S1_09",
+  "engine_index": 9,
+  "video_time": [
+   40.97,
+   43.03
+  ],
+  "engine_semantic": {
+   "shot_scale": "中景",
+   "camera_primitive": "static",
+   "camera_speed": "medium",
+   "subjects": "毛毛虫小孩、独角仙武士",
+   "action_detail": "毛毛虫小孩拿着番茄，向右跳开；独角仙武士抱着番茄坐着。",
+   "geometry_disagreement": false,
+   "geometry_primitive": "static",
+   "frames_analyzed": 49
+  },
+  "kst_subject": "远景：独角仙武士搂着毛毛虫小孩相依在左侧树根上；尾帧螳螂武士（绿色纤细身材、小腿缠白绑带）双腿从上方落入右侧前景",
+  "kst_action": "螳螂武士从空中跃下落入画面前景，父子俩抬头望向它",
+  "dialogue_evidence": "",
+  "dialogue_note": ""
+ },
+ {
+  "shot_id": "S1_10",
+  "engine_index": 10,
+  "video_time": [
+   43.03,
+   46.87
+  ],
+  "engine_semantic": {
+   "shot_scale": "中景",
+   "camera_primitive": "static",
+   "camera_speed": "medium",
+   "subjects": "毛毛虫小孩、独角仙武士",
+   "action_detail": "毛毛虫小孩跑向独角仙武士，递上番茄。",
+   "geometry_disagreement": true,
+   "geometry_primitive": "pan_right",
+   "frames_analyzed": 92
+  },
+  "kst_subject": "毛毛虫小孩皱眉怒视的面部特写，身后独角仙武士虚化；尾帧武士温和的笑脸清晰、毛毛虫转虚",
+  "kst_action": "毛毛虫小孩皱眉生气，焦点由它缓缓转移到后方武士，武士温和微笑",
+  "dialogue_evidence": "",
+  "dialogue_note": ""
+ },
+ {
+  "shot_id": "S1_11",
+  "engine_index": 11,
+  "video_time": [
+   46.87,
+   49.43
+  ],
+  "engine_semantic": {
+   "shot_scale": "特写",
+   "camera_primitive": "static",
+   "camera_speed": "medium",
+   "subjects": "独角仙武士",
+   "action_detail": "独角仙武士咧嘴笑，双手向前伸展。",
+   "geometry_disagreement": true,
+   "geometry_primitive": "dolly_or_zoom_out",
+   "frames_analyzed": 61
+  },
+  "kst_subject": "螳螂武士（绿色纤细身材、白色大复眼、橙色触角、小腿缠白绑带）立于远处苔藓树桩上，左侧前景独角仙武士红棕弯角虚化",
+  "kst_action": "螳螂武士静立对峙，缓缓抬起大刀状前臂摆出迎战架势",
+  "dialogue_evidence": "[黑头前辈] 又有人来打架了。",
+  "dialogue_note": "本镜头对白由黑头前辈说出，情绪：平淡——这在江湖中是常事。TTS需匹配情绪"
+ },
+ {
+  "shot_id": "S1_12",
+  "engine_index": 12,
+  "video_time": [
+   49.43,
+   51.1
+  ],
+  "engine_semantic": {
+   "shot_scale": "中景",
+   "camera_primitive": "static",
+   "camera_speed": "medium",
+   "subjects": "独角仙武士、毛毛虫小孩",
+   "action_detail": "独角仙武士拥抱毛毛虫小孩，两人面带笑容互动",
+   "geometry_disagreement": true,
+   "geometry_primitive": "tilt_up",
+   "frames_analyzed": 40
+  },
+  "kst_subject": "全景：独角仙武士与毛毛虫小孩守在三颗红浆果旁的树根上，右侧前景螳螂武士缠绑带的腿部入画",
+  "kst_action": "独角仙武士从蹲姿起身站直正对螳螂，毛毛虫小孩躲到它身后探头张望",
+  "dialogue_evidence": "",
+  "dialogue_note": ""
+ },
+ {
+  "shot_id": "S1_13",
+  "engine_index": 13,
+  "video_time": [
+   51.1,
+   53.37
+  ],
+  "engine_semantic": {
+   "shot_scale": "中景",
+   "camera_primitive": "static",
+   "camera_speed": "medium",
+   "subjects": "毛毛虫小孩、独角仙武士、螳螂武士",
+   "action_detail": "毛毛虫小孩被独角仙武士抱着，螳螂武士俯视他们。",
+   "geometry_disagreement": false,
+   "geometry_primitive": "static",
+   "frames_analyzed": 54
+  },
+  "kst_subject": "螳螂武士,绿色纤细身材、白色大复眼、橙色触角,前臂缠米色绑带;由眯眼困倦转为瞪圆双眼、摆出武术起手式,一臂伸向画面前方",
+  "kst_action": "由半眯眼无精打采,瞬间睁大双眼、抬起缠绑带的双臂摆出功夫架势,气势突变",
+  "dialogue_evidence": "[黑头前辈] （对花青）正式教你吃饭。没有饭——阿毛，你不吃了吗？",
+  "dialogue_note": "本镜头对白由黑头前辈说出，情绪：把吃饭和练功并置——江湖人的日常。TTS需匹配情绪"
+ },
+ {
+  "shot_id": "S1_14",
+  "engine_index": 14,
+  "video_time": [
+   53.37,
+   55.13
+  ],
+  "engine_semantic": {
+   "shot_scale": "特写",
+   "camera_primitive": "zoom_in",
+   "camera_speed": "fast",
+   "subjects": "毛毛虫小孩",
+   "action_detail": "毛毛虫小孩张嘴露出惊讶表情，眼睛瞪得很大。",
+   "geometry_disagreement": true,
+   "geometry_primitive": "static",
+   "frames_analyzed": 42
+  },
+  "kst_subject": "独角仙武士,红棕色油亮甲壳、头顶巨大双叉弯角,圆眼带笑、憨厚友善,面部居中",
+  "kst_action": "保持憨厚微笑,随后张嘴开口说话,神态热情,像在打招呼寒暄",
+  "dialogue_evidence": "",
+  "dialogue_note": ""
+ },
+ {
+  "shot_id": "S1_15",
+  "engine_index": 15,
+  "video_time": [
+   55.13,
+   58.1
+  ],
+  "engine_semantic": {
+   "shot_scale": "特写",
+   "camera_primitive": "static",
+   "camera_speed": "medium",
+   "subjects": "独角仙武士、毛毛虫小孩",
+   "action_detail": "独角仙武士面带微笑，毛毛虫小孩张嘴说话",
+   "geometry_disagreement": false,
+   "geometry_primitive": "static",
+   "frames_analyzed": 71
+  },
+  "kst_subject": "螳螂武士,绿色纤细身材、白色大复眼,表情由圆眼正视变为眯眼撇嘴、张嘴说话,一脸不屑",
+  "kst_action": "先睁大复眼严肃直视,随后眯起眼睛、张嘴讥诮,表情由正视转为轻蔑",
+  "dialogue_evidence": "[阿毛] 我吃饱了。",
+  "dialogue_note": "本镜头对白由阿毛说出，情绪：乖巧。TTS需匹配情绪"
+ },
+ {
+  "shot_id": "S1_16",
+  "engine_index": 16,
+  "video_time": [
+   58.1,
+   60.13
+  ],
+  "engine_semantic": {
+   "shot_scale": "特写",
+   "camera_primitive": "dolly_out",
+   "camera_speed": "medium",
+   "subjects": "独角仙武士、螳螂武士",
+   "action_detail": "独角仙武士靠近，螳螂武士站在树干上张望。",
+   "geometry_disagreement": true,
+   "geometry_primitive": "static",
+   "frames_analyzed": 49
+  },
+  "kst_subject": "独角仙武士嘴部大特写,宽厚的嘴与獠牙咬住一颗鲜红饱满的番茄;尾帧番茄被咬出缺口,红色汁水挂在嘴角",
+  "kst_action": "张嘴大口咬下番茄,番茄破裂、汁水从嘴角淌下,满足咀嚼",
+  "dialogue_evidence": "",
+  "dialogue_note": ""
+ },
+ {
+  "shot_id": "S1_17",
+  "engine_index": 17,
+  "video_time": [
+   60.13,
+   67.33
+  ],
+  "engine_semantic": {
+   "shot_scale": "特写",
+   "camera_primitive": "zoom_in",
+   "camera_speed": "medium",
+   "subjects": "螳螂武士",
+   "action_detail": "螳螂武士张开嘴，露出牙齿，表情惊讶。",
+   "geometry_disagreement": true,
+   "geometry_primitive": "static",
+   "frames_analyzed": 173
+  },
+  "kst_subject": "全景三人——左侧螳螂武士站立举着小番茄,中间独角仙武士端坐苔藓树根上捧番茄大吃,右侧毛毛虫小孩橙黄绒毛、头顶绿草辫,转身朝独角仙挥起小拳头",
+  "kst_action": "独角仙专注啃番茄,毛毛虫小孩转身凑近,朝他挥拳比划示威,螳螂在旁冷眼旁观",
+  "dialogue_evidence": "[黑头前辈] 吃饱了？那块吃完，别浪费。",
+  "dialogue_note": "本镜头对白由黑头前辈说出，情绪：慈祥的长辈口吻。TTS需匹配情绪"
+ },
+ {
+  "shot_id": "S1_18",
+  "engine_index": 18,
+  "video_time": [
+   67.33,
+   70.8
+  ],
+  "engine_semantic": {
+   "shot_scale": "特写",
+   "camera_primitive": "static",
+   "camera_speed": "medium",
+   "subjects": "独角仙武士、螳螂武士",
+   "action_detail": "独角仙武士张嘴说话，螳螂武士睁大眼睛看着前方。",
+   "geometry_disagreement": false,
+   "geometry_primitive": "static",
+   "frames_analyzed": 83
+  },
+  "kst_subject": "螳螂武士,绿色纤细身材、白色大复眼,表情由圆眼无辜微怔变为眯眼狐疑,头部微侧",
+  "kst_action": "先是睁大复眼愣住、略显无辜,随后眯起眼睛露出怀疑神色",
+  "dialogue_evidence": "",
+  "dialogue_note": ""
+ },
+ {
+  "shot_id": "S1_19",
+  "engine_index": 19,
+  "video_time": [
+   70.8,
+   72.87
+  ],
+  "engine_semantic": {
+   "shot_scale": "特写",
+   "camera_primitive": "static",
+   "camera_speed": "medium",
+   "subjects": "螳螂武士",
+   "action_detail": "螳螂武士睁着大眼睛，嘴巴微张露出惊讶表情。",
+   "geometry_disagreement": false,
+   "geometry_primitive": "static",
+   "frames_analyzed": 50
+  },
+  "kst_subject": "独角仙武士面部大特写,小眼睛斜瞟、大板牙咬住鲜红番茄;尾帧闭眼鼓腮咀嚼,嘴角挂着一滴番茄汁,一脸得意满足",
+  "kst_action": "斜眼瞟视着咬下番茄,随后闭眼鼓腮大嚼,汁水挂唇,神情得意",
+  "dialogue_evidence": "[阿毛] 我吃饱了，该练功了。",
+  "dialogue_note": "本镜头对白由阿毛说出，情绪：急切想学武——与结尾呼应。TTS需匹配情绪"
+ },
+ {
+  "shot_id": "S1_20",
+  "engine_index": 20,
+  "video_time": [
+   72.87,
+   74.4
+  ],
+  "engine_semantic": {
+   "shot_scale": "特写",
+   "camera_primitive": "static",
+   "camera_speed": "slow",
+   "subjects": "巧克力色卡通人物",
+   "action_detail": "卡通人物张嘴咬番茄，汁液滴落",
+   "geometry_disagreement": true,
+   "geometry_primitive": "handheld_candidate",
+   "frames_analyzed": 37
+  },
+  "kst_subject": "独角仙武士嘴部大特写,宽嘴厚唇含着一颗带绿蒂的红番茄;尾帧番茄被咬去一角,红色汁水从嘴角垂落",
+  "kst_action": "含着番茄张口咬下,咬出缺口,汁水自嘴角缓缓垂落,半眯眼回味",
+  "dialogue_evidence": "",
+  "dialogue_note": ""
+ },
+ {
+  "shot_id": "S1_21",
+  "engine_index": 21,
+  "video_time": [
+   74.4,
+   75.8
+  ],
+  "engine_semantic": {
+   "shot_scale": "特写",
+   "camera_primitive": null,
+   "camera_speed": null,
+   "subjects": "毛毛虫小孩、独角仙武士、螳螂武士",
+   "action_detail": "独角仙武士咬番茄，汁液滴落；螳螂武士递番茄给它；毛毛虫小孩在一旁观看。",
+   "geometry_disagreement": true,
+   "geometry_primitive": "static",
+   "frames_analyzed": 34
+  },
+  "kst_subject": "独角仙武士近景,红棕油亮甲壳、双叉弯角,双手捧着红番茄瞪圆眼凑到嘴边;尾帧闭眼咀嚼,番茄被咬出缺口,汁水沾唇",
+  "kst_action": "双手捧番茄瞪眼送入口中大咬,随后闭眼满足咀嚼,满脸汁水",
+  "dialogue_evidence": "[黑头前辈] 前辈，够了没有？阿毛，到树上去。",
+  "dialogue_note": "本镜头对白由黑头前辈说出，情绪：让阿毛去安全位置——危险信号。TTS需匹配情绪"
+ },
+ {
+  "shot_id": "S1_22",
+  "engine_index": 22,
+  "video_time": [
+   75.8,
+   77.17
+  ],
+  "engine_semantic": {
+   "shot_scale": "中景",
+   "camera_primitive": "static",
+   "camera_speed": "slow",
+   "subjects": "毛毛虫小孩、独角仙武士、螳螂武士",
+   "action_detail": "螳螂武士递番茄，独角仙武士吃番茄，毛毛虫小孩旁观",
+   "geometry_disagreement": false,
+   "geometry_primitive": "static",
+   "frames_analyzed": 33
+  },
+  "kst_subject": "螳螂武士中近景,眯眼侧视一脸嫌弃;尾帧低头俯视画面右下方递来的一颗红番茄,复眼半垂",
+  "kst_action": "先眯眼嫌弃地侧视,随后低头看向递到面前的红番茄,神情鄙夷",
+  "dialogue_evidence": "",
+  "dialogue_note": ""
+ },
+ {
+  "shot_id": "S1_23",
+  "engine_index": 23,
+  "video_time": [
+   77.17,
+   80.43
+  ],
+  "engine_semantic": {
+   "shot_scale": "中景",
+   "camera_primitive": "static",
+   "camera_speed": "slow",
+   "subjects": "螳螂武士、独角仙武士、毛毛虫小孩",
+   "action_detail": "螳螂武士递番茄给独角仙，独角仙吃着番茄，毛毛虫小孩旁观。",
+   "geometry_disagreement": false,
+   "geometry_primitive": "static",
+   "frames_analyzed": 78
+  },
+  "kst_subject": "中景双人——左侧远景处螳螂武士手举小番茄观望,右侧前景独角仙武士捧着咬过的番茄,由埋头转为抬头皱眉怒视",
+  "kst_action": "独角仙埋头捧番茄,猛地抬头皱眉怒视前方,番茄上留着咬痕;螳螂在后方举果静观",
+  "dialogue_evidence": "[黑头前辈] 行走江湖，可不能只盯着眼前。这江湖蛊被咬到会湿变的（会中毒变异），你可小心点。你要是变成江湖蛊，我可就打不过你了。",
+  "dialogue_note": "本镜头对白由黑头前辈说出，情绪：用幽默讲道理——'别只看眼前'是核心江湖智慧。TTS需匹配情绪"
+ },
+ {
+  "shot_id": "S1_24",
+  "engine_index": 24,
+  "video_time": [
+   80.43,
+   81.43
+  ],
+  "engine_semantic": {
+   "shot_scale": "中景",
+   "camera_primitive": "static",
+   "camera_speed": "slow",
+   "subjects": "螳螂武士、独角仙武士、毛毛虫小孩",
+   "action_detail": "螳螂武士手持番茄，独角仙武士抱着番茄，毛毛虫小孩看着他们。",
+   "geometry_disagreement": false,
+   "geometry_primitive": "static",
+   "frames_analyzed": 24
+  },
+  "kst_subject": "独角仙武士捧番茄皱眉怒视,张口呵斥;画面右侧毛毛虫小孩橙黄绒毛、头顶绿草辫,仰脸无辜相望;左后方螳螂武士站立观望",
+  "kst_action": "独角仙捧着番茄怒容呵斥,转头朝向毛毛虫小孩;毛毛虫仰脸愣住,一脸无辜",
+  "dialogue_evidence": "",
+  "dialogue_note": ""
+ },
+ {
+  "shot_id": "S1_25",
+  "engine_index": 25,
+  "video_time": [
+   81.43,
+   82.93
+  ],
+  "engine_semantic": {
+   "shot_scale": "中景",
+   "camera_primitive": "static",
+   "camera_speed": "slow",
+   "subjects": "螳螂武士、独角仙武士、毛毛虫小孩",
+   "action_detail": "螳螂武士手持番茄，独角仙武士抱着番茄，毛毛虫小孩在一旁观看。",
+   "geometry_disagreement": false,
+   "geometry_primitive": "static",
+   "frames_analyzed": 36
+  },
+  "kst_subject": "独角仙武士红棕甲壳、前臂缠米色绑带，捧着一颗红果立于左侧，皱眉怒视；毛毛虫小孩橙黄绒毛、头顶绿草辫，立于右侧仰头看他",
+  "kst_action": "独角仙武士呵斥毛毛虫小孩，小孩随后转身背对镜头，朝远处大树走去，武士捧果目送",
+  "dialogue_evidence": "[花青] 前辈，你还有心情说笑。",
+  "dialogue_note": "本镜头对白由花青说出，情绪：战斗前的轻松对话。TTS需匹配情绪"
+ },
+ {
+  "shot_id": "S1_26",
+  "engine_index": 26,
+  "video_time": [
+   82.93,
+   83.93
+  ],
+  "engine_semantic": {
+   "shot_scale": "中景",
+   "camera_primitive": "static",
+   "camera_speed": "medium",
+   "subjects": "螳螂武士、独角仙武士、毛毛虫小孩",
+   "action_detail": "螳螂武士手持番茄，独角仙武士抱着番茄，毛毛虫小孩张嘴惊讶。",
+   "geometry_disagreement": false,
+   "geometry_primitive": "static",
+   "frames_analyzed": 24
+  },
+  "kst_subject": "前景左侧独角仙武士捧红果虚焦；远处毛毛虫小孩背对镜头，攀在覆满青苔的巨树干上",
+  "kst_action": "毛毛虫小孩沿巨树干一点点向上攀爬，越爬越高",
+  "dialogue_evidence": "",
+  "dialogue_note": ""
+ },
+ {
+  "shot_id": "S1_27",
+  "engine_index": 27,
+  "video_time": [
+   83.93,
+   85.43
+  ],
+  "engine_semantic": {
+   "shot_scale": "特写",
+   "camera_primitive": "static",
+   "camera_speed": "slow",
+   "subjects": "螳螂武士",
+   "action_detail": "螳螂武士表情严肃，眼神专注地盯着前方。",
+   "geometry_disagreement": false,
+   "geometry_primitive": "static",
+   "frames_analyzed": 36
+  },
+  "kst_subject": "独角仙武士双手捧红果居于画面右侧，神情警觉侧目；螳螂武士绿身白复眼、前臂缠绑带，从左侧腾空跃入画面",
+  "kst_action": "螳螂武士从侧方飞身跃入，独角仙武士抱果侧头戒备，气氛骤紧",
+  "dialogue_evidence": "",
+  "dialogue_note": ""
+ },
+ {
+  "shot_id": "S1_28",
+  "engine_index": 28,
+  "video_time": [
+   85.43,
+   91.47
+  ],
+  "engine_semantic": {
+   "shot_scale": "特写",
+   "camera_primitive": "static",
+   "camera_speed": "medium",
+   "subjects": "螳螂武士",
+   "action_detail": "螳螂武士表情严肃，眼神专注地盯着前方。",
+   "geometry_disagreement": false,
+   "geometry_primitive": "static",
+   "frames_analyzed": 145
+  },
+  "kst_subject": "独角仙武士捧红果居于右侧前景，体型壮实；螳螂武士立于左侧苔藓岩石上，大复眼睁圆",
+  "kst_action": "独角仙武士起身向右走开，螳螂武士留在原地，瞪大眼睛目送他",
+  "dialogue_evidence": "",
+  "dialogue_note": ""
+ },
+ {
+  "shot_id": "S1_29",
+  "engine_index": 29,
+  "video_time": [
+   91.47,
+   92.63
+  ],
+  "engine_semantic": {
+   "shot_scale": "特写",
+   "camera_primitive": "static",
+   "camera_speed": "medium",
+   "subjects": null,
+   "action_detail": "巧克力人像张嘴咬番茄，汁液滴落",
+   "geometry_disagreement": true,
+   "geometry_primitive": "handheld_candidate",
+   "frames_analyzed": 28
+  },
+  "kst_subject": "独角仙武士与螳螂武士并肩站在横倒的苔藓巨木上，背对镜头；红果留在倒木一端",
+  "kst_action": "两者走上倒木并肩而立，一同望向雾气弥漫的森林深处",
+  "dialogue_evidence": "[花青] 看来你对江湖蛊还不够了解，为什么它只追移动的目标？",
+  "dialogue_note": "本镜头对白由花青说出，情绪：战斗中分析敌人——智慧而非蛮力。TTS需匹配情绪"
+ },
+ {
+  "shot_id": "S1_30",
+  "engine_index": 30,
+  "video_time": [
+   92.63,
+   95.03
+  ],
+  "engine_semantic": {
+   "shot_scale": "特写",
+   "camera_primitive": "static",
+   "camera_speed": "slow",
+   "subjects": "独角仙武士",
+   "action_detail": "独角仙武士低头看着手中的番茄，嘴角流下红色汁液。",
+   "geometry_disagreement": false,
+   "geometry_primitive": "static",
+   "frames_analyzed": 58
+  },
+  "kst_subject": "独角仙武士与螳螂武士小小的身影并肩立于倒木之上，面朝密林，红果留在身旁",
+  "kst_action": "基本静止，仅静静伫立远望森林深处",
+  "dialogue_evidence": "",
+  "dialogue_note": ""
+ },
+ {
+  "shot_id": "S1_31",
+  "engine_index": 31,
+  "video_time": [
+   95.03,
+   96.83
+  ],
+  "engine_semantic": {
+   "shot_scale": "特写",
+   "camera_primitive": "static",
+   "camera_speed": "slow",
+   "subjects": "螳螂武士",
+   "action_detail": "螳螂武士表情严肃，眼神专注地盯着前方。",
+   "geometry_disagreement": false,
+   "geometry_primitive": "static",
+   "frames_analyzed": 43
+  },
+  "kst_subject": "螳螂武士面部大特写，绿色面容、白色大复眼、橙色触角，画面居中",
+  "kst_action": "复眼由正视前方缓缓半垂眼帘，露出无语无奈的神情",
+  "dialogue_evidence": "",
+  "dialogue_note": ""
+ },
+ {
+  "shot_id": "S1_32",
+  "engine_index": 32,
+  "video_time": [
+   96.83,
+   99.1
+  ],
+  "engine_semantic": {
+   "shot_scale": "中景",
+   "camera_primitive": "static",
+   "camera_speed": "medium",
+   "subjects": "螳螂武士、独角仙武士",
+   "action_detail": "螳螂武士站立说话，独角仙武士手持番茄吃着",
+   "geometry_disagreement": false,
+   "geometry_primitive": "static",
+   "frames_analyzed": 54
+  },
+  "kst_subject": "前景左侧螳螂武士后脑虚化；主体为空荡的苔藓林地、隆起树根与林立巨树",
+  "kst_action": "基本静止，仅缓缓扫视空无一虫的林间",
+  "dialogue_evidence": "",
+  "dialogue_note": ""
+ },
+ {
+  "shot_id": "S1_33",
+  "engine_index": 33,
+  "video_time": [
+   99.1,
+   100.1
+  ],
+  "engine_semantic": {
+   "shot_scale": "中景",
+   "camera_primitive": "static",
+   "camera_speed": "medium",
+   "subjects": "螳螂武士、独角仙武士",
+   "action_detail": "独角仙武士咬番茄，螳螂武士站立旁观",
+   "geometry_disagreement": false,
+   "geometry_primitive": "static",
+   "frames_analyzed": 24
+  },
+  "kst_subject": "螳螂武士面部特写，绿色面容、白色大复眼、橙色触角，画面居中",
+  "kst_action": "由半垂眼帘的无语神情突然瞪大双眼，警觉察觉异样",
+  "dialogue_evidence": "[花青] 前辈，为何还不出手？",
+  "dialogue_note": "本镜头对白由花青说出，情绪：焦急。TTS需匹配情绪"
+ },
+ {
+  "shot_id": "S1_34",
+  "engine_index": 34,
+  "video_time": [
+   100.1,
+   100.87
+  ],
+  "engine_semantic": {
+   "shot_scale": "中景",
+   "camera_primitive": "static",
+   "camera_speed": "medium",
+   "subjects": "独角仙武士、螳螂武士",
+   "action_detail": "独角仙武士手持番茄，表情愤怒；螳螂武士站在一旁观望。",
+   "geometry_disagreement": false,
+   "geometry_primitive": "static",
+   "frames_analyzed": 18
+  },
+  "kst_subject": "红蜈蚣暗红油亮的甲壳背部占据画面下方，在蕨叶草丛间高速穿行",
+  "kst_action": "红蜈蚣贴地猛冲，两侧蕨类飞速掠过，画面剧烈晃动",
+  "dialogue_evidence": "",
+  "dialogue_note": ""
+ },
+ {
+  "shot_id": "S1_35",
+  "engine_index": 35,
+  "video_time": [
+   100.87,
+   101.4
+  ],
+  "engine_semantic": {
+   "shot_scale": "中景",
+   "camera_primitive": "static",
+   "camera_speed": "medium",
+   "subjects": "独角仙武士、螳螂武士",
+   "action_detail": "独角仙武士紧握番茄，表情愤怒；螳螂武士站在一旁观望。",
+   "geometry_disagreement": true,
+   "geometry_primitive": "pan_right",
+   "frames_analyzed": 13
+  },
+  "kst_subject": "红蜈蚣多足长身背对镜头在林间地面疾驰，触角前探，甲壳环节分明",
+  "kst_action": "红蜈蚣沿林间小径全速冲刺，两旁草木向后飞退",
+  "dialogue_evidence": "",
+  "dialogue_note": ""
+ },
+ {
+  "shot_id": "S1_36",
+  "engine_index": 36,
+  "video_time": [
+   101.4,
+   102.03
+  ],
+  "engine_semantic": {
+   "shot_scale": "中景",
+   "camera_primitive": "static",
+   "camera_speed": "medium",
+   "subjects": "独角仙武士、毛毛虫小孩",
+   "action_detail": "独角仙武士手持番茄，对毛毛虫小孩说话。",
+   "geometry_disagreement": true,
+   "geometry_primitive": "pan_right",
+   "frames_analyzed": 15
+  },
+  "kst_subject": "红蜈蚣后半身居前景疾行；远处小径尽头隐约可见独角仙武士与螳螂武士两个身影",
+  "kst_action": "红蜈蚣朝远处两武士方向猛冲，镜头随之上抬，显露前方目标",
+  "dialogue_evidence": "",
+  "dialogue_note": ""
+ },
+ {
+  "shot_id": "S1_37",
+  "engine_index": 37,
+  "video_time": [
+   102.03,
+   107.63
+  ],
+  "engine_semantic": {
+   "shot_scale": "中景",
+   "camera_primitive": "static",
+   "camera_speed": "medium",
+   "subjects": "独角仙武士、毛毛虫小孩",
+   "action_detail": "独角仙武士手持番茄，毛毛虫小孩张嘴惊讶。",
+   "geometry_disagreement": false,
+   "geometry_primitive": "static",
+   "frames_analyzed": 134
+  },
+  "kst_subject": "独角仙武士(红棕油亮甲壳、双叉弯角)居左,螳螂武士(绿身、白大复眼、橙触角)居右,并肩立于林中",
+  "kst_action": "螳螂举起刀刃前臂摆出战斗架势,独角仙表情由惊愕转为咧嘴狠笑、身体前倾备战",
+  "dialogue_evidence": "[黑头前辈] 我在等。",
+  "dialogue_note": "本镜头对白由黑头前辈说出，情绪：克制——等最佳时机。TTS需匹配情绪"
+ },
+ {
+  "shot_id": "S1_38",
+  "engine_index": 38,
+  "video_time": [
+   107.63,
+   110.87
+  ],
+  "engine_semantic": {
+   "shot_scale": "中景",
+   "camera_primitive": "static",
+   "camera_speed": "medium",
+   "subjects": "独角仙武士、螳螂武士",
+   "action_detail": "独角仙武士手持番茄，表情惊讶；螳螂武士伸手向前。",
+   "geometry_disagreement": false,
+   "geometry_primitive": "static",
+   "frames_analyzed": 78
+  },
+  "kst_subject": "螳螂武士立于左侧苔藓高台,独角仙武士背对镜头居右,远处暗红蜈蚣虚影游动",
+  "kst_action": "双方对峙间蜈蚣猛然发难,独角仙被扑翻在地,沿落叶地面翻滚",
+  "dialogue_evidence": "",
+  "dialogue_note": ""
+ },
+ {
+  "shot_id": "S1_39",
+  "engine_index": 39,
+  "video_time": [
+   110.87,
+   112.47
+  ],
+  "engine_semantic": {
+   "shot_scale": "中景",
+   "camera_primitive": "static",
+   "camera_speed": "medium",
+   "subjects": "独角仙武士、螳螂武士",
+   "action_detail": "独角仙武士手持番茄，对螳螂武士说话；螳螂武士张开双手。",
+   "geometry_disagreement": false,
+   "geometry_primitive": "static",
+   "frames_analyzed": 38
+  },
+  "kst_subject": "螳螂武士绿色身影,首帧在巨树根处模糊翻滚,尾帧凌空跃起、双刀高举、张嘴呐喊",
+  "kst_action": "螳螂自树根处贴地翻滚后猛然腾身跃起,凌空举刀成下劈之势",
+  "dialogue_evidence": "",
+  "dialogue_note": ""
+ },
+ {
+  "shot_id": "S1_40",
+  "engine_index": 40,
+  "video_time": [
+   112.47,
+   114.47
+  ],
+  "engine_semantic": {
+   "shot_scale": "中景",
+   "camera_primitive": "static",
+   "camera_speed": "medium",
+   "subjects": "独角仙武士、螳螂武士",
+   "action_detail": "独角仙武士手持番茄，螳螂武士伸手互动",
+   "geometry_disagreement": false,
+   "geometry_primitive": "static",
+   "frames_analyzed": 48
+  },
+  "kst_subject": "螳螂武士凌空收身,双臂刀锋高举过头",
+  "kst_action": "螳螂自空中急速俯冲,头朝下刀锋向前直扑地面目标",
+  "dialogue_evidence": "[花青] 等什么？",
+  "dialogue_note": "本镜头对白由花青说出，情绪：不理解。TTS需匹配情绪"
+ },
+ {
+  "shot_id": "S1_41",
+  "engine_index": 41,
+  "video_time": [
+   114.47,
+   116.0
+  ],
+  "engine_semantic": {
+   "shot_scale": "中景",
+   "camera_primitive": "dolly_out",
+   "camera_speed": "medium",
+   "subjects": "螳螂武士、独角仙武士",
+   "action_detail": "螳螂武士站在树根旁，独角仙武士背对它向前走动。",
+   "geometry_disagreement": true,
+   "geometry_primitive": "pan_right",
+   "frames_analyzed": 37
+  },
+  "kst_subject": "独角仙武士举拳与持刀螳螂武士并肩摆出战斗架势",
+  "kst_action": "画面由剧烈晃动模糊到清晰定格,两武士联手亮出迎战姿态",
+  "dialogue_evidence": "",
+  "dialogue_note": ""
+ },
+ {
+  "shot_id": "S1_42",
+  "engine_index": 42,
+  "video_time": [
+   116.0,
+   118.97
+  ],
+  "engine_semantic": {
+   "shot_scale": "特写",
+   "camera_primitive": "zoom_in",
+   "camera_speed": "medium",
+   "subjects": "螳螂武士",
+   "action_detail": "螳螂武士面部表情特写，眼睛睁得很大。",
+   "geometry_disagreement": true,
+   "geometry_primitive": "pan_right",
+   "frames_analyzed": 71
+  },
+  "kst_subject": "毛毛虫小孩(橙黄绒毛、头顶绿色小草辫)端坐粗壮苔藓横枝上,位于画面中央偏右",
+  "kst_action": "基本静止,表情由担忧蹙眉转为开心眯眼微笑,双手合拢于胸前",
+  "dialogue_evidence": "",
+  "dialogue_note": ""
+ },
+ {
+  "shot_id": "S1_43",
+  "engine_index": 43,
+  "video_time": [
+   118.97,
+   120.8
+  ],
+  "engine_semantic": {
+   "shot_scale": "特写",
+   "camera_primitive": "static",
+   "camera_speed": "slow",
+   "subjects": "螳螂武士",
+   "action_detail": "螳螂武士睁着大眼睛，表情略显困惑或担忧。",
+   "geometry_disagreement": true,
+   "geometry_primitive": "pan_left",
+   "frames_analyzed": 44
+  },
+  "kst_subject": "暗红多足巨型红蜈蚣盘踞巨树根须间,尾帧昂首扬起前半身",
+  "kst_action": "蜈蚣从树根落叶间游走现身,盘踞根须间昂首扬起上身示威",
+  "dialogue_evidence": "",
+  "dialogue_note": ""
+ },
+ {
+  "shot_id": "S1_44",
+  "engine_index": 44,
+  "video_time": [
+   120.8,
+   122.37
+  ],
+  "engine_semantic": {
+   "shot_scale": "特写",
+   "camera_primitive": "zoom_out",
+   "camera_speed": "medium",
+   "subjects": "螳螂武士",
+   "action_detail": "螳螂武士眼睛睁得很大，表情惊讶地看向镜头前方。",
+   "geometry_disagreement": true,
+   "geometry_primitive": "pan_left",
+   "frames_analyzed": 38
+  },
+  "kst_subject": "独角仙武士右侧冲刺,螳螂武士中路凌空挥刀,红蜈蚣左侧扑来",
+  "kst_action": "三方混战,螳螂挥刀劈中蜈蚣,刀锋相击迸溅大片金色火花",
+  "dialogue_evidence": "[黑头前辈] 等过战。",
+  "dialogue_note": "本镜头对白由黑头前辈说出，情绪：等它攻击间隙。TTS需匹配情绪"
+ },
+ {
+  "shot_id": "S1_45",
+  "engine_index": 45,
+  "video_time": [
+   122.37,
+   123.7
+  ],
+  "engine_semantic": {
+   "shot_scale": null,
+   "camera_primitive": null,
+   "camera_speed": null,
+   "subjects": null,
+   "action_detail": null,
+   "geometry_disagreement": true,
+   "geometry_primitive": "pan_left",
+   "frames_analyzed": 32
+  },
+  "kst_subject": "螳螂武士背身对峙红蜈蚣,尾帧转为正面特写、双刀交叉、怒目而视",
+  "kst_action": "螳螂闪身避开蜈蚣扑击,旋身正对镜头亮出双刀定格迎战",
+  "dialogue_evidence": "",
+  "dialogue_note": ""
+ },
+ {
+  "shot_id": "S1_46",
+  "engine_index": 46,
+  "video_time": [
+   123.7,
+   129.4
+  ],
+  "engine_semantic": {
+   "shot_scale": "特写",
+   "camera_primitive": "zoom_in",
+   "camera_speed": "medium",
+   "subjects": "螳螂武士",
+   "action_detail": "螳螂武士站立，表情惊讶地看向镜头前方。",
+   "geometry_disagreement": true,
+   "geometry_primitive": "handheld_candidate",
+   "frames_analyzed": 137
+  },
+  "kst_subject": "红蜈蚣张开巨颚扑咬,螳螂武士张臂闪避;尾帧独角仙武士叉腰坏笑的面部特写",
+  "kst_action": "蜈蚣猛扑螳螂,画面随即落在独角仙得意坏笑解说的脸上",
+  "dialogue_evidence": "",
+  "dialogue_note": ""
+ },
+ {
+  "shot_id": "S1_47",
+  "engine_index": 47,
+  "video_time": [
+   129.4,
+   132.6
+  ],
+  "engine_semantic": {
+   "shot_scale": "中景",
+   "camera_primitive": "static",
+   "camera_speed": "medium",
+   "subjects": "独角仙武士、螳螂武士",
+   "action_detail": "独角仙武士张嘴说话，螳螂武士持剑站立",
+   "geometry_disagreement": false,
+   "geometry_primitive": "static",
+   "frames_analyzed": 77
+  },
+  "kst_subject": "红蜈蚣暗红多足长身横贯画面贴地疾行,螳螂武士在其身后伏低闪避,远处独角仙观望",
+  "kst_action": "蜈蚣长身贴地游走扫过,螳螂伏低身形躲避",
+  "dialogue_evidence": "",
+  "dialogue_note": ""
+ },
+ {
+  "shot_id": "S1_48",
+  "engine_index": 48,
+  "video_time": [
+   132.6,
+   133.87
+  ],
+  "engine_semantic": {
+   "shot_scale": "中景",
+   "camera_primitive": "static",
+   "camera_speed": "medium",
+   "subjects": "独角仙武士、螳螂武士",
+   "action_detail": "独角仙武士张嘴说话，螳螂武士持剑站立",
+   "geometry_disagreement": false,
+   "geometry_primitive": "static",
+   "frames_analyzed": 30
+  },
+  "kst_subject": "螳螂武士手持双刀在苔藓树根间奔逃,频频回头张望,神情紧张",
+  "kst_action": "螳螂由弓身戒备转为纵身跃起狂奔,边逃边回头看",
+  "dialogue_evidence": "[黑头前辈] 打完收工了！最好的方法反而是攻击背后，不过得有人吸引它的注意。辛苦你了，前辈。",
+  "dialogue_note": "本镜头对白由黑头前辈说出，情绪：胜利感言——揭示策略。TTS需匹配情绪"
+ },
+ {
+  "shot_id": "S1_49",
+  "engine_index": 49,
+  "video_time": [
+   133.87,
+   136.27
+  ],
+  "engine_semantic": {
+   "shot_scale": "中景",
+   "camera_primitive": "static",
+   "camera_speed": "medium",
+   "subjects": "独角仙武士、螳螂武士",
+   "action_detail": "独角仙武士持剑攻击，螳螂武士举剑防御并后退",
+   "geometry_disagreement": true,
+   "geometry_primitive": "handheld_candidate",
+   "frames_analyzed": 58
+  },
+  "kst_subject": "独角仙武士:红棕油亮甲壳、头顶巨大双叉弯角、前臂缠米色绑带,立于画面左侧林间,表情由凝重疑惑转为恍然笃定",
+  "kst_action": "侧身戒备中转头向旁开口解释,张嘴说话,神态从紧绷疑惑变为明白笃定",
+  "dialogue_evidence": "",
+  "dialogue_note": ""
+ },
+ {
+  "shot_id": "S1_50",
+  "engine_index": 50,
+  "video_time": [
+   136.27,
+   137.67
+  ],
+  "engine_semantic": {
+   "shot_scale": "中景",
+   "camera_primitive": "follow",
+   "camera_speed": "fast",
+   "subjects": "独角仙武士",
+   "action_detail": "独角仙武士挥舞武器向前冲锋，身后有同伴跟随。",
+   "geometry_disagreement": true,
+   "geometry_primitive": "tilt_down",
+   "frames_analyzed": 34
+  },
+  "kst_subject": "螳螂武士:绿色纤细身材、白色大复眼、橙色触角,面部占据画面中心,表情紧张",
+  "kst_action": "正面紧绷凝视、咬牙隐忍,随后猛然侧头张嘴焦急呼喊",
+  "dialogue_evidence": "",
+  "dialogue_note": ""
+ },
+ {
+  "shot_id": "S1_51",
+  "engine_index": 51,
+  "video_time": [
+   137.67,
+   138.93
+  ],
+  "engine_semantic": {
+   "shot_scale": "近景",
+   "camera_primitive": "follow",
+   "camera_speed": "fast",
+   "subjects": "毛毛虫小孩",
+   "action_detail": "毛毛虫小孩被巨物甩出后翻滚落地",
+   "geometry_disagreement": true,
+   "geometry_primitive": "dolly_or_zoom_out",
+   "frames_analyzed": 30
+  },
+  "kst_subject": "独角仙武士:红棕甲壳、头顶弯角,首帧侧脸紧绷睁大眼,尾帧转向正面咧嘴自信微笑",
+  "kst_action": "由侧脸紧张凝视,缓缓转头面向镜头,咧嘴露出自信笑容",
+  "dialogue_evidence": "",
+  "dialogue_note": ""
+ },
+ {
+  "shot_id": "S1_52",
+  "engine_index": 52,
+  "video_time": [
+   138.93,
+   140.2
+  ],
+  "engine_semantic": {
+   "shot_scale": "中景",
+   "camera_primitive": "follow",
+   "camera_speed": "fast",
+   "subjects": "螳螂武士",
+   "action_detail": "螳螂武士挥舞着镰刀状前肢向前方攻击",
+   "geometry_disagreement": true,
+   "geometry_primitive": "pan_right",
+   "frames_analyzed": 30
+  },
+  "kst_subject": "苔藓林地战场:左侧独角仙武士戒备,中央暗红巨型红蜈蚣前身高高扬起,右侧绿色螳螂武士迎战",
+  "kst_action": "红蜈蚣猛然摆身横扫,躯干带运动模糊扫过镜头前,落叶飞溅",
+  "dialogue_evidence": "[阿毛] 只用一招就把他杀死了吗？",
+  "dialogue_note": "本镜头对白由阿毛说出，情绪：天真+紧张。TTS需匹配情绪"
+ },
+ {
+  "shot_id": "S1_53",
+  "engine_index": 53,
+  "video_time": [
+   140.2,
+   144.2
+  ],
+  "engine_semantic": {
+   "shot_scale": "中景",
+   "camera_primitive": "follow",
+   "camera_speed": "fast",
+   "subjects": "螳螂武士",
+   "action_detail": "螳螂武士挥舞镰刀状前肢向前攻击",
+   "geometry_disagreement": true,
+   "geometry_primitive": "handheld_candidate",
+   "frames_analyzed": 96
+  },
+  "kst_subject": "暗红红蜈蚣多足躯干横扫前景,独角仙武士被掀飞至空中翻滚、张嘴大喊",
+  "kst_action": "蜈蚣躯干扫过画面,独角仙武士躲闪不及被掀飞,空中翻滚踉跄",
+  "dialogue_evidence": "",
+  "dialogue_note": ""
+ },
+ {
+  "shot_id": "S1_54",
+  "engine_index": 54,
+  "video_time": [
+   144.2,
+   147.63
+  ],
+  "engine_semantic": {
+   "shot_scale": "中景",
+   "camera_primitive": "static",
+   "camera_speed": "medium",
+   "subjects": "毛毛虫小孩",
+   "action_detail": "毛毛虫小孩坐在树枝上，双手张开，眼睛睁得很大。",
+   "geometry_disagreement": false,
+   "geometry_primitive": "static",
+   "frames_analyzed": 82
+  },
+  "kst_subject": "右侧暗红巨型红蜈蚣昂首立起前身;独角仙武士低头猛冲,以弯角将其撞翻",
+  "kst_action": "独角仙武士从画面右侧猛然冲出,低头用巨角撞向红蜈蚣,蜈蚣翻倒,枯叶飞扬",
+  "dialogue_evidence": "",
+  "dialogue_note": ""
+ },
+ {
+  "shot_id": "S1_55",
+  "engine_index": 55,
+  "video_time": [
+   147.63,
+   149.9
+  ],
+  "engine_semantic": {
+   "shot_scale": "中景",
+   "camera_primitive": "static",
+   "camera_speed": "medium",
+   "subjects": "毛毛虫小孩",
+   "action_detail": "毛毛虫小孩坐在树枝上开心地拍手笑",
+   "geometry_disagreement": false,
+   "geometry_primitive": "static",
+   "frames_analyzed": 54
+  },
+  "kst_subject": "螳螂武士:绿色纤细身材、白色大复眼,缠绑带的前臂握长刀,立于盘结树根前",
+  "kst_action": "侧身持刀戒备中猛然转身面向镜头,瞪大复眼张嘴惊呼,双手分持双刀",
+  "dialogue_evidence": "[黑头前辈] 没死，就是昏绝了。这个江湖蛊，不容易被杀死。",
+  "dialogue_note": "本镜头对白由黑头前辈说出，情绪：危机未真正解除。TTS需匹配情绪"
+ },
+ {
+  "shot_id": "S1_56",
+  "engine_index": 56,
+  "video_time": [
+   149.9,
+   153.47
+  ],
+  "engine_semantic": {
+   "shot_scale": "中景",
+   "camera_primitive": "follow",
+   "camera_speed": "fast",
+   "subjects": "螳螂武士、巨型红蜈蚣",
+   "action_detail": "螳螂武士挥剑攻击，巨型红蜈蚣被击退后转身反击",
+   "geometry_disagreement": true,
+   "geometry_primitive": "pan_right",
+   "frames_analyzed": 86
+  },
+  "kst_subject": "毛毛虫小孩:橙黄绒毛、圆滚身材、头顶绿色小草辫,蹲在苔藓横枝上望向一侧",
+  "kst_action": "毛毛虫小孩起身离开树枝,尾帧只剩空荡的枝干",
+  "dialogue_evidence": "",
+  "dialogue_note": ""
+ },
+ {
+  "shot_id": "S1_57",
+  "engine_index": 57,
+  "video_time": [
+   153.47,
+   157.73
+  ],
+  "engine_semantic": {
+   "shot_scale": "中景",
+   "camera_primitive": "follow",
+   "camera_speed": "fast",
+   "subjects": "螳螂武士、巨型红蜈蚣",
+   "action_detail": "螳螂武士挥剑攻击，巨型红蜈蚣回击格挡",
+   "geometry_disagreement": true,
+   "geometry_primitive": "tilt_up",
+   "frames_analyzed": 102
+  },
+  "kst_subject": "独角仙武士将暗红红蜈蚣压制在落叶地面,随后起身面向右侧持刀站立的螳螂武士",
+  "kst_action": "独角仙武士从压制蜈蚣的姿态起身站直,转向螳螂武士商议对策",
+  "dialogue_evidence": "",
+  "dialogue_note": ""
+ },
+ {
+  "shot_id": "S1_58",
+  "engine_index": 58,
+  "video_time": [
+   157.73,
+   164.1
+  ],
+  "engine_semantic": {
+   "shot_scale": "近景",
+   "camera_primitive": "follow",
+   "camera_speed": "fast",
+   "subjects": "螳螂武士、巨型红蜈蚣",
+   "action_detail": "螳螂武士挥舞镰刀攻击，巨型红蜈蚣向前爬行躲避",
+   "geometry_disagreement": true,
+   "geometry_primitive": "handheld_candidate",
+   "frames_analyzed": 153
+  },
+  "kst_subject": "螳螂武士持刀立于苔藓树根前神情平静;画面转向独角仙武士正面咧嘴憨厚大笑",
+  "kst_action": "对话正反打:螳螂静立聆听,独角仙武士咧嘴露出憨厚笑容",
+  "dialogue_evidence": "",
+  "dialogue_note": ""
+ },
+ {
+  "shot_id": "S1_59",
+  "engine_index": 59,
+  "video_time": [
+   164.1,
+   166.83
+  ],
+  "engine_semantic": {
+   "shot_scale": "中景",
+   "camera_primitive": "follow",
+   "camera_speed": "fast",
+   "subjects": "螳螂武士",
+   "action_detail": "螳螂武士快速奔跑躲避追击，表情惊慌。",
+   "geometry_disagreement": true,
+   "geometry_primitive": "pan_left",
+   "frames_analyzed": 66
+  },
+  "kst_subject": "暗红红蜈蚣长躯横陈前景地面,螳螂武士立于其背上,独角仙武士在右侧树根旁注视",
+  "kst_action": "螳螂武士双手各举一刀摆出战姿戒备,独角仙武士在旁注视",
+  "dialogue_evidence": "[黑头前辈] 哎呀呀呀，坏了，坏了！",
+  "dialogue_note": "本镜头对白由黑头前辈说出，情绪：急迫——蜈蚣即将苏醒。TTS需匹配情绪"
+ },
+ {
+  "shot_id": "S1_60",
+  "engine_index": 60,
+  "video_time": [
+   166.83,
+   168.73
+  ],
+  "engine_semantic": {
+   "shot_scale": "中景",
+   "camera_primitive": "static",
+   "camera_speed": "medium",
+   "subjects": "独角仙武士",
+   "action_detail": "独角仙武士张嘴瞪眼，双手握拳向前冲。",
+   "geometry_disagreement": true,
+   "geometry_primitive": "dolly_or_zoom_in",
+   "frames_analyzed": 46
+  },
+  "kst_subject": "螳螂武士双手各持一把长刀平举、神情严肃;随后俯身将双刀刺向横陈的红蜈蚣背部",
+  "kst_action": "螳螂武士平举双刀蓄势,随即俯身将双刀猛刺入蜈蚣背部",
+  "dialogue_evidence": "",
+  "dialogue_note": ""
+ },
+ {
+  "shot_id": "S1_61",
+  "engine_index": 61,
+  "video_time": [
+   168.73,
+   170.3
+  ],
+  "engine_semantic": {
+   "shot_scale": "特写",
+   "camera_primitive": "static",
+   "camera_speed": "slow",
+   "subjects": "独角仙武士",
+   "action_detail": "独角仙武士面带笑容，双手握拳向前摆动。",
+   "geometry_disagreement": true,
+   "geometry_primitive": "dolly_or_zoom_in",
+   "frames_analyzed": 38
+  },
+  "kst_subject": "独角仙武士面部大特写，红棕油亮甲壳、头顶双叉弯角，瞪圆双眼、张口露齿，满脸惊骇",
+  "kst_action": "基本静止，仅眼神微颤、表情僵住，保持惊恐定格",
+  "dialogue_evidence": "",
+  "dialogue_note": ""
+ },
+ {
+  "shot_id": "S1_62",
+  "engine_index": 62,
+  "video_time": [
+   170.3,
+   171.87
+  ],
+  "engine_semantic": {
+   "shot_scale": "特写",
+   "camera_primitive": "static",
+   "camera_speed": "medium",
+   "subjects": "螳螂武士",
+   "action_detail": "螳螂武士张嘴，表情惊讶地看向一侧。",
+   "geometry_disagreement": true,
+   "geometry_primitive": "dolly_or_zoom_out",
+   "frames_analyzed": 38
+  },
+  "kst_subject": "毛毛虫小孩，橙黄色绒毛圆滚身材、头顶绿色小草辫，神色慌张跑上画面中央的苔藓巨枝",
+  "kst_action": "原本空无一人的横枝上，毛毛虫小孩从右侧慌张跑入，边跑边焦急张望",
+  "dialogue_evidence": "",
+  "dialogue_note": ""
+ },
+ {
+  "shot_id": "S1_63",
+  "engine_index": 63,
+  "video_time": [
+   171.87,
+   173.6
+  ],
+  "engine_semantic": {
+   "shot_scale": "特写",
+   "camera_primitive": "static",
+   "camera_speed": "medium",
+   "subjects": "螳螂武士",
+   "action_detail": "螳螂武士张嘴说话，表情惊讶。",
+   "geometry_disagreement": true,
+   "geometry_primitive": "pan_left",
+   "frames_analyzed": 42
+  },
+  "kst_subject": "巨型红蜈蚣暗红多足长身，从侧翻倒地状态猛然昂首竖起，头部巨颚钳张开；旁侧立着螳螂武士与独角仙武士",
+  "kst_action": "倒地不动的红蜈蚣突然昂首立起，张开巨颚露出凶相",
+  "dialogue_evidence": "[黑头前辈] 断草出根，一绝后患！",
+  "dialogue_note": "本镜头对白由黑头前辈说出，情绪：果断——最终解决方案。TTS需匹配情绪"
+ },
+ {
+  "shot_id": "S1_64",
+  "engine_index": 64,
+  "video_time": [
+   173.6,
+   174.47
+  ],
+  "engine_semantic": {
+   "shot_scale": "特写",
+   "camera_primitive": "static",
+   "camera_speed": "medium",
+   "subjects": "独角仙武士",
+   "action_detail": "独角仙武士面带微笑，眼睛睁得很大。",
+   "geometry_disagreement": true,
+   "geometry_primitive": "pan_left",
+   "frames_analyzed": 21
+  },
+  "kst_subject": "螳螂武士，绿色纤细身材、白色大复眼、橙色触角，手持短刀压低身形贴地疾行",
+  "kst_action": "螳螂武士持刀贴地疾冲突进，最后直扑镜头，画面带强烈速度模糊",
+  "dialogue_evidence": "",
+  "dialogue_note": ""
+ },
+ {
+  "shot_id": "S1_65",
+  "engine_index": 65,
+  "video_time": [
+   174.47,
+   175.23
+  ],
+  "engine_semantic": {
+   "shot_scale": "近景",
+   "camera_primitive": "follow",
+   "camera_speed": "fast",
+   "subjects": "毛毛虫小孩、独角仙武士、螳螂武士、巨型红蜈蚣",
+   "action_detail": "毛毛虫小孩被巨型红蜈蚣追赶，边跑边回头喊等什么。",
+   "geometry_disagreement": true,
+   "geometry_primitive": "dolly_or_zoom_out",
+   "frames_analyzed": 18
+  },
+  "kst_subject": "螳螂武士被困在布满尖牙的巨口中，随即撑开挣脱，浑身溅满绿色黏液，眼神凌厉",
+  "kst_action": "巨口咬合夹住螳螂，螳螂双臂发力撑开挣脱，绿色体液四溅",
+  "dialogue_evidence": "",
+  "dialogue_note": ""
+ },
+ {
+  "shot_id": "S1_66",
+  "engine_index": 66,
+  "video_time": [
+   175.23,
+   182.17
+  ],
+  "engine_semantic": {
+   "shot_scale": "中景",
+   "camera_primitive": "follow",
+   "camera_speed": "fast",
+   "subjects": "独角仙武士",
+   "action_detail": "独角仙武士向前冲刺，姿态凶猛。",
+   "geometry_disagreement": true,
+   "geometry_primitive": "handheld_candidate",
+   "frames_analyzed": 167
+  },
+  "kst_subject": "螳螂武士背对镜头持刀而立，独自面对两只昂首张钳的巨型红蜈蚣",
+  "kst_action": "镜头从贴地的刀臂特写拉起，螳螂起身独立，与两只巨虫形成对峙",
+  "dialogue_evidence": "",
+  "dialogue_note": ""
+ },
+ {
+  "shot_id": "S1_67",
+  "engine_index": 67,
+  "video_time": [
+   182.17,
+   182.9
+  ],
+  "engine_semantic": {
+   "shot_scale": "中景",
+   "camera_primitive": "static",
+   "camera_speed": "slow",
+   "subjects": "独角仙武士、巨型红蜈蚣",
+   "action_detail": "独角仙武士被巨型红蜈蚣攻击，地面落叶飞溅。",
+   "geometry_disagreement": false,
+   "geometry_primitive": "static",
+   "frames_analyzed": 18
+  },
+  "kst_subject": "独角仙武士红棕油亮甲壳、前臂缠米色绑带，咧嘴大笑兴奋冲锋；前景是螳螂持刀的过肩背影",
+  "kst_action": "独角仙武士从盘根古树方向加速冲向镜头，越冲越近，双拳紧握",
+  "dialogue_evidence": "[黑头前辈] 再过一会儿你就打不过我了。",
+  "dialogue_note": "本镜头对白由黑头前辈说出，情绪：暗示前辈力量有限/在试探花青。TTS需匹配情绪"
+ },
+ {
+  "shot_id": "S1_68",
+  "engine_index": 68,
+  "video_time": [
+   182.9,
+   185.6
+  ],
+  "engine_semantic": {
+   "shot_scale": "特写",
+   "camera_primitive": "static",
+   "camera_speed": "medium",
+   "subjects": "螳螂武士",
+   "action_detail": "螳螂武士双手持剑，摆出战斗姿态",
+   "geometry_disagreement": false,
+   "geometry_primitive": "static",
+   "frames_analyzed": 65
+  },
+  "kst_subject": "螳螂武士背对镜头立于两只红蜈蚣巨怪之间；一道红棕色残影高速掠过画面",
+  "kst_action": "对峙僵持中，独角仙化作红影闪电般掠过镜头，画面剧烈速度模糊",
+  "dialogue_evidence": "",
+  "dialogue_note": ""
+ },
+ {
+  "shot_id": "S1_69",
+  "engine_index": 69,
+  "video_time": [
+   185.6,
+   186.6
+  ],
+  "engine_semantic": {
+   "shot_scale": "特写",
+   "camera_primitive": "static",
+   "camera_speed": "medium",
+   "subjects": "螳螂武士",
+   "action_detail": "螳螂武士双手持刀，表情惊讶张嘴",
+   "geometry_disagreement": false,
+   "geometry_primitive": "static",
+   "frames_analyzed": 24
+  },
+  "kst_subject": "螳螂武士睁大白色复眼惊愕蹲身，随即挥刀劈向红蜈蚣头部，刀锋迸出火星",
+  "kst_action": "螳螂从惊愕瞬间转为反击，挥刀劈砍红蜈蚣，刃口擦出火花",
+  "dialogue_evidence": "",
+  "dialogue_note": ""
+ },
+ {
+  "shot_id": "S1_70",
+  "engine_index": 70,
+  "video_time": [
+   186.6,
+   206.33
+  ],
+  "engine_semantic": {
+   "shot_scale": "中景",
+   "camera_primitive": "static",
+   "camera_speed": "medium",
+   "subjects": "螳螂武士、独角仙武士",
+   "action_detail": "螳螂武士持刃戒备，独角仙武士面带微笑站立其旁。",
+   "geometry_disagreement": false,
+   "geometry_primitive": "static",
+   "frames_analyzed": 474
+  },
+  "kst_subject": "螳螂武士持刀戒备面对红蜈蚣巨口；随即独角仙武士面部特写，瞪眼咬牙满脸惊骇",
+  "kst_action": "画面从螳螂举刀戒备切至独角仙的惊骇表情反应",
+  "dialogue_evidence": "",
+  "dialogue_note": ""
+ },
+ {
+  "shot_id": "S1_71",
+  "engine_index": 71,
+  "video_time": [
+   206.33,
+   210.37
+  ],
+  "engine_semantic": {
+   "shot_scale": "中景",
+   "camera_primitive": "static",
+   "camera_speed": "medium",
+   "subjects": "螳螂武士、独角仙武士",
+   "action_detail": "螳螂武士持剑站立，独角仙武士蹲坐一旁观看。",
+   "geometry_disagreement": false,
+   "geometry_primitive": "static",
+   "frames_analyzed": 97
+  },
+  "kst_subject": "螳螂武士正面而立眼神坚定；独角仙缠着米色绑带的前臂拳头举到前景，绑带上带着血迹伤痕",
+  "kst_action": "独角仙缓缓举起受伤的拳头展示，焦点从螳螂面部转移到拳头",
+  "dialogue_evidence": "[阿毛] 太厉害了，爸爸！阿毛别过来！",
+  "dialogue_note": "本镜头对白由阿毛说出，情绪：崇拜与恐惧交织。TTS需匹配情绪"
+ },
+ {
+  "shot_id": "S1_72",
+  "engine_index": 72,
+  "video_time": [
+   210.37,
+   213.63
+  ],
+  "engine_semantic": {
+   "shot_scale": "特写",
+   "camera_primitive": "static",
+   "camera_speed": "slow",
+   "subjects": "独角仙武士",
+   "action_detail": "独角仙武士张开嘴露出牙齿，眼睛瞪得很大。",
+   "geometry_disagreement": false,
+   "geometry_primitive": "static",
+   "frames_analyzed": 78
+  },
+  "kst_subject": "独角仙武士中近景，红棕油亮甲壳、前臂缠绑带，伸臂指向前方，表情由认真转为咧嘴豪爽大笑；前景是螳螂的绿色后脑过肩",
+  "kst_action": "独角仙指着对方说话，神情从认真逐渐变成开怀大笑",
+  "dialogue_evidence": "",
+  "dialogue_note": ""
+ },
+ {
+  "shot_id": "S1_73",
+  "engine_index": 73,
+  "video_time": [
+   213.63,
+   214.93
+  ],
+  "engine_semantic": {
+   "shot_scale": "中景",
+   "camera_primitive": "static",
+   "camera_speed": "medium",
+   "subjects": "毛毛虫小孩",
+   "action_detail": "毛毛虫小孩站在树枝上，表情惊讶地张望四周。",
+   "geometry_disagreement": false,
+   "geometry_primitive": "static",
+   "frames_analyzed": 31
+  },
+  "kst_subject": "螳螂武士，绿色纤细身材、白色大复眼、橙色触角，面部特写居中，表情严肃略带得意",
+  "kst_action": "说话时头部微倾，表情从凝重严肃转为张口朗声，眼神始终直视前方；基本静止，仅口型与表情变化",
+  "dialogue_evidence": "",
+  "dialogue_note": ""
+ },
+ {
+  "shot_id": "S1_74",
+  "engine_index": 74,
+  "video_time": [
+   214.93,
+   218.3
+  ],
+  "engine_semantic": {
+   "shot_scale": "特写",
+   "camera_primitive": "zoom_in",
+   "camera_speed": "medium",
+   "subjects": "螳螂武士",
+   "action_detail": "螳螂武士挥动镰刀状前肢攻击地面",
+   "geometry_disagreement": true,
+   "geometry_primitive": "tilt_up",
+   "frames_analyzed": 81
+  },
+  "kst_subject": "独角仙武士红棕甲壳立于左侧大笑；毛毛虫小孩橙黄绒毛在横倒苔藓巨木上向右走；螳螂武士绿色身形立于右侧",
+  "kst_action": "毛毛虫沿横倒树干向右走向螳螂，独角仙从仰头大笑转为低头前倾喝止，螳螂静立回望",
+  "dialogue_evidence": "",
+  "dialogue_note": ""
+ },
+ {
+  "shot_id": "S1_75",
+  "engine_index": 75,
+  "video_time": [
+   218.3,
+   220.23
+  ],
+  "engine_semantic": {
+   "shot_scale": "特写",
+   "camera_primitive": "static",
+   "camera_speed": "medium",
+   "subjects": "毛毛虫小孩",
+   "action_detail": "毛毛虫小孩被巨大物体压住，表情惊恐，周围有液体飞溅。",
+   "geometry_disagreement": false,
+   "geometry_primitive": "static",
+   "frames_analyzed": 46
+  },
+  "kst_subject": "毛毛虫小孩，橙黄色绒毛、圆滚身材、头顶绿色小草辫、大眼睛，近景居中",
+  "kst_action": "从张嘴兴奋大笑、双臂张开，转为收起手臂、睁大双眼露出困惑无辜表情",
+  "dialogue_evidence": "[阿毛] 爸爸！阿毛，别过来！",
+  "dialogue_note": "本镜头对白由阿毛说出，情绪：最恐惧时刻——担心父亲。TTS需匹配情绪"
+ },
+ {
+  "shot_id": "S1_76",
+  "engine_index": 76,
+  "video_time": [
+   220.23,
+   224.8
+  ],
+  "engine_semantic": {
+   "shot_scale": "中景",
+   "camera_primitive": "static",
+   "camera_speed": "medium",
+   "subjects": "螳螂武士",
+   "action_detail": "螳螂武士高举双臂，做出战斗姿态。",
+   "geometry_disagreement": false,
+   "geometry_primitive": "static",
+   "frames_analyzed": 110
+  },
+  "kst_subject": "独角仙武士，红棕油亮甲壳、巨大双叉弯角、前臂缠米色绑带，画面左侧中景；螳螂武士后脑虚焦于右前景",
+  "kst_action": "面向螳螂喊话，表情从张嘴急喊转为咧嘴微笑；基本静止，仅表情口型变化",
+  "dialogue_evidence": "",
+  "dialogue_note": ""
+ },
+ {
+  "shot_id": "S1_77",
+  "engine_index": 77,
+  "video_time": [
+   224.8,
+   226.43
+  ],
+  "engine_semantic": {
+   "shot_scale": "中景",
+   "camera_primitive": "static",
+   "camera_speed": "medium",
+   "subjects": "螳螂武士",
+   "action_detail": "螳螂武士双手持剑，站立于森林地面，面对前方两只倒地的红色螃蟹状生物。",
+   "geometry_disagreement": false,
+   "geometry_primitive": "static",
+   "frames_analyzed": 39
+  },
+  "kst_subject": "螳螂武士大特写，绿色面部、白色大复眼、橙色触角，表情严肃坚定",
+  "kst_action": "基本静止，仅说话时口型微动，眼神直视前方愈发坚定",
+  "dialogue_evidence": "",
+  "dialogue_note": ""
+ },
+ {
+  "shot_id": "S1_78",
+  "engine_index": 78,
+  "video_time": [
+   226.43,
+   233.3
+  ],
+  "engine_semantic": {
+   "shot_scale": "中景",
+   "camera_primitive": "follow",
+   "camera_speed": "fast",
+   "subjects": "螳螂武士",
+   "action_detail": "螳螂武士挥舞镰刀状前肢攻击敌人",
+   "geometry_disagreement": true,
+   "geometry_primitive": "handheld_candidate",
+   "frames_analyzed": 165
+  },
+  "kst_subject": "独角仙武士在左前景背身侧脸，毛毛虫小孩立于右侧苔藓岩台上张嘴惊讶",
+  "kst_action": "独角仙转身面向镜头咧嘴大笑，毛毛虫从张嘴惊讶变成闭眼开心憨笑",
+  "dialogue_evidence": "",
+  "dialogue_note": ""
+ },
+ {
+  "shot_id": "S1_79",
+  "engine_index": 79,
+  "video_time": [
+   233.3,
+   234.8
+  ],
+  "engine_semantic": {
+   "shot_scale": "中景",
+   "camera_primitive": "follow",
+   "camera_speed": "fast",
+   "subjects": "螳螂武士、独角仙武士、巨型红蜈蚣",
+   "action_detail": "螳螂武士持刃奔跑，身后有独角仙和巨蜈蚣追逐",
+   "geometry_disagreement": true,
+   "geometry_primitive": "pan_left",
+   "frames_analyzed": 36
+  },
+  "kst_subject": "螳螂武士面部特写，绿色面容、白色大复眼、橙色触角，表情认真微沉",
+  "kst_action": "基本静止，仅说话口型与眉眼神情细微变化，语气认真诚恳",
+  "dialogue_evidence": "[阿毛] 如果你能从一数到一百，爸爸就教你功夫？真的？",
+  "dialogue_note": "本镜头对白由阿毛说出，情绪：惊喜确认。TTS需匹配情绪"
+ },
+ {
+  "shot_id": "S1_80",
+  "engine_index": 80,
+  "video_time": [
+   234.8,
+   236.73
+  ],
+  "engine_semantic": {
+   "shot_scale": "中景",
+   "camera_primitive": "follow",
+   "camera_speed": "fast",
+   "subjects": "螳螂武士、巨型红蜈蚣",
+   "action_detail": "螳螂武士挥舞镰刀攻击，巨型红蜈蚣被击退翻滚",
+   "geometry_disagreement": true,
+   "geometry_primitive": "handheld_candidate",
+   "frames_analyzed": 46
+  },
+  "kst_subject": "独角仙武士中景，红棕油亮甲壳、双叉弯角、咧嘴笑；螳螂武士后脑虚焦于右前景",
+  "kst_action": "基本静止，仅咧嘴笑着说话，口型持续张合",
+  "dialogue_evidence": "",
+  "dialogue_note": ""
+ },
+ {
+  "shot_id": "S1_81",
+  "engine_index": 81,
+  "video_time": [
+   236.73,
+   237.7
+  ],
+  "engine_semantic": {
+   "shot_scale": "近景",
+   "camera_primitive": "follow",
+   "camera_speed": "fast",
+   "subjects": "螳螂武士",
+   "action_detail": "螳螂武士挥舞镰刀前足攻击前方敌人",
+   "geometry_disagreement": true,
+   "geometry_primitive": "pan_left",
+   "frames_analyzed": 23
+  },
+  "kst_subject": "螳螂武士面部特写，绿色面容、白色大复眼、橙色触角，表情从凝重到张口欲言",
+  "kst_action": "眉头微蹙凝视前方，说到激动处张口露齿；基本静止，仅表情口型变化",
+  "dialogue_evidence": "",
+  "dialogue_note": ""
+ },
+ {
+  "shot_id": "S1_82",
+  "engine_index": 82,
+  "video_time": [
+   237.7,
+   243.67
+  ],
+  "engine_semantic": {
+   "shot_scale": "近景",
+   "camera_primitive": "follow",
+   "camera_speed": "fast",
+   "subjects": "螳螂武士",
+   "action_detail": "螳螂武士持刀转身，警惕后方逼近的敌人",
+   "geometry_disagreement": true,
+   "geometry_primitive": "handheld_candidate",
+   "frames_analyzed": 143
+  },
+  "kst_subject": "独角仙武士中景，红棕油亮甲壳、双叉弯角，画面左侧；螳螂武士后脑虚焦于右前景",
+  "kst_action": "低头闭眼沉默片刻，猛然睁眼抬头，表情转厉，右手亮出一把短刀",
+  "dialogue_evidence": "",
+  "dialogue_note": ""
+ },
+ {
+  "shot_id": "S1_83",
+  "engine_index": 83,
+  "video_time": [
+   243.67,
+   245.07
+  ],
+  "engine_semantic": {
+   "shot_scale": "中景",
+   "camera_primitive": "zoom_in",
+   "camera_speed": "medium",
+   "subjects": "螳螂武士",
+   "action_detail": "螳螂武士抬头看向前方，双手合十于胸前。",
+   "geometry_disagreement": true,
+   "geometry_primitive": "pan_left",
+   "frames_analyzed": 34
+  },
+  "kst_subject": "一把绿绳缠柄短刀在空中翻转，随即独角仙缠着米色绑带的手握住刀柄，画面右侧露出红棕甲壳肩部",
+  "kst_action": "短刀凌空旋转飞过苔藓横木，被缠绑带的手稳稳抓住",
+  "dialogue_evidence": "[花青] 说话算话。",
+  "dialogue_note": "本镜头对白由花青说出，情绪：父亲承诺的分量。TTS需匹配情绪"
+ },
+ {
+  "shot_id": "S1_84",
+  "engine_index": 84,
+  "video_time": [
+   245.07,
+   249.63
+  ],
+  "engine_semantic": {
+   "shot_scale": "中景",
+   "camera_primitive": "static",
+   "camera_speed": "medium",
+   "subjects": "螳螂武士",
+   "action_detail": "螳螂武士张开嘴，表情惊讶地向前奔跑。",
+   "geometry_disagreement": true,
+   "geometry_primitive": "dolly_or_zoom_in",
+   "frames_analyzed": 109
+  },
+  "kst_subject": "独角仙武士中景，右手持短刀，红棕油亮甲壳、双叉弯角，表情严肃坚定；螳螂武士后脑虚焦于右前景",
+  "kst_action": "右手举刀亮出后缓缓收至胸前，沉声说话，神情凝重坚定",
+  "dialogue_evidence": "",
+  "dialogue_note": ""
+ },
+ {
+  "shot_id": "S1_85",
+  "engine_index": 85,
+  "video_time": [
+   249.63,
+   251.97
+  ],
+  "engine_semantic": {
+   "shot_scale": "中景",
+   "camera_primitive": "static",
+   "camera_speed": "medium",
+   "subjects": "独角仙武士",
+   "action_detail": "独角仙武士蹲伏于林间，头部微抬，表情惊讶。",
+   "geometry_disagreement": true,
+   "geometry_primitive": "dolly_or_zoom_in",
+   "frames_analyzed": 56
+  },
+  "kst_subject": "螳螂武士面部特写，绿色纤细脸庞、白色大复眼、橙色触角，神情凝重，画面居中",
+  "kst_action": "基本静止，仅眼神微动、下颌微收，表情由凝重转为坚毅，似暗下决心",
+  "dialogue_evidence": "",
+  "dialogue_note": ""
+ },
+ {
+  "shot_id": "S1_86",
+  "engine_index": 86,
+  "video_time": [
+   251.97,
+   256.0
+  ],
+  "engine_semantic": {
+   "shot_scale": "特写",
+   "camera_primitive": "zoom_in",
+   "camera_speed": "medium",
+   "subjects": "独角仙武士",
+   "action_detail": "独角仙武士面部表情夸张，眼睛瞪大嘴巴张开露出牙齿。",
+   "geometry_disagreement": true,
+   "geometry_primitive": "dolly_or_zoom_in",
+   "frames_analyzed": 97
+  },
+  "kst_subject": "左前景独角仙武士红棕甲壳、双叉巨角侧脸瞪眼；右侧橙黄绒毛毛毛虫小孩头顶绿草辫，站在苔藓倒木上张嘴哭喊",
+  "kst_action": "独角仙侧头注视不动，毛毛虫小孩越喊越激动，嘴巴张得更大、身体微微前倾",
+  "dialogue_evidence": "",
+  "dialogue_note": ""
+ },
+ {
+  "shot_id": "S1_87",
+  "engine_index": 87,
+  "video_time": [
+   256.0,
+   260.2
+  ],
+  "engine_semantic": {
+   "shot_scale": "特写",
+   "camera_primitive": "static",
+   "camera_speed": "medium",
+   "subjects": "独角仙武士、螳螂武士",
+   "action_detail": "独角仙武士伸手抓向螳螂武士，螳螂武士表情惊恐。",
+   "geometry_disagreement": false,
+   "geometry_primitive": "static",
+   "frames_analyzed": 101
+  },
+  "kst_subject": "螳螂武士面部特写，白色大复眼、橙色触角，首帧神情凝重担忧，尾帧表情柔和、头部微侧",
+  "kst_action": "表情由凝重担忧渐渐缓和，头部微侧，目光温和地望向画外",
+  "dialogue_evidence": "[阿毛] 开始了！一、二、三、四……",
+  "dialogue_note": "本镜头对白由阿毛说出，情绪：认真数数——成长的起点。TTS需匹配情绪"
+ },
+ {
+  "shot_id": "S1_88",
+  "engine_index": 88,
+  "video_time": [
+   260.2,
+   273.2
+  ],
+  "engine_semantic": {
+   "shot_scale": "中景",
+   "camera_primitive": "static",
+   "camera_speed": "medium",
+   "subjects": "独角仙武士、螳螂武士、毛毛虫小孩",
+   "action_detail": "独角仙武士笑着指向前方，螳螂武士持剑站立，毛毛虫小孩站在树后观望。",
+   "geometry_disagreement": false,
+   "geometry_primitive": "static",
+   "frames_analyzed": 312
+  },
+  "kst_subject": "独角仙武士红棕油亮甲壳、双叉巨角、前臂缠米色绑带；首帧立身望向右侧虚化的螳螂武士背影，尾帧低头闭目神情黯然",
+  "kst_action": "与螳螂武士对视后缓缓低下头，巨角随之垂落，双目闭合，面露悲伤愧疚",
+  "dialogue_evidence": "",
+  "dialogue_note": ""
+ },
+ {
+  "shot_id": "S1_89",
+  "engine_index": 89,
+  "video_time": [
+   273.2,
+   277.07
+  ],
+  "engine_semantic": {
+   "shot_scale": "中景",
+   "camera_primitive": "static",
+   "camera_speed": "medium",
+   "subjects": "毛毛虫小孩(橙黄绒毛圆胖、头顶绿草辫)",
+   "action_detail": "毛毛虫小孩坐在苔藓上，睁大眼睛看向观众。",
+   "geometry_disagreement": false,
+   "geometry_primitive": "static",
+   "frames_analyzed": 93
+  },
+  "kst_subject": "绿肤螳螂武士与苔藓倒木上的橙黄绒毛毛毛虫小孩；尾帧螳螂背对镜头，亮出竹节长刀与缠白色绑带的前臂",
+  "kst_action": "螳螂武士由侧身凝望小孩，转为背身拔刀、横刀摆出迎战姿态；小孩在远处倒木上静立注视",
+  "dialogue_evidence": "",
+  "dialogue_note": ""
+ },
+ {
+  "shot_id": "S1_90",
+  "engine_index": 90,
+  "video_time": [
+   277.07,
+   281.27
+  ],
+  "engine_semantic": {
+   "shot_scale": "特写",
+   "camera_primitive": "static",
+   "camera_speed": "medium",
+   "subjects": "螳螂武士",
+   "action_detail": "螳螂武士低头，表情惊讶且略带困惑。",
+   "geometry_disagreement": false,
+   "geometry_primitive": "static",
+   "frames_analyzed": 101
+  },
+  "kst_subject": "全景三人：左侧独角仙武士躬身行礼，中间苔藓倒木上毛毛虫小孩居高俯瞰，右侧螳螂武士持刀肃立",
+  "kst_action": "独角仙武士向小孩深深鞠躬行礼后缓缓直起身，螳螂持刀静立，小孩居高注视",
+  "dialogue_evidence": "[阿毛] （继续数数）你还不过来了，你还不过我了……",
+  "dialogue_note": "本镜头对白由阿毛说出，情绪：数数过程中夹杂着撒娇。TTS需匹配情绪"
+ }
+]

@@ -1,0 +1,36 @@
+=== ROUND 1 17:13:03 ===
+shot 1 续盯 pid=d479320d-99eb-4cc6-9175-300b9b9c6ba9
+shot 1 完成 用时341s
+shot 57 提交失败: 
+SUBMIT_FAILED_HARD rc=2
+=== ROUND 1 17:23:39 ===
+  提交尝试1 空响应/非JSON, 15s后重试
+shot 57 提交 OK pid=e80c20cf-37ac-4da7-a0e5-8845f5dd14f7 length=107
+shot 57 完成+提取 用时1367s -> /data/workspace/kais-shot-timeline/gsrt/renderback/renders/gsrt_rb_57.mp4
+  提交尝试1 空响应/非JSON, 15s后重试
+  提交尝试2 空响应/非JSON, 15s后重试
+  提交尝试3 空响应/非JSON, 15s后重试
+  提交尝试4 空响应/非JSON, 15s后重试
+shot 64 提交失败: (empty)
+SUBMIT_FAILED_HARD rc=2
+shot 64 -> watching {}
+shot 89 -> submitting {}
+shot 89 -> watching {'submit_info': '(no response — 可能已入队, 转守望模式)'}
+shot 90 -> submitting {}
+shot 90 -> watching {'submit_info': '(no response — 可能已入队, 转守望模式)'}
+shot 64 -> done {'file': '/data/workspace/kais-shot-timeline/gsrt/renderback/renders/gsrt_rb_64.mp4'}
+GLOBAL_TIMEOUT
+RENDERBACK_V2_DONE
+  shot 1: done /data/workspace/kais-shot-timeline/gsrt/renderback/renders/gsrt_rb_1.mp4
+  shot 57: done /data/workspace/kais-shot-timeline/gsrt/renderback/renders/gsrt_rb_57.mp4
+  shot 64: done /data/workspace/kais-shot-timeline/gsrt/renderback/renders/gsrt_rb_64.mp4
+  shot 89: watching 
+  shot 90: watching 
+shot 89 -> done {'file': '/data/workspace/kais-shot-timeline/gsrt/renderback/renders/gsrt_rb_89.mp4'}
+shot 90 -> done {'file': '/data/workspace/kais-shot-timeline/gsrt/renderback/renders/gsrt_rb_90.mp4'}
+RENDERBACK_V2_DONE
+  shot 1: done /data/workspace/kais-shot-timeline/gsrt/renderback/renders/gsrt_rb_1.mp4
+  shot 57: done /data/workspace/kais-shot-timeline/gsrt/renderback/renders/gsrt_rb_57.mp4
+  shot 64: done /data/workspace/kais-shot-timeline/gsrt/renderback/renders/gsrt_rb_64.mp4
+  shot 89: done /data/workspace/kais-shot-timeline/gsrt/renderback/renders/gsrt_rb_89.mp4
+  shot 90: done /data/workspace/kais-shot-timeline/gsrt/renderback/renders/gsrt_rb_90.mp4

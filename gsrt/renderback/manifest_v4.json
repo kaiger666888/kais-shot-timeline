@@ -1,0 +1,13 @@
+[
+ {
+  "shot_id": 64,
+  "engine_index": 64,
+  "target_window": [173.6, 174.47],
+  "duration_sec": 0.87,
+  "first_frame": "/data/workspace/kais-shot-timeline/gsrt/renderback/frames/64_first.jpg",
+  "last_frame": "/data/workspace/kais-shot-timeline/gsrt/renderback/frames/64_last.jpg",
+  "target_clip": "/data/workspace/kais-shot-timeline/gsrt/renderback/targets/orig_064.mp4",
+  "length": 22,
+  "prompt_v4": "3D 动画，皮克斯级写实渲染，电影感，强动态模糊 · 森林落叶地面 · 绿色螳螂武士面部特写：白色大复眼、橙色触角，手持短刀 · 螳螂武士全速直扑镜头，面部和白色大复眼随每一帧持续放大，到最后一帧时复眼与面部已占满整个画面，强烈运动模糊 · 急推镜头，一镜到底直冲面部大特写 · 幽暗林光，逆光勾边"
+ }
+]

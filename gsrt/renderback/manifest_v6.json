@@ -1,0 +1,13 @@
+[
+ {
+  "shot_id": 64,
+  "engine_index": 64,
+  "target_window": [173.6, 174.47],
+  "duration_sec": 0.87,
+  "first_frame": "/data/workspace/kais-shot-timeline/gsrt/renderback/frames/64_first.jpg",
+  "last_frame": "/data/workspace/kais-shot-timeline/gsrt/renderback/frames/64_last.jpg",
+  "target_clip": "/data/workspace/kais-shot-timeline/gsrt/renderback/targets/orig_064.mp4",
+  "length": 22,
+  "prompt_v6": "3D 动画，皮克斯级写实渲染，电影感 · 森林落叶地面 · 绿色螳螂武士贴地疾行后直扑镜头 · 螳螂武士全速冲向镜头，扑到近前时白色前肢高速横扫过前景、前肢带强烈运动模糊，但螳螂头部保持清晰锐利对焦：白色大复眼、黑色瞳孔、眼睑结构分明，头部位于画面左侧贴近镜头 · 急推镜头，一镜到底 · 幽暗林光，逆光勾边，丁达尔光束穿透树冠"
+ }
+]

@@ -1,0 +1,102 @@
+[
+ {
+  "shot_id": 1,
+  "engine_index": 1,
+  "target_window": [
+   0.0,
+   6.73
+  ],
+  "duration_sec": 6.73,
+  "first_frame": "/data/workspace/kais-shot-timeline/gsrt/renderback/frames/1_first.jpg",
+  "last_frame": "/data/workspace/kais-shot-timeline/gsrt/renderback/frames/1_last.jpg",
+  "reverse_prompt_under_test": "3D 动画，皮克斯级写实渲染，电影感，丁达尔光，浅景深 · 原始森林，苔藓覆盖的巨树与盘根 · 毛毛虫小孩（橙黄色绒毛、圆滚身材、头顶绿色小草辫）低头抿嘴一脸委屈；尾帧独角仙武士（红棕油亮甲壳、巨大双叉弯角、前臂缠米色绑带）弯腰递上一颗红浆果 · 镜头拉出，独角仙武士俯身把红浆果递到毛毛虫小孩面前，小孩抬头望向它 · 由面部近景拉至全景，平视，拉镜头 · 丁达尔光束穿透林冠，暖绿调",
+  "camera": "由面部近景拉至全景，平视，拉镜头",
+  "scene": "原始森林，苔藓覆盖的巨树与盘根",
+  "lighting": "丁达尔光束穿透林冠，暖绿调",
+  "style": "3D 动画，皮克斯级写实渲染，电影感，丁达尔光，浅景深",
+  "subject": "毛毛虫小孩（橙黄色绒毛、圆滚身材、头顶绿色小草辫）低头抿嘴一脸委屈；尾帧独角仙武士（红棕油亮甲壳、巨大双叉弯角、前臂缠米色绑带）弯腰递上一颗红浆果",
+  "action": "镜头拉出，独角仙武士俯身把红浆果递到毛毛虫小孩面前，小孩抬头望向它",
+  "length": 158,
+  "est_sec": 6.58
+ },
+ {
+  "shot_id": 57,
+  "engine_index": 57,
+  "target_window": [
+   153.47,
+   157.73
+  ],
+  "duration_sec": 4.26,
+  "first_frame": "/data/workspace/kais-shot-timeline/gsrt/renderback/frames/57_first.jpg",
+  "last_frame": "/data/workspace/kais-shot-timeline/gsrt/renderback/frames/57_last.jpg",
+  "reverse_prompt_under_test": "3D 动画,皮克斯级写实渲染,电影感,丁达尔光 · 林地落叶地面,盘根错节 · 独角仙武士将暗红红蜈蚣压制在落叶地面,随后起身面向右侧持刀站立的螳螂武士 · 独角仙武士从压制蜈蚣的姿态起身站直,转向螳螂武士商议对策 · 全景低角度,固定,右侧前景螳螂腿部入画 · 丁达尔光束,暖绿调",
+  "camera": "全景低角度,固定,右侧前景螳螂腿部入画",
+  "scene": "林地落叶地面,盘根错节",
+  "lighting": "丁达尔光束,暖绿调",
+  "style": "3D 动画,皮克斯级写实渲染,电影感,丁达尔光",
+  "subject": "独角仙武士将暗红红蜈蚣压制在落叶地面,随后起身面向右侧持刀站立的螳螂武士",
+  "action": "独角仙武士从压制蜈蚣的姿态起身站直,转向螳螂武士商议对策",
+  "length": 107,
+  "est_sec": 4.46
+ },
+ {
+  "shot_id": 64,
+  "engine_index": 64,
+  "target_window": [
+   173.6,
+   174.47
+  ],
+  "duration_sec": 0.87,
+  "first_frame": "/data/workspace/kais-shot-timeline/gsrt/renderback/frames/64_first.jpg",
+  "last_frame": "/data/workspace/kais-shot-timeline/gsrt/renderback/frames/64_last.jpg",
+  "reverse_prompt_under_test": "3D 动画，皮克斯级写实渲染，电影感，强动态模糊 · 森林落叶地面 · 螳螂武士，绿色纤细身材、白色大复眼、橙色触角，手持短刀压低身形贴地疾行 · 螳螂武士持刀贴地疾冲突进，最后直扑镜头，画面带强烈速度模糊 · 低角度近景转面部大特写，跟拍急推 · 幽暗林光，逆光勾边",
+  "camera": "低角度近景转面部大特写，跟拍急推",
+  "scene": "森林落叶地面",
+  "lighting": "幽暗林光，逆光勾边",
+  "style": "3D 动画，皮克斯级写实渲染，电影感，强动态模糊",
+  "subject": "螳螂武士，绿色纤细身材、白色大复眼、橙色触角，手持短刀压低身形贴地疾行",
+  "action": "螳螂武士持刀贴地疾冲突进，最后直扑镜头，画面带强烈速度模糊",
+  "length": 22,
+  "est_sec": 0.92
+ },
+ {
+  "shot_id": 89,
+  "engine_index": 89,
+  "target_window": [
+   273.2,
+   277.07
+  ],
+  "duration_sec": 3.87,
+  "first_frame": "/data/workspace/kais-shot-timeline/gsrt/renderback/frames/89_first.jpg",
+  "last_frame": "/data/workspace/kais-shot-timeline/gsrt/renderback/frames/89_last.jpg",
+  "reverse_prompt_under_test": "3D 动画，皮克斯级写实渲染，电影感浅景深 · 原始森林，苔藓覆盖的倒木，巨树林立 · 绿肤螳螂武士与苔藓倒木上的橙黄绒毛毛毛虫小孩；尾帧螳螂背对镜头，亮出竹节长刀与缠白色绑带的前臂 · 螳螂武士由侧身凝望小孩，转为背身拔刀、横刀摆出迎战姿态；小孩在远处倒木上静立注视 · 中景，平视，固定，焦点随动作微移 · 柔和自然光，林间薄雾，冷绿色调",
+  "camera": "中景，平视，固定，焦点随动作微移",
+  "scene": "原始森林，苔藓覆盖的倒木，巨树林立",
+  "lighting": "柔和自然光，林间薄雾，冷绿色调",
+  "style": "3D 动画，皮克斯级写实渲染，电影感浅景深",
+  "subject": "绿肤螳螂武士与苔藓倒木上的橙黄绒毛毛毛虫小孩；尾帧螳螂背对镜头，亮出竹节长刀与缠白色绑带的前臂",
+  "action": "螳螂武士由侧身凝望小孩，转为背身拔刀、横刀摆出迎战姿态；小孩在远处倒木上静立注视",
+  "length": 90,
+  "est_sec": 3.75
+ },
+ {
+  "shot_id": 90,
+  "engine_index": 90,
+  "target_window": [
+   277.07,
+   281.27
+  ],
+  "duration_sec": 4.2,
+  "first_frame": "/data/workspace/kais-shot-timeline/gsrt/renderback/frames/90_first.jpg",
+  "last_frame": "/data/workspace/kais-shot-timeline/gsrt/renderback/frames/90_last.jpg",
+  "reverse_prompt_under_test": "3D 动画，皮克斯级写实渲染，电影感 · 原始森林，巨树盘根、蕨类苔藓、倒木横陈 · 全景三人：左侧独角仙武士躬身行礼，中间苔藓倒木上毛毛虫小孩居高俯瞰，右侧螳螂武士持刀肃立 · 独角仙武士向小孩深深鞠躬行礼后缓缓直起身，螳螂持刀静立，小孩居高注视 · 全景，平视略仰，固定 · 丁达尔光束穿透树冠，暖绿交织，庄重史诗感",
+  "camera": "全景，平视略仰，固定",
+  "scene": "原始森林，巨树盘根、蕨类苔藓、倒木横陈",
+  "lighting": "丁达尔光束穿透树冠，暖绿交织，庄重史诗感",
+  "style": "3D 动画，皮克斯级写实渲染，电影感",
+  "subject": "全景三人：左侧独角仙武士躬身行礼，中间苔藓倒木上毛毛虫小孩居高俯瞰，右侧螳螂武士持刀肃立",
+  "action": "独角仙武士向小孩深深鞠躬行礼后缓缓直起身，螳螂持刀静立，小孩居高注视",
+  "length": 107,
+  "est_sec": 4.46
+ }
+]

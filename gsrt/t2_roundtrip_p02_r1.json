@@ -1,0 +1,67 @@
+{
+ "per_beat": [
+  [
+   "Opening Image",
+   0.098
+  ],
+  [
+   "Theme Stated",
+   0.1
+  ],
+  [
+   "Set-Up",
+   0.09
+  ],
+  [
+   "Catalyst",
+   0.135
+  ],
+  [
+   "Debate",
+   0.066
+  ],
+  [
+   "Break into Two",
+   0.136
+  ],
+  [
+   "B Story",
+   0.149
+  ],
+  [
+   "Fun and Games",
+   0.051
+  ],
+  [
+   "Midpoint",
+   0.08
+  ],
+  [
+   "Bad Guys Close In",
+   0.115
+  ],
+  [
+   "All Is Lost",
+   0.135
+  ],
+  [
+   "Dark Night of the Soul",
+   0.103
+  ],
+  [
+   "Break into Three",
+   0.11
+  ],
+  [
+   "Finale",
+   0.079
+  ],
+  [
+   "Final Image",
+   0.051
+  ]
+ ],
+ "median": 0.1,
+ "mean": 0.1,
+ "oneliner": 0.0
+}

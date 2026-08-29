@@ -1,0 +1,63 @@
+{
+ "pilot": "GSRT ep01 P02 往返+视频仲裁试点",
+ "judged_at": "2026-08-28T07:58:27.613628+00:00",
+ "verdict": {
+  "T2_roundtrip_similarity": {
+   "median": 0.1,
+   "mean": 0.1,
+   "oneliner": null,
+   "note": "往返臂产出同DNA不同戏剧选择的故事(神话破产+断刀+数数卡十 vs 金标委屈浆果+苦战策略胜)。结构15/15 beat对齐,内容级分叉。"
+  },
+  "video_arbitration": {
+   "frames_checked": [
+    2,
+    8,
+    240,
+    255,
+    262,
+    270,
+    285,
+    290,
+    295,
+    300,
+    303
+   ],
+   "asr_full_tail": "221s承诺→227s『告诉你个秘密/其实我们不是亲爷俩』→239s『我时间不够了』→250s托孤『这个孩子我就托付给你了』→272-286s数数61→100→286-296s『爸爸你在哪儿』→297-305s『他骗了我/我要去把他找回来』",
+   "opening_check": "金标忠实(t2帧=委屈+递红浆果,与金标Opening Image精确吻合)",
+   "midgame_check": "t240父亲从容占优(往返臂『掀翻神话破产』为虚构;但『借兄弟宝刀一用』暗示断刀元素有真实影子)",
+   "ending_check": "金标P02结尾层失实——Finale『温暖约定收尾』遗漏227-305s(78秒=25%时长)的托孤+离别+寻父层"
+  },
+  "golden_p02_defects": [
+   {
+    "severity": "material",
+    "beat": "Finale/Final Image",
+    "golden": "数到一百=成长契约,温暖期待收尾,情绪弧终于『温暖·成长萌芽』",
+    "actual": "数到一百=父亲离别的调虎离山装置;真结局=托孤+消失+『他骗了我』+主动寻父;情绪弧应终于离别之痛→寻父决心",
+    "corroborating": "片名《爸爸去哪儿?》只有悲壮版结局才成立;demo run 被改的requirement(悲壮/生死离别/告别)实为忠实于原片——此前判其『不忠实』是我错了"
+   },
+   {
+    "severity": "minor",
+    "beat": "Midpoint",
+    "golden": "3:30-3:45『打完收工了』假高潮",
+    "actual": "时间码漂移:金标全片beat时间轴整体偏移,Finale标5:00实际承诺在3:41;Final Image时间码5:10-5:08格式坏"
+   },
+   {
+    "severity": "minor",
+    "beat": "Catalyst/B Story",
+    "golden": "称对手为蜈蚣+黑头前辈功能性角色",
+    "actual": "托孤对象=前辈且戏份重(教功夫受托);t240帧对手形态似螳螂(需更多帧确认真身,金标蜈蚣存疑)"
+   }
+  ],
+  "gsrt_protocol_validation": {
+   "T2_alone": "不足定谳(压缩半径+自由度半径混杂)",
+   "T2+video": "首例试点即抓到金标material级失真——Kai的假设被证实:金集推断层未经视频验证,不能当绝对零点",
+   "methodology": "逐步往返+视频仲裁的路线正确且必要"
+  }
+ },
+ "actions": [
+  "P1: 依ASR锚定重写金标P02 Finale/Final Image/emotion_curve尾段(修正稿见 golden_p02_fix_proposal.json)",
+  "P2: 复测:修正后金标重注→往返臂r2,期望相似度显著上升",
+  "P3: 扩展:同法审P03剧本层与P09结尾镜emotion/felt_intent(272-305s区间高风险)",
+  "P4: 金标metadata加gsrt_validation字段,记录验证等级(anchored/roundtrip_ok/video_arbitrated)"
+ ]
+}

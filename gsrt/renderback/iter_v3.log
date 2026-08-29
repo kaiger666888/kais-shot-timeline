@@ -1,0 +1,12 @@
+[00:24:37] watcher start — waiting for ComfyUI queue drain
+[02:05:01] DEADLINE hit — GPU still busy, NOT submitting
+=== shot 64 submit (v3) ===
+  pid=2034c5c3-d2d2-43f0-a9ff-94b04e45b537 info={"code":200,"data":{"promptId":"2034c5c3-d2d2-43f0-a9ff-94b04e45b537","status":"submitted","mode":"fl2va","estimatedTime
+  -> /data/workspace/kais-shot-timeline/gsrt/renderback/renders_iter/gsrt_v3_64_00001_.mp4
+=== shot 89 submit (v3) ===
+  pid=a6a62ab3-d87c-4ac4-a34d-75a32ac471cf info={"code":200,"data":{"promptId":"a6a62ab3-d87c-4ac4-a34d-75a32ac471cf","status":"submitted","mode":"fl2va","estimatedTime
+  -> /data/workspace/kais-shot-timeline/gsrt/renderback/renders_iter/gsrt_v3_89_00001_.mp4
+=== shot 90 submit (v3) ===
+  pid=57fd4b27-68d4-4e8c-b80a-abca01ce4cff info={"code":200,"data":{"promptId":"57fd4b27-68d4-4e8c-b80a-abca01ce4cff","status":"submitted","mode":"fl2va","estimatedTime
+  -> /data/workspace/kais-shot-timeline/gsrt/renderback/renders_iter/gsrt_v3_90_00001_.mp4
+ALL_SUBMITTED {"64": true, "89": true, "90": true}

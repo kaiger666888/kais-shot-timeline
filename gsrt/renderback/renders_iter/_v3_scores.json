@@ -1,0 +1,23 @@
+{
+ "64": {
+  "file": "/data/workspace/kais-shot-timeline/gsrt/renderback/renders_iter/gsrt_v3_64_00001_.mp4",
+  "anchor_first_diff": 0,
+  "anchor_last_diff": 19,
+  "pass_anchors": false,
+  "midbeats": "/data/workspace/kais-shot-timeline/gsrt/renderback/renders_iter/64_midbeats_raw/"
+ },
+ "89": {
+  "file": "/data/workspace/kais-shot-timeline/gsrt/renderback/renders_iter/gsrt_v3_89_00001_.mp4",
+  "anchor_first_diff": 0,
+  "anchor_last_diff": 1,
+  "pass_anchors": true,
+  "midbeats": "/data/workspace/kais-shot-timeline/gsrt/renderback/renders_iter/89_midbeats_raw/"
+ },
+ "90": {
+  "file": "/data/workspace/kais-shot-timeline/gsrt/renderback/renders_iter/gsrt_v3_90_00001_.mp4",
+  "anchor_first_diff": 1,
+  "anchor_last_diff": 2,
+  "pass_anchors": true,
+  "midbeats": "/data/workspace/kais-shot-timeline/gsrt/renderback/renders_iter/90_midbeats_raw/"
+ }
+}
