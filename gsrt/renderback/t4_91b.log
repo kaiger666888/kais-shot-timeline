@@ -1,0 +1,3 @@
+[16:33:30] shot91 retry submit (len=90)
+submit resp: {"code":200,"data":{"promptId":"8eca659f-f4d1-4ec6-aee3-148edcd013b9","status":"submitted","mode":"fl2va","estimatedTime":"6-12 min","pollUrl":"/api/production/minimax-h3/status/8eca659f-f4d1-4ec6-aee
+DONE /data/workspace/kais-shot-timeline/gsrt/renderback/renders_iter/gsrt_t4_91b_00001_.mp4

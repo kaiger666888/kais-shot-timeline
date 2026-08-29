@@ -1,0 +1,18 @@
+=== [14:08:02] shot91 submit (len=90) ===
+    submit resp: {"code":400,"data":{"kind":"vram_insufficient","engine":"minimax_h3","freeMiB":10898,"requiredMiB":18432,"gpuIndex":1},"message":"vram_insufficient: e
+    [15:02:52] shot91: TIMEOUT_NO_OUTPUT
+=== [15:02:52] shot92 submit (len=124) ===
+    submit resp: {"code":200,"data":{"promptId":"fb9a07d4-0424-4ab2-a530-11dcca709bd2","status":"submitted","mode":"fl2va","estimatedTime":"6-12 min","pollUrl":"/api/p
+    [15:41:09] shot92: DONE /data/workspace/kais-shot-timeline/gsrt/renderback/renders_iter/gsrt_t4_92_00001_.mp4
+=== [15:41:09] shot93 submit (len=226) ===
+    submit resp: {"code":200,"data":{"promptId":"2ceefd11-bfd4-423b-a8fe-c8d6d58524cd","status":"submitted","mode":"fl2va","estimatedTime":"6-12 min","pollUrl":"/api/p
+    [16:06:20] shot93: TIMEOUT_NO_OUTPUT
+=== [16:06:20] shot94 submit (len=226) ===
+    submit resp: {"code":200,"data":{"promptId":"fd81a387-70d2-4f00-8b98-f339e7dd5fd2","status":"submitted","mode":"fl2va","estimatedTime":"6-12 min","pollUrl":"/api/p
+    [16:31:31] shot94: DONE /data/workspace/kais-shot-timeline/gsrt/renderback/renders_iter/gsrt_t4_94_00001_.mp4
+
+=== SUMMARY ===
+shot91: FAILED
+shot92: /data/workspace/kais-shot-timeline/gsrt/renderback/renders_iter/gsrt_t4_92_00001_.mp4
+shot93: FAILED
+shot94: /data/workspace/kais-shot-timeline/gsrt/renderback/renders_iter/gsrt_t4_94_00001_.mp4

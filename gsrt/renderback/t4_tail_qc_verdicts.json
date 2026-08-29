@@ -20,12 +20,16 @@
    "verdict": "PASS(条件帧字幕伪影在案)"
   },
   "91": {
-   "status": "渲染中(KAP gpuQueue放行后ComfyUI排队, promptId=8eca659f)"
+   "pixel": "d_first=3.9 d_last=11.3 LIGHT_DRIFT(临界, 同92族)",
+   "vision": "躬身节拍全程在; 原片O90/O97同为躬身(该窗口原片本就未离开) → 渲染尾段状态与原片一致; 毛毛虫掩面动作渲染未复现(远景小主体), 原片同窗口也仅为前倾趋势",
+   "note": "转身离开动作原片在此窗口未发生, 渲染如实复现窗口内容; 两次vision均证实渲染与原片尾段状态一致",
+   "verdict": "PASS(躬身复现; 离开动作不在窗口内)"
   }
  },
  "infra": {
   "shot91首提": "vram_insufficient 400拒绝(外部任务占卡) → free缓存后91b重提成功",
-  "shot93救回": "容器迟到产物 docker cp 补收(本地48B残片覆盖为4.65MB完整)"
+  "shot93救回": "容器迟到产物 docker cp 补收(本地48B残片覆盖为4.65MB完整)",
+  "shot91落地": "vram拒绝→free→91b重提(promptId 8eca659f)→ComfyUI排队→90帧3.75s落地→QC PASS"
  },
  "rejected_qc_mistake": "92的75%单点FAIL判读被尾帧核实推翻——vision单点采样判节拍需末端加密采样复核(skill v1.1收敛硬规的QC侧同款纪律)"
 }

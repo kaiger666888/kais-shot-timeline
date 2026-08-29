@@ -102,7 +102,11 @@ KST 产出的不是"一份金标"，而是**分级信任的资产**。`golden-se
   =绿螳螂」名字误导编造实锤），尾段补采 +5 镜（S1_91-95，时间轴 308.6s 闭合原片），
   T3 尾段盲标 PASS（族内警示在案）。**EP01 成为首部全链锚定、可整集出库的标准集。**
   收官报告：`gsrt/ep01_fullchain_closure_20260829.md`；金标集 git `~/learning_sets`（a8ab2dd）
-- [ ] c) T4 尾段 4 镜 render-back 回收 + QC 判收敛（渲染中，manifest_v8）
+- [x] c) T4 尾段 4 镜 render-back 回收 + QC 判收敛（2026-08-29 收官 **4/4 PASS**，manifest_v8）：
+  92 节拍后移~10%备注 PASS / 93 拉远一镜到底 ANCHORED / 94 航拍全对（条件帧字幕伪影在案不计判分）/
+  91b 躬身复现 PASS（d_last=11.3 临界同 92 族；原片窗口内本就未离开，渲染如实复现）。
+  QC 纪律：vision 单点 FAIL 判读必须末端加密采样复核（92 翻案 + 91 原片对照双实证）。台账
+  `gsrt/renderback/t4_tail_qc_verdicts.json`（判定+infra 救回记录）/ `t4_tail_results.json`
 - [ ] d) T4 出厂检验常态化：新 episode 金标打包前抽样 5-6 镜（≈5 镜 × 40min GPU）
 
 ### P1 — prompt 层规模化（循环二从抽样到全覆盖的路径）

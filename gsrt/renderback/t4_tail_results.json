@@ -1,6 +1,10 @@
 {
- "91": null,
+ "91": "/data/workspace/kais-shot-timeline/gsrt/renderback/renders_iter/gsrt_t4_91b_00001_.mp4",
  "92": "/data/workspace/kais-shot-timeline/gsrt/renderback/renders_iter/gsrt_t4_92_00001_.mp4",
- "93": null,
- "94": "/data/workspace/kais-shot-timeline/gsrt/renderback/renders_iter/gsrt_t4_94_00001_.mp4"
+ "93": "/data/workspace/kais-shot-timeline/gsrt/renderback/renders_iter/gsrt_t4_93_00001_.mp4",
+ "94": "/data/workspace/kais-shot-timeline/gsrt/renderback/renders_iter/gsrt_t4_94_00001_.mp4",
+ "notes": {
+  "91": "首提 vram_insufficient 400 拒绝(外部占卡) → 91b 重提成功; 文件名 91b 与 manifest prefix 差异如实记录",
+  "93": "本地 48B 残片(渲染未完成时 docker cp) → 容器迟到产物补收为完整 4.65MB"
+ }
 }
