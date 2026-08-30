@@ -47,3 +47,5 @@ shot 1/57 首轮已通过不重渲（省 GPU）。
 - **提交通道统一 tmux（v4 事故）**：execute_code/脚本环境里 `nohup+Popen` 会因管道残留把同一提交脚本拉起多份（v4 实锤 3 连发 → KAP gpuQueue position=1/2/3 + ComfyUI pending×3）。纪律：渲染提交一律 `tmux new-session -d -s <tag> "python3 submit..."`；误重复后用 ComfyUI `/queue` POST `{"delete":[prompt_id...]}` 清 pending（只留 running）；KAP gpuQueue 无 cancel API，堵在 KAP 层时只能等 retry 或清 VRAM。
 - **KAP 空响应≠失败**：curl 等 gpuQueue 锁会挂 5-25min 无输出，journalctl `gpuQueue enqueue position=N` 才是入队铁证；先查日志再决定是否重提，否则必重复入队。
 - **GPU 让路**：H3 需要 18.4G，IndexTTS-server (root进程) 占 6.9G 时差 1.8G 排不上队 → `sudo -n kill`（免密 sudo 通道，普通 kill 对 root 进程静默失败）；TTS 空闲期可断，盲测要用时重启服务即可。
+
+- **vision 高速模糊帧误读（64 复查实锤）**：grid 缩略图里运动模糊的横扫前肢会被 vision 误读成"嘴和牙齿"等不存在物体。纪律：对模糊帧的单点事实判定必须单独放大原图复验，grid 判读只用于构图/节拍级；两次判读矛盾时以放大原图为准。

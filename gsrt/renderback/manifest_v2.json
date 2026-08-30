@@ -2,19 +2,30 @@
  {
   "shot_id": 64,
   "engine_index": 64,
-  "target_window": [173.6, 174.47],
+  "target_window": [
+   173.6,
+   174.47
+  ],
   "duration_sec": 0.87,
   "first_frame": "/data/workspace/kais-shot-timeline/gsrt/renderback/frames/64_first.jpg",
   "last_frame": "/data/workspace/kais-shot-timeline/gsrt/renderback/frames/64_last.jpg",
   "target_clip": "/data/workspace/kais-shot-timeline/gsrt/renderback/targets/orig_064.mp4",
   "length": 22,
   "v1_verdict": "边界镜: 首尾锚钉住, 但'贴地疾行→面部大特写扑面'的景别演进被渲染为'疾行→全身掠过'。0.87s 内完成特写推进是 H3 turbo 边界。v2 策略: 前置+量化景别终点(面部占满画面), 显式两段式推进节拍; 若仍不达 → 锁定prompt(描述准确, 引擎边界)。",
-  "prompt_v2": "3D 动画，皮克斯级写实渲染，电影感，强动态模糊 · 森林落叶地面 · 螳螂武士，绿色纤细身材、白色大复眼、橙色触角，手持短刀压低身形贴地疾行 · 螳螂武士贴地疾行掠过镜头前沿，面部随之急剧放大逼近，最后白色大复眼与面部特写占满整个画面，扑面而来，画面带强烈速度模糊 · 低角度起幅连续急推到面部大特写，一镜到底 · 幽暗林光，逆光勾边"
+  "prompt_v2": "3D 动画，皮克斯级写实渲染，电影感，强动态模糊 · 森林落叶地面 · 螳螂武士，绿色纤细身材、白色大复眼、橙色触角，手持短刀压低身形贴地疾行 · 螳螂武士贴地疾行掠过镜头前沿，面部随之急剧放大逼近，最后白色大复眼与面部特写占满整个画面，扑面而来，画面带强烈速度模糊 · 低角度起幅连续急推到面部大特写，一镜到底 · 幽暗林光，逆光勾边",
+  "physical_handover_check": {
+   "check": "动作物理交接",
+   "verdict": "PASS(引擎边界维持)",
+   "notes": "0.1→0.7s推进方向两边一致(全身→中景→特写)；原片尾帧GT复核=头在左+前肢横扫(前次vision误读'嘴牙'为grid模糊伪影,按降级纪律人工复核纠正)；0.85s渲染=同向演进+强运动模糊,维持'构图级85%+turbo引擎边界'原锁定"
+  }
  },
  {
   "shot_id": 89,
   "engine_index": 89,
-  "target_window": [273.2, 277.07],
+  "target_window": [
+   273.2,
+   277.07
+  ],
   "duration_sec": 3.87,
   "first_frame": "/data/workspace/kais-shot-timeline/gsrt/renderback/frames/89_first.jpg",
   "last_frame": "/data/workspace/kais-shot-timeline/gsrt/renderback/frames/89_last.jpg",
@@ -26,13 +37,21 @@
  {
   "shot_id": 90,
   "engine_index": 90,
-  "target_window": [277.07, 281.27],
+  "target_window": [
+   277.07,
+   281.27
+  ],
   "duration_sec": 4.46,
   "first_frame": "/data/workspace/kais-shot-timeline/gsrt/renderback/frames/90_first.jpg",
   "last_frame": "/data/workspace/kais-shot-timeline/gsrt/renderback/frames/90_last.jpg",
   "target_clip": "/data/workspace/kais-shot-timeline/gsrt/renderback/targets/orig_090.mp4",
   "length": 107,
   "v1_verdict": "双锚钉住(3.8/12.1), 躬身行礼动作清晰发生但幅度略浅于原片。v2 策略: 量化鞠躬深度(90度深鞠躬, 上身弯至与地面平行, 头部低垂)。",
-  "prompt_v2": "3D 动画，皮克斯级写实渲染，电影感 · 原始森林，巨树盘根、蕨类苔藓、倒木横陈 · 全景三人：左侧独角仙武士躬身行礼，中间苔藓倒木上毛毛虫小孩居高俯瞰，右侧螳螂武士持刀肃立 · 独角仙武士向小孩深深鞠躬行礼，上身弯至与地面平行，头部深深低垂，停顿一拍后缓缓直起身；螳螂持刀静立不动，小孩居高凝视 · 全景，平视略仰，固定 · 丁达尔光束穿透树冠，暖绿交织，庄重史诗感"
+  "prompt_v2": "3D 动画，皮克斯级写实渲染，电影感 · 原始森林，巨树盘根、蕨类苔藓、倒木横陈 · 全景三人：左侧独角仙武士躬身行礼，中间苔藓倒木上毛毛虫小孩居高俯瞰，右侧螳螂武士持刀肃立 · 独角仙武士向小孩深深鞠躬行礼，上身弯至与地面平行，头部深深低垂，停顿一拍后缓缓直起身；螳螂持刀静立不动，小孩居高凝视 · 全景，平视略仰，固定 · 丁达尔光束穿透树冠，暖绿交织，庄重史诗感",
+  "physical_handover_check": {
+   "check": "动作物理交接",
+   "verdict": "PASS",
+   "notes": "托孤镜无物品交接（两边一致）；鞠躬深度/起身/收尾定格全程同拍；甲虫长辈深躬→起身→直立节奏一致"
+  }
  }
 ]

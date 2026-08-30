@@ -1,0 +1,51 @@
+{
+ "date": "2026-08-29",
+ "page": "gsrt-blind-5shot.html",
+ "pairs": {
+  "1": {
+   "desc": "逗小孩递苹果",
+   "A_file": "bt_s1_A.mp4",
+   "B_file": "bt_s1_B.mp4",
+   "A_truth": "render",
+   "B_truth": "target",
+   "A_src": "/data/workspace/kais-shot-timeline/gsrt/renderback/renders/gsrt_rb_1.mp4",
+   "B_src": "/data/workspace/kais-shot-timeline/gsrt/renderback/targets/orig_001.mp4"
+  },
+  "57": {
+   "desc": "对峙亮刀",
+   "A_file": "bt_s57_A.mp4",
+   "B_file": "bt_s57_B.mp4",
+   "A_truth": "target",
+   "B_truth": "render",
+   "A_src": "/data/workspace/kais-shot-timeline/gsrt/renderback/targets/orig_057.mp4",
+   "B_src": "/data/workspace/kais-shot-timeline/gsrt/renderback/renders/gsrt_rb_57.mp4"
+  },
+  "89": {
+   "desc": "拔刀亮刃",
+   "A_file": "bt_s89_A.mp4",
+   "B_file": "bt_s89_B.mp4",
+   "A_truth": "render",
+   "B_truth": "target",
+   "A_src": "/data/workspace/kais-shot-timeline/gsrt/renderback/renders_iter/gsrt_v4_89_00001_.mp4",
+   "B_src": "/data/workspace/kais-shot-timeline/gsrt/renderback/targets/orig_089.mp4"
+  },
+  "90": {
+   "desc": "鞠躬托孤",
+   "A_file": "bt_s90_A.mp4",
+   "B_file": "bt_s90_B.mp4",
+   "A_truth": "target",
+   "B_truth": "render",
+   "A_src": "/data/workspace/kais-shot-timeline/gsrt/renderback/targets/orig_090.mp4",
+   "B_src": "/data/workspace/kais-shot-timeline/gsrt/renderback/renders/gsrt_rb_90.mp4"
+  },
+  "64": {
+   "desc": "急扑特写",
+   "A_file": "bt_s64_A.mp4",
+   "B_file": "bt_s64_B.mp4",
+   "A_truth": "target",
+   "B_truth": "render",
+   "A_src": "/data/workspace/kais-shot-timeline/gsrt/renderback/targets/orig_064.mp4",
+   "B_src": "/data/workspace/kais-shot-timeline/gsrt/renderback/renders/gsrt_rb_64.mp4"
+  }
+ }
+}
