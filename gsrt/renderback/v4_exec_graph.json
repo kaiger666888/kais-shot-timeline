@@ -1,0 +1,252 @@
+{
+ "1": {
+  "class_type": "LoadAudio",
+  "inputs": {
+   "audio": "gsrt/s89_vocals.wav"
+  }
+ },
+ "2": {
+  "class_type": "MiniMaxH3AudioWindowT8",
+  "inputs": {
+   "audio": [
+    "1",
+    0
+   ],
+   "scene_start_seconds": 0.0,
+   "scene_duration_seconds": 4.1,
+   "warmup_seconds": 0.0,
+   "cooldown_seconds": 0.0,
+   "ensure_minimum_context": true
+  }
+ },
+ "3": {
+  "class_type": "VAELoader",
+  "inputs": {
+   "vae_name": "minimax_h3_video_vae_fp16.safetensors"
+  }
+ },
+ "4": {
+  "class_type": "VAELoader",
+  "inputs": {
+   "vae_name": "minimax_h3_audio_vae_fp32.safetensors"
+  }
+ },
+ "5": {
+  "class_type": "CLIPLoader",
+  "inputs": {
+   "clip_name": "qwen3vl_32b_minimax_h3_nvfp4_awq.safetensors",
+   "type": "minimax",
+   "device": "default"
+  }
+ },
+ "6": {
+  "class_type": "UNETLoader",
+  "inputs": {
+   "unet_name": "minimax_h3_fl2va_int8_convrot.safetensors",
+   "weight_dtype": "default"
+  }
+ },
+ "17": {
+  "class_type": "LoraLoaderBypassModelOnly",
+  "inputs": {
+   "model": [
+    "6",
+    0
+   ],
+   "lora_name": "minimax_h3_turbo_4step_original_comfyui.safetensors",
+   "strength_model": 1.0,
+   "strength_clip": 0.0
+  }
+ },
+ "7": {
+  "class_type": "MiniMaxH3SigmaShift",
+  "inputs": {
+   "model": [
+    "17",
+    0
+   ],
+   "shift_video": 12.0,
+   "shift_audio": 3.0
+  }
+ },
+ "18": {
+  "class_type": "LoadImage",
+  "inputs": {
+   "image": "gsrt/s89_first_1344.jpg"
+  }
+ },
+ "19": {
+  "class_type": "LoadImage",
+  "inputs": {
+   "image": "gsrt/s89_last_1344.jpg"
+  }
+ },
+ "8": {
+  "class_type": "MiniMaxH3AudioConditioningT8",
+  "inputs": {
+   "clip": [
+    "5",
+    0
+   ],
+   "video_vae": [
+    "3",
+    0
+   ],
+   "audio_vae": [
+    "4",
+    0
+   ],
+   "length": [
+    "2",
+    1
+   ],
+   "drive_audio": [
+    "2",
+    0
+   ],
+   "first_frame": [
+    "18",
+    0
+   ],
+   "last_frame": [
+    "19",
+    0
+   ],
+   "prompt": "3D animation, Pixar-level rendering, cinematic shallow depth of field. Primeval forest, moss-covered fallen logs, towering trees. A green mantis warrior, both bandaged hands gripping a vertical bamboo katana with blade tip pointing down, slowly bows forward from the waist throughout the whole shot: he starts slightly bowed and sinks deeper and deeper until his back is arched high, head hanging very low beside the katana, eyes closed in a reverent bow; the katana never rises, never lifts, stays tip-down in his hands the entire time. An orange fuzzy caterpillar child in the far background covers its eyes with both paws, counting numbers aloud, fully diegetic sound, no other speech, no scored music, strictly diegetic in-world sound, unscored scene. Medium shot, eye level, locked camera, static tripod.",
+   "width": 1344,
+   "height": 768,
+   "task_type": "FL2VA",
+   "audio_mode": "lock_source",
+   "audio_denoise_strength": 0.0,
+   "add_source_as_reference": false,
+   "prompt_primary_audio_ordinal": 1,
+   "strict_prompt_tags": true,
+   "ref_image_size": "match",
+   "reference_video_policy": "official_2_to_15s"
+  }
+ },
+ "9": {
+  "class_type": "RandomNoise",
+  "inputs": {
+   "noise_seed": 43
+  }
+ },
+ "10": {
+  "class_type": "BasicGuider",
+  "inputs": {
+   "model": [
+    "7",
+    0
+   ],
+   "conditioning": [
+    "8",
+    0
+   ]
+  }
+ },
+ "11": {
+  "class_type": "KSamplerSelect",
+  "inputs": {
+   "sampler_name": "res_multistep"
+  }
+ },
+ "12": {
+  "class_type": "BasicScheduler",
+  "inputs": {
+   "model": [
+    "7",
+    0
+   ],
+   "scheduler": "simple",
+   "steps": 4,
+   "denoise": 1.0
+  }
+ },
+ "13": {
+  "class_type": "SamplerCustomAdvanced",
+  "inputs": {
+   "noise": [
+    "9",
+    0
+   ],
+   "guider": [
+    "10",
+    0
+   ],
+   "sampler": [
+    "11",
+    0
+   ],
+   "sigmas": [
+    "12",
+    0
+   ],
+   "latent_image": [
+    "8",
+    1
+   ]
+  }
+ },
+ "14": {
+  "class_type": "MiniMaxH3AVDecodeT8",
+  "inputs": {
+   "av_latent": [
+    "13",
+    0
+   ],
+   "video_vae": [
+    "3",
+    0
+   ],
+   "audio_vae": [
+    "4",
+    0
+   ]
+  }
+ },
+ "15": {
+  "class_type": "MiniMaxH3OutputTrimT8",
+  "inputs": {
+   "start_seconds": [
+    "2",
+    2
+   ],
+   "duration_seconds": [
+    "2",
+    3
+   ],
+   "frames": [
+    "14",
+    0
+   ],
+   "audio": [
+    "8",
+    2
+   ],
+   "fps": 24.0
+  }
+ },
+ "16": {
+  "class_type": "VHS_VideoCombine",
+  "inputs": {
+   "images": [
+    "15",
+    0
+   ],
+   "audio": [
+    "15",
+    1
+   ],
+   "frame_rate": 24.0,
+   "loop_count": 0,
+   "filename_prefix": "gsrt_a2v_s89_v5",
+   "format": "video/h264-mp4",
+   "pix_fmt": "yuv420p",
+   "crf": 19,
+   "save_metadata": true,
+   "trim_to_audio": false,
+   "pingpong": false,
+   "save_output": true
+  }
+ }
+}
