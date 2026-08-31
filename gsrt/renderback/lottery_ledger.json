@@ -1,0 +1,159 @@
+{
+ "shot": 89,
+ "date": "2026-08-30",
+ "gates": {
+  "ssim": 0.55,
+  "semantic": 0.75
+ },
+ "lottery": {
+  "n_seeds": 8,
+  "ranked": [
+   {
+    "seed": "7",
+    "ssim_mean": 0.5338,
+    "sem_mean": 0.833,
+    "ssim_pass": false,
+    "sem_pass": true,
+    "overall": false,
+    "dips": {
+     "ssim": [
+      [
+       16,
+       18
+      ]
+     ],
+     "sem": []
+    }
+   },
+   {
+    "seed": "100",
+    "ssim_mean": 0.5586,
+    "sem_mean": 0.8301,
+    "ssim_pass": true,
+    "sem_pass": true,
+    "overall": true,
+    "dips": {
+     "ssim": [],
+     "sem": []
+    }
+   },
+   {
+    "seed": "2026",
+    "ssim_mean": 0.5008,
+    "sem_mean": 0.7983,
+    "ssim_pass": false,
+    "sem_pass": true,
+    "overall": false,
+    "dips": {
+     "ssim": [
+      [
+       14,
+       19
+      ]
+     ],
+     "sem": []
+    }
+   },
+   {
+    "seed": "1234",
+    "ssim_mean": 0.4822,
+    "sem_mean": 0.7757,
+    "ssim_pass": false,
+    "sem_pass": true,
+    "overall": false,
+    "dips": {
+     "ssim": [
+      [
+       13,
+       22
+      ]
+     ],
+     "sem": []
+    }
+   },
+   {
+    "seed": "5358",
+    "ssim_mean": 0.4904,
+    "sem_mean": 0.7719,
+    "ssim_pass": false,
+    "sem_pass": true,
+    "overall": false,
+    "dips": {
+     "ssim": [
+      [
+       14,
+       19
+      ]
+     ],
+     "sem": []
+    }
+   },
+   {
+    "seed": "9793",
+    "ssim_mean": 0.5038,
+    "sem_mean": 0.7339,
+    "ssim_pass": false,
+    "sem_pass": false,
+    "overall": false,
+    "dips": {
+     "ssim": [
+      [
+       15,
+       18
+      ]
+     ],
+     "sem": []
+    }
+   },
+   {
+    "seed": "3141",
+    "ssim_mean": 0.47,
+    "sem_mean": 0.7335,
+    "ssim_pass": false,
+    "sem_pass": false,
+    "overall": false,
+    "dips": {
+     "ssim": [
+      [
+       12,
+       21
+      ]
+     ],
+     "sem": [
+      [
+       1,
+       3
+      ]
+     ]
+    }
+   },
+   {
+    "seed": "5926",
+    "ssim_mean": 0.4876,
+    "sem_mean": 0.6953,
+    "ssim_pass": false,
+    "sem_pass": false,
+    "overall": false,
+    "dips": {
+     "ssim": [
+      [
+       14,
+       16
+      ]
+     ],
+     "sem": [
+      [
+       1,
+       3
+      ],
+      [
+       13,
+       15
+      ]
+     ]
+    }
+   }
+  ]
+ },
+ "notes": "v4 配方逐字克隆, 唯一变量=seed; 目标=中段低谷(1.9-3.6s)被某个 seed 的动作时相恰好命中"
+}
