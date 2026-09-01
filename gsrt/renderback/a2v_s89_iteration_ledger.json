@@ -1,212 +1,234 @@
 {
- "shot": 89,
- "date": "2026-08-30",
- "gates": {
-  "ssim": 0.55,
-  "semantic": 0.75,
-  "dip_free": true
- },
- "versions": {
-  "v2_audio_lock": {
-   "ssim": 0.4196,
-   "sem": 0.6248,
-   "note": "台词轴打通; 中段举刀端详 vs 原片收势=方向相反"
+  "shot": 89,
+  "date": "2026-08-30",
+  "gates": {
+    "ssim": 0.55,
+    "semantic": 0.75,
+    "dip_free": true
   },
-  "v3_beat_split": {
-   "ssim": 0.4864,
-   "sem": 0.7702,
-   "note": "分拍指令: 躬身出现但滞后(3.2s才躬,原片1.9s); SEM过线"
+  "versions": {
+    "v2_audio_lock": {
+      "ssim": 0.4196,
+      "sem": 0.6248,
+      "note": "台词轴打通; 中段举刀端详 vs 原片收势=方向相反"
+    },
+    "v3_beat_split": {
+      "ssim": 0.4864,
+      "sem": 0.7702,
+      "note": "分拍指令: 躬身出现但滞后(3.2s才躬,原片1.9s); SEM过线"
+    },
+    "v4_beat45": {
+      "ssim": 0.4873,
+      "sem": 0.7692,
+      "note": "45%起躬指令: 时相仍被引擎无视, 同v3; 当前最优"
+    },
+    "v5_continuous": {
+      "ssim": 0.4395,
+      "sem": 0.651,
+      "note": "seed+1+单一持续躬身: 推过头, 全程深躬 vs 原片前段直立, 反而更差"
+    },
+    "lot_seed100": {
+      "ssim": 0.559,
+      "sem": 0.83,
+      "note": "seed彩票8臂 winner: 首个双门槛PASS (SSIM>=0.55 & SEM>=0.75 & 无低谷段); 音频波形相关0.9995实证台词锁定"
+    },
+    "lot_seed7": {
+      "ssim": 0.534,
+      "sem": 0.833,
+      "note": "SEM最高(0.833)但SSIM 0.534差一线, 中后段有低谷[16-18]"
+    },
+    "stitch_7x100": {
+      "ssim": 0.579,
+      "sem": 0.8551,
+      "note": "终版: lot7(0-2.5s 躬身晚匹配直立相) + lot100(2.5s- 深躬相) xfade 0.2s @2.50s(offset=trim消相位漂移) + GT原声轨; 双门槛PASS且无低谷段; 全片overall_pass=true"
+    }
   },
-  "v4_beat45": {
-   "ssim": 0.4873,
-   "sem": 0.7692,
-   "note": "45%起躬指令: 时相仍被引擎无视, 同v3; 当前最优"
+  "finding": "H3 对 prompt 中的时相/百分比节拍指令几乎无控制力(45%起躬完全无效); 动作时相受 seed 主导; v2-v5 四轮数据: SSIM 卡在 0.42-0.49 平台期, 主要残差=螳螂身形微差+背景光照微差+躬身时相偏移",
+  "verdict": "seed彩票+分段择优拼接: 量化上 SSIM 0.487(v4)→0.579(stitch), SEM 0.769→0.855; 但 09-01 盲测终审: 拼接版3×明显差异(接缝感知回退), 单臂lot100仅轻微差异=当前最优。终态: lot100 锁定, 残差=身形微差+躬身时相偏早(引擎边界)。盲测未达'分不出来', 不称收敛",
+  "seed_lottery": {
+    "n": 8,
+    "seeds": [
+      7,
+      100,
+      1234,
+      2026,
+      3141,
+      5926,
+      5358,
+      9793
+    ],
+    "winner": 100,
+    "runner": 7,
+    "ranked": [
+      {
+        "seed": "7",
+        "ssim_mean": 0.5338,
+        "sem_mean": 0.833,
+        "ssim_pass": false,
+        "sem_pass": true,
+        "overall": false,
+        "dips": {
+          "ssim": [
+            [
+              16,
+              18
+            ]
+          ],
+          "sem": []
+        }
+      },
+      {
+        "seed": "100",
+        "ssim_mean": 0.5586,
+        "sem_mean": 0.8301,
+        "ssim_pass": true,
+        "sem_pass": true,
+        "overall": true,
+        "dips": {
+          "ssim": [],
+          "sem": []
+        }
+      },
+      {
+        "seed": "2026",
+        "ssim_mean": 0.5008,
+        "sem_mean": 0.7983,
+        "ssim_pass": false,
+        "sem_pass": true,
+        "overall": false,
+        "dips": {
+          "ssim": [
+            [
+              14,
+              19
+            ]
+          ],
+          "sem": []
+        }
+      },
+      {
+        "seed": "1234",
+        "ssim_mean": 0.4822,
+        "sem_mean": 0.7757,
+        "ssim_pass": false,
+        "sem_pass": true,
+        "overall": false,
+        "dips": {
+          "ssim": [
+            [
+              13,
+              22
+            ]
+          ],
+          "sem": []
+        }
+      },
+      {
+        "seed": "5358",
+        "ssim_mean": 0.4904,
+        "sem_mean": 0.7719,
+        "ssim_pass": false,
+        "sem_pass": true,
+        "overall": false,
+        "dips": {
+          "ssim": [
+            [
+              14,
+              19
+            ]
+          ],
+          "sem": []
+        }
+      },
+      {
+        "seed": "9793",
+        "ssim_mean": 0.5038,
+        "sem_mean": 0.7339,
+        "ssim_pass": false,
+        "sem_pass": false,
+        "overall": false,
+        "dips": {
+          "ssim": [
+            [
+              15,
+              18
+            ]
+          ],
+          "sem": []
+        }
+      },
+      {
+        "seed": "3141",
+        "ssim_mean": 0.47,
+        "sem_mean": 0.7335,
+        "ssim_pass": false,
+        "sem_pass": false,
+        "overall": false,
+        "dips": {
+          "ssim": [
+            [
+              12,
+              21
+            ]
+          ],
+          "sem": [
+            [
+              1,
+              3
+            ]
+          ]
+        }
+      },
+      {
+        "seed": "5926",
+        "ssim_mean": 0.4876,
+        "sem_mean": 0.6953,
+        "ssim_pass": false,
+        "sem_pass": false,
+        "overall": false,
+        "dips": {
+          "ssim": [
+            [
+              14,
+              16
+            ]
+          ],
+          "sem": [
+            [
+              1,
+              3
+            ],
+            [
+              13,
+              15
+            ]
+          ]
+        }
+      }
+    ],
+    "audio_correlation": 0.9995,
+    "conclusion": "seed方差足以覆盖时相漂移: prompt域卡死的'45%起躬'时相, 在seed=100下自然命中 → seed彩票是H3 A2V收敛的正确后处理域"
   },
-  "v5_continuous": {
-   "ssim": 0.4395,
-   "sem": 0.651,
-   "note": "seed+1+单一持续躬身: 推过头, 全程深躬 vs 原片前段直立, 反而更差"
-  },
-  "lot_seed100": {
-   "ssim": 0.559,
-   "sem": 0.83,
-   "note": "seed彩票8臂 winner: 首个双门槛PASS (SSIM>=0.55 & SEM>=0.75 & 无低谷段); 音频波形相关0.9995实证台词锁定"
-  },
-  "lot_seed7": {
-   "ssim": 0.534,
-   "sem": 0.833,
-   "note": "SEM最高(0.833)但SSIM 0.534差一线, 中后段有低谷[16-18]"
-  },
-  "stitch_7x100": {
-   "ssim": 0.579,
-   "sem": 0.8551,
-   "note": "终版: lot7(0-2.5s 躬身晚匹配直立相) + lot100(2.5s- 深躬相) xfade 0.2s @2.50s(offset=trim消相位漂移) + GT原声轨; 双门槛PASS且无低谷段; 全片overall_pass=true"
-  }
- },
- "finding": "H3 对 prompt 中的时相/百分比节拍指令几乎无控制力(45%起躬完全无效); 动作时相受 seed 主导; v2-v5 四轮数据: SSIM 卡在 0.42-0.49 平台期, 主要残差=螳螂身形微差+背景光照微差+躬身时相偏移",
- "verdict": "seed彩票+分段择优拼接收敛: SSIM 0.487(v4) → 0.579(stitch), SEM 0.769 → 0.855; 残差=身形/持刀角微差(vision抽检lot100躬身偏早0.5-1s, 拼接版前段由lot7承担已缓解); 方法论: prompt域→seed域→时域逐段择优",
- "seed_lottery": {
-  "n": 8,
-  "seeds": [
-   7,
-   100,
-   1234,
-   2026,
-   3141,
-   5926,
-   5358,
-   9793
-  ],
-  "winner": 100,
-  "runner": 7,
-  "ranked": [
-   {
-    "seed": "7",
-    "ssim_mean": 0.5338,
-    "sem_mean": 0.833,
-    "ssim_pass": false,
-    "sem_pass": true,
-    "overall": false,
-    "dips": {
-     "ssim": [
-      [
-       16,
-       18
-      ]
-     ],
-     "sem": []
-    }
-   },
-   {
-    "seed": "100",
-    "ssim_mean": 0.5586,
-    "sem_mean": 0.8301,
-    "ssim_pass": true,
-    "sem_pass": true,
-    "overall": true,
-    "dips": {
-     "ssim": [],
-     "sem": []
-    }
-   },
-   {
-    "seed": "2026",
-    "ssim_mean": 0.5008,
-    "sem_mean": 0.7983,
-    "ssim_pass": false,
-    "sem_pass": true,
-    "overall": false,
-    "dips": {
-     "ssim": [
-      [
-       14,
-       19
-      ]
-     ],
-     "sem": []
-    }
-   },
-   {
-    "seed": "1234",
-    "ssim_mean": 0.4822,
-    "sem_mean": 0.7757,
-    "ssim_pass": false,
-    "sem_pass": true,
-    "overall": false,
-    "dips": {
-     "ssim": [
-      [
-       13,
-       22
-      ]
-     ],
-     "sem": []
-    }
-   },
-   {
-    "seed": "5358",
-    "ssim_mean": 0.4904,
-    "sem_mean": 0.7719,
-    "ssim_pass": false,
-    "sem_pass": true,
-    "overall": false,
-    "dips": {
-     "ssim": [
-      [
-       14,
-       19
-      ]
-     ],
-     "sem": []
-    }
-   },
-   {
-    "seed": "9793",
-    "ssim_mean": 0.5038,
-    "sem_mean": 0.7339,
-    "ssim_pass": false,
-    "sem_pass": false,
-    "overall": false,
-    "dips": {
-     "ssim": [
-      [
-       15,
-       18
-      ]
-     ],
-     "sem": []
-    }
-   },
-   {
-    "seed": "3141",
-    "ssim_mean": 0.47,
-    "sem_mean": 0.7335,
-    "ssim_pass": false,
-    "sem_pass": false,
-    "overall": false,
-    "dips": {
-     "ssim": [
-      [
-       12,
-       21
-      ]
-     ],
-     "sem": [
-      [
-       1,
-       3
-      ]
-     ]
-    }
-   },
-   {
-    "seed": "5926",
-    "ssim_mean": 0.4876,
-    "sem_mean": 0.6953,
-    "ssim_pass": false,
-    "sem_pass": false,
-    "overall": false,
-    "dips": {
-     "ssim": [
-      [
-       14,
-       16
-      ]
-     ],
-     "sem": [
-      [
-       1,
-       3
+  "blind_test": {
+    "date": "2026-09-01",
+    "page": "gsrt-a2v-s89-blind.html (6题: 3×stitch_7x100 + 1×lot100 + 1×v4 + 1×对照同片)",
+    "identification": "4/5 实判认出原片。页面预注册口径 ≥4='显著高于瞎猜'→渲染仍可分辨; 统计上 n=5 二项 p≈0.19 属方向性信号",
+    "per_arm_degree": {
+      "stitch_7x100": [
+        "明显差异",
+        "明显差异",
+        "明显差异"
       ],
-      [
-       13,
-       15
-      ]
-     ]
-    }
-   }
-  ],
-  "audio_correlation": 0.9995,
-  "conclusion": "seed方差足以覆盖时相漂移: prompt域卡死的'45%起躬'时相, 在seed=100下自然命中 → seed彩票是H3 A2V收敛的正确后处理域"
- }
+      "lot100": [
+        "轻微差异"
+      ],
+      "v4": [
+        "1题认错(把渲染当原片), 未标差异"
+      ],
+      "control": "几乎一样 → 感知标定通过(同片判同, 判读可信)"
+    },
+    "key_finding": "拼接版聚合QC最优(SSIM 0.579/SEM 0.855, 双门过)但人眼3×明显差异——7段异seed拼接的接缝处身形/光照微跳变是感知杀手, 24帧配对SSIM/SEM看不见接缝; 单臂lot100(量化唯一双门过)仅轻微差异。量化↑≠感知↑ 第二例实锤",
+    "verdict": "盲测口径未过'分不出来'标准 → 不称收敛(Kai 08-30红线)。当前感知最优=单臂 lot100(轻微差异档)",
+    "disposition": "lot100 锁定为 shot89 A2V 当前锚定版; 残差定性=身形微差+躬身时相偏早0.5-1s(引擎边界, prompt域不可达已四轮实证); stitch 降级为方法论实验记录"
+  }
 }
