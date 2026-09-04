@@ -14,6 +14,7 @@
 - **不碰核心算法**：分镜检测/转录/分离是 validated 基线，v1.0 不改算法，只在其输出之上加导出层
 - **画布侧低摩擦**：复用现有渲染器 + 结构化父节点，不引入 custom renderer / contract bump
 - **媒体服务**：导出约定需覆盖 Range-aware HTTP 服务（画布消费 stem/视频 seek 依赖 206 响应）
+- **金标工程三方分工中的角色 = 造尺子**（考古学/归纳：原片→描述，金标可信度 T1-T4 定级）。与 kais-gold-remount（KGR，复刻工厂/演绎）互为上下游：KGR 只读消费本仓机械层证据（帧证/ASR/时间轴），不回写金标；KGR 反向输出闭合天花板（引擎边界图）供本仓 render-back 提前止损。铁律「描述对了 ≠ 能复现」——金标须双关齐过（KST anchored 定级 + KGR 节点闭合）才够格当 KMC 迭代对比目标，两仓联合签发。详见两仓 README 互引章节
 <!-- GSD:project-end -->
 
 <!-- GSD:stack-start source:codebase/STACK.md -->
