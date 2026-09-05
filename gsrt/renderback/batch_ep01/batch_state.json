@@ -1,0 +1,32 @@
+{
+ "64": {
+  "done": true,
+  "status": "success",
+  "files": [
+   "s064_seed990202_00001-audio.mp4"
+  ],
+  "seed": 990202,
+  "prompt_id": "dc48b422-e57d-4dd5-9f51-4a78a118feba",
+  "finished": "09-03 01:17"
+ },
+ "89": {
+  "done": true,
+  "status": "success",
+  "files": [
+   "s089_seed990202_00001-audio.mp4"
+  ],
+  "seed": 990202,
+  "prompt_id": "e83503a3-91e9-4bb7-89cf-44f45abea362",
+  "finished": "09-03 01:20"
+ },
+ "92": {
+  "done": true,
+  "status": "success",
+  "files": [
+   "s092_seed990202_00002-audio.mp4"
+  ],
+  "seed": 990202,
+  "prompt_id": "c2962142-744c-44b4-8dc0-70e5f42ad220",
+  "finished": "09-03 01:29"
+ }
+}

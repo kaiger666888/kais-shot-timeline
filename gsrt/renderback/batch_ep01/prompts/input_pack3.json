@@ -1,0 +1,439 @@
+[
+ {
+  "sid": 4,
+  "dur": 9.3,
+  "subject": "巨树盘根上，独角仙武士与毛毛虫小孩并肩而坐，周围散落数颗红浆果",
+  "action": "基本静止，仅两者捧着红浆果相视互动，毛毛虫小孩侧身靠近爸爸",
+  "camera": "大远景，平视，固定",
+  "scene": "原始森林深处，苔藓巨树根系与蕨类",
+  "lighting": "林间薄雾漫射光，清幽暖绿",
+  "style": "3D 动画，皮克斯级写实渲染，电影感，丁达尔光",
+  "dialogue_zh": "爸爸\n我不喜欢你总跟别人打架\n你打伤了怎么办\n好小子\n知道心疼爸爸了\n不过他们想找爸爸切磋",
+  "dialogue_note": "画外配音；出场角色: 独角仙武士、毛毛虫小孩",
+  "grid_dur": 9.417,
+  "roster": {
+   "独角仙武士": "rhino beetle warrior (glossy reddish-brown armored shell, large double-pronged horn, beige bandages on forearms)",
+   "螳螂武士": "green praying mantis warrior (thin limbs, white bandage wraps on forearms)",
+   "毛毛虫小孩": "small orange-yellow fuzzy caterpillar child (round body, single green sprout on head, big expressive eyes)",
+   "红蜈蚣": "red centipede (glossy red segmented body, many legs, menacing)"
+  }
+ },
+ {
+  "sid": 8,
+  "dur": 5.14,
+  "subject": "独角仙武士近景居中，毛毛虫小孩绒球般背影从右侧入画",
+  "action": "武士先神色认真地说话，随即咧嘴大笑，张开缠绑带的双臂把毛毛虫一把搂进怀里",
+  "camera": "近景，平视，固定",
+  "scene": "森林中，背景绿意虚化",
+  "lighting": "暖绿柔光，甲壳高光",
+  "style": "3D 动画，皮克斯级写实渲染，电影感，浅景深",
+  "dialogue_zh": "不然等你老了谁来保护你呀\n不会那么快老的\n爸爸还要陪你玩呢",
+  "dialogue_note": "画外配音；出场角色: 独角仙武士、毛毛虫小孩",
+  "grid_dur": 5.167,
+  "roster": {
+   "独角仙武士": "rhino beetle warrior (glossy reddish-brown armored shell, large double-pronged horn, beige bandages on forearms)",
+   "螳螂武士": "green praying mantis warrior (thin limbs, white bandage wraps on forearms)",
+   "毛毛虫小孩": "small orange-yellow fuzzy caterpillar child (round body, single green sprout on head, big expressive eyes)",
+   "红蜈蚣": "red centipede (glossy red segmented body, many legs, menacing)"
+  }
+ },
+ {
+  "sid": 12,
+  "dur": 1.67,
+  "subject": "全景：独角仙武士与毛毛虫小孩守在三颗红浆果旁的树根上，右侧前景螳螂武士缠绑带的腿部入画",
+  "action": "独角仙武士从蹲姿起身站直正对螳螂，毛毛虫小孩躲到它身后探头张望",
+  "camera": "全景，平视，固定",
+  "scene": "原始森林巨树根上，苔藓与蕨类",
+  "lighting": "丁达尔光束，暖绿调",
+  "style": "3D 动画，皮克斯级写实渲染，电影感，丁达尔光",
+  "dialogue_zh": "正是\n请赐教",
+  "dialogue_note": "画外配音；出场角色: 独角仙武士、螳螂武士、毛毛虫小孩",
+  "grid_dur": 1.625,
+  "roster": {
+   "独角仙武士": "rhino beetle warrior (glossy reddish-brown armored shell, large double-pronged horn, beige bandages on forearms)",
+   "螳螂武士": "green praying mantis warrior (thin limbs, white bandage wraps on forearms)",
+   "毛毛虫小孩": "small orange-yellow fuzzy caterpillar child (round body, single green sprout on head, big expressive eyes)",
+   "红蜈蚣": "red centipede (glossy red segmented body, many legs, menacing)"
+  }
+ },
+ {
+  "sid": 16,
+  "dur": 2.03,
+  "subject": "独角仙武士嘴部大特写,宽厚的嘴与獠牙咬住一颗鲜红饱满的番茄;尾帧番茄被咬出缺口,红色汁水挂在嘴角",
+  "action": "张嘴大口咬下番茄,番茄破裂、汁水从嘴角淌下,满足咀嚼",
+  "camera": "大特写,平视,固定镜头聚焦嘴部与番茄",
+  "scene": "原始森林,背景完全虚化",
+  "lighting": "柔光,番茄表面油亮高光",
+  "style": "3D 动画,皮克斯级写实渲染,电影感浅景深",
+  "dialogue_zh": "阿毛你不吃了吗",
+  "dialogue_note": "画外配音；出场角色: 独角仙武士",
+  "grid_dur": 2.333,
+  "roster": {
+   "独角仙武士": "rhino beetle warrior (glossy reddish-brown armored shell, large double-pronged horn, beige bandages on forearms)",
+   "螳螂武士": "green praying mantis warrior (thin limbs, white bandage wraps on forearms)",
+   "毛毛虫小孩": "small orange-yellow fuzzy caterpillar child (round body, single green sprout on head, big expressive eyes)",
+   "红蜈蚣": "red centipede (glossy red segmented body, many legs, menacing)"
+  }
+ },
+ {
+  "sid": 20,
+  "dur": 1.53,
+  "subject": "独角仙武士嘴部大特写,宽嘴厚唇含着一颗带绿蒂的红番茄;尾帧番茄被咬去一角,红色汁水从嘴角垂落",
+  "action": "含着番茄张口咬下,咬出缺口,汁水自嘴角缓缓垂落,半眯眼回味",
+  "camera": "大特写,平视,固定镜头,焦点始终在番茄与嘴部",
+  "scene": "原始森林,背景完全虚化",
+  "lighting": "柔光,番茄表面晶莹高光",
+  "style": "3D 动画,皮克斯级写实渲染,电影感浅景深",
+  "dialogue_zh": "前辈",
+  "dialogue_note": "画外配音；出场角色: 独角仙武士",
+  "grid_dur": 1.625,
+  "roster": {
+   "独角仙武士": "rhino beetle warrior (glossy reddish-brown armored shell, large double-pronged horn, beige bandages on forearms)",
+   "螳螂武士": "green praying mantis warrior (thin limbs, white bandage wraps on forearms)",
+   "毛毛虫小孩": "small orange-yellow fuzzy caterpillar child (round body, single green sprout on head, big expressive eyes)",
+   "红蜈蚣": "red centipede (glossy red segmented body, many legs, menacing)"
+  }
+ },
+ {
+  "sid": 24,
+  "dur": 1.0,
+  "subject": "独角仙武士捧番茄皱眉怒视,张口呵斥;画面右侧毛毛虫小孩橙黄绒毛、头顶绿草辫,仰脸无辜相望;左后方螳螂武士站立观望",
+  "action": "独角仙捧着番茄怒容呵斥,转头朝向毛毛虫小孩;毛毛虫仰脸愣住,一脸无辜",
+  "camera": "中景,平视,镜头向右横移,毛毛虫小孩入画",
+  "scene": "原始森林,巨树苔藓环绕",
+  "lighting": "林间散射光,绿色调",
+  "style": "3D 动画,皮克斯级写实渲染,电影感浅景深",
+  "dialogue_zh": "到树上去",
+  "dialogue_note": "画外配音；出场角色: 独角仙武士、螳螂武士、毛毛虫小孩",
+  "grid_dur": 0.917,
+  "roster": {
+   "独角仙武士": "rhino beetle warrior (glossy reddish-brown armored shell, large double-pronged horn, beige bandages on forearms)",
+   "螳螂武士": "green praying mantis warrior (thin limbs, white bandage wraps on forearms)",
+   "毛毛虫小孩": "small orange-yellow fuzzy caterpillar child (round body, single green sprout on head, big expressive eyes)",
+   "红蜈蚣": "red centipede (glossy red segmented body, many legs, menacing)"
+  }
+ },
+ {
+  "sid": 28,
+  "dur": 6.04,
+  "subject": "独角仙武士捧红果居于右侧前景，体型壮实；螳螂武士立于左侧苔藓岩石上，大复眼睁圆",
+  "action": "独角仙武士起身向右走开，螳螂武士留在原地，瞪大眼睛目送他",
+  "camera": "中景平视，固定镜头",
+  "scene": "林间苔藓地，散落红果，背景林木朦胧",
+  "lighting": "柔和林间光，色调青绿",
+  "style": "3D 动画，皮克斯级写实渲染，电影感浅景深",
+  "dialogue_zh": "行走江湖\n可不能只盯着眼前啊",
+  "dialogue_note": "画外配音；出场角色: 独角仙武士、螳螂武士",
+  "grid_dur": 5.875,
+  "roster": {
+   "独角仙武士": "rhino beetle warrior (glossy reddish-brown armored shell, large double-pronged horn, beige bandages on forearms)",
+   "螳螂武士": "green praying mantis warrior (thin limbs, white bandage wraps on forearms)",
+   "毛毛虫小孩": "small orange-yellow fuzzy caterpillar child (round body, single green sprout on head, big expressive eyes)",
+   "红蜈蚣": "red centipede (glossy red segmented body, many legs, menacing)"
+  }
+ },
+ {
+  "sid": 32,
+  "dur": 2.27,
+  "subject": "前景左侧螳螂武士后脑虚化；主体为空荡的苔藓林地、隆起树根与林立巨树",
+  "action": "基本静止，仅缓缓扫视空无一虫的林间",
+  "camera": "过肩 POV，中远景，缓慢向右摇镜",
+  "scene": "原始森林地表，苔藓树根盘错，林木幽深",
+  "lighting": "丁达尔光束穿林洒落，雾气氤氲",
+  "style": "3D 动画，皮克斯级写实渲染，电影感浅景深",
+  "dialogue_zh": "",
+  "dialogue_note": "",
+  "grid_dur": 2.333,
+  "roster": {
+   "独角仙武士": "rhino beetle warrior (glossy reddish-brown armored shell, large double-pronged horn, beige bandages on forearms)",
+   "螳螂武士": "green praying mantis warrior (thin limbs, white bandage wraps on forearms)",
+   "毛毛虫小孩": "small orange-yellow fuzzy caterpillar child (round body, single green sprout on head, big expressive eyes)",
+   "红蜈蚣": "red centipede (glossy red segmented body, many legs, menacing)"
+  }
+ },
+ {
+  "sid": 36,
+  "dur": 0.63,
+  "subject": "红蜈蚣后半身居前景疾行；远处小径尽头隐约可见独角仙武士与螳螂武士两个身影",
+  "action": "红蜈蚣朝远处两武士方向猛冲，镜头随之上抬，显露前方目标",
+  "camera": "跟拍结合微微上抬，由虫背特写过渡至过肩远景",
+  "scene": "密林小径，草木两侧夹道，远处雾气弥漫",
+  "lighting": "幽绿林间光，远处雾中透光",
+  "style": "3D 动画，皮克斯级写实渲染，运动模糊，电影感",
+  "dialogue_zh": "这僵尸无功",
+  "dialogue_note": "画外配音；出场角色: 独角仙武士、螳螂武士、红蜈蚣",
+  "grid_dur": 0.917,
+  "roster": {
+   "独角仙武士": "rhino beetle warrior (glossy reddish-brown armored shell, large double-pronged horn, beige bandages on forearms)",
+   "螳螂武士": "green praying mantis warrior (thin limbs, white bandage wraps on forearms)",
+   "毛毛虫小孩": "small orange-yellow fuzzy caterpillar child (round body, single green sprout on head, big expressive eyes)",
+   "红蜈蚣": "red centipede (glossy red segmented body, many legs, menacing)"
+  }
+ },
+ {
+  "sid": 40,
+  "dur": 2.0,
+  "subject": "螳螂武士凌空收身,双臂刀锋高举过头",
+  "action": "螳螂自空中急速俯冲,头朝下刀锋向前直扑地面目标",
+  "camera": "俯视高速跟拍俯冲,落叶地面扑面而来",
+  "scene": "落叶林地与盘根上方",
+  "lighting": "幽暗林光",
+  "style": "3D 动画,皮克斯级写实渲染,电影感,强烈径向运动模糊",
+  "dialogue_zh": "帅",
+  "dialogue_note": "画外配音；出场角色: 螳螂武士",
+  "grid_dur": 2.333,
+  "roster": {
+   "独角仙武士": "rhino beetle warrior (glossy reddish-brown armored shell, large double-pronged horn, beige bandages on forearms)",
+   "螳螂武士": "green praying mantis warrior (thin limbs, white bandage wraps on forearms)",
+   "毛毛虫小孩": "small orange-yellow fuzzy caterpillar child (round body, single green sprout on head, big expressive eyes)",
+   "红蜈蚣": "red centipede (glossy red segmented body, many legs, menacing)"
+  }
+ },
+ {
+  "sid": 44,
+  "dur": 1.57,
+  "subject": "独角仙武士右侧冲刺,螳螂武士中路凌空挥刀,红蜈蚣左侧扑来",
+  "action": "三方混战,螳螂挥刀劈中蜈蚣,刀锋相击迸溅大片金色火花",
+  "camera": "中近景快速跟拍,手持晃动,动感十足",
+  "scene": "落叶覆盖的林地",
+  "lighting": "幽暗林光中火花金芒刺眼",
+  "style": "3D 动画,皮克斯级写实渲染,电影感,强运动模糊",
+  "dialogue_zh": "看来你对僵尸蜈蜈蜈蜈蜈蜈蜈蜈蜈蚣",
+  "dialogue_note": "画外配音；出场角色: 独角仙武士、螳螂武士、红蜈蚣",
+  "grid_dur": 1.625,
+  "roster": {
+   "独角仙武士": "rhino beetle warrior (glossy reddish-brown armored shell, large double-pronged horn, beige bandages on forearms)",
+   "螳螂武士": "green praying mantis warrior (thin limbs, white bandage wraps on forearms)",
+   "毛毛虫小孩": "small orange-yellow fuzzy caterpillar child (round body, single green sprout on head, big expressive eyes)",
+   "红蜈蚣": "red centipede (glossy red segmented body, many legs, menacing)"
+  }
+ },
+ {
+  "sid": 48,
+  "dur": 1.27,
+  "subject": "螳螂武士手持双刀在苔藓树根间奔逃,频频回头张望,神情紧张",
+  "action": "螳螂由弓身戒备转为纵身跃起狂奔,边逃边回头看",
+  "camera": "侧面中景横移跟拍,背景树林流动虚化",
+  "scene": "苔藓覆盖的树根林地",
+  "lighting": "幽暗散射林光",
+  "style": "3D 动画,皮克斯级写实渲染,电影感,运动模糊",
+  "dialogue_zh": "为什么他只盯着我",
+  "dialogue_note": "画外配音；出场角色: 螳螂武士",
+  "grid_dur": 0.917,
+  "roster": {
+   "独角仙武士": "rhino beetle warrior (glossy reddish-brown armored shell, large double-pronged horn, beige bandages on forearms)",
+   "螳螂武士": "green praying mantis warrior (thin limbs, white bandage wraps on forearms)",
+   "毛毛虫小孩": "small orange-yellow fuzzy caterpillar child (round body, single green sprout on head, big expressive eyes)",
+   "红蜈蚣": "red centipede (glossy red segmented body, many legs, menacing)"
+  }
+ },
+ {
+  "sid": 52,
+  "dur": 1.27,
+  "subject": "苔藓林地战场:左侧独角仙武士戒备,中央暗红巨型红蜈蚣前身高高扬起,右侧绿色螳螂武士迎战",
+  "action": "红蜈蚣猛然摆身横扫,躯干带运动模糊扫过镜头前,落叶飞溅",
+  "camera": "大远景低角度,随蜈蚣横扫快速横摇",
+  "scene": "原始森林地面,苔藓、朽木、落叶遍布",
+  "lighting": "林间散射光,暗绿调,战斗氛围紧张",
+  "style": "3D 动画,皮克斯级写实渲染,电影感,动态模糊",
+  "dialogue_zh": "等什么",
+  "dialogue_note": "画外配音；出场角色: 独角仙武士、螳螂武士、红蜈蚣",
+  "grid_dur": 0.917,
+  "roster": {
+   "独角仙武士": "rhino beetle warrior (glossy reddish-brown armored shell, large double-pronged horn, beige bandages on forearms)",
+   "螳螂武士": "green praying mantis warrior (thin limbs, white bandage wraps on forearms)",
+   "毛毛虫小孩": "small orange-yellow fuzzy caterpillar child (round body, single green sprout on head, big expressive eyes)",
+   "红蜈蚣": "red centipede (glossy red segmented body, many legs, menacing)"
+  }
+ },
+ {
+  "sid": 56,
+  "dur": 3.57,
+  "subject": "毛毛虫小孩:橙黄绒毛、圆滚身材、头顶绿色小草辫,蹲在苔藓横枝上望向一侧",
+  "action": "毛毛虫小孩起身离开树枝,尾帧只剩空荡的枝干",
+  "camera": "全景平视,固定",
+  "scene": "高大乔木中层,苔藓与蕨类覆盖的粗壮横枝",
+  "lighting": "丁达尔光束洒落,明亮暖绿调",
+  "style": "3D 动画,皮克斯级写实渲染,电影感,丁达尔光",
+  "dialogue_zh": "打完收工了\n最好的方法反而是攻击背部",
+  "dialogue_note": "画外配音；出场角色: 毛毛虫小孩",
+  "grid_dur": 3.75,
+  "roster": {
+   "独角仙武士": "rhino beetle warrior (glossy reddish-brown armored shell, large double-pronged horn, beige bandages on forearms)",
+   "螳螂武士": "green praying mantis warrior (thin limbs, white bandage wraps on forearms)",
+   "毛毛虫小孩": "small orange-yellow fuzzy caterpillar child (round body, single green sprout on head, big expressive eyes)",
+   "红蜈蚣": "red centipede (glossy red segmented body, many legs, menacing)"
+  }
+ },
+ {
+  "sid": 60,
+  "dur": 1.9,
+  "subject": "螳螂武士双手各持一把长刀平举、神情严肃;随后俯身将双刀刺向横陈的红蜈蚣背部",
+  "action": "螳螂武士平举双刀蓄势,随即俯身将双刀猛刺入蜈蚣背部",
+  "camera": "由近景拉远至全景,平视",
+  "scene": "林地巨树根旁,蜈蚣躯体横陈",
+  "lighting": "丁达尔光束,暖绿调",
+  "style": "3D 动画,皮克斯级写实渲染,电影感,丁达尔光",
+  "dialogue_zh": "他不容易被杀死\n哎呀呀呀 坏了坏了",
+  "dialogue_note": "画外配音；出场角色: 螳螂武士、红蜈蚣",
+  "grid_dur": 1.625,
+  "roster": {
+   "独角仙武士": "rhino beetle warrior (glossy reddish-brown armored shell, large double-pronged horn, beige bandages on forearms)",
+   "螳螂武士": "green praying mantis warrior (thin limbs, white bandage wraps on forearms)",
+   "毛毛虫小孩": "small orange-yellow fuzzy caterpillar child (round body, single green sprout on head, big expressive eyes)",
+   "红蜈蚣": "red centipede (glossy red segmented body, many legs, menacing)"
+  }
+ },
+ {
+  "sid": 64,
+  "dur": 0.87,
+  "subject": "螳螂武士，绿色纤细身材、白色大复眼、橙色触角，手持短刀压低身形贴地疾行",
+  "action": "螳螂武士持刀贴地疾冲突进，最后直扑镜头，画面带强烈速度模糊",
+  "camera": "低角度近景转面部大特写，跟拍急推",
+  "scene": "森林落叶地面",
+  "lighting": "幽暗林光，逆光勾边",
+  "style": "3D 动画，皮克斯级写实渲染，电影感，强动态模糊",
+  "dialogue_zh": "斩草出根 一绝后患",
+  "dialogue_note": "画外配音；出场角色: 螳螂武士",
+  "grid_dur": 0.917,
+  "roster": {
+   "独角仙武士": "rhino beetle warrior (glossy reddish-brown armored shell, large double-pronged horn, beige bandages on forearms)",
+   "螳螂武士": "green praying mantis warrior (thin limbs, white bandage wraps on forearms)",
+   "毛毛虫小孩": "small orange-yellow fuzzy caterpillar child (round body, single green sprout on head, big expressive eyes)",
+   "红蜈蚣": "red centipede (glossy red segmented body, many legs, menacing)"
+  }
+ },
+ {
+  "sid": 68,
+  "dur": 2.7,
+  "subject": "螳螂武士背对镜头立于两只红蜈蚣巨怪之间；一道红棕色残影高速掠过画面",
+  "action": "对峙僵持中，独角仙化作红影闪电般掠过镜头，画面剧烈速度模糊",
+  "camera": "中景转大特写，快速甩镜",
+  "scene": "原始森林空地，盘根落叶",
+  "lighting": "幽暗林光",
+  "style": "3D 动画，皮克斯级写实渲染，电影感，强动态模糊",
+  "dialogue_zh": "青辈 生死之后",
+  "dialogue_note": "画外配音；出场角色: 螳螂武士、红蜈蚣",
+  "grid_dur": 3.042,
+  "roster": {
+   "独角仙武士": "rhino beetle warrior (glossy reddish-brown armored shell, large double-pronged horn, beige bandages on forearms)",
+   "螳螂武士": "green praying mantis warrior (thin limbs, white bandage wraps on forearms)",
+   "毛毛虫小孩": "small orange-yellow fuzzy caterpillar child (round body, single green sprout on head, big expressive eyes)",
+   "红蜈蚣": "red centipede (glossy red segmented body, many legs, menacing)"
+  }
+ },
+ {
+  "sid": 72,
+  "dur": 3.26,
+  "subject": "独角仙武士中近景，红棕油亮甲壳、前臂缠绑带，伸臂指向前方，表情由认真转为咧嘴豪爽大笑；前景是螳螂的绿色后脑过肩",
+  "action": "独角仙指着对方说话，神情从认真逐渐变成开怀大笑",
+  "camera": "过肩中近景，平视，固定",
+  "scene": "森林中，背景虚化",
+  "lighting": "暖调柔和林光",
+  "style": "3D 动画，皮克斯级写实渲染，电影感浅景深",
+  "dialogue_zh": "再过一会儿\n你就打不过我了",
+  "dialogue_note": "画外配音；出场角色: 独角仙武士",
+  "grid_dur": 3.042,
+  "roster": {
+   "独角仙武士": "rhino beetle warrior (glossy reddish-brown armored shell, large double-pronged horn, beige bandages on forearms)",
+   "螳螂武士": "green praying mantis warrior (thin limbs, white bandage wraps on forearms)",
+   "毛毛虫小孩": "small orange-yellow fuzzy caterpillar child (round body, single green sprout on head, big expressive eyes)",
+   "红蜈蚣": "red centipede (glossy red segmented body, many legs, menacing)"
+  }
+ },
+ {
+  "sid": 76,
+  "dur": 4.57,
+  "subject": "独角仙武士，红棕油亮甲壳、巨大双叉弯角、前臂缠米色绑带，画面左侧中景；螳螂武士后脑虚焦于右前景",
+  "action": "面向螳螂喊话，表情从张嘴急喊转为咧嘴微笑；基本静止，仅表情口型变化",
+  "camera": "中景，过肩平视，固定",
+  "scene": "原始森林，苔藓巨树与藤蔓",
+  "lighting": "林间柔光，丁达尔光束，暖绿色调",
+  "style": "3D 动画，皮克斯级写实渲染，电影感浅景深",
+  "dialogue_zh": "阿毛\n如果你能从一数到一百\n爸爸就教你功夫",
+  "dialogue_note": "画外配音；出场角色: 独角仙武士、螳螂武士",
+  "grid_dur": 4.458,
+  "roster": {
+   "独角仙武士": "rhino beetle warrior (glossy reddish-brown armored shell, large double-pronged horn, beige bandages on forearms)",
+   "螳螂武士": "green praying mantis warrior (thin limbs, white bandage wraps on forearms)",
+   "毛毛虫小孩": "small orange-yellow fuzzy caterpillar child (round body, single green sprout on head, big expressive eyes)",
+   "红蜈蚣": "red centipede (glossy red segmented body, many legs, menacing)"
+  }
+ },
+ {
+  "sid": 80,
+  "dur": 1.93,
+  "subject": "独角仙武士中景，红棕油亮甲壳、双叉弯角、咧嘴笑；螳螂武士后脑虚焦于右前景",
+  "action": "基本静止，仅咧嘴笑着说话，口型持续张合",
+  "camera": "中景，过肩平视，固定",
+  "scene": "原始森林，苔藓巨树",
+  "lighting": "林间柔光，暖绿调",
+  "style": "3D 动画，皮克斯级写实渲染，电影感浅景深",
+  "dialogue_zh": "但是我们俩比亲的还亲呢",
+  "dialogue_note": "画外配音；出场角色: 独角仙武士、螳螂武士",
+  "grid_dur": 1.625,
+  "roster": {
+   "独角仙武士": "rhino beetle warrior (glossy reddish-brown armored shell, large double-pronged horn, beige bandages on forearms)",
+   "螳螂武士": "green praying mantis warrior (thin limbs, white bandage wraps on forearms)",
+   "毛毛虫小孩": "small orange-yellow fuzzy caterpillar child (round body, single green sprout on head, big expressive eyes)",
+   "红蜈蚣": "red centipede (glossy red segmented body, many legs, menacing)"
+  }
+ },
+ {
+  "sid": 84,
+  "dur": 4.56,
+  "subject": "独角仙武士中景，右手持短刀，红棕油亮甲壳、双叉弯角，表情严肃坚定；螳螂武士后脑虚焦于右前景",
+  "action": "右手举刀亮出后缓缓收至胸前，沉声说话，神情凝重坚定",
+  "camera": "中景，过肩平视，固定",
+  "scene": "原始森林，苔藓巨树与藤蔓",
+  "lighting": "林间柔光，暖绿调",
+  "style": "3D 动画，皮克斯级写实渲染，电影感浅景深",
+  "dialogue_zh": "你打不过我\n我只能自己动手了",
+  "dialogue_note": "画外配音；出场角色: 独角仙武士、螳螂武士",
+  "grid_dur": 4.458,
+  "roster": {
+   "独角仙武士": "rhino beetle warrior (glossy reddish-brown armored shell, large double-pronged horn, beige bandages on forearms)",
+   "螳螂武士": "green praying mantis warrior (thin limbs, white bandage wraps on forearms)",
+   "毛毛虫小孩": "small orange-yellow fuzzy caterpillar child (round body, single green sprout on head, big expressive eyes)",
+   "红蜈蚣": "red centipede (glossy red segmented body, many legs, menacing)"
+  }
+ },
+ {
+  "sid": 88,
+  "dur": 13.0,
+  "subject": "独角仙武士红棕油亮甲壳、双叉巨角、前臂缠米色绑带；首帧立身望向右侧虚化的螳螂武士背影，尾帧低头闭目神情黯然",
+  "action": "与螳螂武士对视后缓缓低下头，巨角随之垂落，双目闭合，面露悲伤愧疚",
+  "camera": "首帧中景过肩，尾帧推至面部特写，平视推镜",
+  "scene": "原始森林深处，粗壮树根与蕨类环绕",
+  "lighting": "暖侧光，林间柔光，忧伤压抑氛围",
+  "style": "3D 动画，皮克斯级写实渲染，电影感浅景深",
+  "dialogue_zh": "他是个好孩子\n教他一些功夫吧\n他很聪明\n医学就会\n拜托了\n六十一 六十二 六十三 六十四 六十五 六十六 六十七 六十八 六十九 七十 九十七 九十八 九十九",
+  "dialogue_note": "画外配音；出场角色: 独角仙武士、螳螂武士",
+  "grid_dur": 12.958,
+  "roster": {
+   "独角仙武士": "rhino beetle warrior (glossy reddish-brown armored shell, large double-pronged horn, beige bandages on forearms)",
+   "螳螂武士": "green praying mantis warrior (thin limbs, white bandage wraps on forearms)",
+   "毛毛虫小孩": "small orange-yellow fuzzy caterpillar child (round body, single green sprout on head, big expressive eyes)",
+   "红蜈蚣": "red centipede (glossy red segmented body, many legs, menacing)"
+  }
+ },
+ {
+  "sid": 92,
+  "dur": 9.8,
+  "subject": "无人空镜，连绵起伏的原始森林树冠，白色雾气在山谷间流动",
+  "action": "基本静止，仅云雾缓慢飘移流动",
+  "camera": "大远景，高空俯拍，缓慢平移",
+  "scene": "广阔原始森林，层叠树冠延绵至天际",
+  "lighting": "青灰冷调，晨光微透，雾气氤氲",
+  "style": "3D 动画，皮克斯级写实渲染，电影感",
+  "dialogue_zh": "爸爸\n他有一百种方法逗我开心\n可是这一次\n他骗了我\n我要去把他找回来",
+  "dialogue_note": "画外配音；出场角色: ?",
+  "grid_dur": 10.125,
+  "roster": {
+   "独角仙武士": "rhino beetle warrior (glossy reddish-brown armored shell, large double-pronged horn, beige bandages on forearms)",
+   "螳螂武士": "green praying mantis warrior (thin limbs, white bandage wraps on forearms)",
+   "毛毛虫小孩": "small orange-yellow fuzzy caterpillar child (round body, single green sprout on head, big expressive eyes)",
+   "红蜈蚣": "red centipede (glossy red segmented body, many legs, menacing)"
+  }
+ }
+]

@@ -1,0 +1,1862 @@
+[
+ {
+  "sid": 1,
+  "start": 0.0,
+  "end": 6.73,
+  "dur": 6.73,
+  "grid_frames": 158,
+  "grid_dur": 6.583,
+  "audio_win": [
+   0,
+   7.63
+  ],
+  "has_dial": true,
+  "cond_first": "/data/workspace/kais-shot-timeline/gsrt/renderback/batch_ep01/cond/s001_first_1344.jpg",
+  "cond_last": "/data/workspace/kais-shot-timeline/gsrt/renderback/batch_ep01/cond/s001_last_1344.jpg",
+  "audio": "/data/workspace/kais-shot-timeline/gsrt/renderback/batch_ep01/audio/s001_vocals.wav",
+  "ready": true,
+  "h3_prompt": "3D animation, Pixar-level rendering, cinematic shallow depth of field. A primeval forest of moss-covered giant trees and tangled roots. Beat 1 (first 50% of the shot): the rhino beetle warrior (glossy reddish-brown armored shell, large double-pronged horn, beige bandages on forearms) bends down and gently offers a single red berry in front of the small orange-yellow fuzzy caterpillar child (round body, single green sprout on head, big expressive eyes). Beat 2 (from 50% onward): the caterpillar child lifts his head and looks up at the beetle warrior. Camera: slow pull-back from a face close-up to a wide shot at eye level, one continuous take. Soft natural light, Tyndall god rays piercing the canopy, warm green tones. Off-screen narration, characters do not speak",
+  "dialogue_line": "Off-screen narration, characters do not speak",
+  "notes": ""
+ },
+ {
+  "sid": 2,
+  "start": 6.73,
+  "end": 9.63,
+  "dur": 2.9,
+  "grid_frames": 73,
+  "grid_dur": 3.042,
+  "audio_win": [
+   6.43,
+   10.53
+  ],
+  "has_dial": true,
+  "cond_first": "/data/workspace/kais-shot-timeline/gsrt/renderback/batch_ep01/cond/s002_first_1344.jpg",
+  "cond_last": "/data/workspace/kais-shot-timeline/gsrt/renderback/batch_ep01/cond/s002_last_1344.jpg",
+  "audio": "/data/workspace/kais-shot-timeline/gsrt/renderback/batch_ep01/audio/s002_vocals.wav",
+  "ready": true,
+  "h3_prompt": "3D animation, Pixar-level rendering, cinematic shallow depth of field. On the forest floor, green foliage softly blurred beyond. The small orange-yellow fuzzy caterpillar child's face fills the frame, its expression transforming from startled to delighted. Beat 1 (first 40% of the shot): eyes stretched wide, mouth open in surprise. Beat 2 (from 40% onward): the surprise melts into a huge happy open-mouthed grin. Extreme close-up at eye level, locked off with a barely perceptible push-in. Soft warm light, facial contours gently translucent and glowing. Off-screen narration, characters do not speak.",
+  "dialogue_line": "Off-screen narration, characters do not speak",
+  "notes": ""
+ },
+ {
+  "sid": 3,
+  "start": 9.63,
+  "end": 12.1,
+  "dur": 2.47,
+  "grid_frames": 56,
+  "grid_dur": 2.333,
+  "audio_win": [
+   9.33,
+   13.0
+  ],
+  "has_dial": true,
+  "cond_first": "/data/workspace/kais-shot-timeline/gsrt/renderback/batch_ep01/cond/s003_first_1344.jpg",
+  "cond_last": "/data/workspace/kais-shot-timeline/gsrt/renderback/batch_ep01/cond/s003_last_1344.jpg",
+  "audio": "/data/workspace/kais-shot-timeline/gsrt/renderback/batch_ep01/audio/s003_vocals.wav",
+  "ready": true,
+  "h3_prompt": "3D animation, Pixar-level rendering, cinematic shallow depth of field. Forest clearing with soft out-of-focus green foliage in the background. The rhino beetle warrior (glossy reddish-brown armored shell, large double-pronged horn, beige bandages on forearms) first holds a gentle smile with head slightly lowered, then breaks into a wide open-mouthed hearty laugh showing his mandibles. Beat 1 (first 50% of the shot): head lowered in a warm gentle smile. Beat 2 (from 50% onward): the smile widens into a big toothy laugh. Static over-the-shoulder close-up at eye level. Warm green diffused light with glossy highlights on the shell. Off-screen narration, characters do not speak.",
+  "dialogue_line": "Off-screen narration, characters do not speak",
+  "notes": ""
+ },
+ {
+  "sid": 4,
+  "start": 12.1,
+  "end": 21.4,
+  "dur": 9.3,
+  "grid_frames": 226,
+  "grid_dur": 9.417,
+  "audio_win": [
+   11.8,
+   22.3
+  ],
+  "has_dial": true,
+  "cond_first": "/data/workspace/kais-shot-timeline/gsrt/renderback/batch_ep01/cond/s004_first_1344.jpg",
+  "cond_last": "/data/workspace/kais-shot-timeline/gsrt/renderback/batch_ep01/cond/s004_last_1344.jpg",
+  "audio": "/data/workspace/kais-shot-timeline/gsrt/renderback/batch_ep01/audio/s004_vocals.wav",
+  "ready": true,
+  "h3_prompt": "3D animation, Pixar-level rendering, cinematic shallow depth of field. Deep in a primeval forest among moss-covered giant tree roots and ferns. A rhino beetle warrior (glossy reddish-brown armored shell, large double-pronged horn, beige bandages on forearms) and a small orange-yellow fuzzy caterpillar child (round body, single green sprout on head, big expressive eyes) sit side by side on the huge gnarled roots, holding red berries and interacting tenderly. Beat 1 (first 60% of the shot): the two keep holding the red berries and gaze at each other fondly. Beat 2 (from 60% onward): the caterpillar child leans sideways and snuggles closer against the beetle warrior. Static extreme wide shot at eye level. Soft diffused forest light with thin mist, tranquil warm green tones. Off-screen narration, characters do not speak.",
+  "dialogue_line": "Off-screen narration, characters do not speak",
+  "notes": ""
+ },
+ {
+  "sid": 5,
+  "start": 21.4,
+  "end": 28.63,
+  "dur": 7.23,
+  "grid_frames": 175,
+  "grid_dur": 7.292,
+  "audio_win": [
+   21.1,
+   29.53
+  ],
+  "has_dial": true,
+  "cond_first": "/data/workspace/kais-shot-timeline/gsrt/renderback/batch_ep01/cond/s005_first_1344.jpg",
+  "cond_last": "/data/workspace/kais-shot-timeline/gsrt/renderback/batch_ep01/cond/s005_last_1344.jpg",
+  "audio": "/data/workspace/kais-shot-timeline/gsrt/renderback/batch_ep01/audio/s005_vocals.wav",
+  "ready": true,
+  "h3_prompt": "3D animation, Pixar-level rendering, cinematic shallow depth of field. Forest moss ground with softly blurred trees in the background. Beat 1 (first 40% of the shot): the rhino beetle warrior (glossy reddish-brown armored shell, large double-pronged horn, beige bandages on forearms) smiles warmly as he offers up a half-eaten red berry cradled in his bandaged forearms. Beat 2 (from 40% onward): his eyes suddenly go wide, he freezes mid-gesture and a puzzled look spreads over his face. Camera: over-the-shoulder medium shot, eye level, locked-off static, one continuous take. Warm green soft light with beams falling from above. Off-screen narration, characters do not speak",
+  "dialogue_line": "Off-screen narration, characters do not speak",
+  "notes": ""
+ },
+ {
+  "sid": 6,
+  "start": 28.63,
+  "end": 32.13,
+  "dur": 3.5,
+  "grid_frames": 90,
+  "grid_dur": 3.75,
+  "audio_win": [
+   28.33,
+   33.03
+  ],
+  "has_dial": true,
+  "cond_first": "/data/workspace/kais-shot-timeline/gsrt/renderback/batch_ep01/cond/s006_first_1344.jpg",
+  "cond_last": "/data/workspace/kais-shot-timeline/gsrt/renderback/batch_ep01/cond/s006_last_1344.jpg",
+  "audio": "/data/workspace/kais-shot-timeline/gsrt/renderback/batch_ep01/audio/s006_vocals.wav",
+  "ready": true,
+  "h3_prompt": "3D animation, Pixar-level rendering, cinematic shallow depth of field. In the forest, background greenery soft and out of focus. The small orange-yellow fuzzy caterpillar child hugging a half-eaten red berry tilts its head up toward the rhino beetle warrior beside it, and its expression opens up with anticipation. Beat 1 (first 30% of the shot): the child gazes upward, caught in a brief stunned pause. Beat 2 (from 30% onward): a wide eager expectant grin spreads across its face. Medium close-up from a slight low angle, static. Warm soft light, the edges of its fur glowing. Off-screen narration, characters do not speak.",
+  "dialogue_line": "Off-screen narration, characters do not speak",
+  "notes": "删开口说话，保留表情轴"
+ },
+ {
+  "sid": 7,
+  "start": 32.13,
+  "end": 35.83,
+  "dur": 3.7,
+  "grid_frames": 90,
+  "grid_dur": 3.75,
+  "audio_win": [
+   31.83,
+   36.73
+  ],
+  "has_dial": true,
+  "cond_first": "/data/workspace/kais-shot-timeline/gsrt/renderback/batch_ep01/cond/s007_first_1344.jpg",
+  "cond_last": "/data/workspace/kais-shot-timeline/gsrt/renderback/batch_ep01/cond/s007_last_1344.jpg",
+  "audio": "/data/workspace/kais-shot-timeline/gsrt/renderback/batch_ep01/audio/s007_vocals.wav",
+  "ready": true,
+  "h3_prompt": "3D animation, Pixar-level rendering, cinematic shallow depth of field. Primeval forest with a moss-covered tree-root platform, scattered red berries around. The small orange-yellow fuzzy caterpillar child (round body, single green sprout on head, big expressive eyes) sets down its fruit and bounces over to nestle close to the rhino beetle warrior (glossy reddish-brown armored shell, large double-pronged horn, beige bandages on forearms), who holds a berry and tilts his head to watch the child fondly. Beat 1 (first 60% of the shot): the caterpillar child puts down the fruit and bounces to the warrior's side. Beat 2 (from 60% onward): the warrior tilts his head, watching the child while holding the fruit. Static wide shot at eye level. Warm green tones with Tyndall god rays streaming through the canopy. Off-screen narration, characters do not speak.",
+  "dialogue_line": "Off-screen narration, characters do not speak",
+  "notes": ""
+ },
+ {
+  "sid": 8,
+  "start": 35.83,
+  "end": 40.97,
+  "dur": 5.14,
+  "grid_frames": 124,
+  "grid_dur": 5.167,
+  "audio_win": [
+   35.53,
+   41.74
+  ],
+  "has_dial": true,
+  "cond_first": "/data/workspace/kais-shot-timeline/gsrt/renderback/batch_ep01/cond/s008_first_1344.jpg",
+  "cond_last": "/data/workspace/kais-shot-timeline/gsrt/renderback/batch_ep01/cond/s008_last_1344.jpg",
+  "audio": "/data/workspace/kais-shot-timeline/gsrt/renderback/batch_ep01/audio/s008_vocals.wav",
+  "ready": true,
+  "h3_prompt": "3D animation, Pixar-level rendering, cinematic shallow depth of field. In the forest, greenery softly blurred in the background. A rhino beetle warrior (glossy reddish-brown armored shell, large double-pronged horn, beige bandages on forearms) interacts affectionately with the small orange-yellow fuzzy caterpillar child (round body, single green sprout on head, big expressive eyes). Beat 1 (first 50% of the shot): the beetle warrior speaks with a serious, earnest look. Beat 2 (from 50% onward): he bursts into hearty laughter, spreads his bandaged arms wide and gathers the caterpillar child into a warm hug. Static close shot at eye level. Warm green soft light, glossy highlights on the shell. Character speaks aloud, natural lip-sync.",
+  "dialogue_line": "Character speaks aloud, natural lip-sync",
+  "notes": ""
+ },
+ {
+  "sid": 9,
+  "start": 40.97,
+  "end": 43.03,
+  "dur": 2.06,
+  "grid_frames": 56,
+  "grid_dur": 2.333,
+  "audio_win": [
+   40.67,
+   43.93
+  ],
+  "has_dial": true,
+  "cond_first": "/data/workspace/kais-shot-timeline/gsrt/renderback/batch_ep01/cond/s009_first_1344.jpg",
+  "cond_last": "/data/workspace/kais-shot-timeline/gsrt/renderback/batch_ep01/cond/s009_last_1344.jpg",
+  "audio": "/data/workspace/kais-shot-timeline/gsrt/renderback/batch_ep01/audio/s009_vocals.wav",
+  "ready": true,
+  "h3_prompt": "3D animation, Pixar-level rendering, cinematic shallow depth of field. A misty primeval forest with giant tangled tree roots. Beat 1 (first 50% of the shot): the green praying mantis warrior (thin limbs, white bandage wraps on forearms) leaps down from above and lands in the foreground among the roots. Beat 2 (from 50% onward): the rhino beetle warrior (glossy reddish-brown armored shell, large double-pronged horn, beige bandages on forearms) and the small orange-yellow fuzzy caterpillar child (round body, single green sprout on head, big expressive eyes), huddled together on a tree root, raise their heads to look up at him. Camera: wide shot from a low camera position, eye level, static, one continuous take. Tyndall light beams piercing the mist, warm green tones. Off-screen narration, characters do not speak",
+  "dialogue_line": "Off-screen narration, characters do not speak",
+  "notes": "临界时长2.06s，按语义拆两拍"
+ },
+ {
+  "sid": 10,
+  "start": 43.03,
+  "end": 46.87,
+  "dur": 3.84,
+  "grid_frames": 90,
+  "grid_dur": 3.75,
+  "audio_win": [
+   42.73,
+   47.77
+  ],
+  "has_dial": true,
+  "cond_first": "/data/workspace/kais-shot-timeline/gsrt/renderback/batch_ep01/cond/s010_first_1344.jpg",
+  "cond_last": "/data/workspace/kais-shot-timeline/gsrt/renderback/batch_ep01/cond/s010_last_1344.jpg",
+  "audio": "/data/workspace/kais-shot-timeline/gsrt/renderback/batch_ep01/audio/s010_vocals.wav",
+  "ready": true,
+  "h3_prompt": "3D animation, Pixar-level rendering, cinematic shallow depth of field. In the forest, blurred green leaves behind. The small orange-yellow fuzzy caterpillar child glowers with a furrowed brow while, behind it, the rhino beetle warrior slowly comes into clarity wearing a warm gentle smile. Beat 1 (first 50% of the shot): the caterpillar child's angry frown held in razor-sharp focus. Beat 2 (from 50% onward): focus racks smoothly back onto the rhino beetle warrior, his smile kind and unhurried. Close-up at eye level, static, with one slow continuous rack focus. Warm soft green light separating fine fur from glossy shell. Off-screen narration, characters do not speak.",
+  "dialogue_line": "Off-screen narration, characters do not speak",
+  "notes": ""
+ },
+ {
+  "sid": 11,
+  "start": 46.87,
+  "end": 49.43,
+  "dur": 2.56,
+  "grid_frames": 56,
+  "grid_dur": 2.333,
+  "audio_win": [
+   46.57,
+   49.72
+  ],
+  "has_dial": true,
+  "cond_first": "/data/workspace/kais-shot-timeline/gsrt/renderback/batch_ep01/cond/s011_first_1344.jpg",
+  "cond_last": "/data/workspace/kais-shot-timeline/gsrt/renderback/batch_ep01/cond/s011_last_1344.jpg",
+  "audio": "/data/workspace/kais-shot-timeline/gsrt/renderback/batch_ep01/audio/s011_vocals.wav",
+  "ready": true,
+  "h3_prompt": "3D animation, Pixar-level rendering, cinematic shallow depth of field. Misty primeval forest with mossy tree stumps and ferns. The green praying mantis warrior (thin limbs, white bandage wraps on forearms) holds still in a standoff, then slowly raises his blade-like forearms into a ready fighting stance. Beat 1 (first 40% of the shot): standing motionless in confrontation. Beat 2 (from 40% onward): slowly lifting the scythe-like forearms into a battle-ready guard. Static over-the-shoulder wide shot at eye level. Cool green diffused light with drifting forest mist. Off-screen narration, characters do not speak.",
+  "dialogue_line": "Off-screen narration, characters do not speak",
+  "notes": ""
+ },
+ {
+  "sid": 12,
+  "start": 49.43,
+  "end": 51.1,
+  "dur": 1.67,
+  "grid_frames": 39,
+  "grid_dur": 1.625,
+  "audio_win": [
+   49.13,
+   52.0
+  ],
+  "has_dial": true,
+  "cond_first": "/data/workspace/kais-shot-timeline/gsrt/renderback/batch_ep01/cond/s012_first_1344.jpg",
+  "cond_last": "/data/workspace/kais-shot-timeline/gsrt/renderback/batch_ep01/cond/s012_last_1344.jpg",
+  "audio": "/data/workspace/kais-shot-timeline/gsrt/renderback/batch_ep01/audio/s012_vocals.wav",
+  "ready": true,
+  "h3_prompt": "3D animation, Pixar-level rendering, cinematic shallow depth of field. Primeval forest on giant mossy tree roots with ferns. A rhino beetle warrior (glossy reddish-brown armored shell, large double-pronged horn, beige bandages on forearms) pushes up from a crouch and rises to his full height, squaring off against the green praying mantis warrior (thin limbs, white bandage wraps on forearms), while the small orange-yellow fuzzy caterpillar child (round body, single green sprout on head, big expressive eyes) scurries behind the beetle and peeks out warily. Static full shot at eye level. Volumetric god rays, warm green tones. Off-screen narration, characters do not speak.",
+  "dialogue_line": "Off-screen narration, characters do not speak",
+  "notes": ""
+ },
+ {
+  "sid": 13,
+  "start": 51.1,
+  "end": 53.37,
+  "dur": 2.27,
+  "grid_frames": 56,
+  "grid_dur": 2.333,
+  "audio_win": [
+   50.8,
+   54.27
+  ],
+  "has_dial": true,
+  "cond_first": "/data/workspace/kais-shot-timeline/gsrt/renderback/batch_ep01/cond/s013_first_1344.jpg",
+  "cond_last": "/data/workspace/kais-shot-timeline/gsrt/renderback/batch_ep01/cond/s013_last_1344.jpg",
+  "audio": "/data/workspace/kais-shot-timeline/gsrt/renderback/batch_ep01/audio/s013_vocals.wav",
+  "ready": true,
+  "h3_prompt": "3D animation, Pixar-level rendering, cinematic shallow depth of field. A primeval forest with mossy giant trees, background foliage softly blurred. Beat 1 (first 40% of the shot): the green praying mantis warrior (thin limbs, white bandage wraps on forearms, large white compound eyes, orange antennae) stands listless with half-lidded drowsy eyes. Beat 2 (from 40% onward): his eyes snap wide open and he raises both bandaged forearms into a kung-fu ready stance, one arm thrust forward, his presence turning fierce. Camera: fast pull-out from an extreme face close-up to a medium fighting framing at eye level, one continuous take. Soft natural light, green tones, evenly lit face. Off-screen narration, characters do not speak",
+  "dialogue_line": "Off-screen narration, characters do not speak",
+  "notes": ""
+ },
+ {
+  "sid": 14,
+  "start": 53.37,
+  "end": 55.13,
+  "dur": 1.76,
+  "grid_frames": 39,
+  "grid_dur": 1.625,
+  "audio_win": [
+   53.07,
+   55.46
+  ],
+  "has_dial": true,
+  "cond_first": "/data/workspace/kais-shot-timeline/gsrt/renderback/batch_ep01/cond/s014_first_1344.jpg",
+  "cond_last": "/data/workspace/kais-shot-timeline/gsrt/renderback/batch_ep01/cond/s014_last_1344.jpg",
+  "audio": "/data/workspace/kais-shot-timeline/gsrt/renderback/batch_ep01/audio/s014_vocals.wav",
+  "ready": true,
+  "h3_prompt": "3D animation, Pixar-level rendering, cinematic shallow depth of field. Old-growth forest, green plants softly blurred behind. The rhino beetle warrior's face holds a warm good-natured smile that broadens with genuine hearty friendliness, as if greeting someone warmly. Close-up at eye level with a slight upward tilt, locked off with only the faintest drift inward. Bright soft natural diffused light, warm green tones. Off-screen narration, characters do not speak.",
+  "dialogue_line": "Off-screen narration, characters do not speak",
+  "notes": "台词画外，未写开口"
+ },
+ {
+  "sid": 15,
+  "start": 55.13,
+  "end": 58.1,
+  "dur": 2.97,
+  "grid_frames": 73,
+  "grid_dur": 3.042,
+  "audio_win": [
+   54.83,
+   59.0
+  ],
+  "has_dial": true,
+  "cond_first": "/data/workspace/kais-shot-timeline/gsrt/renderback/batch_ep01/cond/s015_first_1344.jpg",
+  "cond_last": "/data/workspace/kais-shot-timeline/gsrt/renderback/batch_ep01/cond/s015_last_1344.jpg",
+  "audio": "/data/workspace/kais-shot-timeline/gsrt/renderback/batch_ep01/audio/s015_vocals.wav",
+  "ready": true,
+  "h3_prompt": "3D animation, Pixar-level rendering, cinematic shallow depth of field. Primeval forest, background trees dissolving into soft green bokeh. The green praying mantis warrior (thin limbs, white bandage wraps on forearms) first stares straight ahead with wide serious compound eyes, then narrows his eyes and curls his mouth into a scornful sneer. Beat 1 (first 50% of the shot): wide-eyed serious stare straight ahead. Beat 2 (from 50% onward): eyes narrowing into a disdainful, mocking sneer. Static close-up at eye level with a very slow push-in. Soft natural light, cool green tones. Off-screen narration, characters do not speak.",
+  "dialogue_line": "Off-screen narration, characters do not speak",
+  "notes": ""
+ },
+ {
+  "sid": 16,
+  "start": 58.1,
+  "end": 60.13,
+  "dur": 2.03,
+  "grid_frames": 56,
+  "grid_dur": 2.333,
+  "audio_win": [
+   57.8,
+   61.03
+  ],
+  "has_dial": true,
+  "cond_first": "/data/workspace/kais-shot-timeline/gsrt/renderback/batch_ep01/cond/s016_first_1344.jpg",
+  "cond_last": "/data/workspace/kais-shot-timeline/gsrt/renderback/batch_ep01/cond/s016_last_1344.jpg",
+  "audio": "/data/workspace/kais-shot-timeline/gsrt/renderback/batch_ep01/audio/s016_vocals.wav",
+  "ready": true,
+  "h3_prompt": "3D animation, Pixar-level rendering, cinematic shallow depth of field. Primeval forest, background fully blurred. The broad mandibles of a rhino beetle warrior (glossy reddish-brown armored shell, large double-pronged horn, beige bandages on forearms) clamp down hard on the plump bright-red tomato; the fruit bursts, red juice runs down from the corner of his mouth and he chews with slow satisfaction. Static extreme close-up locked on the mouth and the tomato. Soft light, glossy highlights on the tomato skin. Off-screen narration, characters do not speak.",
+  "dialogue_line": "Off-screen narration, characters do not speak",
+  "notes": ""
+ },
+ {
+  "sid": 17,
+  "start": 60.13,
+  "end": 67.33,
+  "dur": 7.2,
+  "grid_frames": 175,
+  "grid_dur": 7.292,
+  "audio_win": [
+   59.83,
+   68.23
+  ],
+  "has_dial": true,
+  "cond_first": "/data/workspace/kais-shot-timeline/gsrt/renderback/batch_ep01/cond/s017_first_1344.jpg",
+  "cond_last": "/data/workspace/kais-shot-timeline/gsrt/renderback/batch_ep01/cond/s017_last_1344.jpg",
+  "audio": "/data/workspace/kais-shot-timeline/gsrt/renderback/batch_ep01/audio/s017_vocals.wav",
+  "ready": true,
+  "h3_prompt": "3D animation, Pixar-level rendering, cinematic shallow depth of field. A primeval forest with a thick mossy fallen root, giant trees and ferns all around. Beat 1 (first 50% of the shot): the rhino beetle warrior (glossy reddish-brown armored shell, large double-pronged horn, beige bandages on forearms) sits on the root, completely focused on devouring a tomato held in his forearms. Beat 2 (from 50% onward): the small orange-yellow fuzzy caterpillar child (round body, single green sprout on head, big expressive eyes) turns toward him, leans in and waves a small fist in a show of defiance, while the green praying mantis warrior (thin limbs, white bandage wraps on forearms) stands by holding a small tomato, watching coldly. Camera: wide shot, eye level, static, one continuous take. Soft scattered forest light, fresh bright green tones. Off-screen narration, characters do not speak",
+  "dialogue_line": "Off-screen narration, characters do not speak",
+  "notes": ""
+ },
+ {
+  "sid": 18,
+  "start": 67.33,
+  "end": 70.8,
+  "dur": 3.47,
+  "grid_frames": 90,
+  "grid_dur": 3.75,
+  "audio_win": [
+   67.03,
+   71.18
+  ],
+  "has_dial": true,
+  "cond_first": "/data/workspace/kais-shot-timeline/gsrt/renderback/batch_ep01/cond/s018_first_1344.jpg",
+  "cond_last": "/data/workspace/kais-shot-timeline/gsrt/renderback/batch_ep01/cond/s018_last_1344.jpg",
+  "audio": "/data/workspace/kais-shot-timeline/gsrt/renderback/batch_ep01/audio/s018_vocals.wav",
+  "ready": true,
+  "h3_prompt": "3D animation, Pixar-level rendering, cinematic shallow depth of field. Primeval forest, background foliage dissolved into soft dappled bokeh. The green praying mantis warrior with thin limbs and large white compound eyes reacts in close view. Beat 1 (first 40% of the shot): the big compound eyes go wide in an innocent, startled freeze. Beat 2 (from 40% onward): the eyes narrow into a guarded suspicious squint, the head tilting slightly. Medium close-up at eye level, static. Soft natural light, green tones. Off-screen narration, characters do not speak.",
+  "dialogue_line": "Off-screen narration, characters do not speak",
+  "notes": ""
+ },
+ {
+  "sid": 19,
+  "start": 70.8,
+  "end": 72.87,
+  "dur": 2.07,
+  "grid_frames": 56,
+  "grid_dur": 2.333,
+  "audio_win": [
+   70.5,
+   73.77
+  ],
+  "has_dial": true,
+  "cond_first": "/data/workspace/kais-shot-timeline/gsrt/renderback/batch_ep01/cond/s019_first_1344.jpg",
+  "cond_last": "/data/workspace/kais-shot-timeline/gsrt/renderback/batch_ep01/cond/s019_last_1344.jpg",
+  "audio": "/data/workspace/kais-shot-timeline/gsrt/renderback/batch_ep01/audio/s019_vocals.wav",
+  "ready": true,
+  "h3_prompt": "3D animation, Pixar-level rendering, cinematic shallow depth of field. Primeval forest with a fully blurred background. The rhino beetle warrior (glossy reddish-brown armored shell, large double-pronged horn, beige bandages on forearms) glances sideways as he bites into the bright red tomato, then closes his eyes and chews with puffed cheeks, a drop of juice at the corner of his mouth, looking smug and satisfied. Beat 1 (first 40% of the shot): sidelong glance while biting into the tomato. Beat 2 (from 40% onward): eyes closed, cheeks puffing as he chews, juice glistening on his lip. Static extreme close-up at eye level. Soft light with glossy highlights on the tomato. Off-screen narration, characters do not speak.",
+  "dialogue_line": "Off-screen narration, characters do not speak",
+  "notes": ""
+ },
+ {
+  "sid": 20,
+  "start": 72.87,
+  "end": 74.4,
+  "dur": 1.53,
+  "grid_frames": 39,
+  "grid_dur": 1.625,
+  "audio_win": [
+   72.57,
+   75.3
+  ],
+  "has_dial": true,
+  "cond_first": "/data/workspace/kais-shot-timeline/gsrt/renderback/batch_ep01/cond/s020_first_1344.jpg",
+  "cond_last": "/data/workspace/kais-shot-timeline/gsrt/renderback/batch_ep01/cond/s020_last_1344.jpg",
+  "audio": "/data/workspace/kais-shot-timeline/gsrt/renderback/batch_ep01/audio/s020_vocals.wav",
+  "ready": true,
+  "h3_prompt": "3D animation, Pixar-level rendering, cinematic shallow depth of field. Primeval forest, background fully blurred. A rhino beetle warrior (glossy reddish-brown armored shell, large double-pronged horn, beige bandages on forearms) closes his broad mouth slowly around the green-stemmed red tomato and takes a deliberate bite; juice drips down from the corner of his mouth while his eyes narrow halfway in enjoyment. Static extreme close-up, focus held on the mouth and the tomato. Soft light, glistening highlights on the tomato. Off-screen narration, characters do not speak.",
+  "dialogue_line": "Off-screen narration, characters do not speak",
+  "notes": ""
+ },
+ {
+  "sid": 21,
+  "start": 74.4,
+  "end": 75.8,
+  "dur": 1.4,
+  "grid_frames": 39,
+  "grid_dur": 1.625,
+  "audio_win": [
+   74.1,
+   76.7
+  ],
+  "has_dial": true,
+  "cond_first": "/data/workspace/kais-shot-timeline/gsrt/renderback/batch_ep01/cond/s021_first_1344.jpg",
+  "cond_last": "/data/workspace/kais-shot-timeline/gsrt/renderback/batch_ep01/cond/s021_last_1344.jpg",
+  "audio": "/data/workspace/kais-shot-timeline/gsrt/renderback/batch_ep01/audio/s021_vocals.wav",
+  "ready": true,
+  "h3_prompt": "3D animation, Pixar-level rendering, cinematic shallow depth of field. A primeval forest with blurred green plants in the background. The rhino beetle warrior (glossy reddish-brown armored shell, large double-pronged horn, beige bandages on forearms) holds a red tomato in both hands, eyes wide, takes a huge bite, then closes his eyes and chews in deep satisfaction, juice glistening on his face. Camera: close-up, eye level, static, one continuous take. Soft natural light, warm green tones. Off-screen narration, characters do not speak",
+  "dialogue_line": "Off-screen narration, characters do not speak",
+  "notes": ""
+ },
+ {
+  "sid": 22,
+  "start": 75.8,
+  "end": 77.17,
+  "dur": 1.37,
+  "grid_frames": 39,
+  "grid_dur": 1.625,
+  "audio_win": [
+   75.5,
+   78.07
+  ],
+  "has_dial": true,
+  "cond_first": "/data/workspace/kais-shot-timeline/gsrt/renderback/batch_ep01/cond/s022_first_1344.jpg",
+  "cond_last": "/data/workspace/kais-shot-timeline/gsrt/renderback/batch_ep01/cond/s022_last_1344.jpg",
+  "audio": "/data/workspace/kais-shot-timeline/gsrt/renderback/batch_ep01/audio/s022_vocals.wav",
+  "ready": true,
+  "h3_prompt": "3D animation, Pixar-level rendering, cinematic shallow depth of field. Primeval forest, blurred tree trunks behind. The green praying mantis warrior first glances aside with narrowed disdainful eyes, then lowers his head toward a red tomato offered up into frame from the lower right, compound eyes half-lidding with contempt. Medium close-up, eye level easing into a faint high angle, static. Soft natural light, cool green tones. Off-screen narration, characters do not speak.",
+  "dialogue_line": "Off-screen narration, characters do not speak",
+  "notes": ""
+ },
+ {
+  "sid": 23,
+  "start": 77.17,
+  "end": 80.43,
+  "dur": 3.26,
+  "grid_frames": 73,
+  "grid_dur": 3.042,
+  "audio_win": [
+   76.87,
+   81.33
+  ],
+  "has_dial": true,
+  "cond_first": "/data/workspace/kais-shot-timeline/gsrt/renderback/batch_ep01/cond/s023_first_1344.jpg",
+  "cond_last": "/data/workspace/kais-shot-timeline/gsrt/renderback/batch_ep01/cond/s023_last_1344.jpg",
+  "audio": "/data/workspace/kais-shot-timeline/gsrt/renderback/batch_ep01/audio/s023_vocals.wav",
+  "ready": true,
+  "h3_prompt": "3D animation, Pixar-level rendering, cinematic shallow depth of field. Primeval forest surrounded by mossy tree roots and giant trees. The rhino beetle warrior (glossy reddish-brown armored shell, large double-pronged horn, beige bandages on forearms) holds a half-eaten tomato with head buried, then snaps his head up with a furrowed brow and a fierce glare, while the green praying mantis warrior (thin limbs, white bandage wraps on forearms) watches quietly from behind holding a small tomato. Beat 1 (first 50% of the shot): head buried in the tomato. Beat 2 (from 50% onward): head snapping up into an angry frowning glare. Static medium shot at eye level with focus on the foreground beetle. Diffused forest light, green tones. Off-screen narration, characters do not speak.",
+  "dialogue_line": "Off-screen narration, characters do not speak",
+  "notes": ""
+ },
+ {
+  "sid": 24,
+  "start": 80.43,
+  "end": 81.43,
+  "dur": 1.0,
+  "grid_frames": 22,
+  "grid_dur": 0.917,
+  "audio_win": [
+   80.13,
+   81.78
+  ],
+  "has_dial": true,
+  "cond_first": "/data/workspace/kais-shot-timeline/gsrt/renderback/batch_ep01/cond/s024_first_1344.jpg",
+  "cond_last": "/data/workspace/kais-shot-timeline/gsrt/renderback/batch_ep01/cond/s024_last_1344.jpg",
+  "audio": "/data/workspace/kais-shot-timeline/gsrt/renderback/batch_ep01/audio/s024_vocals.wav",
+  "ready": true,
+  "h3_prompt": "3D animation, Pixar-level rendering, cinematic shallow depth of field. Primeval forest wrapped in mossy giant trees. A rhino beetle warrior (glossy reddish-brown armored shell, large double-pronged horn, beige bandages on forearms) clutches a tomato and scolds furiously, then swings his head toward the small orange-yellow fuzzy caterpillar child (round body, single green sprout on head, big expressive eyes), who tips his face up with an innocent bewildered look while the green praying mantis warrior (thin limbs, white bandage wraps on forearms) looks on from behind. Medium shot at eye level panning right, bringing the caterpillar child into frame. Dappled forest light, green tones. Character speaks aloud, natural lip-sync.",
+  "dialogue_line": "Character speaks aloud, natural lip-sync",
+  "notes": ""
+ },
+ {
+  "sid": 25,
+  "start": 81.43,
+  "end": 82.93,
+  "dur": 1.5,
+  "grid_frames": 39,
+  "grid_dur": 1.625,
+  "audio_win": [
+   81.13,
+   83.83
+  ],
+  "has_dial": true,
+  "cond_first": "/data/workspace/kais-shot-timeline/gsrt/renderback/batch_ep01/cond/s025_first_1344.jpg",
+  "cond_last": "/data/workspace/kais-shot-timeline/gsrt/renderback/batch_ep01/cond/s025_last_1344.jpg",
+  "audio": "/data/workspace/kais-shot-timeline/gsrt/renderback/batch_ep01/audio/s025_vocals.wav",
+  "ready": true,
+  "h3_prompt": "3D animation, Pixar-level rendering, cinematic shallow depth of field. A forest clearing with mossy ground and giant tangled roots. The rhino beetle warrior (glossy reddish-brown armored shell, large double-pronged horn, beige bandages on forearms), holding a red berry, scolds the small orange-yellow fuzzy caterpillar child (round body, single green sprout on head, big expressive eyes) with a frown; the child turns his back and walks away toward a distant giant tree while the warrior keeps watching him go, fruit still in hand. Camera: medium shot, eye level, static, one continuous take. Soft scattered forest light, emerald and warm tones. Off-screen narration, characters do not speak",
+  "dialogue_line": "Off-screen narration, characters do not speak",
+  "notes": "1.5s内双动作，连续表述未拆拍"
+ },
+ {
+  "sid": 26,
+  "start": 82.93,
+  "end": 83.93,
+  "dur": 1.0,
+  "grid_frames": 22,
+  "grid_dur": 0.917,
+  "audio_win": [
+   82.63,
+   84.83
+  ],
+  "has_dial": true,
+  "cond_first": "/data/workspace/kais-shot-timeline/gsrt/renderback/batch_ep01/cond/s026_first_1344.jpg",
+  "cond_last": "/data/workspace/kais-shot-timeline/gsrt/renderback/batch_ep01/cond/s026_last_1344.jpg",
+  "audio": "/data/workspace/kais-shot-timeline/gsrt/renderback/batch_ep01/audio/s026_vocals.wav",
+  "ready": true,
+  "h3_prompt": "3D animation, Pixar-level rendering, cinematic shallow depth of field. At the base of a giant tree, its trunk buried under thick moss and ringed by ferns. Far in frame the small orange-yellow fuzzy caterpillar child, back to camera, keeps inching its way up the mossy giant trunk, climbing steadily higher, while the blurred foreground rhino beetle warrior holds a red berry motionless. Wide shot at eye level, static, foreground soft and out of focus. Dappled forest light and shade under a thin drifting mist. Off-screen narration, characters do not speak.",
+  "dialogue_line": "Off-screen narration, characters do not speak",
+  "notes": ""
+ },
+ {
+  "sid": 27,
+  "start": 83.93,
+  "end": 85.43,
+  "dur": 1.5,
+  "grid_frames": 39,
+  "grid_dur": 1.625,
+  "audio_win": [
+   83.63,
+   86.33
+  ],
+  "has_dial": true,
+  "cond_first": "/data/workspace/kais-shot-timeline/gsrt/renderback/batch_ep01/cond/s027_first_1344.jpg",
+  "cond_last": "/data/workspace/kais-shot-timeline/gsrt/renderback/batch_ep01/cond/s027_last_1344.jpg",
+  "audio": "/data/workspace/kais-shot-timeline/gsrt/renderback/batch_ep01/audio/s027_vocals.wav",
+  "ready": true,
+  "h3_prompt": "3D animation, Pixar-level rendering, cinematic shallow depth of field. Primeval forest floor with giant moss-covered trees. The green praying mantis warrior (thin limbs, white bandage wraps on forearms) leaps in from the side into the frame while the rhino beetle warrior (glossy reddish-brown armored shell, large double-pronged horn, beige bandages on forearms) clutches his red berry and turns his head warily, the air suddenly tense. Medium close shot panning left to follow the mantis's entrance. Soft overhead light with forest diffusion. Off-screen narration, characters do not speak.",
+  "dialogue_line": "Off-screen narration, characters do not speak",
+  "notes": ""
+ },
+ {
+  "sid": 28,
+  "start": 85.43,
+  "end": 91.47,
+  "dur": 6.04,
+  "grid_frames": 141,
+  "grid_dur": 5.875,
+  "audio_win": [
+   85.13,
+   89.84
+  ],
+  "has_dial": true,
+  "cond_first": "/data/workspace/kais-shot-timeline/gsrt/renderback/batch_ep01/cond/s028_first_1344.jpg",
+  "cond_last": "/data/workspace/kais-shot-timeline/gsrt/renderback/batch_ep01/cond/s028_last_1344.jpg",
+  "audio": "/data/workspace/kais-shot-timeline/gsrt/renderback/batch_ep01/audio/s028_vocals.wav",
+  "ready": true,
+  "h3_prompt": "3D animation, Pixar-level rendering, cinematic shallow depth of field. Mossy forest floor scattered with red berries, blurred woods in the background. A rhino beetle warrior (glossy reddish-brown armored shell, large double-pronged horn, beige bandages on forearms) gets up and walks away toward the right while the green praying mantis warrior (thin limbs, white bandage wraps on forearms) stays planted on his mossy rock, eyes round and wide, watching him go. Beat 1 (first 40% of the shot): the beetle warrior rises to his feet and sets off to the right. Beat 2 (from 40% onward): he keeps walking away into the blurred woods as the mantis warrior remains still, staring after him with widening eyes. Static medium shot at eye level. Soft forest light, teal-green tones. Off-screen narration, characters do not speak.",
+  "dialogue_line": "Off-screen narration, characters do not speak",
+  "notes": ""
+ },
+ {
+  "sid": 29,
+  "start": 91.47,
+  "end": 92.63,
+  "dur": 1.16,
+  "grid_frames": 22,
+  "grid_dur": 0.917,
+  "audio_win": [
+   91.47,
+   92.63
+  ],
+  "has_dial": false,
+  "cond_first": "/data/workspace/kais-shot-timeline/gsrt/renderback/batch_ep01/cond/s029_first_1344.jpg",
+  "cond_last": "/data/workspace/kais-shot-timeline/gsrt/renderback/batch_ep01/cond/s029_last_1344.jpg",
+  "audio": "/data/workspace/kais-shot-timeline/gsrt/renderback/batch_ep01/audio/s029_vocals.wav",
+  "ready": true,
+  "h3_prompt": "3D animation, Pixar-level rendering, cinematic shallow depth of field. Deep in a primeval forest, a giant mossy log lies fallen with mist rising around it. The rhino beetle warrior (glossy reddish-brown armored shell, large double-pronged horn, beige bandages on forearms) and the green praying mantis warrior (thin limbs, white bandage wraps on forearms) walk up onto the log and settle standing side by side, gazing together into the mist-filled forest depths. Camera: slow pull-back from a medium-close shot to a wide shot from behind, one continuous take. Misty forest light, first Tyndall beams appearing",
+  "dialogue_line": "",
+  "notes": ""
+ },
+ {
+  "sid": 30,
+  "start": 92.63,
+  "end": 95.03,
+  "dur": 2.4,
+  "grid_frames": 56,
+  "grid_dur": 2.333,
+  "audio_win": [
+   92.63,
+   95.03
+  ],
+  "has_dial": false,
+  "cond_first": "/data/workspace/kais-shot-timeline/gsrt/renderback/batch_ep01/cond/s030_first_1344.jpg",
+  "cond_last": "/data/workspace/kais-shot-timeline/gsrt/renderback/batch_ep01/cond/s030_last_1344.jpg",
+  "audio": "/data/workspace/kais-shot-timeline/gsrt/renderback/batch_ep01/audio/s030_vocals.wav",
+  "ready": true,
+  "h3_prompt": "3D animation, Pixar-level rendering, cinematic shallow depth of field. A vast primeval forest of towering giant trees and thick ferns. The rhino beetle warrior and the green praying mantis warrior stand side by side on a fallen log, small against the woods, simply standing still as they gaze into the forest's depths. Slow pull-back from a wide shot to an extreme wide, eye level. Volumetric god rays slanting through the mist, serene and still.",
+  "dialogue_line": "",
+  "notes": ""
+ },
+ {
+  "sid": 31,
+  "start": 95.03,
+  "end": 96.83,
+  "dur": 1.8,
+  "grid_frames": 39,
+  "grid_dur": 1.625,
+  "audio_win": [
+   95.03,
+   96.83
+  ],
+  "has_dial": false,
+  "cond_first": "/data/workspace/kais-shot-timeline/gsrt/renderback/batch_ep01/cond/s031_first_1344.jpg",
+  "cond_last": "/data/workspace/kais-shot-timeline/gsrt/renderback/batch_ep01/cond/s031_last_1344.jpg",
+  "audio": "/data/workspace/kais-shot-timeline/gsrt/renderback/batch_ep01/audio/s031_vocals.wav",
+  "ready": true,
+  "h3_prompt": "3D animation, Pixar-level rendering, cinematic shallow depth of field. Forest background completely blurred into soft bokeh. The green praying mantis warrior (thin limbs, white bandage wraps on forearms) stares straight ahead, then slowly lets his large white compound eyelids half-lower into a speechless, resigned look. Static extreme close-up at eye level. Soft side light with hazy background bokeh.",
+  "dialogue_line": "",
+  "notes": ""
+ },
+ {
+  "sid": 32,
+  "start": 96.83,
+  "end": 99.1,
+  "dur": 2.27,
+  "grid_frames": 56,
+  "grid_dur": 2.333,
+  "audio_win": [
+   96.83,
+   99.1
+  ],
+  "has_dial": false,
+  "cond_first": "/data/workspace/kais-shot-timeline/gsrt/renderback/batch_ep01/cond/s032_first_1344.jpg",
+  "cond_last": "/data/workspace/kais-shot-timeline/gsrt/renderback/batch_ep01/cond/s032_last_1344.jpg",
+  "audio": "/data/workspace/kais-shot-timeline/gsrt/renderback/batch_ep01/audio/s032_vocals.wav",
+  "ready": true,
+  "h3_prompt": "3D animation, Pixar-level rendering, cinematic shallow depth of field. Primeval forest floor of tangled mossy roots, deep woods standing beyond. Over the shoulder of the green praying mantis warrior (thin limbs, white bandage wraps on forearms), the view sweeps slowly across the empty mossy clearing where no insect remains. Slow over-the-shoulder POV, medium-long shot, gentle pan to the right. Volumetric god rays falling through the trees, hazy mist.",
+  "dialogue_line": "",
+  "notes": ""
+ },
+ {
+  "sid": 33,
+  "start": 99.1,
+  "end": 100.1,
+  "dur": 1.0,
+  "grid_frames": 22,
+  "grid_dur": 0.917,
+  "audio_win": [
+   99.1,
+   100.1
+  ],
+  "has_dial": false,
+  "cond_first": "/data/workspace/kais-shot-timeline/gsrt/renderback/batch_ep01/cond/s033_first_1344.jpg",
+  "cond_last": "/data/workspace/kais-shot-timeline/gsrt/renderback/batch_ep01/cond/s033_last_1344.jpg",
+  "audio": "/data/workspace/kais-shot-timeline/gsrt/renderback/batch_ep01/audio/s033_vocals.wav",
+  "ready": true,
+  "h3_prompt": "3D animation, Pixar-level rendering, cinematic shallow depth of field. Dense forest softly blurred in the background. The face of the green praying mantis warrior (thin limbs, white bandage wraps on forearms, large white compound eyes, orange antennae) shifts from a deadpan half-lidded stare to eyes suddenly snapping wide open in alert awareness. Camera: close-up, eye level, static, one continuous take. Soft scattered light with background bokeh spots",
+  "dialogue_line": "",
+  "notes": ""
+ },
+ {
+  "sid": 34,
+  "start": 100.1,
+  "end": 100.87,
+  "dur": 0.77,
+  "grid_frames": 22,
+  "grid_dur": 0.917,
+  "audio_win": [
+   100.1,
+   100.87
+  ],
+  "has_dial": false,
+  "cond_first": "/data/workspace/kais-shot-timeline/gsrt/renderback/batch_ep01/cond/s034_first_1344.jpg",
+  "cond_last": "/data/workspace/kais-shot-timeline/gsrt/renderback/batch_ep01/cond/s034_last_1344.jpg",
+  "audio": "/data/workspace/kais-shot-timeline/gsrt/renderback/batch_ep01/audio/s034_vocals.wav",
+  "ready": true,
+  "h3_prompt": "3D animation, Pixar-level rendering, cinematic shallow depth of field. The dark floor of a primeval forest, ferns thick, the trees dim. The red centipede with its glossy red segmented body and many legs hurtles low along the ground, ferns whipping past on both sides as it surges forward. Low camera hugging just above its back, rushing forward at speed with heavy motion blur and violent shake. Dim green tones, broken light flickering past through the trees.",
+  "dialogue_line": "",
+  "notes": ""
+ },
+ {
+  "sid": 35,
+  "start": 100.87,
+  "end": 101.4,
+  "dur": 0.53,
+  "grid_frames": 22,
+  "grid_dur": 0.917,
+  "audio_win": [
+   100.57,
+   102.3
+  ],
+  "has_dial": true,
+  "cond_first": "/data/workspace/kais-shot-timeline/gsrt/renderback/batch_ep01/cond/s035_first_1344.jpg",
+  "cond_last": "/data/workspace/kais-shot-timeline/gsrt/renderback/batch_ep01/cond/s035_last_1344.jpg",
+  "audio": "/data/workspace/kais-shot-timeline/gsrt/renderback/batch_ep01/audio/s035_vocals.wav",
+  "ready": true,
+  "h3_prompt": "3D animation, Pixar-level rendering, cinematic shallow depth of field, motion blur. Foggy dense forest with a winding path between towering trees. The red centipede (glossy red segmented body, many legs, menacing) sprints at full speed along the forest path, antennae stretched forward, vegetation whipping past on both sides. Low-angle tracking shot from behind, fast forward push. Eerie green fog light, tree shadows flickering past rapidly. Off-screen narration, characters do not speak.",
+  "dialogue_line": "Off-screen narration, characters do not speak",
+  "notes": ""
+ },
+ {
+  "sid": 36,
+  "start": 101.4,
+  "end": 102.03,
+  "dur": 0.63,
+  "grid_frames": 22,
+  "grid_dur": 0.917,
+  "audio_win": [
+   101.1,
+   102.34
+  ],
+  "has_dial": true,
+  "cond_first": "/data/workspace/kais-shot-timeline/gsrt/renderback/batch_ep01/cond/s036_first_1344.jpg",
+  "cond_last": "/data/workspace/kais-shot-timeline/gsrt/renderback/batch_ep01/cond/s036_last_1344.jpg",
+  "audio": "/data/workspace/kais-shot-timeline/gsrt/renderback/batch_ep01/audio/s036_vocals.wav",
+  "ready": true,
+  "h3_prompt": "3D animation, Pixar-level rendering, cinematic shallow depth of field. A dense forest path flanked by thick vegetation, mist hanging in the distance. A red centipede (glossy red segmented body, many legs, menacing) sprints hard along the path toward the two distant figures of the rhino beetle warrior and the green praying mantis warrior at the far end of the trail, the camera lifting slightly to reveal the target ahead. Fast tracking shot with a slight upward tilt, strong motion blur. Dim green forest light, glow filtering through the distant mist. Off-screen narration, characters do not speak.",
+  "dialogue_line": "Off-screen narration, characters do not speak",
+  "notes": ""
+ },
+ {
+  "sid": 37,
+  "start": 102.03,
+  "end": 107.63,
+  "dur": 5.6,
+  "grid_frames": 141,
+  "grid_dur": 5.875,
+  "audio_win": [
+   101.73,
+   108.18
+  ],
+  "has_dial": true,
+  "cond_first": "/data/workspace/kais-shot-timeline/gsrt/renderback/batch_ep01/cond/s037_first_1344.jpg",
+  "cond_last": "/data/workspace/kais-shot-timeline/gsrt/renderback/batch_ep01/cond/s037_last_1344.jpg",
+  "audio": "/data/workspace/kais-shot-timeline/gsrt/renderback/batch_ep01/audio/s037_vocals.wav",
+  "ready": true,
+  "h3_prompt": "3D animation, Pixar-level rendering, cinematic shallow depth of field. A primeval forest with giant trees and moss in the background. Beat 1 (first 50% of the shot): the green praying mantis warrior (thin limbs, white bandage wraps on forearms, large white compound eyes, orange antennae) raises his blade-like forearms into a fighting stance. Beat 2 (from 50% onward): the rhino beetle warrior (glossy reddish-brown armored shell, large double-pronged horn, beige bandages on forearms) reacts, his expression turning from startled to a wicked grin as he leans forward, ready to fight. Camera: medium two-shot, eye level, slow push-in, one continuous take. Natural scattered forest light, soft and bright. Off-screen narration, characters do not speak",
+  "dialogue_line": "Off-screen narration, characters do not speak",
+  "notes": ""
+ },
+ {
+  "sid": 38,
+  "start": 107.63,
+  "end": 110.87,
+  "dur": 3.24,
+  "grid_frames": 73,
+  "grid_dur": 3.042,
+  "audio_win": [
+   107.33,
+   111.77
+  ],
+  "has_dial": true,
+  "cond_first": "/data/workspace/kais-shot-timeline/gsrt/renderback/batch_ep01/cond/s038_first_1344.jpg",
+  "cond_last": "/data/workspace/kais-shot-timeline/gsrt/renderback/batch_ep01/cond/s038_last_1344.jpg",
+  "audio": "/data/workspace/kais-shot-timeline/gsrt/renderback/batch_ep01/audio/s038_vocals.wav",
+  "ready": true,
+  "h3_prompt": "3D animation, Pixar-level rendering, cinematic shallow depth of field. Moss-covered woodland ground and rock platforms under leaf litter. The green praying mantis warrior on his raised mossy platform and the rhino beetle warrior face off as the red centipede erupts from the distance. Beat 1 (first 35% of the shot): the tense standoff holds, the centipede a blurred dark-red shape circling beyond. Beat 2 (from 35% onward): the centipede lunges without warning and bowls the rhino beetle warrior over, sending him tumbling across the leaf-strewn ground as the camera dives in low. Starts as an extreme wide at eye level, then rapidly pushes in and drops to a ground-hugging low close view. Volumetric god rays piercing the trees, deep green mood. Off-screen narration, characters do not speak.",
+  "dialogue_line": "Off-screen narration, characters do not speak",
+  "notes": ""
+ },
+ {
+  "sid": 39,
+  "start": 110.87,
+  "end": 112.47,
+  "dur": 1.6,
+  "grid_frames": 39,
+  "grid_dur": 1.625,
+  "audio_win": [
+   110.57,
+   113.37
+  ],
+  "has_dial": true,
+  "cond_first": "/data/workspace/kais-shot-timeline/gsrt/renderback/batch_ep01/cond/s039_first_1344.jpg",
+  "cond_last": "/data/workspace/kais-shot-timeline/gsrt/renderback/batch_ep01/cond/s039_last_1344.jpg",
+  "audio": "/data/workspace/kais-shot-timeline/gsrt/renderback/batch_ep01/audio/s039_vocals.wav",
+  "ready": true,
+  "h3_prompt": "3D animation, Pixar-level rendering, cinematic shallow depth of field, motion blur. Giant tangled tree roots in mossy dense forest. The green praying mantis warrior (thin limbs, white bandage wraps on forearms) rolls low across the ground by the roots, then springs up into the air with both blade arms raised high, mouth open in a battle cry. Low-angle shot tilting up quickly as he leaps. Diffused forest light, deep shadowed background. Off-screen narration, characters do not speak.",
+  "dialogue_line": "Off-screen narration, characters do not speak",
+  "notes": ""
+ },
+ {
+  "sid": 40,
+  "start": 112.47,
+  "end": 114.47,
+  "dur": 2.0,
+  "grid_frames": 56,
+  "grid_dur": 2.333,
+  "audio_win": [
+   112.17,
+   115.37
+  ],
+  "has_dial": true,
+  "cond_first": "/data/workspace/kais-shot-timeline/gsrt/renderback/batch_ep01/cond/s040_first_1344.jpg",
+  "cond_last": "/data/workspace/kais-shot-timeline/gsrt/renderback/batch_ep01/cond/s040_last_1344.jpg",
+  "audio": "/data/workspace/kais-shot-timeline/gsrt/renderback/batch_ep01/audio/s040_vocals.wav",
+  "ready": true,
+  "h3_prompt": "3D animation, Pixar-level rendering, cinematic shallow depth of field. Leaf-strewn woodland floor above gnarled roots. A green praying mantis warrior (thin limbs, white bandage wraps on forearms) tucks his body mid-air and dives headfirst, blade arms leading, plunging straight down at the target on the ground as the leafy floor rushes up toward the lens. High-speed top-down dive tracking shot, strong radial motion blur. Dim forest light. Off-screen narration, characters do not speak.",
+  "dialogue_line": "Off-screen narration, characters do not speak",
+  "notes": ""
+ },
+ {
+  "sid": 41,
+  "start": 114.47,
+  "end": 116.0,
+  "dur": 1.53,
+  "grid_frames": 39,
+  "grid_dur": 1.625,
+  "audio_win": [
+   114.17,
+   116.9
+  ],
+  "has_dial": true,
+  "cond_first": "/data/workspace/kais-shot-timeline/gsrt/renderback/batch_ep01/cond/s041_first_1344.jpg",
+  "cond_last": "/data/workspace/kais-shot-timeline/gsrt/renderback/batch_ep01/cond/s041_last_1344.jpg",
+  "audio": "/data/workspace/kais-shot-timeline/gsrt/renderback/batch_ep01/audio/s041_vocals.wav",
+  "ready": true,
+  "h3_prompt": "3D animation, Pixar-level rendering, cinematic shallow depth of field. A forest floor covered in fallen leaves with tree trunks all around. The rhino beetle warrior (glossy reddish-brown armored shell, large double-pronged horn, beige bandages on forearms) with a raised fist and the green praying mantis warrior (thin limbs, white bandage wraps on forearms) settle side by side into their battle stances, holding the pose as the view firms into a sharp steady frame. Camera: low angle, handheld shake settling into a steady medium shot with focus resolving from blur to sharp, one continuous take. Bright scattered forest light. Off-screen narration, characters do not speak",
+  "dialogue_line": "Off-screen narration, characters do not speak",
+  "notes": "手持抖动转稳，单连续镜"
+ },
+ {
+  "sid": 42,
+  "start": 116.0,
+  "end": 118.97,
+  "dur": 2.97,
+  "grid_frames": 73,
+  "grid_dur": 3.042,
+  "audio_win": [
+   115.7,
+   119.87
+  ],
+  "has_dial": true,
+  "cond_first": "/data/workspace/kais-shot-timeline/gsrt/renderback/batch_ep01/cond/s042_first_1344.jpg",
+  "cond_last": "/data/workspace/kais-shot-timeline/gsrt/renderback/batch_ep01/cond/s042_last_1344.jpg",
+  "audio": "/data/workspace/kais-shot-timeline/gsrt/renderback/batch_ep01/audio/s042_vocals.wav",
+  "ready": true,
+  "h3_prompt": "3D animation, Pixar-level rendering, cinematic shallow depth of field. Sunlit forest canopy level, a thick horizontal branch coated in moss and ferns. The small orange-yellow fuzzy caterpillar child sits upright on the branch, folding its hands together at its chest as its mood lifts. Beat 1 (first 45% of the shot): brow creased with worry, small hands clasping together. Beat 2 (from 45% onward): the worry dissolves into a happy squinting smile. Medium shot at eye level, static with a gentle push-in. Warm sunlight sifting down through the canopy, soft backlight. Off-screen narration, characters do not speak.",
+  "dialogue_line": "Off-screen narration, characters do not speak",
+  "notes": ""
+ },
+ {
+  "sid": 43,
+  "start": 118.97,
+  "end": 120.8,
+  "dur": 1.83,
+  "grid_frames": 39,
+  "grid_dur": 1.625,
+  "audio_win": [
+   118.67,
+   121.7
+  ],
+  "has_dial": true,
+  "cond_first": "/data/workspace/kais-shot-timeline/gsrt/renderback/batch_ep01/cond/s043_first_1344.jpg",
+  "cond_last": "/data/workspace/kais-shot-timeline/gsrt/renderback/batch_ep01/cond/s043_last_1344.jpg",
+  "audio": "/data/workspace/kais-shot-timeline/gsrt/renderback/batch_ep01/audio/s043_vocals.wav",
+  "ready": true,
+  "h3_prompt": "3D animation, Pixar-level rendering, cinematic shallow depth of field. Forest floor of giant tangled roots, fallen leaves and ferns. The red centipede (glossy red segmented body, many legs, menacing) glides out from among the roots and leaves, then coils between the roots and rears up its front half in a threatening display. Static wide shot at eye level with a slight slow push-in. Dim mysterious forest light, oppressive mood. Off-screen narration, characters do not speak.",
+  "dialogue_line": "Off-screen narration, characters do not speak",
+  "notes": ""
+ },
+ {
+  "sid": 44,
+  "start": 120.8,
+  "end": 122.37,
+  "dur": 1.57,
+  "grid_frames": 39,
+  "grid_dur": 1.625,
+  "audio_win": [
+   120.5,
+   123.27
+  ],
+  "has_dial": true,
+  "cond_first": "/data/workspace/kais-shot-timeline/gsrt/renderback/batch_ep01/cond/s044_first_1344.jpg",
+  "cond_last": "/data/workspace/kais-shot-timeline/gsrt/renderback/batch_ep01/cond/s044_last_1344.jpg",
+  "audio": "/data/workspace/kais-shot-timeline/gsrt/renderback/batch_ep01/audio/s044_vocals.wav",
+  "ready": true,
+  "h3_prompt": "3D animation, Pixar-level rendering, cinematic shallow depth of field. Woodland floor covered with dry leaves. In a three-way clash, the green praying mantis warrior (thin limbs, white bandage wraps on forearms) slashes his blade through the air and strikes the lunging red centipede (glossy red segmented body, many legs, menacing), the impact bursting into a spray of golden sparks while the rhino beetle warrior (glossy reddish-brown armored shell, large double-pronged horn, beige bandages on forearms) charges in from the side. Fast handheld medium-close tracking with camera shake, strong motion blur. Dim forest light pierced by glaring golden sparks. Off-screen narration, characters do not speak.",
+  "dialogue_line": "Off-screen narration, characters do not speak",
+  "notes": ""
+ },
+ {
+  "sid": 45,
+  "start": 122.37,
+  "end": 123.7,
+  "dur": 1.33,
+  "grid_frames": 39,
+  "grid_dur": 1.625,
+  "audio_win": [
+   122.07,
+   124.6
+  ],
+  "has_dial": true,
+  "cond_first": "/data/workspace/kais-shot-timeline/gsrt/renderback/batch_ep01/cond/s045_first_1344.jpg",
+  "cond_last": "/data/workspace/kais-shot-timeline/gsrt/renderback/batch_ep01/cond/s045_last_1344.jpg",
+  "audio": "/data/workspace/kais-shot-timeline/gsrt/renderback/batch_ep01/audio/s045_vocals.wav",
+  "ready": true,
+  "h3_prompt": "3D animation, Pixar-level rendering, cinematic shallow depth of field. A dim dense forest floor covered with fallen leaves. The green praying mantis warrior (thin limbs, white bandage wraps on forearms) slips aside to evade the lunging red centipede (glossy red segmented body, many legs, menacing), then spins to face the camera, crossing his dual blade forearms and glaring fiercely into a held battle pose. Camera: fast tracking shot rushing from a medium shot into a face close-up, one continuous take. Dim forest light. Off-screen narration, characters do not speak",
+  "dialogue_line": "Off-screen narration, characters do not speak",
+  "notes": ""
+ },
+ {
+  "sid": 46,
+  "start": 123.7,
+  "end": 129.4,
+  "dur": 5.7,
+  "grid_frames": 141,
+  "grid_dur": 5.875,
+  "audio_win": [
+   123.4,
+   129.76
+  ],
+  "has_dial": true,
+  "cond_first": "/data/workspace/kais-shot-timeline/gsrt/renderback/batch_ep01/cond/s046_first_1344.jpg",
+  "cond_last": "/data/workspace/kais-shot-timeline/gsrt/renderback/batch_ep01/cond/s046_last_1344.jpg",
+  "audio": "/data/workspace/kais-shot-timeline/gsrt/renderback/batch_ep01/audio/s046_vocals.wav",
+  "ready": true,
+  "h3_prompt": "3D animation, Pixar-level rendering, cinematic shallow depth of field. A leaf-littered woodland opening into deep dark forest. The red centipede strikes with its huge jaws wide open and the green praying mantis warrior flings his thin limbs out to dodge, after which the camera settles on the rhino beetle warrior's delighted face. Beat 1 (first 60% of the shot): the centipede pounces, the mantis warrior swaying clear of the snapping jaws. Beat 2 (from 60% onward): in one continuous move the camera pushes in to the rhino beetle warrior's face as he breaks into a smug knowing grin. Wide action framing pushing through to an extreme facial close-up. Dim forest light, soft light on the face. Off-screen narration, characters do not speak.",
+  "dialogue_line": "Off-screen narration, characters do not speak",
+  "notes": "全程连续运镜无剪切"
+ },
+ {
+  "sid": 47,
+  "start": 129.4,
+  "end": 132.6,
+  "dur": 3.2,
+  "grid_frames": 73,
+  "grid_dur": 3.042,
+  "audio_win": [
+   129.1,
+   133.5
+  ],
+  "has_dial": true,
+  "cond_first": "/data/workspace/kais-shot-timeline/gsrt/renderback/batch_ep01/cond/s047_first_1344.jpg",
+  "cond_last": "/data/workspace/kais-shot-timeline/gsrt/renderback/batch_ep01/cond/s047_last_1344.jpg",
+  "audio": "/data/workspace/kais-shot-timeline/gsrt/renderback/batch_ep01/audio/s047_vocals.wav",
+  "ready": true,
+  "h3_prompt": "3D animation, Pixar-level rendering, cinematic shallow depth of field. Mossy tree roots and leaf-littered forest floor. The red centipede (glossy red segmented body, many legs, menacing) sweeps its long body low across the ground while the green praying mantis warrior (thin limbs, white bandage wraps on forearms) presses himself flat to dodge, the rhino beetle warrior watching from the distance. Beat 1 (first 55% of the shot): the centipede's long body glides swiftly across the ground toward the mantis. Beat 2 (from 55% onward): the mantis crouches low, dodging as the body sweeps past. Ground-level low-angle lateral tracking shot, the centipede's body blurring across the foreground. Dim forest light. Off-screen narration, characters do not speak.",
+  "dialogue_line": "Off-screen narration, characters do not speak",
+  "notes": ""
+ },
+ {
+  "sid": 48,
+  "start": 132.6,
+  "end": 133.87,
+  "dur": 1.27,
+  "grid_frames": 22,
+  "grid_dur": 0.917,
+  "audio_win": [
+   132.3,
+   134.2
+  ],
+  "has_dial": true,
+  "cond_first": "/data/workspace/kais-shot-timeline/gsrt/renderback/batch_ep01/cond/s048_first_1344.jpg",
+  "cond_last": "/data/workspace/kais-shot-timeline/gsrt/renderback/batch_ep01/cond/s048_last_1344.jpg",
+  "audio": "/data/workspace/kais-shot-timeline/gsrt/renderback/batch_ep01/audio/s048_vocals.wav",
+  "ready": true,
+  "h3_prompt": "3D animation, Pixar-level rendering, cinematic shallow depth of field. Woodland of moss-covered tree roots. A green praying mantis warrior (thin limbs, white bandage wraps on forearms) holding twin blades uncoils from a low guarded crouch into a frantic sprint, glancing back over his shoulder again and again as he runs. Side medium tracking shot moving with him, the woods streaming past in blurred streaks. Dim diffused forest light, motion blur. Off-screen narration, characters do not speak.",
+  "dialogue_line": "Off-screen narration, characters do not speak",
+  "notes": ""
+ },
+ {
+  "sid": 49,
+  "start": 133.87,
+  "end": 136.27,
+  "dur": 2.4,
+  "grid_frames": 56,
+  "grid_dur": 2.333,
+  "audio_win": [
+   133.57,
+   137.17
+  ],
+  "has_dial": true,
+  "cond_first": "/data/workspace/kais-shot-timeline/gsrt/renderback/batch_ep01/cond/s049_first_1344.jpg",
+  "cond_last": "/data/workspace/kais-shot-timeline/gsrt/renderback/batch_ep01/cond/s049_last_1344.jpg",
+  "audio": "/data/workspace/kais-shot-timeline/gsrt/renderback/batch_ep01/audio/s049_vocals.wav",
+  "ready": true,
+  "h3_prompt": "3D animation, Pixar-level rendering, cinematic shallow depth of field. Deep in a primeval forest with towering giant trees and softly blurred greenery. Beat 1 (first 50% of the shot): the rhino beetle warrior (glossy reddish-brown armored shell, large double-pronged horn, beige bandages on forearms), held in a wary side guard, turns his head aside. Beat 2 (from 50% onward): he opens his mouth to explain, his tense puzzled look easing into confident certainty. Camera: medium shot, eye level, essentially static with a slight push-in, one continuous take. Tyndall beams falling through the forest, warm green tones, side light tracing glossy highlights on his shell. Off-screen narration, characters do not speak",
+  "dialogue_line": "Off-screen narration, characters do not speak",
+  "notes": ""
+ },
+ {
+  "sid": 50,
+  "start": 136.27,
+  "end": 137.67,
+  "dur": 1.4,
+  "grid_frames": 39,
+  "grid_dur": 1.625,
+  "audio_win": [
+   135.97,
+   137.98
+  ],
+  "has_dial": true,
+  "cond_first": "/data/workspace/kais-shot-timeline/gsrt/renderback/batch_ep01/cond/s050_first_1344.jpg",
+  "cond_last": "/data/workspace/kais-shot-timeline/gsrt/renderback/batch_ep01/cond/s050_last_1344.jpg",
+  "audio": "/data/workspace/kais-shot-timeline/gsrt/renderback/batch_ep01/audio/s050_vocals.wav",
+  "ready": true,
+  "h3_prompt": "3D animation, Pixar-level rendering, cinematic shallow depth of field. Dark dense woods, blurred trunks and fallen leaves behind. The green praying mantis warrior's face is taut with strain, teeth clenched in endurance, before he snaps his head aside in sudden anxious alarm. Facial close-up easing slightly wider to a close shot, eye level, static, shallow focus. Soft diffused light, dark green tones, a tense atmosphere. Off-screen narration, characters do not speak.",
+  "dialogue_line": "Off-screen narration, characters do not speak",
+  "notes": "画外轴，改呼喊为侧头"
+ },
+ {
+  "sid": 51,
+  "start": 137.67,
+  "end": 138.93,
+  "dur": 1.26,
+  "grid_frames": 22,
+  "grid_dur": 0.917,
+  "audio_win": [
+   137.37,
+   139.83
+  ],
+  "has_dial": true,
+  "cond_first": "/data/workspace/kais-shot-timeline/gsrt/renderback/batch_ep01/cond/s051_first_1344.jpg",
+  "cond_last": "/data/workspace/kais-shot-timeline/gsrt/renderback/batch_ep01/cond/s051_last_1344.jpg",
+  "audio": "/data/workspace/kais-shot-timeline/gsrt/renderback/batch_ep01/audio/s051_vocals.wav",
+  "ready": true,
+  "h3_prompt": "3D animation, Pixar-level rendering, cinematic shallow depth of field. Forest with soft blurred greenery. The rhino beetle warrior (glossy reddish-brown armored shell, large double-pronged horn, beige bandages on forearms) turns from a tense side profile to face the camera, breaking into a confident grin. Static close-up at eye level with a subtle slow push-in. Side lighting with glossy highlights on the shell, warm green tones. Off-screen narration, characters do not speak.",
+  "dialogue_line": "Off-screen narration, characters do not speak",
+  "notes": ""
+ },
+ {
+  "sid": 52,
+  "start": 138.93,
+  "end": 140.2,
+  "dur": 1.27,
+  "grid_frames": 22,
+  "grid_dur": 0.917,
+  "audio_win": [
+   138.63,
+   140.6
+  ],
+  "has_dial": true,
+  "cond_first": "/data/workspace/kais-shot-timeline/gsrt/renderback/batch_ep01/cond/s052_first_1344.jpg",
+  "cond_last": "/data/workspace/kais-shot-timeline/gsrt/renderback/batch_ep01/cond/s052_last_1344.jpg",
+  "audio": "/data/workspace/kais-shot-timeline/gsrt/renderback/batch_ep01/audio/s052_vocals.wav",
+  "ready": true,
+  "h3_prompt": "3D animation, Pixar-level rendering, cinematic shallow depth of field. Primeval forest floor strewn with moss, rotten wood and fallen leaves. The huge dark-red red centipede (glossy red segmented body, many legs, menacing) rears up and whips its long body in a horizontal sweep, smearing across the frame in a motion-blurred arc as leaves scatter, while the rhino beetle warrior (glossy reddish-brown armored shell, large double-pronged horn, beige bandages on forearms) and the green praying mantis warrior (thin limbs, white bandage wraps on forearms) brace on either side. Extreme wide low-angle shot with a fast lateral whip-pan following the sweep, dynamic motion blur. Scattered forest light, dark green tones, tense battle mood. Off-screen narration, characters do not speak.",
+  "dialogue_line": "Off-screen narration, characters do not speak",
+  "notes": ""
+ },
+ {
+  "sid": 53,
+  "start": 140.2,
+  "end": 144.2,
+  "dur": 4.0,
+  "grid_frames": 90,
+  "grid_dur": 3.75,
+  "audio_win": [
+   139.9,
+   144.58
+  ],
+  "has_dial": true,
+  "cond_first": "/data/workspace/kais-shot-timeline/gsrt/renderback/batch_ep01/cond/s053_first_1344.jpg",
+  "cond_last": "/data/workspace/kais-shot-timeline/gsrt/renderback/batch_ep01/cond/s053_last_1344.jpg",
+  "audio": "/data/workspace/kais-shot-timeline/gsrt/renderback/batch_ep01/audio/s053_vocals.wav",
+  "ready": true,
+  "h3_prompt": "3D animation, Pixar-level rendering, cinematic shallow depth of field. A leaf-covered forest floor with gnarled roots. Beat 1 (first 50% of the shot): the red centipede (glossy red segmented body, many legs, menacing) sweeps its long multi-legged trunk across the foreground. Beat 2 (from 50% onward): the rhino beetle warrior (glossy reddish-brown armored shell, large double-pronged horn, beige bandages on forearms) fails to dodge, is knocked flying and tumbles through the air shouting. Camera: low-angle fast lateral tracking shot rushing from a wide shot into a close shot, one continuous take. Dark green tones, dappled forest light, strong motion blur. Off-screen narration, characters do not speak",
+  "dialogue_line": "Off-screen narration, characters do not speak",
+  "notes": ""
+ },
+ {
+  "sid": 54,
+  "start": 144.2,
+  "end": 147.63,
+  "dur": 3.43,
+  "grid_frames": 90,
+  "grid_dur": 3.75,
+  "audio_win": [
+   143.9,
+   148.53
+  ],
+  "has_dial": true,
+  "cond_first": "/data/workspace/kais-shot-timeline/gsrt/renderback/batch_ep01/cond/s054_first_1344.jpg",
+  "cond_last": "/data/workspace/kais-shot-timeline/gsrt/renderback/batch_ep01/cond/s054_last_1344.jpg",
+  "audio": "/data/workspace/kais-shot-timeline/gsrt/renderback/batch_ep01/audio/s054_vocals.wav",
+  "ready": true,
+  "h3_prompt": "3D animation, Pixar-level rendering, cinematic shallow depth of field. Dense primeval forest, towering trees, hanging vines, ground mist spreading low. The rhino beetle warrior charges in head-low and rams the rearing red centipede with his large double-pronged horn, dry leaves bursting into the air. Beat 1 (first 30% of the shot): the rhino beetle warrior explodes into his charge, head lowered. Beat 2 (from 30% onward): the horn slams home, the glossy red segmented centipede toppling sideways in a flurry of leaves. Extreme wide from a low angle, static. Volumetric god rays breaking through the trees, bright warm green tones. Off-screen narration, characters do not speak.",
+  "dialogue_line": "Off-screen narration, characters do not speak",
+  "notes": ""
+ },
+ {
+  "sid": 55,
+  "start": 147.63,
+  "end": 149.9,
+  "dur": 2.27,
+  "grid_frames": 56,
+  "grid_dur": 2.333,
+  "audio_win": [
+   147.33,
+   150.8
+  ],
+  "has_dial": true,
+  "cond_first": "/data/workspace/kais-shot-timeline/gsrt/renderback/batch_ep01/cond/s055_first_1344.jpg",
+  "cond_last": "/data/workspace/kais-shot-timeline/gsrt/renderback/batch_ep01/cond/s055_last_1344.jpg",
+  "audio": "/data/workspace/kais-shot-timeline/gsrt/renderback/batch_ep01/audio/s055_vocals.wav",
+  "ready": true,
+  "h3_prompt": "3D animation, Pixar-level rendering, cinematic shallow depth of field. Giant tree base covered in thick moss. The green praying mantis warrior (thin limbs, white bandage wraps on forearms) stands sideways on guard with his long blade, then whirls to face the camera with compound eyes wide and mouth open in an exclamation, a blade in each hand. Beat 1 (first 45% of the shot): sideways guarded stance with the blade held ready. Beat 2 (from 45% onward): spinning to face the camera with a startled exclamation, twin blades spread. Static medium shot at eye level. Soft forest light, warm green tones. Off-screen narration, characters do not speak.",
+  "dialogue_line": "Off-screen narration, characters do not speak",
+  "notes": ""
+ },
+ {
+  "sid": 56,
+  "start": 149.9,
+  "end": 153.47,
+  "dur": 3.57,
+  "grid_frames": 90,
+  "grid_dur": 3.75,
+  "audio_win": [
+   149.6,
+   154.37
+  ],
+  "has_dial": true,
+  "cond_first": "/data/workspace/kais-shot-timeline/gsrt/renderback/batch_ep01/cond/s056_first_1344.jpg",
+  "cond_last": "/data/workspace/kais-shot-timeline/gsrt/renderback/batch_ep01/cond/s056_last_1344.jpg",
+  "audio": "/data/workspace/kais-shot-timeline/gsrt/renderback/batch_ep01/audio/s056_vocals.wav",
+  "ready": true,
+  "h3_prompt": "3D animation, Pixar-level rendering, cinematic shallow depth of field. Mid-height in a tall tree, on a thick branch coated with moss and ferns. The small orange-yellow fuzzy caterpillar child (round body, single green sprout on head, big expressive eyes) climbs up from his crouch and hurries away out of sight, leaving the branch bare. Beat 1 (first 40% of the shot): the caterpillar child pushes up from his crouch on the branch. Beat 2 (from 40% onward): he scrambles off along the branch and out of frame, leaving only the empty mossy branch. Static full shot at eye level. Bright warm green tones, god rays sifting through the canopy. Off-screen narration, characters do not speak.",
+  "dialogue_line": "Off-screen narration, characters do not speak",
+  "notes": ""
+ },
+ {
+  "sid": 57,
+  "start": 153.47,
+  "end": 157.73,
+  "dur": 4.26,
+  "grid_frames": 107,
+  "grid_dur": 4.458,
+  "audio_win": [
+   153.17,
+   158.34
+  ],
+  "has_dial": true,
+  "cond_first": "/data/workspace/kais-shot-timeline/gsrt/renderback/batch_ep01/cond/s057_first_1344.jpg",
+  "cond_last": "/data/workspace/kais-shot-timeline/gsrt/renderback/batch_ep01/cond/s057_last_1344.jpg",
+  "audio": "/data/workspace/kais-shot-timeline/gsrt/renderback/batch_ep01/audio/s057_vocals.wav",
+  "ready": true,
+  "h3_prompt": "3D animation, Pixar-level rendering, cinematic shallow depth of field. A forest floor of fallen leaves and tangled roots. Beat 1 (first 50% of the shot): the rhino beetle warrior (glossy reddish-brown armored shell, large double-pronged horn, beige bandages on forearms) rises up from pinning the red centipede (glossy red segmented body, many legs, menacing) against the ground and stands upright. Beat 2 (from 50% onward): he turns toward the green praying mantis warrior (thin limbs, white bandage wraps on forearms) standing blade-ready, and the two confer over their plan. Camera: wide shot from a low angle, static, one continuous take. Tyndall light beams, warm green tones. Off-screen narration, characters do not speak",
+  "dialogue_line": "Off-screen narration, characters do not speak",
+  "notes": ""
+ },
+ {
+  "sid": 58,
+  "start": 157.73,
+  "end": 164.1,
+  "dur": 6.37,
+  "grid_frames": 158,
+  "grid_dur": 6.583,
+  "audio_win": [
+   157.43,
+   164.4
+  ],
+  "has_dial": true,
+  "cond_first": "/data/workspace/kais-shot-timeline/gsrt/renderback/batch_ep01/cond/s058_first_1344.jpg",
+  "cond_last": "/data/workspace/kais-shot-timeline/gsrt/renderback/batch_ep01/cond/s058_last_1344.jpg",
+  "audio": "/data/workspace/kais-shot-timeline/gsrt/renderback/batch_ep01/audio/s058_vocals.wav",
+  "ready": true,
+  "h3_prompt": "3D animation, Pixar-level rendering, cinematic shallow depth of field. Before moss-covered giant roots. The green praying mantis warrior stands still and calm with his blade, listening, while the camera swings across to the rhino beetle warrior, who beams a wide hearty good-natured grin. Beat 1 (first 40% of the shot): the pan glides across the green praying mantis warrior standing motionless and composed. Beat 2 (from 40% onward): the pan settles on the rhino beetle warrior as his hearty grin spreads. Close framing at eye level carried by one continuous pan from the mantis to the beetle. Soft warm green tones, diffused forest light. Off-screen narration, characters do not speak.",
+  "dialogue_line": "Off-screen narration, characters do not speak",
+  "notes": "正反打改连续横摇"
+ },
+ {
+  "sid": 59,
+  "start": 164.1,
+  "end": 166.83,
+  "dur": 2.73,
+  "grid_frames": 73,
+  "grid_dur": 3.042,
+  "audio_win": [
+   163.8,
+   167.54
+  ],
+  "has_dial": true,
+  "cond_first": "/data/workspace/kais-shot-timeline/gsrt/renderback/batch_ep01/cond/s059_first_1344.jpg",
+  "cond_last": "/data/workspace/kais-shot-timeline/gsrt/renderback/batch_ep01/cond/s059_last_1344.jpg",
+  "audio": "/data/workspace/kais-shot-timeline/gsrt/renderback/batch_ep01/audio/s059_vocals.wav",
+  "ready": true,
+  "h3_prompt": "3D animation, Pixar-level rendering, cinematic shallow depth of field. Deep dense forest with giant tangled roots and a shadowed floor. The green praying mantis warrior (thin limbs, white bandage wraps on forearms), standing atop the fallen red centipede (glossy red segmented body, many legs, menacing), raises a blade in each hand into a guarded ready stance while the rhino beetle warrior (glossy reddish-brown armored shell, large double-pronged horn, beige bandages on forearms) watches from beside the roots. Static wide shot at eye level. Tyndall god rays, warm green tones. Off-screen narration, characters do not speak.",
+  "dialogue_line": "Off-screen narration, characters do not speak",
+  "notes": ""
+ },
+ {
+  "sid": 60,
+  "start": 166.83,
+  "end": 168.73,
+  "dur": 1.9,
+  "grid_frames": 39,
+  "grid_dur": 1.625,
+  "audio_win": [
+   166.53,
+   169.63
+  ],
+  "has_dial": true,
+  "cond_first": "/data/workspace/kais-shot-timeline/gsrt/renderback/batch_ep01/cond/s060_first_1344.jpg",
+  "cond_last": "/data/workspace/kais-shot-timeline/gsrt/renderback/batch_ep01/cond/s060_last_1344.jpg",
+  "audio": "/data/workspace/kais-shot-timeline/gsrt/renderback/batch_ep01/audio/s060_vocals.wav",
+  "ready": true,
+  "h3_prompt": "3D animation, Pixar-level rendering, cinematic shallow depth of field. Woodland beside giant tree roots where the centipede's long body lies stretched across the ground. A green praying mantis warrior (thin limbs, white bandage wraps on forearms) holds his two long blades level for a breath, then bends down and drives both blades deep into the back of the red centipede (glossy red segmented body, many legs, menacing). Slow pull-back from a close shot to a full shot at eye level. God rays through the canopy, warm green tones. Off-screen narration, characters do not speak.",
+  "dialogue_line": "Off-screen narration, characters do not speak",
+  "notes": ""
+ },
+ {
+  "sid": 61,
+  "start": 168.73,
+  "end": 170.3,
+  "dur": 1.57,
+  "grid_frames": 39,
+  "grid_dur": 1.625,
+  "audio_win": [
+   168.43,
+   171.2
+  ],
+  "has_dial": true,
+  "cond_first": "/data/workspace/kais-shot-timeline/gsrt/renderback/batch_ep01/cond/s061_first_1344.jpg",
+  "cond_last": "/data/workspace/kais-shot-timeline/gsrt/renderback/batch_ep01/cond/s061_last_1344.jpg",
+  "audio": "/data/workspace/kais-shot-timeline/gsrt/renderback/batch_ep01/audio/s061_vocals.wav",
+  "ready": true,
+  "h3_prompt": "3D animation, Pixar-level rendering, cinematic shallow depth of field. A primeval forest with blurred emerald trees in the background. The rhino beetle warrior (glossy reddish-brown armored shell, large double-pronged horn) holds a frozen expression of horror in extreme close-up, eyes stretched wide and mouth agape, only a faint tremor in his gaze and glossy highlights on his shell. Camera: extreme close-up, eye level with a slight low angle, static, one continuous take. Soft scattered natural light, cool green tones in the background. Off-screen narration, characters do not speak",
+  "dialogue_line": "Off-screen narration, characters do not speak",
+  "notes": ""
+ },
+ {
+  "sid": 62,
+  "start": 170.3,
+  "end": 171.87,
+  "dur": 1.57,
+  "grid_frames": 39,
+  "grid_dur": 1.625,
+  "audio_win": [
+   170.0,
+   172.77
+  ],
+  "has_dial": true,
+  "cond_first": "/data/workspace/kais-shot-timeline/gsrt/renderback/batch_ep01/cond/s062_first_1344.jpg",
+  "cond_last": "/data/workspace/kais-shot-timeline/gsrt/renderback/batch_ep01/cond/s062_last_1344.jpg",
+  "audio": "/data/workspace/kais-shot-timeline/gsrt/renderback/batch_ep01/audio/s062_vocals.wav",
+  "ready": true,
+  "h3_prompt": "3D animation, Pixar-level rendering, cinematic shallow depth of field. Primeval forest, a huge horizontal branch covered in moss and ferns, giant trees rising beyond. The small orange-yellow fuzzy caterpillar child scurries in from the right onto the branch, glancing anxiously about as it runs. Wide shot at eye level, static. Morning volumetric god rays piercing the canopy, drifting mist, luminous emerald air. Off-screen narration, characters do not speak.",
+  "dialogue_line": "Off-screen narration, characters do not speak",
+  "notes": ""
+ },
+ {
+  "sid": 63,
+  "start": 171.87,
+  "end": 173.6,
+  "dur": 1.73,
+  "grid_frames": 39,
+  "grid_dur": 1.625,
+  "audio_win": [
+   171.57,
+   174.5
+  ],
+  "has_dial": true,
+  "cond_first": "/data/workspace/kais-shot-timeline/gsrt/renderback/batch_ep01/cond/s063_first_1344.jpg",
+  "cond_last": "/data/workspace/kais-shot-timeline/gsrt/renderback/batch_ep01/cond/s063_last_1344.jpg",
+  "audio": "/data/workspace/kais-shot-timeline/gsrt/renderback/batch_ep01/audio/s063_vocals.wav",
+  "ready": true,
+  "h3_prompt": "3D animation, Pixar-level rendering, cinematic shallow depth of field. Primeval forest floor with fallen leaves, tangled roots and ferns. The red centipede (glossy red segmented body, many legs, menacing), lying toppled and motionless, suddenly rears its head and front body upright with huge pincer jaws gaping open in a fierce snarl, while the green praying mantis warrior (thin limbs, white bandage wraps on forearms) and the rhino beetle warrior (glossy reddish-brown armored shell, large double-pronged horn, beige bandages on forearms) stand alert beside it. Continuous quick push-in from a wide view into a low-angle close view. Dimmer diffused forest light with Tyndall beams, tension spiking. Off-screen narration, characters do not speak.",
+  "dialogue_line": "Off-screen narration, characters do not speak",
+  "notes": ""
+ },
+ {
+  "sid": 64,
+  "start": 173.6,
+  "end": 174.47,
+  "dur": 0.87,
+  "grid_frames": 22,
+  "grid_dur": 0.917,
+  "audio_win": [
+   173.3,
+   175.37
+  ],
+  "has_dial": true,
+  "cond_first": "/data/workspace/kais-shot-timeline/gsrt/renderback/batch_ep01/cond/s064_first_1344.jpg",
+  "cond_last": "/data/workspace/kais-shot-timeline/gsrt/renderback/batch_ep01/cond/s064_last_1344.jpg",
+  "audio": "/data/workspace/kais-shot-timeline/gsrt/renderback/batch_ep01/audio/s064_vocals.wav",
+  "ready": true,
+  "h3_prompt": "3D animation, Pixar-level rendering, cinematic shallow depth of field. Forest floor covered with fallen leaves. A green praying mantis warrior (thin limbs, white bandage wraps on forearms) hugs the ground with a short blade in hand and dashes forward at full stretch, then launches straight at the lens in a rush of speed blur. Low-angle close shot accelerating into an extreme facial close-up, fast push-in tracking. Dim forest light with sharp rim backlight. Off-screen narration, characters do not speak.",
+  "dialogue_line": "Off-screen narration, characters do not speak",
+  "notes": ""
+ },
+ {
+  "sid": 65,
+  "start": 174.47,
+  "end": 175.23,
+  "dur": 0.76,
+  "grid_frames": 22,
+  "grid_dur": 0.917,
+  "audio_win": [
+   174.17,
+   176.13
+  ],
+  "has_dial": true,
+  "cond_first": "/data/workspace/kais-shot-timeline/gsrt/renderback/batch_ep01/cond/s065_first_1344.jpg",
+  "cond_last": "/data/workspace/kais-shot-timeline/gsrt/renderback/batch_ep01/cond/s065_last_1344.jpg",
+  "audio": "/data/workspace/kais-shot-timeline/gsrt/renderback/batch_ep01/audio/s065_vocals.wav",
+  "ready": true,
+  "h3_prompt": "3D animation, Pixar-level rendering, cinematic shallow depth of field. Around a giant insect's fanged maw, the forest blurred beyond. The green praying mantis warrior (thin limbs, white bandage wraps on forearms) is caught between the closing jaws, then braces with both forearms and forces them apart to break free, flecks of green slime scattering, his eyes fierce. Camera: fast pull-out from an extreme close-up to a close shot, one continuous take. Crushed shadows with gleaming slime highlights, tense and oppressive mood. Off-screen narration, characters do not speak",
+  "dialogue_line": "Off-screen narration, characters do not speak",
+  "notes": "0.76s极短，动作压缩表述"
+ },
+ {
+  "sid": 66,
+  "start": 175.23,
+  "end": 182.17,
+  "dur": 6.94,
+  "grid_frames": 175,
+  "grid_dur": 7.292,
+  "audio_win": [
+   174.93,
+   183.07
+  ],
+  "has_dial": true,
+  "cond_first": "/data/workspace/kais-shot-timeline/gsrt/renderback/batch_ep01/cond/s066_first_1344.jpg",
+  "cond_last": "/data/workspace/kais-shot-timeline/gsrt/renderback/batch_ep01/cond/s066_last_1344.jpg",
+  "audio": "/data/workspace/kais-shot-timeline/gsrt/renderback/batch_ep01/audio/s066_vocals.wav",
+  "ready": true,
+  "h3_prompt": "3D animation, Pixar-level rendering, cinematic shallow depth of field. A mist-shrouded clearing among the giant gnarled roots of a primeval forest. The green praying mantis warrior stands alone, blade in hand, back to camera, facing two rearing red centipedes with claws spread wide. Beat 1 (first 40% of the shot): low to the ground beside the mantis warrior's blade arm, the grip tightening on the hilt. Beat 2 (from 40% onward): the camera climbs and pulls back as the mantis warrior straightens to his full height, one small figure against the two looming giants. Low-angle close-up rising into an extreme wide. Backlit mist, volumetric god rays, epic scale. Off-screen narration, characters do not speak.",
+  "dialogue_line": "Off-screen narration, characters do not speak",
+  "notes": ""
+ },
+ {
+  "sid": 67,
+  "start": 182.17,
+  "end": 182.9,
+  "dur": 0.73,
+  "grid_frames": 22,
+  "grid_dur": 0.917,
+  "audio_win": [
+   181.87,
+   183.8
+  ],
+  "has_dial": true,
+  "cond_first": "/data/workspace/kais-shot-timeline/gsrt/renderback/batch_ep01/cond/s067_first_1344.jpg",
+  "cond_last": "/data/workspace/kais-shot-timeline/gsrt/renderback/batch_ep01/cond/s067_last_1344.jpg",
+  "audio": "/data/workspace/kais-shot-timeline/gsrt/renderback/batch_ep01/audio/s067_vocals.wav",
+  "ready": true,
+  "h3_prompt": "3D animation, Pixar-level rendering, cinematic shallow depth of field. Forest floor of giant tangled roots covered with fallen leaves. The rhino beetle warrior (glossy reddish-brown armored shell, large double-pronged horn, beige bandages on forearms) charges toward the camera with a wide excited grin and clenched fists, kicking up dust as he accelerates closer. Static over-the-shoulder medium shot with a subtle push-in. Warm forest light, dust motes kicked up by the charge. Off-screen narration, characters do not speak.",
+  "dialogue_line": "Off-screen narration, characters do not speak",
+  "notes": ""
+ },
+ {
+  "sid": 68,
+  "start": 182.9,
+  "end": 185.6,
+  "dur": 2.7,
+  "grid_frames": 73,
+  "grid_dur": 3.042,
+  "audio_win": [
+   182.6,
+   186.5
+  ],
+  "has_dial": true,
+  "cond_first": "/data/workspace/kais-shot-timeline/gsrt/renderback/batch_ep01/cond/s068_first_1344.jpg",
+  "cond_last": "/data/workspace/kais-shot-timeline/gsrt/renderback/batch_ep01/cond/s068_last_1344.jpg",
+  "audio": "/data/workspace/kais-shot-timeline/gsrt/renderback/batch_ep01/audio/s068_vocals.wav",
+  "ready": true,
+  "h3_prompt": "3D animation, Pixar-level rendering, cinematic shallow depth of field. A primeval forest clearing of gnarled roots and fallen leaves. A green praying mantis warrior (thin limbs, white bandage wraps on forearms) stands with his back to the camera between two looming red centipedes (glossy red segmented body, many legs, menacing) in a frozen standoff, then a red-brown streak blazes across the frame like lightning, smeared with violent speed blur. Beat 1 (first 50% of the shot): the standoff holds, tense and dead still. Beat 2 (from 50% onward): a red-brown figure tears across the frame at full speed, dissolving into extreme motion blur. Medium shot whipping into a close-up, fast whip-pan. Dim forest light. Off-screen narration, characters do not speak.",
+  "dialogue_line": "Off-screen narration, characters do not speak",
+  "notes": ""
+ },
+ {
+  "sid": 69,
+  "start": 185.6,
+  "end": 186.6,
+  "dur": 1.0,
+  "grid_frames": 22,
+  "grid_dur": 0.917,
+  "audio_win": [
+   185.3,
+   187.5
+  ],
+  "has_dial": true,
+  "cond_first": "/data/workspace/kais-shot-timeline/gsrt/renderback/batch_ep01/cond/s069_first_1344.jpg",
+  "cond_last": "/data/workspace/kais-shot-timeline/gsrt/renderback/batch_ep01/cond/s069_last_1344.jpg",
+  "audio": "/data/workspace/kais-shot-timeline/gsrt/renderback/batch_ep01/audio/s069_vocals.wav",
+  "ready": true,
+  "h3_prompt": "3D animation, Pixar-level rendering, cinematic shallow depth of field. A forest floor of interwoven roots. The green praying mantis warrior (thin limbs, white bandage wraps on forearms) snaps from a shocked crouch into a counterattack, slashing his blade forearm down onto the head of the red centipede (glossy red segmented body, many legs, menacing), sparks bursting from the impact. Camera: close shot with handheld shake and a fast horizontal pan, one continuous take. Dim forest light with warm spark highlights. Off-screen narration, characters do not speak",
+  "dialogue_line": "Off-screen narration, characters do not speak",
+  "notes": ""
+ },
+ {
+  "sid": 70,
+  "start": 186.6,
+  "end": 206.33,
+  "dur": 19.73,
+  "grid_frames": 481,
+  "grid_dur": 20.042,
+  "audio_win": [
+   186.3,
+   207.23
+  ],
+  "has_dial": true,
+  "cond_first": "/data/workspace/kais-shot-timeline/gsrt/renderback/batch_ep01/cond/s070_first_1344.jpg",
+  "cond_last": "/data/workspace/kais-shot-timeline/gsrt/renderback/batch_ep01/cond/s070_last_1344.jpg",
+  "audio": "/data/workspace/kais-shot-timeline/gsrt/renderback/batch_ep01/audio/s070_vocals.wav",
+  "ready": true,
+  "h3_prompt": "3D animation, Pixar-level rendering, cinematic shallow depth of field. A dim forest over leaf-covered ground. The green praying mantis warrior holds his blade up in guard against the red centipede's gaping jaws, the tension carrying through into the rhino beetle warrior's horrified reaction. Beat 1 (first 50% of the shot): the mantis warrior frozen mid-guard, blade raised, the centipede's jaws looming. Beat 2 (from 50% onward): the camera reframes smoothly across to the rhino beetle warrior's face, eyes bulging, teeth clenched in naked horror. Close framing that pushes from the guard into an extreme facial close-up in one unbroken move. Dark low-key forest light. Off-screen narration, characters do not speak.",
+  "dialogue_line": "Off-screen narration, characters do not speak",
+  "notes": "原硬切改连续摆镜"
+ },
+ {
+  "sid": 71,
+  "start": 206.33,
+  "end": 210.37,
+  "dur": 4.04,
+  "grid_frames": 90,
+  "grid_dur": 3.75,
+  "audio_win": [
+   206.03,
+   211.27
+  ],
+  "has_dial": true,
+  "cond_first": "/data/workspace/kais-shot-timeline/gsrt/renderback/batch_ep01/cond/s071_first_1344.jpg",
+  "cond_last": "/data/workspace/kais-shot-timeline/gsrt/renderback/batch_ep01/cond/s071_last_1344.jpg",
+  "audio": "/data/workspace/kais-shot-timeline/gsrt/renderback/batch_ep01/audio/s071_vocals.wav",
+  "ready": true,
+  "h3_prompt": "3D animation, Pixar-level rendering, cinematic shallow depth of field. Forest with soft blurred greenery. The green praying mantis warrior (thin limbs, white bandage wraps on forearms) stands facing forward with determined eyes while the rhino beetle warrior's bandaged fist, marked with bloodstains, slowly rises into the foreground, and the focus racks from the mantis's face to the raised fist. Beat 1 (first 50% of the shot): the mantis stands firm with a resolute gaze as the fist begins to rise. Beat 2 (from 50% onward): focus pulls to the raised bandaged fist showing its scars. Over-the-shoulder close shot with a focus pull from face to fist. Soft forest light, warm green tones. Off-screen narration, characters do not speak.",
+  "dialogue_line": "Off-screen narration, characters do not speak",
+  "notes": ""
+ },
+ {
+  "sid": 72,
+  "start": 210.37,
+  "end": 213.63,
+  "dur": 3.26,
+  "grid_frames": 73,
+  "grid_dur": 3.042,
+  "audio_win": [
+   210.07,
+   214.4
+  ],
+  "has_dial": true,
+  "cond_first": "/data/workspace/kais-shot-timeline/gsrt/renderback/batch_ep01/cond/s072_first_1344.jpg",
+  "cond_last": "/data/workspace/kais-shot-timeline/gsrt/renderback/batch_ep01/cond/s072_last_1344.jpg",
+  "audio": "/data/workspace/kais-shot-timeline/gsrt/renderback/batch_ep01/audio/s072_vocals.wav",
+  "ready": true,
+  "h3_prompt": "3D animation, Pixar-level rendering, cinematic shallow depth of field. In the forest, background softly out of focus. A rhino beetle warrior (glossy reddish-brown armored shell, large double-pronged horn, beige bandages on forearms) points ahead and talks, his expression melting from earnest seriousness into a hearty open-mouthed laugh. Beat 1 (first 50% of the shot): he points forward with a serious face while talking. Beat 2 (from 50% onward): his whole face opens into a wide, hearty grin. Static over-the-shoulder medium-close shot at eye level. Warm soft forest light. Character speaks aloud, natural lip-sync.",
+  "dialogue_line": "Character speaks aloud, natural lip-sync",
+  "notes": ""
+ },
+ {
+  "sid": 73,
+  "start": 213.63,
+  "end": 214.93,
+  "dur": 1.3,
+  "grid_frames": 39,
+  "grid_dur": 1.625,
+  "audio_win": [
+   213.33,
+   215.83
+  ],
+  "has_dial": true,
+  "cond_first": "/data/workspace/kais-shot-timeline/gsrt/renderback/batch_ep01/cond/s073_first_1344.jpg",
+  "cond_last": "/data/workspace/kais-shot-timeline/gsrt/renderback/batch_ep01/cond/s073_last_1344.jpg",
+  "audio": "/data/workspace/kais-shot-timeline/gsrt/renderback/batch_ep01/audio/s073_vocals.wav",
+  "ready": true,
+  "h3_prompt": "3D animation, Pixar-level rendering, cinematic shallow depth of field. Deep in a primeval forest, mossy rocks and greenery blurred into soft bokeh behind. The green praying mantis warrior (thin limbs, white bandage wraps on forearms, large white compound eyes, orange antennae) speaks with a slight tilt of his head, his stern face opening into a bright open-mouthed declaration, eyes fixed steadily forward throughout. Camera: close-up, frontal eye level, static, one continuous take. Soft scattered natural light, green tones, background bokeh. Off-screen narration, characters do not speak",
+  "dialogue_line": "Off-screen narration, characters do not speak",
+  "notes": ""
+ },
+ {
+  "sid": 74,
+  "start": 214.93,
+  "end": 218.3,
+  "dur": 3.37,
+  "grid_frames": 73,
+  "grid_dur": 3.042,
+  "audio_win": [
+   214.63,
+   218.66
+  ],
+  "has_dial": true,
+  "cond_first": "/data/workspace/kais-shot-timeline/gsrt/renderback/batch_ep01/cond/s074_first_1344.jpg",
+  "cond_last": "/data/workspace/kais-shot-timeline/gsrt/renderback/batch_ep01/cond/s074_last_1344.jpg",
+  "audio": "/data/workspace/kais-shot-timeline/gsrt/renderback/batch_ep01/audio/s074_vocals.wav",
+  "ready": true,
+  "h3_prompt": "3D animation, Pixar-level rendering, cinematic shallow depth of field. Primeval forest of towering trees, a fallen mossy giant log, ferns all around. The small orange-yellow fuzzy caterpillar child toddles rightward along the fallen log toward the green praying mantis warrior, while the rhino beetle warrior's booming laughter turns stern. Beat 1 (first 50% of the shot): the caterpillar child walks along the log, the mantis warrior standing still and glancing back. Beat 2 (from 50% onward): the rhino beetle warrior drops his head and leans forward sternly, his laughter cutting off. Extreme wide, eye level, static. Bright natural light, god rays through the woods, green tones. Off-screen narration, characters do not speak.",
+  "dialogue_line": "Off-screen narration, characters do not speak",
+  "notes": "喝止不写口型"
+ },
+ {
+  "sid": 75,
+  "start": 218.3,
+  "end": 220.23,
+  "dur": 1.93,
+  "grid_frames": 39,
+  "grid_dur": 1.625,
+  "audio_win": [
+   218.0,
+   221.0
+  ],
+  "has_dial": true,
+  "cond_first": "/data/workspace/kais-shot-timeline/gsrt/renderback/batch_ep01/cond/s075_first_1344.jpg",
+  "cond_last": "/data/workspace/kais-shot-timeline/gsrt/renderback/batch_ep01/cond/s075_last_1344.jpg",
+  "audio": "/data/workspace/kais-shot-timeline/gsrt/renderback/batch_ep01/audio/s075_vocals.wav",
+  "ready": true,
+  "h3_prompt": "3D animation, Pixar-level rendering, cinematic shallow depth of field. Mossy ground with blurred forest behind. The small orange-yellow fuzzy caterpillar child (round body, single green sprout on head, big expressive eyes) shifts from laughing excitedly with both arms flung wide to pulling its arms in, eyes going wide in a puzzled, innocent look. Static close-up at eye level. Soft light rimming the fuzz, warm green bokeh background. Off-screen narration, characters do not speak.",
+  "dialogue_line": "Off-screen narration, characters do not speak",
+  "notes": ""
+ },
+ {
+  "sid": 76,
+  "start": 220.23,
+  "end": 224.8,
+  "dur": 4.57,
+  "grid_frames": 107,
+  "grid_dur": 4.458,
+  "audio_win": [
+   219.93,
+   225.08
+  ],
+  "has_dial": true,
+  "cond_first": "/data/workspace/kais-shot-timeline/gsrt/renderback/batch_ep01/cond/s076_first_1344.jpg",
+  "cond_last": "/data/workspace/kais-shot-timeline/gsrt/renderback/batch_ep01/cond/s076_last_1344.jpg",
+  "audio": "/data/workspace/kais-shot-timeline/gsrt/renderback/batch_ep01/audio/s076_vocals.wav",
+  "ready": true,
+  "h3_prompt": "3D animation, Pixar-level rendering, cinematic shallow depth of field. Primeval forest of mossy giant trees and hanging vines. A rhino beetle warrior (glossy reddish-brown armored shell, large double-pronged horn, beige bandages on forearms) calls out to the green praying mantis warrior (thin limbs, white bandage wraps on forearms) facing him, his expression easing from urgent wide-mouthed shouting into a relaxed grin. Beat 1 (first 50% of the shot): he calls out with his mouth stretched wide in urgency. Beat 2 (from 50% onward): his expression settles into a warm, broad smile as he finishes. Static over-the-shoulder medium shot at eye level. Soft forest light with god rays, warm green tones. Character speaks aloud, natural lip-sync.",
+  "dialogue_line": "Character speaks aloud, natural lip-sync",
+  "notes": ""
+ },
+ {
+  "sid": 77,
+  "start": 224.8,
+  "end": 226.43,
+  "dur": 1.63,
+  "grid_frames": 39,
+  "grid_dur": 1.625,
+  "audio_win": [
+   224.5,
+   227.12
+  ],
+  "has_dial": true,
+  "cond_first": "/data/workspace/kais-shot-timeline/gsrt/renderback/batch_ep01/cond/s077_first_1344.jpg",
+  "cond_last": "/data/workspace/kais-shot-timeline/gsrt/renderback/batch_ep01/cond/s077_last_1344.jpg",
+  "audio": "/data/workspace/kais-shot-timeline/gsrt/renderback/batch_ep01/audio/s077_vocals.wav",
+  "ready": true,
+  "h3_prompt": "3D animation, Pixar-level rendering, cinematic shallow depth of field. Forest background dissolved into soft green bokeh. The green praying mantis warrior (thin limbs, white bandage wraps on forearms, large white compound eyes, orange antennae) holds an extreme close-up, basically still as only his mouth moves while speaking, his gaze straight ahead growing firmer and more resolute. Camera: extreme close-up, eye level, static, one continuous take. Soft side light, green tones. Off-screen narration, characters do not speak",
+  "dialogue_line": "Off-screen narration, characters do not speak",
+  "notes": ""
+ },
+ {
+  "sid": 78,
+  "start": 226.43,
+  "end": 233.3,
+  "dur": 6.87,
+  "grid_frames": 158,
+  "grid_dur": 6.583,
+  "audio_win": [
+   226.13,
+   234.2
+  ],
+  "has_dial": true,
+  "cond_first": "/data/workspace/kais-shot-timeline/gsrt/renderback/batch_ep01/cond/s078_first_1344.jpg",
+  "cond_last": "/data/workspace/kais-shot-timeline/gsrt/renderback/batch_ep01/cond/s078_last_1344.jpg",
+  "audio": "/data/workspace/kais-shot-timeline/gsrt/renderback/batch_ep01/audio/s078_vocals.wav",
+  "ready": true,
+  "h3_prompt": "3D animation, Pixar-level rendering, cinematic shallow depth of field. Primeval forest, moss-covered rocks and giant trees. The rhino beetle warrior in the near left turns to face camera and breaks into a wide hearty grin, and the small orange-yellow fuzzy caterpillar child on the mossy rock at right follows suit. Beat 1 (first 40% of the shot): the rhino beetle warrior turns, the grin spreading across his face. Beat 2 (from 40% onward): the caterpillar child's open-mouthed surprise melts into a contented eyes-closed giggle. Medium shot, eye level, static. Bright soft light, warm green tones. Off-screen narration, characters do not speak.",
+  "dialogue_line": "Off-screen narration, characters do not speak",
+  "notes": ""
+ },
+ {
+  "sid": 79,
+  "start": 233.3,
+  "end": 234.8,
+  "dur": 1.5,
+  "grid_frames": 39,
+  "grid_dur": 1.625,
+  "audio_win": [
+   233.0,
+   235.7
+  ],
+  "has_dial": true,
+  "cond_first": "/data/workspace/kais-shot-timeline/gsrt/renderback/batch_ep01/cond/s079_first_1344.jpg",
+  "cond_last": "/data/workspace/kais-shot-timeline/gsrt/renderback/batch_ep01/cond/s079_last_1344.jpg",
+  "audio": "/data/workspace/kais-shot-timeline/gsrt/renderback/batch_ep01/audio/s079_vocals.wav",
+  "ready": true,
+  "h3_prompt": "3D animation, Pixar-level rendering, cinematic shallow depth of field. Forest background dissolving into green bokeh. The green praying mantis warrior (thin limbs, white bandage wraps on forearms) stays nearly still, only subtle micro-changes in brow and expression conveying a sincere, earnest tone. Static close-up at eye level. Soft diffused light, green tones. Off-screen narration, characters do not speak.",
+  "dialogue_line": "Off-screen narration, characters do not speak",
+  "notes": "台词画外，未写口型"
+ },
+ {
+  "sid": 80,
+  "start": 234.8,
+  "end": 236.73,
+  "dur": 1.93,
+  "grid_frames": 39,
+  "grid_dur": 1.625,
+  "audio_win": [
+   234.5,
+   237.14
+  ],
+  "has_dial": true,
+  "cond_first": "/data/workspace/kais-shot-timeline/gsrt/renderback/batch_ep01/cond/s080_first_1344.jpg",
+  "cond_last": "/data/workspace/kais-shot-timeline/gsrt/renderback/batch_ep01/cond/s080_last_1344.jpg",
+  "audio": "/data/workspace/kais-shot-timeline/gsrt/renderback/batch_ep01/audio/s080_vocals.wav",
+  "ready": true,
+  "h3_prompt": "3D animation, Pixar-level rendering, cinematic shallow depth of field. Primeval forest with mossy giant trees. A rhino beetle warrior (glossy reddish-brown armored shell, large double-pronged horn, beige bandages on forearms) stays in place, grinning as he talks on, his mouth opening and closing in a natural easy rhythm. Static over-the-shoulder medium shot at eye level. Soft forest light, warm green tones. Character speaks aloud, natural lip-sync.",
+  "dialogue_line": "Character speaks aloud, natural lip-sync",
+  "notes": ""
+ },
+ {
+  "sid": 81,
+  "start": 236.73,
+  "end": 237.7,
+  "dur": 0.97,
+  "grid_frames": 22,
+  "grid_dur": 0.917,
+  "audio_win": [
+   236.43,
+   238.28
+  ],
+  "has_dial": true,
+  "cond_first": "/data/workspace/kais-shot-timeline/gsrt/renderback/batch_ep01/cond/s081_first_1344.jpg",
+  "cond_last": "/data/workspace/kais-shot-timeline/gsrt/renderback/batch_ep01/cond/s081_last_1344.jpg",
+  "audio": "/data/workspace/kais-shot-timeline/gsrt/renderback/batch_ep01/audio/s081_vocals.wav",
+  "ready": true,
+  "h3_prompt": "3D animation, Pixar-level rendering, cinematic shallow depth of field. Forest background reduced to soft green bokeh. The face of the green praying mantis warrior (thin limbs, white bandage wraps on forearms, large white compound eyes, orange antennae) stays basically still, brows slightly knit as he gazes ahead, then his mouth opens eagerly mid-speech showing his teeth. Camera: close-up, eye level, static, one continuous take. Soft side light, green tones. Off-screen narration, characters do not speak",
+  "dialogue_line": "Off-screen narration, characters do not speak",
+  "notes": ""
+ },
+ {
+  "sid": 82,
+  "start": 237.7,
+  "end": 243.67,
+  "dur": 5.97,
+  "grid_frames": 141,
+  "grid_dur": 5.875,
+  "audio_win": [
+   237.4,
+   244.57
+  ],
+  "has_dial": true,
+  "cond_first": "/data/workspace/kais-shot-timeline/gsrt/renderback/batch_ep01/cond/s082_first_1344.jpg",
+  "cond_last": "/data/workspace/kais-shot-timeline/gsrt/renderback/batch_ep01/cond/s082_last_1344.jpg",
+  "audio": "/data/workspace/kais-shot-timeline/gsrt/renderback/batch_ep01/audio/s082_vocals.wav",
+  "ready": true,
+  "h3_prompt": "3D animation, Pixar-level rendering, cinematic shallow depth of field. Primeval forest, mossy giant trees. The rhino beetle warrior stands in medium view past the blurred back of the green praying mantis warrior's head, his stillness hardening into resolve. Beat 1 (first 45% of the shot): head lowered, eyes closed, a beat of heavy silence. Beat 2 (from 45% onward): his eyes snap open, the head lifts, the expression turns steely as his right hand draws out a short blade. Medium over-the-shoulder framing at eye level, static. Soft forest light, warm green tones. Off-screen narration, characters do not speak.",
+  "dialogue_line": "Off-screen narration, characters do not speak",
+  "notes": ""
+ },
+ {
+  "sid": 83,
+  "start": 243.67,
+  "end": 245.07,
+  "dur": 1.4,
+  "grid_frames": 39,
+  "grid_dur": 1.625,
+  "audio_win": [
+   243.37,
+   245.97
+  ],
+  "has_dial": true,
+  "cond_first": "/data/workspace/kais-shot-timeline/gsrt/renderback/batch_ep01/cond/s083_first_1344.jpg",
+  "cond_last": "/data/workspace/kais-shot-timeline/gsrt/renderback/batch_ep01/cond/s083_last_1344.jpg",
+  "audio": "/data/workspace/kais-shot-timeline/gsrt/renderback/batch_ep01/audio/s083_vocals.wav",
+  "ready": true,
+  "h3_prompt": "3D animation, Pixar-level rendering, cinematic shallow depth of field, motion blur. Mossy fallen log in the forest. A short knife with a green cord-wrapped handle spins through the air across the mossy log and is caught firmly by the beige-bandaged hand of the rhino beetle warrior (glossy reddish-brown armored shell, large double-pronged horn, beige bandages on forearms). Slight low-angle close shot panning to follow the spinning knife. Diffused forest light, green tones. Off-screen narration, characters do not speak.",
+  "dialogue_line": "Off-screen narration, characters do not speak",
+  "notes": ""
+ },
+ {
+  "sid": 84,
+  "start": 245.07,
+  "end": 249.63,
+  "dur": 4.56,
+  "grid_frames": 107,
+  "grid_dur": 4.458,
+  "audio_win": [
+   244.77,
+   249.9
+  ],
+  "has_dial": true,
+  "cond_first": "/data/workspace/kais-shot-timeline/gsrt/renderback/batch_ep01/cond/s084_first_1344.jpg",
+  "cond_last": "/data/workspace/kais-shot-timeline/gsrt/renderback/batch_ep01/cond/s084_last_1344.jpg",
+  "audio": "/data/workspace/kais-shot-timeline/gsrt/renderback/batch_ep01/audio/s084_vocals.wav",
+  "ready": true,
+  "h3_prompt": "3D animation, Pixar-level rendering, cinematic shallow depth of field. Primeval forest with mossy giant trees and vines. A rhino beetle warrior (glossy reddish-brown armored shell, large double-pronged horn, beige bandages on forearms) lifts a short dagger in his right hand to display it, then draws it slowly down to his chest and speaks in a low, weighty voice with a grave, resolute look. Beat 1 (first 40% of the shot): he raises the dagger and holds it up. Beat 2 (from 40% onward): he lowers it slowly to his chest and speaks with heavy resolve. Static over-the-shoulder medium shot at eye level. Soft forest light, warm green tones. Character speaks aloud, natural lip-sync.",
+  "dialogue_line": "Character speaks aloud, natural lip-sync",
+  "notes": ""
+ },
+ {
+  "sid": 85,
+  "start": 249.63,
+  "end": 251.97,
+  "dur": 2.34,
+  "grid_frames": 56,
+  "grid_dur": 2.333,
+  "audio_win": [
+   249.33,
+   252.87
+  ],
+  "has_dial": true,
+  "cond_first": "/data/workspace/kais-shot-timeline/gsrt/renderback/batch_ep01/cond/s085_first_1344.jpg",
+  "cond_last": "/data/workspace/kais-shot-timeline/gsrt/renderback/batch_ep01/cond/s085_last_1344.jpg",
+  "audio": "/data/workspace/kais-shot-timeline/gsrt/renderback/batch_ep01/audio/s085_vocals.wav",
+  "ready": true,
+  "h3_prompt": "3D animation, Pixar-level rendering, cinematic shallow depth of field. A primeval forest with blurred giant trees and moss behind. The green praying mantis warrior (thin limbs, white bandage wraps on forearms, large white compound eyes, orange antennae) keeps an almost still frontal close-up as his gaze shifts faintly and his jaw tightens, the grave expression settling into quiet resolve, as if making a silent vow. Camera: close-up, eye level, static with a very slow push-in, one continuous take. Soft side light, Tyndall beams in the background, cool green tones. Off-screen narration, characters do not speak",
+  "dialogue_line": "Off-screen narration, characters do not speak",
+  "notes": "仅表情连续渐变，不拆拍"
+ },
+ {
+  "sid": 86,
+  "start": 251.97,
+  "end": 256.0,
+  "dur": 4.03,
+  "grid_frames": 90,
+  "grid_dur": 3.75,
+  "audio_win": [
+   251.67,
+   256.9
+  ],
+  "has_dial": true,
+  "cond_first": "/data/workspace/kais-shot-timeline/gsrt/renderback/batch_ep01/cond/s086_first_1344.jpg",
+  "cond_last": "/data/workspace/kais-shot-timeline/gsrt/renderback/batch_ep01/cond/s086_last_1344.jpg",
+  "audio": "/data/workspace/kais-shot-timeline/gsrt/renderback/batch_ep01/audio/s086_vocals.wav",
+  "ready": true,
+  "h3_prompt": "3D animation, Pixar-level rendering, cinematic shallow depth of field. Primeval forest, a moss-covered fallen log under ferns and giant trees. On the right the small orange-yellow fuzzy caterpillar child stands on the log crying out with mounting urgency, while the rhino beetle warrior holds a steady sideways gaze, unmoving. Beat 1 (first 45% of the shot): the child's mouth opens wide in a wail, body tipping forward slightly. Beat 2 (from 45% onward): the crying grows more intense, the mouth wider, the small body leaning further in, the rhino beetle warrior still and watching. Medium shot, eye level, static, the two facing each other across frame. Bright diffused forest light, warm green tones. Off-screen narration, characters do not speak.",
+  "dialogue_line": "Off-screen narration, characters do not speak",
+  "notes": "哭喊为表演非台词"
+ },
+ {
+  "sid": 87,
+  "start": 256.0,
+  "end": 260.2,
+  "dur": 4.2,
+  "grid_frames": 107,
+  "grid_dur": 4.458,
+  "audio_win": [
+   255.7,
+   260.62
+  ],
+  "has_dial": true,
+  "cond_first": "/data/workspace/kais-shot-timeline/gsrt/renderback/batch_ep01/cond/s087_first_1344.jpg",
+  "cond_last": "/data/workspace/kais-shot-timeline/gsrt/renderback/batch_ep01/cond/s087_last_1344.jpg",
+  "audio": "/data/workspace/kais-shot-timeline/gsrt/renderback/batch_ep01/audio/s087_vocals.wav",
+  "ready": true,
+  "h3_prompt": "3D animation, Pixar-level rendering, cinematic shallow depth of field. Primeval forest with blurred giant trees. The green praying mantis warrior (thin limbs, white bandage wraps on forearms) starts with a solemn, worried expression that gradually melts into gentleness, his head tilting slightly as his gaze turns warm toward something off-screen. Beat 1 (first 50% of the shot): solemn, worried gaze. Beat 2 (from 50% onward): the expression softens, head tilting with a tender look. Static close-up at eye level. Soft side backlight with Tyndall beams behind, cool green tones. Off-screen narration, characters do not speak.",
+  "dialogue_line": "Off-screen narration, characters do not speak",
+  "notes": ""
+ },
+ {
+  "sid": 88,
+  "start": 260.2,
+  "end": 273.2,
+  "dur": 13.0,
+  "grid_frames": 311,
+  "grid_dur": 12.958,
+  "audio_win": [
+   259.9,
+   274.1
+  ],
+  "has_dial": true,
+  "cond_first": "/data/workspace/kais-shot-timeline/gsrt/renderback/batch_ep01/cond/s088_first_1344.jpg",
+  "cond_last": "/data/workspace/kais-shot-timeline/gsrt/renderback/batch_ep01/cond/s088_last_1344.jpg",
+  "audio": "/data/workspace/kais-shot-timeline/gsrt/renderback/batch_ep01/audio/s088_vocals.wav",
+  "ready": true,
+  "h3_prompt": "3D animation, Pixar-level rendering, cinematic shallow depth of field. Deep in the primeval forest among massive roots and ferns. A rhino beetle warrior (glossy reddish-brown armored shell, large double-pronged horn, beige bandages on forearms) holds a long, steady gaze toward the green praying mantis warrior (thin limbs, white bandage wraps on forearms), then little by little bows his head, the great double-pronged horn sinking low, until his eyes close in quiet sorrow and guilt. Beat 1 (first 30% of the shot): he keeps the eye contact, motionless. Beat 2 (from 30% onward): his head sinks lower and lower, horn drooping, until his eyes are fully closed in sadness. Slow push-in from an over-the-shoulder medium shot to a facial close-up at eye level. Warm side light, soft forest glow, melancholic heavy mood. Off-screen narration, characters do not speak.",
+  "dialogue_line": "Off-screen narration, characters do not speak",
+  "notes": "数数为画外童声，镜内角色静默"
+ },
+ {
+  "sid": 89,
+  "start": 273.2,
+  "end": 277.07,
+  "dur": 3.87,
+  "grid_frames": 90,
+  "grid_dur": 3.75,
+  "audio_win": [
+   272.9,
+   277.97
+  ],
+  "has_dial": true,
+  "cond_first": "/data/workspace/kais-shot-timeline/gsrt/renderback/batch_ep01/cond/s089_first_1344.jpg",
+  "cond_last": "/data/workspace/kais-shot-timeline/gsrt/renderback/batch_ep01/cond/s089_last_1344.jpg",
+  "audio": "/data/workspace/kais-shot-timeline/gsrt/renderback/batch_ep01/audio/s089_vocals.wav",
+  "ready": true,
+  "h3_prompt": "3D animation, Pixar-level rendering, cinematic shallow depth of field. A primeval forest with a moss-covered fallen log and towering giant trees. Beat 1 (first 50% of the shot): the green praying mantis warrior (thin limbs, white bandage wraps on forearms) gazes sideways at the small orange-yellow fuzzy caterpillar child (round body, single green sprout on head, big expressive eyes), who stands still on the log watching him. Beat 2 (from 50% onward): the mantis warrior turns his back to the camera, draws his long bamboo blade and levels it across into a battle-ready stance, white bandaged forearm in view, while the child keeps watching quietly from the log. Camera: medium shot, eye level, static, focus subtly shifting with the action, one continuous take. Soft natural light, thin forest mist, cool green tones. Character counts numbers aloud continuously, mouth movements synced to counting rhythm",
+  "dialogue_line": "Character counts numbers aloud continuously, mouth movements synced to counting rhythm",
+  "notes": "数数台词镜，沿用S89验证台词轴"
+ },
+ {
+  "sid": 90,
+  "start": 277.07,
+  "end": 281.27,
+  "dur": 4.2,
+  "grid_frames": 107,
+  "grid_dur": 4.458,
+  "audio_win": [
+   276.77,
+   282.17
+  ],
+  "has_dial": true,
+  "cond_first": "/data/workspace/kais-shot-timeline/gsrt/renderback/batch_ep01/cond/s090_first_1344.jpg",
+  "cond_last": "/data/workspace/kais-shot-timeline/gsrt/renderback/batch_ep01/cond/s090_last_1344.jpg",
+  "audio": "/data/workspace/kais-shot-timeline/gsrt/renderback/batch_ep01/audio/s090_vocals.wav",
+  "ready": true,
+  "h3_prompt": "3D animation, Pixar-level rendering, cinematic shallow depth of field. A primeval forest of giant gnarled roots, ferns, moss and fallen logs. The rhino beetle warrior bows deeply toward the small orange-yellow fuzzy caterpillar child perched above on the fallen mossy log, then slowly straightens, while the green praying mantis warrior stands solemn at rest with his blade. Beat 1 (first 55% of the shot): the rhino beetle warrior folds into a deep formal bow and holds it. Beat 2 (from 55% onward): he rises slowly back upright, the caterpillar child watching steadily from above. Full shot, eye level with a slight upward tilt, static. Volumetric god rays breaking through the canopy, warm and green interwoven, ceremonial grandeur. Character counts numbers aloud continuously, mouth movements synced to counting rhythm.",
+  "dialogue_line": "Character counts numbers aloud continuously, mouth movements synced to counting rhythm",
+  "notes": "数数为画外配音"
+ },
+ {
+  "sid": 91,
+  "start": 281.27,
+  "end": 296.37,
+  "dur": 15.1,
+  "grid_frames": 362,
+  "grid_dur": 15.083,
+  "audio_win": [
+   280.97,
+   296.96
+  ],
+  "has_dial": true,
+  "cond_first": "/data/workspace/kais-shot-timeline/gsrt/renderback/batch_ep01/cond/s091_first_1344.jpg",
+  "cond_last": "/data/workspace/kais-shot-timeline/gsrt/renderback/batch_ep01/cond/s091_last_1344.jpg",
+  "audio": "/data/workspace/kais-shot-timeline/gsrt/renderback/batch_ep01/audio/s091_vocals.wav",
+  "ready": true,
+  "h3_prompt": "3D animation, Pixar-level rendering, cinematic shallow depth of field. Primeval forest rising into a vast canopy of rolling treetops wrapped in drifting clouds and mist. The small orange-yellow fuzzy caterpillar child (round body, single green sprout on head, big expressive eyes) rubs his face and eyes with both claws, then the camera sweeps up and away in one continuous move until he vanishes into the boundless sea of forest. Beat 1 (first 10% of the shot): extreme close-up of the caterpillar child rubbing his eyes with both claws. Beat 2 (from 10% onward): the camera pulls back and rises in a continuous aerial-style move, the child shrinking away as the misty canopy fills the frame. Aerial-style pull-back rising from extreme close-up to a vast high wide shot. Light shifting from warm close-up tones to cool blue-grey haze as mist spreads. Character counts numbers aloud continuously, mouth movements synced to counting rhythm.",
+  "dialogue_line": "Character counts numbers aloud continuously, mouth movements synced to counting rhythm",
+  "notes": "数数台词驱动全镜"
+ },
+ {
+  "sid": 92,
+  "start": 296.37,
+  "end": 306.17,
+  "dur": 9.8,
+  "grid_frames": 243,
+  "grid_dur": 10.125,
+  "audio_win": [
+   296.07,
+   305.74
+  ],
+  "has_dial": true,
+  "cond_first": "/data/workspace/kais-shot-timeline/gsrt/renderback/batch_ep01/cond/s092_first_1344.jpg",
+  "cond_last": "/data/workspace/kais-shot-timeline/gsrt/renderback/batch_ep01/cond/s092_last_1344.jpg",
+  "audio": "/data/workspace/kais-shot-timeline/gsrt/renderback/batch_ep01/audio/s092_vocals.wav",
+  "ready": true,
+  "h3_prompt": "3D animation, Pixar-level rendering, cinematic shallow depth of field. A vast primeval forest, layered canopies rolling to the horizon, white mist drifting slowly through the valleys. Extreme wide high-aerial shot looking down, drifting slowly sideways. Cool grey-blue morning light, hazy mist in the air. Off-screen narration, characters do not speak.",
+  "dialogue_line": "Off-screen narration, characters do not speak",
+  "notes": ""
+ },
+ {
+  "sid": 93,
+  "start": 306.17,
+  "end": 308.33,
+  "dur": 2.16,
+  "grid_frames": 56,
+  "grid_dur": 2.333,
+  "audio_win": [
+   306.17,
+   308.33
+  ],
+  "has_dial": false,
+  "cond_first": "/data/workspace/kais-shot-timeline/gsrt/renderback/batch_ep01/cond/s093_first_1344.jpg",
+  "cond_last": "/data/workspace/kais-shot-timeline/gsrt/renderback/batch_ep01/cond/s093_last_1344.jpg",
+  "audio": "/data/workspace/kais-shot-timeline/gsrt/renderback/batch_ep01/audio/s093_vocals.wav",
+  "ready": true,
+  "h3_prompt": "3D animation, Pixar-level rendering, cinematic shallow depth of field. A pure black void filling the frame. A single centered line of glowing white Chinese text holds perfectly still throughout the shot, its faint glow breathing gently without any other movement. Camera: locked title card, completely static, one continuous take. Pure black with a faint soft glow around the text",
+  "dialogue_line": "",
+  "notes": "字幕卡黑场，首尾帧已锁文字"
+ }
+]

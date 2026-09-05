@@ -9,3 +9,12 @@ gsrt/frames/
 gsrt/renderback/p1a_anchor_scan/frames_full/
 gsrt/renderback/p1a_anchor_scan/tmp_*.jpg
 gsrt/renderback/qc_tmp_*.jpg
+# GSRT EP01 批量回测产物（配方延续 795bc5aa：渲染单元 mp4/png/wav + 条件帧 cond* 可再生，
+# 真值 = 工作流脚本 + batch_state/units_full_state 台账 + manifests + prompts 包）。
+gsrt/renderback/batch_ep01/renders/
+gsrt/renderback/batch_ep01/renders_lightx2v9/
+gsrt/renderback/batch_ep01/ep01_units_full/
+gsrt/renderback/batch_ep01/cond/
+gsrt/renderback/batch_ep01/cond_units/
+gsrt/renderback/batch_ep01/cond_units_full/
+gsrt/renderback/batch_ep01/kgr_stage/

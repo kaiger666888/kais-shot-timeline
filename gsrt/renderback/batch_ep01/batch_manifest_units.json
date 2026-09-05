@@ -1,0 +1,68 @@
+{
+ "shots": [
+  {
+   "sid": 64,
+   "unit": "physical_shot_v2",
+   "start": 173.66,
+   "end": 174.43,
+   "dur": 0.77,
+   "grid_frames": 18,
+   "grid_dur": 0.77,
+   "audio_win": [
+    173.66,
+    174.43
+   ],
+   "has_dial": true,
+   "cond_first": "/data/workspace/kais-shot-timeline/gsrt/renderback/batch_ep01/cond_units/s064_first.jpg",
+   "cond_last": "/data/workspace/kais-shot-timeline/gsrt/renderback/batch_ep01/cond_units/s064_last.jpg",
+   "audio": "/data/workspace/kais-shot-timeline/gsrt/renderback/batch_ep01/audio_units/s064_win.wav",
+   "dialogue_line": "Off-screen narration, characters do not speak",
+   "h3_prompt": "3D animation, Pixar-level rendering, cinematic shallow depth of field. Forest floor covered with fallen leaves. A green praying mantis warrior (thin limbs, white bandage wraps on forearms) hugs the ground with a short blade in hand and dashes forward at full stretch, then launches straight at the lens in a rush of speed blur. Low-angle close shot accelerating into an extreme facial close-up, fast push-in tracking. Dim forest light with sharp rim backlight. Off-screen narration, characters do not speak.",
+   "notes": "v2物理单元重切: 旧窗含跨镜污染(s064窗内4物理镜/cond_last取自下一镜); 端点内缩0.06s避开切镜",
+   "ready": true
+  },
+  {
+   "sid": 89,
+   "unit": "physical_shot_v2",
+   "start": 273.26,
+   "end": 277.01,
+   "dur": 3.75,
+   "grid_frames": 90,
+   "grid_dur": 3.75,
+   "audio_win": [
+    273.26,
+    277.01
+   ],
+   "has_dial": true,
+   "cond_first": "/data/workspace/kais-shot-timeline/gsrt/renderback/batch_ep01/cond_units/s089_first.jpg",
+   "cond_last": "/data/workspace/kais-shot-timeline/gsrt/renderback/batch_ep01/cond_units/s089_last.jpg",
+   "audio": "/data/workspace/kais-shot-timeline/gsrt/renderback/batch_ep01/audio_units/s089_win.wav",
+   "dialogue_line": "Character counts numbers aloud continuously, mouth movements synced to counting rhythm",
+   "h3_prompt": "3D animation, Pixar-level rendering, cinematic shallow depth of field. A primeval forest with a moss-covered fallen log and towering giant trees. Beat 1 (first 50% of the shot): the green praying mantis warrior (thin limbs, white bandage wraps on forearms) gazes sideways at the small orange-yellow fuzzy caterpillar child (round body, single green sprout on head, big expressive eyes), who stands still on the log watching him. Beat 2 (from 50% onward): the mantis warrior turns his back to the camera, draws his long bamboo blade and levels it across into a battle-ready stance, white bandaged forearm in view, while the child keeps watching quietly from the log. Camera: medium shot, eye level, static, focus subtly shifting with the action, one continuous take. Soft natural light, thin forest mist, cool green tones. Character counts numbers aloud continuously, mouth movements synced to counting rhythm",
+   "notes": "v2物理单元重切: 旧窗含跨镜污染(s064窗内4物理镜/cond_last取自下一镜); 端点内缩0.06s避开切镜",
+   "ready": true
+  },
+  {
+   "sid": 92,
+   "unit": "physical_shot_v2",
+   "start": 296.37,
+   "end": 306.11,
+   "dur": 9.74,
+   "grid_frames": 234,
+   "grid_dur": 9.74,
+   "audio_win": [
+    296.37,
+    306.11
+   ],
+   "has_dial": true,
+   "cond_first": "/data/workspace/kais-shot-timeline/gsrt/renderback/batch_ep01/cond_units/s092_first.jpg",
+   "cond_last": "/data/workspace/kais-shot-timeline/gsrt/renderback/batch_ep01/cond_units/s092_last.jpg",
+   "audio": "/data/workspace/kais-shot-timeline/gsrt/renderback/batch_ep01/audio_units/s092_win.wav",
+   "dialogue_line": "Off-screen narration, characters do not speak",
+   "h3_prompt": "3D animation, Pixar-level rendering, cinematic wide shot. Vast primeval forest seen from high above, layered canopies rolling to the horizon, white mist drifting slowly through the valleys. Aerial drone shot slowly ASCENDING while TILTING UP: starts looking down at a tall emergent tree, ends at a level horizon revealing layered mist banks and distant treeline, foreground tree exits bottom of frame. Cool grey-blue morning light, hazy mist thickening with altitude. Off-screen narration, characters do not speak.",
+   "notes": "v2物理单元重切: 旧窗含跨镜污染(s064窗内4物理镜/cond_last取自下一镜); 端点内缩0.06s避开切镜; prompt运动轴修正: sideways drift→ascending+tilt-up (GT帧取证实测)",
+   "ready": true
+  }
+ ],
+ "schema": "physical-unit-v2"
+}
