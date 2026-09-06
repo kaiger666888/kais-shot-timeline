@@ -1667,7 +1667,7 @@
    "cond_last": "/data/workspace/kais-shot-timeline/gsrt/renderback/batch_ep01/cond_units_full/s064_p1_last.jpg",
    "audio": "/data/workspace/kais-shot-timeline/gsrt/renderback/batch_ep01/audio_units_full/s064_p1_win.wav",
    "dialogue_line": "Off-screen narration, characters do not speak",
-   "h3_prompt": "3D animation, Pixar-level rendering, cinematic shallow depth of field. Forest floor covered with fallen leaves. A green praying mantis warrior (thin limbs, white bandage wraps on forearms) hugs the ground with a short blade in hand and dashes forward at full stretch, then launches straight at the lens in a rush of speed blur. Low-angle close shot accelerating into an extreme facial close-up, fast push-in tracking. Dim forest light with sharp rim backlight. Off-screen narration, characters do not speak.",
+   "h3_prompt": "3D animation, Pixar-level rendering, cinematic shallow depth of field. Forest floor covered with fallen leaves. A green praying mantis warrior (thin limbs, white bandage wraps on forearms) hugs the ground with a short blade in hand, dashes forward at full stretch with forelegs leading, then lunges straight into the lens as its jaws snap wide open, engulfing the entire frame with conical teeth and slimy saliva in heavy speed blur. Low-angle close shot accelerating into an extreme close-up of the wide-open mouth swallowing the camera, fast push-in tracking. Dim forest light with sharp rim backlight. Off-screen narration, characters do not speak.",
    "prompt_mode": "parent_full",
    "ready": true,
    "notes": "v2全量物理单元; 端点=窗start/end帧直接拉伸1344x768; 音频=-t精确截断(24000Hz stereo)"

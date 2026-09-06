@@ -91,9 +91,9 @@
  },
  {
   "sid": 64,
-  "h3_prompt": "3D animation, Pixar-level rendering, cinematic shallow depth of field. Forest floor covered with fallen leaves. A green praying mantis warrior (thin limbs, white bandage wraps on forearms) hugs the ground with a short blade in hand and dashes forward at full stretch, then launches straight at the lens in a rush of speed blur. Low-angle close shot accelerating into an extreme facial close-up, fast push-in tracking. Dim forest light with sharp rim backlight. Off-screen narration, characters do not speak.",
+  "h3_prompt": "3D animation, Pixar-level rendering, cinematic shallow depth of field. Forest floor covered with fallen leaves. A green praying mantis warrior (thin limbs, white bandage wraps on forearms) hugs the ground with a short blade in hand, dashes forward at full stretch with forelegs leading, then lunges straight into the lens as its jaws snap wide open, engulfing the entire frame with conical teeth and slimy saliva in heavy speed blur. Low-angle close shot accelerating into an extreme close-up of the wide-open mouth swallowing the camera, fast push-in tracking. Dim forest light with sharp rim backlight. Off-screen narration, characters do not speak.",
   "dialogue_line": "Off-screen narration, characters do not speak",
-  "notes": ""
+  "notes": "[0904 Kai盲测终审定稿v2回写: 弃v1\"extreme facial close-up\"错误终点, jaws-snap地面真值版]"
  },
  {
   "sid": 68,
