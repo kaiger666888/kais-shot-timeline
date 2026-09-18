@@ -1,0 +1,9 @@
+# analysis/camera_motion_quant.py 光流探针依赖 (安装进 worktree 内 .venv_flow, 禁全局)
+#   python3 -m venv .venv_flow && .venv_flow/bin/pip install -r requirements-flow.txt
+# torch 走 PyPI 默认 CUDA 轮子 (本机实测 2.14.0+cu130 于 RTX 3090/GPU2 可用);
+# CPU-only 场景装 torch-cpu 亦可, 脚本 --device cpu / --impl farneback 兜底
+torch>=2.6
+torchvision
+opencv-python>=4.10
+numpy
+safetensors

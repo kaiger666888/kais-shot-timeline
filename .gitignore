@@ -18,3 +18,8 @@ gsrt/renderback/batch_ep01/cond/
 gsrt/renderback/batch_ep01/cond_units/
 gsrt/renderback/batch_ep01/cond_units_full/
 gsrt/renderback/batch_ep01/kgr_stage/
+
+# GPR-L2 光流探针 (不注入 commit 的本地产物)
+.venv_flow/
+analysis/vendor_sea_raft/weights/
+analysis/flow_probe/tmp_frames/
