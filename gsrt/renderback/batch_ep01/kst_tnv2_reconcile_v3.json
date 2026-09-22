@@ -1,0 +1,637 @@
+{
+ "date": "2026-09-22",
+ "basis": "physcut_table_rev5 (98 shots) x shots.json (93 KST beat rows)",
+ "matched": [
+  {
+   "kst_boundary_after": 1,
+   "t": 6.73,
+   "cut": 6.7333,
+   "delta": 0.0033
+  },
+  {
+   "kst_boundary_after": 2,
+   "t": 9.63,
+   "cut": 9.6333,
+   "delta": 0.0033
+  },
+  {
+   "kst_boundary_after": 3,
+   "t": 12.1,
+   "cut": 12.1003,
+   "delta": 0.0003
+  },
+  {
+   "kst_boundary_after": 4,
+   "t": 21.4,
+   "cut": 21.4003,
+   "delta": 0.0003
+  },
+  {
+   "kst_boundary_after": 5,
+   "t": 28.63,
+   "cut": 28.6333,
+   "delta": 0.0033
+  },
+  {
+   "kst_boundary_after": 6,
+   "t": 32.13,
+   "cut": 32.1333,
+   "delta": 0.0033
+  },
+  {
+   "kst_boundary_after": 7,
+   "t": 35.83,
+   "cut": 35.8333,
+   "delta": 0.0033
+  },
+  {
+   "kst_boundary_after": 8,
+   "t": 40.97,
+   "cut": 40.9663,
+   "delta": -0.0037
+  },
+  {
+   "kst_boundary_after": 9,
+   "t": 43.03,
+   "cut": 43.0333,
+   "delta": 0.0033
+  },
+  {
+   "kst_boundary_after": 10,
+   "t": 46.87,
+   "cut": 46.8663,
+   "delta": -0.0037
+  },
+  {
+   "kst_boundary_after": 11,
+   "t": 49.43,
+   "cut": 49.4333,
+   "delta": 0.0033
+  },
+  {
+   "kst_boundary_after": 12,
+   "t": 51.1,
+   "cut": 51.1003,
+   "delta": 0.0003
+  },
+  {
+   "kst_boundary_after": 13,
+   "t": 53.37,
+   "cut": 53.3663,
+   "delta": -0.0037
+  },
+  {
+   "kst_boundary_after": 14,
+   "t": 55.13,
+   "cut": 55.1333,
+   "delta": 0.0033
+  },
+  {
+   "kst_boundary_after": 15,
+   "t": 58.1,
+   "cut": 58.1003,
+   "delta": 0.0003
+  },
+  {
+   "kst_boundary_after": 16,
+   "t": 60.13,
+   "cut": 60.1333,
+   "delta": 0.0033
+  },
+  {
+   "kst_boundary_after": 17,
+   "t": 67.33,
+   "cut": 67.3333,
+   "delta": 0.0033
+  },
+  {
+   "kst_boundary_after": 18,
+   "t": 70.8,
+   "cut": 70.8003,
+   "delta": 0.0003
+  },
+  {
+   "kst_boundary_after": 19,
+   "t": 72.87,
+   "cut": 72.8663,
+   "delta": -0.0037
+  },
+  {
+   "kst_boundary_after": 20,
+   "t": 74.4,
+   "cut": 74.4003,
+   "delta": 0.0003
+  },
+  {
+   "kst_boundary_after": 21,
+   "t": 75.8,
+   "cut": 75.8003,
+   "delta": 0.0003
+  },
+  {
+   "kst_boundary_after": 22,
+   "t": 77.17,
+   "cut": 77.1663,
+   "delta": -0.0037
+  },
+  {
+   "kst_boundary_after": 24,
+   "t": 81.43,
+   "cut": 81.4333,
+   "delta": 0.0033
+  },
+  {
+   "kst_boundary_after": 26,
+   "t": 83.93,
+   "cut": 83.9333,
+   "delta": 0.0033
+  },
+  {
+   "kst_boundary_after": 27,
+   "t": 85.43,
+   "cut": 85.4333,
+   "delta": 0.0033
+  },
+  {
+   "kst_boundary_after": 30,
+   "t": 95.03,
+   "cut": 95.0333,
+   "delta": 0.0033
+  },
+  {
+   "kst_boundary_after": 31,
+   "t": 96.83,
+   "cut": 96.8333,
+   "delta": 0.0033
+  },
+  {
+   "kst_boundary_after": 32,
+   "t": 99.1,
+   "cut": 99.1003,
+   "delta": 0.0003
+  },
+  {
+   "kst_boundary_after": 33,
+   "t": 100.1,
+   "cut": 100.1003,
+   "delta": 0.0003
+  },
+  {
+   "kst_boundary_after": 34,
+   "t": 100.87,
+   "cut": 100.8667,
+   "delta": -0.0033
+  },
+  {
+   "kst_boundary_after": 35,
+   "t": 101.4,
+   "cut": 101.4,
+   "delta": 0.0
+  },
+  {
+   "kst_boundary_after": 36,
+   "t": 102.03,
+   "cut": 102.0333,
+   "delta": 0.0033
+  },
+  {
+   "kst_boundary_after": 37,
+   "t": 107.63,
+   "cut": 107.6333,
+   "delta": 0.0033
+  },
+  {
+   "kst_boundary_after": 38,
+   "t": 110.87,
+   "cut": 110.8663,
+   "delta": -0.0037
+  },
+  {
+   "kst_boundary_after": 39,
+   "t": 112.47,
+   "cut": 112.4333,
+   "delta": -0.0367
+  },
+  {
+   "kst_boundary_after": 40,
+   "t": 114.47,
+   "cut": 114.4667,
+   "delta": -0.0033
+  },
+  {
+   "kst_boundary_after": 41,
+   "t": 116.0,
+   "cut": 116.0003,
+   "delta": 0.0003
+  },
+  {
+   "kst_boundary_after": 42,
+   "t": 118.97,
+   "cut": 118.9663,
+   "delta": -0.0037
+  },
+  {
+   "kst_boundary_after": 43,
+   "t": 120.8,
+   "cut": 120.8003,
+   "delta": 0.0003
+  },
+  {
+   "kst_boundary_after": 44,
+   "t": 122.37,
+   "cut": 122.3667,
+   "delta": -0.0033
+  },
+  {
+   "kst_boundary_after": 45,
+   "t": 123.7,
+   "cut": 123.7003,
+   "delta": 0.0003
+  },
+  {
+   "kst_boundary_after": 46,
+   "t": 129.4,
+   "cut": 129.4003,
+   "delta": 0.0003
+  },
+  {
+   "kst_boundary_after": 47,
+   "t": 132.6,
+   "cut": 132.6,
+   "delta": 0.0
+  },
+  {
+   "kst_boundary_after": 48,
+   "t": 133.87,
+   "cut": 133.8663,
+   "delta": -0.0037
+  },
+  {
+   "kst_boundary_after": 49,
+   "t": 136.27,
+   "cut": 136.2663,
+   "delta": -0.0037
+  },
+  {
+   "kst_boundary_after": 50,
+   "t": 137.67,
+   "cut": 137.6663,
+   "delta": -0.0037
+  },
+  {
+   "kst_boundary_after": 51,
+   "t": 138.93,
+   "cut": 138.9333,
+   "delta": 0.0033
+  },
+  {
+   "kst_boundary_after": 52,
+   "t": 140.2,
+   "cut": 140.2,
+   "delta": 0.0
+  },
+  {
+   "kst_boundary_after": 53,
+   "t": 144.2,
+   "cut": 144.2003,
+   "delta": 0.0003
+  },
+  {
+   "kst_boundary_after": 54,
+   "t": 147.63,
+   "cut": 147.6333,
+   "delta": 0.0033
+  },
+  {
+   "kst_boundary_after": 55,
+   "t": 149.9,
+   "cut": 149.9003,
+   "delta": 0.0003
+  },
+  {
+   "kst_boundary_after": 56,
+   "t": 153.47,
+   "cut": 153.4663,
+   "delta": -0.0037
+  },
+  {
+   "kst_boundary_after": 57,
+   "t": 157.73,
+   "cut": 157.7333,
+   "delta": 0.0033
+  },
+  {
+   "kst_boundary_after": 58,
+   "t": 164.1,
+   "cut": 164.1003,
+   "delta": 0.0003
+  },
+  {
+   "kst_boundary_after": 59,
+   "t": 166.83,
+   "cut": 166.8333,
+   "delta": 0.0033
+  },
+  {
+   "kst_boundary_after": 60,
+   "t": 168.73,
+   "cut": 168.7333,
+   "delta": 0.0033
+  },
+  {
+   "kst_boundary_after": 61,
+   "t": 170.3,
+   "cut": 170.3003,
+   "delta": 0.0003
+  },
+  {
+   "kst_boundary_after": 62,
+   "t": 171.87,
+   "cut": 171.8663,
+   "delta": -0.0037
+  },
+  {
+   "kst_boundary_after": 63,
+   "t": 173.6,
+   "cut": 173.6,
+   "delta": 0.0
+  },
+  {
+   "kst_boundary_after": 64,
+   "t": 174.47,
+   "cut": 174.4667,
+   "delta": -0.0033
+  },
+  {
+   "kst_boundary_after": 65,
+   "t": 175.23,
+   "cut": 175.2333,
+   "delta": 0.0033
+  },
+  {
+   "kst_boundary_after": 66,
+   "t": 182.17,
+   "cut": 182.1663,
+   "delta": -0.0037
+  },
+  {
+   "kst_boundary_after": 67,
+   "t": 182.9,
+   "cut": 182.9003,
+   "delta": 0.0003
+  },
+  {
+   "kst_boundary_after": 68,
+   "t": 185.6,
+   "cut": 185.6,
+   "delta": 0.0
+  },
+  {
+   "kst_boundary_after": 69,
+   "t": 186.6,
+   "cut": 186.6,
+   "delta": 0.0
+  },
+  {
+   "kst_boundary_after": 70,
+   "t": 206.33,
+   "cut": 206.3333,
+   "delta": 0.0033
+  },
+  {
+   "kst_boundary_after": 71,
+   "t": 210.37,
+   "cut": 210.3663,
+   "delta": -0.0037
+  },
+  {
+   "kst_boundary_after": 72,
+   "t": 213.63,
+   "cut": 213.6333,
+   "delta": 0.0033
+  },
+  {
+   "kst_boundary_after": 73,
+   "t": 214.93,
+   "cut": 214.9333,
+   "delta": 0.0033
+  },
+  {
+   "kst_boundary_after": 74,
+   "t": 218.3,
+   "cut": 218.3003,
+   "delta": 0.0003
+  },
+  {
+   "kst_boundary_after": 75,
+   "t": 220.23,
+   "cut": 220.2333,
+   "delta": 0.0033
+  },
+  {
+   "kst_boundary_after": 76,
+   "t": 224.8,
+   "cut": 224.8003,
+   "delta": 0.0003
+  },
+  {
+   "kst_boundary_after": 77,
+   "t": 226.43,
+   "cut": 226.4333,
+   "delta": 0.0033
+  },
+  {
+   "kst_boundary_after": 78,
+   "t": 233.3,
+   "cut": 233.3003,
+   "delta": 0.0003
+  },
+  {
+   "kst_boundary_after": 79,
+   "t": 234.8,
+   "cut": 234.8003,
+   "delta": 0.0003
+  },
+  {
+   "kst_boundary_after": 80,
+   "t": 236.73,
+   "cut": 236.7333,
+   "delta": 0.0033
+  },
+  {
+   "kst_boundary_after": 81,
+   "t": 237.7,
+   "cut": 237.7003,
+   "delta": 0.0003
+  },
+  {
+   "kst_boundary_after": 82,
+   "t": 243.67,
+   "cut": 243.6663,
+   "delta": -0.0037
+  },
+  {
+   "kst_boundary_after": 83,
+   "t": 245.07,
+   "cut": 245.0663,
+   "delta": -0.0037
+  },
+  {
+   "kst_boundary_after": 84,
+   "t": 249.63,
+   "cut": 249.6333,
+   "delta": 0.0033
+  },
+  {
+   "kst_boundary_after": 85,
+   "t": 251.97,
+   "cut": 251.9663,
+   "delta": -0.0037
+  },
+  {
+   "kst_boundary_after": 86,
+   "t": 256.0,
+   "cut": 256.0003,
+   "delta": 0.0003
+  },
+  {
+   "kst_boundary_after": 87,
+   "t": 260.2,
+   "cut": 260.2003,
+   "delta": 0.0003
+  },
+  {
+   "kst_boundary_after": 88,
+   "t": 273.2,
+   "cut": 273.2003,
+   "delta": 0.0003
+  },
+  {
+   "kst_boundary_after": 89,
+   "t": 277.07,
+   "cut": 277.0663,
+   "delta": -0.0037
+  },
+  {
+   "kst_boundary_after": 90,
+   "t": 281.27,
+   "cut": 281.2663,
+   "delta": -0.0037
+  },
+  {
+   "kst_boundary_after": 91,
+   "t": 296.37,
+   "cut": 296.2333,
+   "delta": -0.1367
+  },
+  {
+   "kst_boundary_after": 92,
+   "t": 306.17,
+   "cut": 306.1663,
+   "delta": -0.0037
+  }
+ ],
+ "pure_beat_boundaries": [
+  {
+   "kst_boundary_after": 23,
+   "t": 80.43
+  },
+  {
+   "kst_boundary_after": 25,
+   "t": 82.93
+  },
+  {
+   "kst_boundary_after": 28,
+   "t": 91.47
+  },
+  {
+   "kst_boundary_after": 29,
+   "t": 92.63
+  }
+ ],
+ "extra_cuts": [
+  {
+   "cut": 108.2667,
+   "rev5_shot_id": 35,
+   "in_kst_row": 38,
+   "row_range": [
+    107.63,
+    110.87
+   ]
+  },
+  {
+   "cut": 109.0333,
+   "rev5_shot_id": 36,
+   "in_kst_row": 38,
+   "row_range": [
+    107.63,
+    110.87
+   ]
+  },
+  {
+   "cut": 111.3333,
+   "rev5_shot_id": 38,
+   "in_kst_row": 39,
+   "row_range": [
+    110.87,
+    112.47
+   ]
+  },
+  {
+   "cut": 112.1,
+   "rev5_shot_id": 39,
+   "in_kst_row": 39,
+   "row_range": [
+    110.87,
+    112.47
+   ]
+  },
+  {
+   "cut": 112.9333,
+   "rev5_shot_id": 41,
+   "in_kst_row": 40,
+   "row_range": [
+    112.47,
+    114.47
+   ]
+  },
+  {
+   "cut": 122.8333,
+   "rev5_shot_id": 47,
+   "in_kst_row": 45,
+   "row_range": [
+    122.37,
+    123.7
+   ]
+  },
+  {
+   "cut": 142.5333,
+   "rev5_shot_id": 56,
+   "in_kst_row": 53,
+   "row_range": [
+    140.2,
+    144.2
+   ]
+  },
+  {
+   "cut": 167.3333,
+   "rev5_shot_id": 64,
+   "in_kst_row": 60,
+   "row_range": [
+    166.83,
+    168.73
+   ]
+  },
+  {
+   "cut": 244.1667,
+   "rev5_shot_id": 88,
+   "in_kst_row": 83,
+   "row_range": [
+    243.67,
+    245.07
+   ]
+  }
+ ],
+ "identity_check": "98 phys = 93 KST rows + 9 extra_cuts − 4 pure_beat absorbed (inner bounds 97 = matched 88 + extra 9); KST rows needing split: [38, 39, 40, 45, 53, 60, 83] (row 39 now 2 cuts)",
+ "v3_note": "v2→v3 变化: 新切点 112.4333 入表 (rev5_shot_id 39; Kai kb4 附注定谳 + TNV2 0.240 软峰 + 条带 vision 裁决 + rev4 反写两段拼接证据)。其距 KST 行39/40边界 112.47 仅 1 帧 → 归 matched (delta -0.0367), matched 87→88 / pure_beat 5→4; extra_cuts 维持 9 (rows 38/39/40/45/53/60/83), 其余 87 matched 边界全部复现"
+}
