@@ -1112,19 +1112,18 @@
   ],
   "engine_semantic": {
    "shot_scale": "全景",
-   "camera_primitive": "tracking",
+   "camera_primitive": "whip_pan",
    "camera_speed": "fast",
-   "subjects": "绿色螳螂",
-   "action_detail": "绿色螳螂腾空跃起扑向红棕色甲虫背壳,落地后将短刀用力刺入甲壳裂缝,绿色黏液迸溅而出",
+   "subjects": "绿色螳螂、绿蛇、林间人影",
+   "action_detail": "螳螂被击飞高速掠过树林, 镜头急甩扫过张口扑咬的蛇头, 末段虚焦停在远处伫立的人影上",
    "geometry_disagreement": false,
    "geometry_primitive": "static",
    "frames_analyzed": 48,
-   "needs_reannotation": true,
+   "needs_reannotation": false,
    "reannotation": {
-    "source": "rev5_split_0922",
+    "source": "p2_reannotation_rev5.jsonl (GLM-4.6 新窗三帧)",
     "date": "2026-09-22",
-    "is_jump_cut_split": "是",
-    "note": "rev5 拆件: 语义继承父 G2_R_039, 待 P2 对新窗 [112.1,112.4333] 重标注"
+    "is_jump_cut_split": "否"
    }
   },
   "kst_subject": "螳螂武士凌空收身,双臂刀锋高举过头",
@@ -1142,20 +1141,19 @@
    112.9333
   ],
   "engine_semantic": {
-   "shot_scale": "全景",
-   "camera_primitive": "tracking",
+   "shot_scale": "近景",
+   "camera_primitive": "dolly_in",
    "camera_speed": "fast",
-   "subjects": "绿色螳螂",
-   "action_detail": "绿色螳螂腾空跃起扑向红棕色甲虫背壳,落地后将短刀用力刺入甲壳裂缝,绿色黏液迸溅而出",
+   "subjects": "螳螂、红色甲虫",
+   "action_detail": "螳螂高举双臂腾空扑向红色甲虫, 双手持匕首刺入虫背, 绿色汁液自伤口溢出",
    "geometry_disagreement": false,
    "geometry_primitive": "static",
    "frames_analyzed": 48,
-   "needs_reannotation": true,
+   "needs_reannotation": false,
    "reannotation": {
-    "source": "rev5_split_0922",
+    "source": "p2_reannotation_rev5.jsonl (GLM-4.6 新窗三帧)",
     "date": "2026-09-22",
-    "is_jump_cut_split": "是",
-    "note": "rev5 拆件: 语义继承父 G2_R_039, 待 P2 对新窗 [112.4333,112.9333] 重标注"
+    "is_jump_cut_split": "否"
    }
   },
   "kst_subject": "螳螂武士凌空收身,双臂刀锋高举过头",
