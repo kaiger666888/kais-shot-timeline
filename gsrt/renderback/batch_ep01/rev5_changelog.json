@@ -1,0 +1,18 @@
+{
+ "date": "2026-09-22",
+ "from": "rev4 (97 shots)",
+ "to": "rev5 (98 shots)",
+ "identity_check": "97 + 1 inserted cut = 98 ✓",
+ "evidence": [
+  "Kai kb4 blind 附注: r039 应拆两个分镜",
+  "TNV2 soft peak 0.240 @ f3373 (112.433) — 0914 定谳的漏检真切签名档",
+  "全分辨率条带 vision 裁判: 0.400->0.433 构图/主体尺度/背景瞬间替换 = CUT",
+  "rev4 manifest r039 h3_prompt 本为两段动作 prompt 拼接(翻滚+俯冲) — 反写时已按两拍书写"
+ ],
+ "actions": [
+  "insert cut @ 112.4333",
+  "r039 [112.1,112.933] -> r039a [112.1,112.433] + r039b [112.433,112.933]",
+  "shot ids >= 40 shifted +1 (97 -> 98)",
+  "rev4 原件未动; 下游 KST 对账/渲染单元待 v3 联动"
+ ]
+}
