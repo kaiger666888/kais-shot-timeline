@@ -1,0 +1,21 @@
+{
+ "audit": "L1 missed-cut cross-audit (prompt-structure x TNV2 soft peak)",
+ "table": "/data/workspace/kais-shot-timeline/gsrt/renderback/batch_ep01/physcut_table_rev5.json",
+ "n_shots_audited": 97,
+ "signature_def": {
+  "S1": "multi-block prompt + in-window TNV2 soft peak [0.15,0.5) -> escalate per-frame adjudication (r039-proven)",
+  "S2": "multi-block prompt + clean window -> one-shot-multi-beat prose, no cut (r023/r024/r026-type)",
+  "S3": "peak at window-head/tail neighbor frame -> belongs to adjacent shot boundary, not this shot"
+ },
+ "findings": [
+  {
+   "uid": "r039_p1",
+   "t": 112.433,
+   "prob": 0.24,
+   "prompt_blocks": 2,
+   "cls": "S1_candidate_missed_cut",
+   "action": "escalate_frame_adjudication"
+  }
+ ],
+ "run_note": "固化的 L1 审计层; 切点真值升级仍需 video-shot-boundary-detection skill 的条带裁决+Kai 票, 本层只收敛候选集"
+}
